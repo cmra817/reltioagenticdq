@@ -52,7 +52,7 @@ function NavItem({
 }
 
 function SectionDivider() {
-  return <div className="mx-3 my-3 h-px" style={{ background: "var(--hairline)" }} />;
+  return <div className="mx-3 my-2 h-px" style={{ background: "var(--hairline)" }} />;
 }
 
 const DEFAULT_DOMAINS = [
