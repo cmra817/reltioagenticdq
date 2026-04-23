@@ -388,7 +388,25 @@ function FilterPanel({
 }
 
 /* ---------- asset overview ---------- */
-function AssetOverview() {
+type View =
+  | { mode: "source"; title: string; rows: AssetRow[] }
+  | { mode: "dataset"; title: string; rows: AssetRow[] }
+  | { mode: "table"; title: string; columns: ColumnRow[] };
+
+function resolveView(selected: string | null): View {
+  if (!selected || selected === "Databricks") {
+    return { mode: "source", title: "Databricks", rows: DATABRICKS_ALL };
+  }
+  if (DATASET_ASSETS[selected]) {
+    return { mode: "dataset", title: `Databricks / ${selected}`, rows: DATASET_ASSETS[selected] };
+  }
+  // assume table/dashboard leaf
+  return { mode: "table", title: `Databricks / ${selected}`, columns: getColumnsFor(selected) };
+}
+
+function AssetOverview({ selected }: { selected: string | null }) {
+  const view = resolveView(selected);
+
   return (
     <section
       className="rounded-2xl border bg-white"
@@ -398,87 +416,117 @@ function AssetOverview() {
         className="flex items-center gap-2 px-4 py-2 text-[12px] border-b"
         style={{ color: "var(--ink-500)", borderColor: "var(--hairline)" }}
       >
-        <span>Databricks / customer_data</span>
+        <span>{view.title}</span>
         <span
           className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5"
           style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
         >
-          240 <ColumnIcon size={12} />
+          {view.mode === "table" ? view.columns.length : view.rows.length} <ColumnIcon size={12} />
         </span>
       </div>
 
       <div className="overflow-hidden">
-        <table className="w-full table-fixed border-collapse text-left text-[13px]">
-          <thead>
-            <tr
-              className="border-y text-[11px] uppercase tracking-[0.08em]"
-              style={{ borderColor: "var(--hairline)", color: "var(--ink-300)" }}
-            >
-              <th className="w-[22%] px-6 py-3 font-semibold">Name</th>
-              <th className="w-[34%] px-3 py-3 font-semibold">Description</th>
-              <th className="w-[14%] px-3 py-3 font-semibold">Data Source</th>
-              <th className="w-[12%] px-3 py-3 font-semibold">Columns</th>
-              <th className="w-[18%] px-6 py-3 font-semibold">Last Analyzed</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ASSETS.map((a) => {
-              const slug = a.name.toLowerCase().replace(/\s+/g, "-");
-              return (
-                <tr
-                  key={a.name}
-                  className="border-b transition-colors hover:bg-[color:var(--surface-soft)] cursor-pointer"
-                  style={{ borderColor: "var(--hairline)" }}
-                >
+        {view.mode === "table" ? (
+          <table className="w-full table-fixed border-collapse text-left text-[13px]">
+            <thead>
+              <tr
+                className="border-y text-[11px] uppercase tracking-[0.08em]"
+                style={{ borderColor: "var(--hairline)", color: "var(--ink-300)" }}
+              >
+                <th className="w-[28%] px-6 py-3 font-semibold">Name</th>
+                <th className="w-[52%] px-3 py-3 font-semibold">Description</th>
+                <th className="w-[20%] px-6 py-3 font-semibold">Last Analyzed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {view.columns.map((c) => (
+                <tr key={c.name} className="border-b" style={{ borderColor: "var(--hairline)" }}>
                   <td className="px-6 py-4">
-                    <Link
-                      to="/assets/$assetSlug"
-                      params={{ assetSlug: slug }}
-                      className="flex items-center gap-2"
-                      style={{ color: "var(--ink-900)" }}
-                    >
-                      <span style={{ color: "var(--ink-500)" }}>{kindIcon(a.kind, 16)}</span>
-                      <span className="font-medium">{a.name}</span>
-                    </Link>
-                  </td>
-                  <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-700)" }}>
-                    {a.description}
-                  </td>
-                  <td className="px-3 py-4">
-                    <span
-                      className="inline-flex items-center gap-1.5 text-[13px]"
-                      style={{ color: "var(--ink-700)" }}
-                    >
-                      <StarIcon size={13} />
-                      {a.source}
+                    <span className="flex items-center gap-2" style={{ color: "var(--ink-900)" }}>
+                      <span style={{ color: "var(--ink-500)" }}><ColumnIcon size={14} /></span>
+                      <span className="font-medium">{c.name}</span>
                     </span>
                   </td>
-                  <td className="px-3 py-4">
-                    {a.columns !== null ? (
-                      <span
-                        className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
-                        style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                      >
-                        {a.columns} <ColumnIcon size={12} />
-                      </span>
-                    ) : (
-                      <span style={{ color: "var(--ink-300)" }}>—</span>
-                    )}
+                  <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-700)" }}>
+                    {c.description}
                   </td>
                   <td className="px-6 py-4">
-                    <span
-                      className="inline-flex items-center gap-1.5 text-[13px]"
-                      style={{ color: "var(--ink-700)" }}
-                    >
+                    <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
                       <ClockIcon size={13} />
-                      {a.lastAnalyzed}
+                      {c.lastAnalyzed}
                     </span>
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <table className="w-full table-fixed border-collapse text-left text-[13px]">
+            <thead>
+              <tr
+                className="border-y text-[11px] uppercase tracking-[0.08em]"
+                style={{ borderColor: "var(--hairline)", color: "var(--ink-300)" }}
+              >
+                <th className="w-[22%] px-6 py-3 font-semibold">Name</th>
+                <th className="w-[34%] px-3 py-3 font-semibold">Description</th>
+                <th className="w-[14%] px-3 py-3 font-semibold">Data Source</th>
+                <th className="w-[12%] px-3 py-3 font-semibold">Columns</th>
+                <th className="w-[18%] px-6 py-3 font-semibold">Last Analyzed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {view.rows.map((a) => {
+                const slug = a.name.toLowerCase().replace(/\s+/g, "-");
+                return (
+                  <tr
+                    key={a.name}
+                    className="border-b transition-colors hover:bg-[color:var(--surface-soft)] cursor-pointer"
+                    style={{ borderColor: "var(--hairline)" }}
+                  >
+                    <td className="px-6 py-4">
+                      <Link
+                        to="/assets/$assetSlug"
+                        params={{ assetSlug: slug }}
+                        className="flex items-center gap-2"
+                        style={{ color: "var(--ink-900)" }}
+                      >
+                        <span style={{ color: "var(--ink-500)" }}>{kindIcon(a.kind, 16)}</span>
+                        <span className="font-medium">{a.name}</span>
+                      </Link>
+                    </td>
+                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-700)" }}>
+                      {a.description}
+                    </td>
+                    <td className="px-3 py-4">
+                      <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                        <StarIcon size={13} />
+                        {a.source}
+                      </span>
+                    </td>
+                    <td className="px-3 py-4">
+                      {a.columns !== null ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
+                          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                        >
+                          {a.columns} <ColumnIcon size={12} />
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--ink-300)" }}>—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                        <ClockIcon size={13} />
+                        {a.lastAnalyzed}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </section>
   );
@@ -486,13 +534,13 @@ function AssetOverview() {
 
 /* ---------- screen ---------- */
 export function ExploreScreen() {
-  const [selected, setSelected] = useState<string | null>("Customer Data");
+  const [selected, setSelected] = useState<string | null>("Databricks");
   return (
     <div className="relative flex flex-1 flex-col">
       <div className="flex flex-1 gap-6 px-8 pt-6 pb-28">
         <FilterPanel selected={selected} onSelect={setSelected} />
         <div className="flex flex-1 flex-col gap-6">
-          <AssetOverview />
+          <AssetOverview selected={selected} />
         </div>
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-6 px-8">
