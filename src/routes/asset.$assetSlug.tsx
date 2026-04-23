@@ -58,7 +58,7 @@ const ASSET_DETAILS: Record<string, AssetDetail> = {
 const TABS = ["Overview", "Assets", "Checks", "Activity"] as const;
 
 function AssetDetailPage() {
-  const { assetSlug } = useParams({ from: "/explore/$assetSlug" });
+  const { assetSlug } = useParams({ from: "/asset/$assetSlug" });
   const detail = ASSET_DETAILS[assetSlug.toLowerCase()] ?? ASSET_DETAILS.orders;
 
   return (
