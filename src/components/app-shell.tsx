@@ -1,7 +1,8 @@
 import { AgentflowSidebar } from "@/components/agentflow-sidebar";
 import { AgentflowTopbar } from "@/components/agentflow-topbar";
+import { SidebarProvider, useSidebarState } from "@/components/sidebar-context";
 
-export function AppShell({
+function AppShellInner({
   children,
   activeNav,
   activeTab,
@@ -10,6 +11,7 @@ export function AppShell({
   activeNav?: "new-chat" | "data-health" | "explore";
   activeTab?: "Agents" | "Unstructured" | "Quality";
 }) {
+  const { collapsed } = useSidebarState();
   return (
     <div
       className="relative min-h-screen w-full overflow-hidden"
@@ -32,10 +34,22 @@ export function AppShell({
       <div className="relative z-10 flex h-screen flex-col">
         <AgentflowTopbar active={activeTab ?? "Quality"} />
         <div className="flex flex-1 overflow-hidden">
-          <AgentflowSidebar activeNav={activeNav ?? "new-chat"} />
+          {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "new-chat"} />}
           <main className="flex flex-1 flex-col overflow-hidden">{children}</main>
         </div>
       </div>
     </div>
+  );
+}
+
+export function AppShell(props: {
+  children: React.ReactNode;
+  activeNav?: "new-chat" | "data-health" | "explore";
+  activeTab?: "Agents" | "Unstructured" | "Quality";
+}) {
+  return (
+    <SidebarProvider>
+      <AppShellInner {...props} />
+    </SidebarProvider>
   );
 }
