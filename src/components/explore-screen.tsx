@@ -314,20 +314,18 @@ function AssetOverview() {
       className="rounded-2xl border bg-white"
       style={{ borderColor: "var(--hairline)" }}
     >
-      <header className="flex items-center justify-between px-6 pt-5 pb-4">
-        <h2 className="text-[18px] font-semibold" style={{ color: "var(--ink-900)" }}>
-          Asset Overview
-        </h2>
-        <div className="flex items-center gap-2 text-[12px]" style={{ color: "var(--ink-500)" }}>
-          <span>Databricks / customer_data</span>
-          <span
-            className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5"
-            style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-          >
-            240 <ColumnIcon size={12} />
-          </span>
-        </div>
-      </header>
+      <div
+        className="flex items-center gap-2 px-4 py-2 text-[12px] border-b"
+        style={{ color: "var(--ink-500)", borderColor: "var(--hairline)" }}
+      >
+        <span>Databricks / customer_data</span>
+        <span
+          className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5"
+          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+        >
+          240 <ColumnIcon size={12} />
+        </span>
+      </div>
 
       <div className="overflow-hidden">
         <table className="w-full table-fixed border-collapse text-left text-[13px]">
