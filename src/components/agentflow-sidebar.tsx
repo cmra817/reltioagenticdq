@@ -5,13 +5,11 @@ import {
   BarsIcon,
   ChevronDownIcon,
   CompassIcon,
-  DollarIcon,
   FolderIcon,
   HealthIcon,
   PlusCircleIcon,
   PlusIcon,
   SearchIcon,
-  SidebarToggleIcon,
   UserIcon,
   UsersGearIcon,
 } from "./brand-icons";
