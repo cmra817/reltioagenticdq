@@ -100,24 +100,25 @@ type TreeNode = {
   children?: TreeNode[];
 };
 
-const DATABRICKS_TREE: TreeNode[] = [
-  {
-    name: "Customer Data",
-    kind: "dataset",
-    children: [
-      { name: "Orders", kind: "table" },
-      { name: "Customer profiles", kind: "table" },
-      { name: "Revenue dashboard", kind: "chart" },
-    ],
-  },
-  { name: "Product catalog", kind: "table" },
-  { name: "Loyalty Points", kind: "table" },
-];
+type AssetRow = {
+  name: string;
+  kind: AssetKind;
+  description: string;
+  source: string;
+  columns: number | null;
+  lastAnalyzed: string;
+};
 
-const ASSETS = [
+type ColumnRow = {
+  name: string;
+  description: string;
+  lastAnalyzed: string;
+};
+
+const CUSTOMER_DATA_CHILDREN: AssetRow[] = [
   {
     name: "Orders",
-    kind: "dataset" as AssetKind,
+    kind: "table",
     description: "Stores all customer order transactions including amounts, dates, and statuses",
     source: "Databricks",
     columns: 40,
@@ -125,7 +126,7 @@ const ASSETS = [
   },
   {
     name: "customer_profiles",
-    kind: "table" as AssetKind,
+    kind: "table",
     description: "Golden customer profile table with attributes from CRM, ERP, and loyalty systems",
     source: "Databricks",
     columns: 200,
@@ -133,13 +134,90 @@ const ASSETS = [
   },
   {
     name: "revenue_dashboard",
-    kind: "chart" as AssetKind,
+    kind: "chart",
     description: "Shows real-time inventory counts across warehouses and fulfillment centers",
     source: "Databricks",
-    columns: null as number | null,
+    columns: null,
     lastAnalyzed: "6:01 PM, 11/25/2025",
   },
 ];
+
+const PRODUCT_CATALOG_CHILDREN: AssetRow[] = [
+  {
+    name: "products",
+    kind: "table",
+    description: "Master product table with SKU, name, category, and pricing information",
+    source: "Databricks",
+    columns: 28,
+    lastAnalyzed: "2h ago",
+  },
+  {
+    name: "categories",
+    kind: "table",
+    description: "Product taxonomy and category hierarchy",
+    source: "Databricks",
+    columns: 12,
+    lastAnalyzed: "1d ago",
+  },
+];
+
+const LOYALTY_POINTS_CHILDREN: AssetRow[] = [
+  {
+    name: "points_ledger",
+    kind: "table",
+    description: "Transaction-level ledger of loyalty points earned and redeemed",
+    source: "Databricks",
+    columns: 18,
+    lastAnalyzed: "4h ago",
+  },
+  {
+    name: "tier_status",
+    kind: "table",
+    description: "Current loyalty tier per customer with thresholds",
+    source: "Databricks",
+    columns: 9,
+    lastAnalyzed: "12h ago",
+  },
+];
+
+const DATABRICKS_TREE: TreeNode[] = [
+  { name: "Customer Data", kind: "dataset", children: CUSTOMER_DATA_CHILDREN.map((c) => ({ name: c.name, kind: c.kind })) },
+  { name: "Product catalog", kind: "dataset", children: PRODUCT_CATALOG_CHILDREN.map((c) => ({ name: c.name, kind: c.kind })) },
+  { name: "Loyalty Points", kind: "dataset", children: LOYALTY_POINTS_CHILDREN.map((c) => ({ name: c.name, kind: c.kind })) },
+];
+
+const DATASET_ASSETS: Record<string, AssetRow[]> = {
+  "Customer Data": CUSTOMER_DATA_CHILDREN,
+  "Product catalog": PRODUCT_CATALOG_CHILDREN,
+  "Loyalty Points": LOYALTY_POINTS_CHILDREN,
+};
+
+const DATABRICKS_ALL: AssetRow[] = [
+  { name: "Customer Data", kind: "dataset", description: "Customer master data including profiles, orders, and revenue dashboards", source: "Databricks", columns: null, lastAnalyzed: "15h ago" },
+  { name: "Product catalog", kind: "dataset", description: "Products, SKUs, and category hierarchy", source: "Databricks", columns: null, lastAnalyzed: "2h ago" },
+  { name: "Loyalty Points", kind: "dataset", description: "Loyalty points ledger and customer tier status", source: "Databricks", columns: null, lastAnalyzed: "4h ago" },
+];
+
+const TABLE_COLUMNS: Record<string, ColumnRow[]> = {
+  Orders: [
+    { name: "order_id", description: "Unique identifier for each order", lastAnalyzed: "15h ago" },
+    { name: "customer_id", description: "Foreign key to customer_profiles", lastAnalyzed: "15h ago" },
+    { name: "order_date", description: "Date the order was placed", lastAnalyzed: "15h ago" },
+    { name: "order_status", description: "Current fulfillment status of the order", lastAnalyzed: "15h ago" },
+    { name: "total_amount", description: "Total order amount in USD", lastAnalyzed: "15h ago" },
+    { name: "currency", description: "ISO currency code", lastAnalyzed: "1d ago" },
+    { name: "shipping_address", description: "Destination shipping address", lastAnalyzed: "1d ago" },
+    { name: "payment_method", description: "Method used to pay for the order", lastAnalyzed: "1d ago" },
+  ],
+};
+
+function getColumnsFor(name: string): ColumnRow[] {
+  return TABLE_COLUMNS[name] ?? [
+    { name: "id", description: "Primary key", lastAnalyzed: "1d ago" },
+    { name: "created_at", description: "Row creation timestamp", lastAnalyzed: "1d ago" },
+    { name: "updated_at", description: "Row last update timestamp", lastAnalyzed: "1d ago" },
+  ];
+}
 
 function kindIcon(kind: AssetKind, size = 16) {
   if (kind === "dataset") return <DatasetIcon size={size} />;
