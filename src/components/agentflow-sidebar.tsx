@@ -223,20 +223,8 @@ export function AgentflowSidebar({
       className="flex h-full w-[260px] shrink-0 flex-col"
       style={{ background: "transparent" }}
     >
-      {/* top: collapse toggle */}
-      <div className="px-4 pt-4">
-        <button
-          type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)]"
-          style={{ color: "var(--ink-700)" }}
-          aria-label="Collapse sidebar"
-        >
-          <SidebarToggleIcon size={20} />
-        </button>
-      </div>
-
       {/* primary actions */}
-      <nav className="mt-4 px-3">
+      <nav className="mt-3 px-3">
         <NavItem icon={<PlusCircleIcon />} label="New chat" to="/" active={activeNav === "new-chat"} />
         <NavItem
           icon={<HealthIcon />}
