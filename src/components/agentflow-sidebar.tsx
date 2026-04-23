@@ -111,8 +111,8 @@ function DomainPill() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between rounded-full px-3 py-2 transition-colors hover:bg-[color:var(--surface-soft)] border-0"
-        style={{ borderColor: "var(--hairline)", background: "white" }}
+        className="flex w-full items-center justify-between rounded-full px-3 py-2 transition-colors hover:bg-[color:var(--surface-soft)] border-0 bg-black/0"
+        style={{ borderColor: "var(--hairline)" }}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
