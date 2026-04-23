@@ -253,8 +253,8 @@ export function AgentflowSidebar({
         <DomainPill />
       </div>
 
-      {/* secondary nav */}
-      <nav className="mt-2 px-3">
+      {/* secondary nav — scoped to selected domain */}
+      <nav className="mt-2 px-3 pl-6">
         <NavItem icon={<CompassIcon />} label="Explore" to="/explore" active={activeNav === "explore"} />
         <NavItem icon={<FolderIcon />} label="Projects" />
         <NavItem icon={<BarsIcon />} label="DQ checks" />
