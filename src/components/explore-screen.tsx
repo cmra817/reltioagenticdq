@@ -301,7 +301,10 @@ function FilterPanel({
 
         <button
           type="button"
-          onClick={() => setDatabricksOpen((o) => !o)}
+          onClick={() => {
+            setDatabricksOpen((o) => !o);
+            onSelect("Databricks");
+          }}
           className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
           style={{ color: "var(--ink-900)" }}
         >
