@@ -260,6 +260,7 @@ function TreeRow({
           {kindIcon(node.kind, 14)}
         </span>
         <span className="flex-1 truncate font-medium">{node.name}</span>
+        {hasChildren && (open ? <ChevronUp size={12} /> : <ChevronDown size={12} />)}
       </button>
       {hasChildren && open && (
         <div>
