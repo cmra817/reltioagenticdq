@@ -400,15 +400,17 @@ function AssetOverview() {
 export function ExploreScreen() {
   const [selected, setSelected] = useState<string | null>("Customer Data");
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="flex flex-1 gap-6 px-8 pt-6">
+    <div className="relative flex flex-1 flex-col">
+      <div className="flex flex-1 gap-6 px-8 pt-6 pb-28">
         <FilterPanel selected={selected} onSelect={setSelected} />
         <div className="flex flex-1 flex-col gap-6">
           <AssetOverview />
         </div>
       </div>
-      <div className="px-8 pb-6 pt-8">
-        <ChatComposer />
+      <div className="pointer-events-none absolute inset-x-0 bottom-6 px-8">
+        <div className="pointer-events-auto mx-auto w-full max-w-2xl">
+          <ChatComposer />
+        </div>
       </div>
     </div>
   );

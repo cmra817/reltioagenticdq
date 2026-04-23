@@ -287,8 +287,8 @@ function MetricCard({ m }: { m: Metric }) {
 /* ---------- main dashboard ---------- */
 export function DataHealthDashboard() {
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      <div className="flex flex-1 flex-col overflow-y-auto px-8 pb-8 pt-4">
+    <div className="relative flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-y-auto px-8 pb-28 pt-4">
         {/* filter bar */}
         <div className="mb-5 flex items-center justify-between">
           <div className="flex flex-wrap items-center gap-3">
@@ -387,9 +387,9 @@ export function DataHealthDashboard() {
         </CardShell>
       </div>
 
-      {/* composer pinned */}
-      <div className="px-8 pb-6">
-        <div className="mx-auto w-full max-w-[820px]">
+      {/* composer floating */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-6 px-8">
+        <div className="pointer-events-auto mx-auto w-full max-w-2xl">
           <ChatComposer />
         </div>
       </div>
