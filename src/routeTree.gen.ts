@@ -12,7 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DataHealthRouteImport } from './routes/data-health'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ExploreAssetSlugRouteImport } from './routes/explore.$assetSlug'
+import { Route as AssetAssetSlugRouteImport } from './routes/asset.$assetSlug'
 
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
@@ -29,43 +29,44 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ExploreAssetSlugRoute = ExploreAssetSlugRouteImport.update({
-  id: '/$assetSlug',
-  path: '/$assetSlug',
-  getParentRoute: () => ExploreRoute,
+const AssetAssetSlugRoute = AssetAssetSlugRouteImport.update({
+  id: '/asset/$assetSlug',
+  path: '/asset/$assetSlug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
-  '/explore': typeof ExploreRouteWithChildren
-  '/explore/$assetSlug': typeof ExploreAssetSlugRoute
+  '/explore': typeof ExploreRoute
+  '/asset/$assetSlug': typeof AssetAssetSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
-  '/explore': typeof ExploreRouteWithChildren
-  '/explore/$assetSlug': typeof ExploreAssetSlugRoute
+  '/explore': typeof ExploreRoute
+  '/asset/$assetSlug': typeof AssetAssetSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
-  '/explore': typeof ExploreRouteWithChildren
-  '/explore/$assetSlug': typeof ExploreAssetSlugRoute
+  '/explore': typeof ExploreRoute
+  '/asset/$assetSlug': typeof AssetAssetSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/data-health' | '/explore' | '/explore/$assetSlug'
+  fullPaths: '/' | '/data-health' | '/explore' | '/asset/$assetSlug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/data-health' | '/explore' | '/explore/$assetSlug'
-  id: '__root__' | '/' | '/data-health' | '/explore' | '/explore/$assetSlug'
+  to: '/' | '/data-health' | '/explore' | '/asset/$assetSlug'
+  id: '__root__' | '/' | '/data-health' | '/explore' | '/asset/$assetSlug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DataHealthRoute: typeof DataHealthRoute
-  ExploreRoute: typeof ExploreRouteWithChildren
+  ExploreRoute: typeof ExploreRoute
+  AssetAssetSlugRoute: typeof AssetAssetSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -91,31 +92,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/explore/$assetSlug': {
-      id: '/explore/$assetSlug'
-      path: '/$assetSlug'
-      fullPath: '/explore/$assetSlug'
-      preLoaderRoute: typeof ExploreAssetSlugRouteImport
-      parentRoute: typeof ExploreRoute
+    '/asset/$assetSlug': {
+      id: '/asset/$assetSlug'
+      path: '/asset/$assetSlug'
+      fullPath: '/asset/$assetSlug'
+      preLoaderRoute: typeof AssetAssetSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface ExploreRouteChildren {
-  ExploreAssetSlugRoute: typeof ExploreAssetSlugRoute
-}
-
-const ExploreRouteChildren: ExploreRouteChildren = {
-  ExploreAssetSlugRoute: ExploreAssetSlugRoute,
-}
-
-const ExploreRouteWithChildren =
-  ExploreRoute._addFileChildren(ExploreRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DataHealthRoute: DataHealthRoute,
-  ExploreRoute: ExploreRouteWithChildren,
+  ExploreRoute: ExploreRoute,
+  AssetAssetSlugRoute: AssetAssetSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
