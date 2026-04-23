@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { ChatComposer } from "@/components/chat-composer";
 
-export const Route = createFileRoute("/asset/$assetSlug")({
+export const Route = createFileRoute("/assets/$assetSlug")({
   head: ({ params }) => ({
     meta: [
       { title: `${params.assetSlug} — AgentFlow Quality` },
@@ -58,7 +58,7 @@ const ASSET_DETAILS: Record<string, AssetDetail> = {
 const TABS = ["Overview", "Assets", "Checks", "Activity"] as const;
 
 function AssetDetailPage() {
-  const { assetSlug } = useParams({ from: "/asset/$assetSlug" });
+  const { assetSlug } = useParams({ from: "/assets/$assetSlug" });
   const detail = ASSET_DETAILS[assetSlug.toLowerCase()] ?? ASSET_DETAILS.orders;
 
   return (
