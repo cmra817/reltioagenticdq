@@ -9,7 +9,7 @@ export function ChatComposer() {
         e.preventDefault();
         setValue("");
       }}
-      className="flex items-center gap-3 rounded-full border bg-white px-5 py-2.5"
+      className="mx-auto flex w-full max-w-2xl items-center gap-3 rounded-full border bg-white px-5 py-2.5"
       style={{
         borderColor: "var(--hairline)",
         boxShadow: "var(--shadow-input)",
