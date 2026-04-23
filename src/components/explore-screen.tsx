@@ -100,24 +100,25 @@ type TreeNode = {
   children?: TreeNode[];
 };
 
-const DATABRICKS_TREE: TreeNode[] = [
-  {
-    name: "Customer Data",
-    kind: "dataset",
-    children: [
-      { name: "Orders", kind: "table" },
-      { name: "Customer profiles", kind: "table" },
-      { name: "Revenue dashboard", kind: "chart" },
-    ],
-  },
-  { name: "Product catalog", kind: "table" },
-  { name: "Loyalty Points", kind: "table" },
-];
+type AssetRow = {
+  name: string;
+  kind: AssetKind;
+  description: string;
+  source: string;
+  columns: number | null;
+  lastAnalyzed: string;
+};
 
-const ASSETS = [
+type ColumnRow = {
+  name: string;
+  description: string;
+  lastAnalyzed: string;
+};
+
+const CUSTOMER_DATA_CHILDREN: AssetRow[] = [
   {
     name: "Orders",
-    kind: "dataset" as AssetKind,
+    kind: "table",
     description: "Stores all customer order transactions including amounts, dates, and statuses",
     source: "Databricks",
     columns: 40,
@@ -125,7 +126,7 @@ const ASSETS = [
   },
   {
     name: "customer_profiles",
-    kind: "table" as AssetKind,
+    kind: "table",
     description: "Golden customer profile table with attributes from CRM, ERP, and loyalty systems",
     source: "Databricks",
     columns: 200,
@@ -133,13 +134,90 @@ const ASSETS = [
   },
   {
     name: "revenue_dashboard",
-    kind: "chart" as AssetKind,
+    kind: "chart",
     description: "Shows real-time inventory counts across warehouses and fulfillment centers",
     source: "Databricks",
-    columns: null as number | null,
+    columns: null,
     lastAnalyzed: "6:01 PM, 11/25/2025",
   },
 ];
+
+const PRODUCT_CATALOG_CHILDREN: AssetRow[] = [
+  {
+    name: "products",
+    kind: "table",
+    description: "Master product table with SKU, name, category, and pricing information",
+    source: "Databricks",
+    columns: 28,
+    lastAnalyzed: "2h ago",
+  },
+  {
+    name: "categories",
+    kind: "table",
+    description: "Product taxonomy and category hierarchy",
+    source: "Databricks",
+    columns: 12,
+    lastAnalyzed: "1d ago",
+  },
+];
+
+const LOYALTY_POINTS_CHILDREN: AssetRow[] = [
+  {
+    name: "points_ledger",
+    kind: "table",
+    description: "Transaction-level ledger of loyalty points earned and redeemed",
+    source: "Databricks",
+    columns: 18,
+    lastAnalyzed: "4h ago",
+  },
+  {
+    name: "tier_status",
+    kind: "table",
+    description: "Current loyalty tier per customer with thresholds",
+    source: "Databricks",
+    columns: 9,
+    lastAnalyzed: "12h ago",
+  },
+];
+
+const DATABRICKS_TREE: TreeNode[] = [
+  { name: "Customer Data", kind: "dataset", children: CUSTOMER_DATA_CHILDREN.map((c) => ({ name: c.name, kind: c.kind })) },
+  { name: "Product catalog", kind: "dataset", children: PRODUCT_CATALOG_CHILDREN.map((c) => ({ name: c.name, kind: c.kind })) },
+  { name: "Loyalty Points", kind: "dataset", children: LOYALTY_POINTS_CHILDREN.map((c) => ({ name: c.name, kind: c.kind })) },
+];
+
+const DATASET_ASSETS: Record<string, AssetRow[]> = {
+  "Customer Data": CUSTOMER_DATA_CHILDREN,
+  "Product catalog": PRODUCT_CATALOG_CHILDREN,
+  "Loyalty Points": LOYALTY_POINTS_CHILDREN,
+};
+
+const DATABRICKS_ALL: AssetRow[] = [
+  { name: "Customer Data", kind: "dataset", description: "Customer master data including profiles, orders, and revenue dashboards", source: "Databricks", columns: null, lastAnalyzed: "15h ago" },
+  { name: "Product catalog", kind: "dataset", description: "Products, SKUs, and category hierarchy", source: "Databricks", columns: null, lastAnalyzed: "2h ago" },
+  { name: "Loyalty Points", kind: "dataset", description: "Loyalty points ledger and customer tier status", source: "Databricks", columns: null, lastAnalyzed: "4h ago" },
+];
+
+const TABLE_COLUMNS: Record<string, ColumnRow[]> = {
+  Orders: [
+    { name: "order_id", description: "Unique identifier for each order", lastAnalyzed: "15h ago" },
+    { name: "customer_id", description: "Foreign key to customer_profiles", lastAnalyzed: "15h ago" },
+    { name: "order_date", description: "Date the order was placed", lastAnalyzed: "15h ago" },
+    { name: "order_status", description: "Current fulfillment status of the order", lastAnalyzed: "15h ago" },
+    { name: "total_amount", description: "Total order amount in USD", lastAnalyzed: "15h ago" },
+    { name: "currency", description: "ISO currency code", lastAnalyzed: "1d ago" },
+    { name: "shipping_address", description: "Destination shipping address", lastAnalyzed: "1d ago" },
+    { name: "payment_method", description: "Method used to pay for the order", lastAnalyzed: "1d ago" },
+  ],
+};
+
+function getColumnsFor(name: string): ColumnRow[] {
+  return TABLE_COLUMNS[name] ?? [
+    { name: "id", description: "Primary key", lastAnalyzed: "1d ago" },
+    { name: "created_at", description: "Row creation timestamp", lastAnalyzed: "1d ago" },
+    { name: "updated_at", description: "Row last update timestamp", lastAnalyzed: "1d ago" },
+  ];
+}
 
 function kindIcon(kind: AssetKind, size = 16) {
   if (kind === "dataset") return <DatasetIcon size={size} />;
@@ -182,6 +260,7 @@ function TreeRow({
           {kindIcon(node.kind, 14)}
         </span>
         <span className="flex-1 truncate font-medium">{node.name}</span>
+        {hasChildren && (open ? <ChevronUp size={12} /> : <ChevronDown size={12} />)}
       </button>
       {hasChildren && open && (
         <div>
@@ -222,7 +301,10 @@ function FilterPanel({
 
         <button
           type="button"
-          onClick={() => setDatabricksOpen((o) => !o)}
+          onClick={() => {
+            setDatabricksOpen((o) => !o);
+            onSelect("Databricks");
+          }}
           className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
           style={{ color: "var(--ink-900)" }}
         >
@@ -309,7 +391,25 @@ function FilterPanel({
 }
 
 /* ---------- asset overview ---------- */
-function AssetOverview() {
+type View =
+  | { mode: "source"; title: string; rows: AssetRow[] }
+  | { mode: "dataset"; title: string; rows: AssetRow[] }
+  | { mode: "table"; title: string; columns: ColumnRow[] };
+
+function resolveView(selected: string | null): View {
+  if (!selected || selected === "Databricks") {
+    return { mode: "source", title: "Databricks", rows: DATABRICKS_ALL };
+  }
+  if (DATASET_ASSETS[selected]) {
+    return { mode: "dataset", title: `Databricks / ${selected}`, rows: DATASET_ASSETS[selected] };
+  }
+  // assume table/dashboard leaf
+  return { mode: "table", title: `Databricks / ${selected}`, columns: getColumnsFor(selected) };
+}
+
+function AssetOverview({ selected }: { selected: string | null }) {
+  const view = resolveView(selected);
+
   return (
     <section
       className="rounded-2xl border bg-white"
@@ -319,87 +419,117 @@ function AssetOverview() {
         className="flex items-center gap-2 px-4 py-2 text-[12px] border-b"
         style={{ color: "var(--ink-500)", borderColor: "var(--hairline)" }}
       >
-        <span>Databricks / customer_data</span>
+        <span>{view.title}</span>
         <span
           className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5"
           style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
         >
-          240 <ColumnIcon size={12} />
+          {view.mode === "table" ? view.columns.length : view.rows.length} <ColumnIcon size={12} />
         </span>
       </div>
 
       <div className="overflow-hidden">
-        <table className="w-full table-fixed border-collapse text-left text-[13px]">
-          <thead>
-            <tr
-              className="border-y text-[11px] uppercase tracking-[0.08em]"
-              style={{ borderColor: "var(--hairline)", color: "var(--ink-300)" }}
-            >
-              <th className="w-[22%] px-6 py-3 font-semibold">Name</th>
-              <th className="w-[34%] px-3 py-3 font-semibold">Description</th>
-              <th className="w-[14%] px-3 py-3 font-semibold">Data Source</th>
-              <th className="w-[12%] px-3 py-3 font-semibold">Columns</th>
-              <th className="w-[18%] px-6 py-3 font-semibold">Last Analyzed</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ASSETS.map((a) => {
-              const slug = a.name.toLowerCase().replace(/\s+/g, "-");
-              return (
-                <tr
-                  key={a.name}
-                  className="border-b transition-colors hover:bg-[color:var(--surface-soft)] cursor-pointer"
-                  style={{ borderColor: "var(--hairline)" }}
-                >
+        {view.mode === "table" ? (
+          <table className="w-full table-fixed border-collapse text-left text-[13px]">
+            <thead>
+              <tr
+                className="border-y text-[11px] uppercase tracking-[0.08em]"
+                style={{ borderColor: "var(--hairline)", color: "var(--ink-300)" }}
+              >
+                <th className="w-[28%] px-6 py-3 font-semibold">Name</th>
+                <th className="w-[52%] px-3 py-3 font-semibold">Description</th>
+                <th className="w-[20%] px-6 py-3 font-semibold">Last Analyzed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {view.columns.map((c) => (
+                <tr key={c.name} className="border-b" style={{ borderColor: "var(--hairline)" }}>
                   <td className="px-6 py-4">
-                    <Link
-                      to="/assets/$assetSlug"
-                      params={{ assetSlug: slug }}
-                      className="flex items-center gap-2"
-                      style={{ color: "var(--ink-900)" }}
-                    >
-                      <span style={{ color: "var(--ink-500)" }}>{kindIcon(a.kind, 16)}</span>
-                      <span className="font-medium">{a.name}</span>
-                    </Link>
-                  </td>
-                  <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-700)" }}>
-                    {a.description}
-                  </td>
-                  <td className="px-3 py-4">
-                    <span
-                      className="inline-flex items-center gap-1.5 text-[13px]"
-                      style={{ color: "var(--ink-700)" }}
-                    >
-                      <StarIcon size={13} />
-                      {a.source}
+                    <span className="flex items-center gap-2" style={{ color: "var(--ink-900)" }}>
+                      <span style={{ color: "var(--ink-500)" }}><ColumnIcon size={14} /></span>
+                      <span className="font-medium">{c.name}</span>
                     </span>
                   </td>
-                  <td className="px-3 py-4">
-                    {a.columns !== null ? (
-                      <span
-                        className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
-                        style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                      >
-                        {a.columns} <ColumnIcon size={12} />
-                      </span>
-                    ) : (
-                      <span style={{ color: "var(--ink-300)" }}>—</span>
-                    )}
+                  <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-700)" }}>
+                    {c.description}
                   </td>
                   <td className="px-6 py-4">
-                    <span
-                      className="inline-flex items-center gap-1.5 text-[13px]"
-                      style={{ color: "var(--ink-700)" }}
-                    >
+                    <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
                       <ClockIcon size={13} />
-                      {a.lastAnalyzed}
+                      {c.lastAnalyzed}
                     </span>
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <table className="w-full table-fixed border-collapse text-left text-[13px]">
+            <thead>
+              <tr
+                className="border-y text-[11px] uppercase tracking-[0.08em]"
+                style={{ borderColor: "var(--hairline)", color: "var(--ink-300)" }}
+              >
+                <th className="w-[22%] px-6 py-3 font-semibold">Name</th>
+                <th className="w-[34%] px-3 py-3 font-semibold">Description</th>
+                <th className="w-[14%] px-3 py-3 font-semibold">Data Source</th>
+                <th className="w-[12%] px-3 py-3 font-semibold">Columns</th>
+                <th className="w-[18%] px-6 py-3 font-semibold">Last Analyzed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {view.rows.map((a) => {
+                const slug = a.name.toLowerCase().replace(/\s+/g, "-");
+                return (
+                  <tr
+                    key={a.name}
+                    className="border-b transition-colors hover:bg-[color:var(--surface-soft)] cursor-pointer"
+                    style={{ borderColor: "var(--hairline)" }}
+                  >
+                    <td className="px-6 py-4">
+                      <Link
+                        to="/assets/$assetSlug"
+                        params={{ assetSlug: slug }}
+                        className="flex items-center gap-2"
+                        style={{ color: "var(--ink-900)" }}
+                      >
+                        <span style={{ color: "var(--ink-500)" }}>{kindIcon(a.kind, 16)}</span>
+                        <span className="font-medium">{a.name}</span>
+                      </Link>
+                    </td>
+                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-700)" }}>
+                      {a.description}
+                    </td>
+                    <td className="px-3 py-4">
+                      <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                        <StarIcon size={13} />
+                        {a.source}
+                      </span>
+                    </td>
+                    <td className="px-3 py-4">
+                      {a.columns !== null ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
+                          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                        >
+                          {a.columns} <ColumnIcon size={12} />
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--ink-300)" }}>—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                        <ClockIcon size={13} />
+                        {a.lastAnalyzed}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </section>
   );
@@ -407,13 +537,13 @@ function AssetOverview() {
 
 /* ---------- screen ---------- */
 export function ExploreScreen() {
-  const [selected, setSelected] = useState<string | null>("Customer Data");
+  const [selected, setSelected] = useState<string | null>("Databricks");
   return (
     <div className="relative flex flex-1 flex-col">
       <div className="flex flex-1 gap-6 px-8 pt-6 pb-28">
         <FilterPanel selected={selected} onSelect={setSelected} />
         <div className="flex flex-1 flex-col gap-6">
-          <AssetOverview />
+          <AssetOverview selected={selected} />
         </div>
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-6 px-8">
