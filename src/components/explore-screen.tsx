@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { ChatComposer } from "./chat-composer";
 
 /* ---------- icons ---------- */
@@ -342,53 +343,61 @@ function AssetOverview() {
             </tr>
           </thead>
           <tbody>
-            {ASSETS.map((a) => (
-              <tr
-                key={a.name}
-                className="border-b transition-colors hover:bg-[color:var(--surface-soft)]"
-                style={{ borderColor: "var(--hairline)" }}
-              >
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2" style={{ color: "var(--ink-900)" }}>
-                    <span style={{ color: "var(--ink-500)" }}>{kindIcon(a.kind, 16)}</span>
-                    <span className="font-medium">{a.name}</span>
-                  </div>
-                </td>
-                <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-700)" }}>
-                  {a.description}
-                </td>
-                <td className="px-3 py-4">
-                  <span
-                    className="inline-flex items-center gap-1.5 text-[13px]"
-                    style={{ color: "var(--ink-700)" }}
-                  >
-                    <StarIcon size={13} />
-                    {a.source}
-                  </span>
-                </td>
-                <td className="px-3 py-4">
-                  {a.columns !== null ? (
-                    <span
-                      className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
-                      style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+            {ASSETS.map((a) => {
+              const slug = a.name.toLowerCase().replace(/\s+/g, "-");
+              return (
+                <tr
+                  key={a.name}
+                  className="border-b transition-colors hover:bg-[color:var(--surface-soft)] cursor-pointer"
+                  style={{ borderColor: "var(--hairline)" }}
+                >
+                  <td className="px-6 py-4">
+                    <Link
+                      to="/explore/$assetSlug"
+                      params={{ assetSlug: slug }}
+                      className="flex items-center gap-2"
+                      style={{ color: "var(--ink-900)" }}
                     >
-                      {a.columns} <ColumnIcon size={12} />
+                      <span style={{ color: "var(--ink-500)" }}>{kindIcon(a.kind, 16)}</span>
+                      <span className="font-medium">{a.name}</span>
+                    </Link>
+                  </td>
+                  <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-700)" }}>
+                    {a.description}
+                  </td>
+                  <td className="px-3 py-4">
+                    <span
+                      className="inline-flex items-center gap-1.5 text-[13px]"
+                      style={{ color: "var(--ink-700)" }}
+                    >
+                      <StarIcon size={13} />
+                      {a.source}
                     </span>
-                  ) : (
-                    <span style={{ color: "var(--ink-300)" }}>—</span>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className="inline-flex items-center gap-1.5 text-[13px]"
-                    style={{ color: "var(--ink-700)" }}
-                  >
-                    <ClockIcon size={13} />
-                    {a.lastAnalyzed}
-                  </span>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-3 py-4">
+                    {a.columns !== null ? (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
+                        style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                      >
+                        {a.columns} <ColumnIcon size={12} />
+                      </span>
+                    ) : (
+                      <span style={{ color: "var(--ink-300)" }}>—</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className="inline-flex items-center gap-1.5 text-[13px]"
+                      style={{ color: "var(--ink-700)" }}
+                    >
+                      <ClockIcon size={13} />
+                      {a.lastAnalyzed}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
