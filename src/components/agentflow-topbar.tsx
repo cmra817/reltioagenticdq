@@ -1,16 +1,27 @@
 import lockupUrl from "@/assets/reltio-agentflow-lockup.png";
+import { SidebarToggleIcon } from "./brand-icons";
 
 const tabs = ["Agents", "Unstructured", "Quality"] as const;
 type Tab = (typeof tabs)[number];
 
 export function AgentflowTopbar({ active = "Quality" as Tab }: { active?: Tab }) {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-6 px-6">
+    <header className="flex h-12 shrink-0 items-center gap-4 px-4">
+      {/* Sidebar toggle */}
+      <button
+        type="button"
+        className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)]"
+        style={{ color: "var(--ink-700)" }}
+        aria-label="Toggle sidebar"
+      >
+        <SidebarToggleIcon size={20} />
+      </button>
+
       {/* Logo lockup */}
       <img
         src={lockupUrl}
         alt="Reltio AgentFlow"
-        style={{ height: 28, width: "auto", display: "block" }}
+        style={{ height: 26, width: "auto", display: "block" }}
       />
 
       {/* Tab pill */}
