@@ -35,7 +35,7 @@ function AppShellInner({
         <AgentflowTopbar active={activeTab ?? "Quality"} />
         <div className="flex flex-1 overflow-hidden">
           {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "new-chat"} />}
-          <main className="flex flex-1 flex-col overflow-hidden">{children}</main>
+          <main className="flex flex-1 flex-col overflow-y-auto">{children}</main>
         </div>
       </div>
     </div>
