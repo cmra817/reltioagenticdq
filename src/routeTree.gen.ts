@@ -13,7 +13,6 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DataHealthRouteImport } from './routes/data-health'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
-import { Route as AssetRouteImport } from './routes/asset.'
 
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
@@ -35,24 +34,17 @@ const AssetsAssetSlugRoute = AssetsAssetSlugRouteImport.update({
   path: '/assets/$assetSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AssetRoute = AssetRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AssetRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
   '/explore': typeof ExploreRoute
-  '/asset/': typeof AssetRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
   '/explore': typeof ExploreRoute
-  '/asset': typeof AssetRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
 export interface FileRoutesById {
@@ -60,26 +52,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
   '/explore': typeof ExploreRoute
-  '/asset/': typeof AssetRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/data-health'
-    | '/explore'
-    | '/asset/'
-    | '/assets/$assetSlug'
+  fullPaths: '/' | '/data-health' | '/explore' | '/assets/$assetSlug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/data-health' | '/explore' | '/asset' | '/assets/$assetSlug'
-  id:
-    | '__root__'
-    | '/'
-    | '/data-health'
-    | '/explore'
-    | '/asset/'
-    | '/assets/$assetSlug'
+  to: '/' | '/data-health' | '/explore' | '/assets/$assetSlug'
+  id: '__root__' | '/' | '/data-health' | '/explore' | '/assets/$assetSlug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,13 +98,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/assets/$assetSlug'
       preLoaderRoute: typeof AssetsAssetSlugRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/asset/': {
-      id: '/asset/'
-      path: '/'
-      fullPath: '/asset/'
-      preLoaderRoute: typeof AssetRouteImport
-      parentRoute: typeof AssetRoute
     }
   }
 }
