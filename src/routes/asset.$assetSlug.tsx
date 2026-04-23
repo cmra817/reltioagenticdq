@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { ChatComposer } from "@/components/chat-composer";
 
-export const Route = createFileRoute("/explore/$assetSlug")({
+export const Route = createFileRoute("/asset/$assetSlug")({
   head: ({ params }) => ({
     meta: [
       { title: `${params.assetSlug} — AgentFlow Quality` },
