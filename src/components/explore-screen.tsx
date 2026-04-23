@@ -542,14 +542,16 @@ function AssetOverview({ selected }: { selected: string | null }) {
 export function ExploreScreen() {
   const [selected, setSelected] = useState<string | null>("Databricks");
   return (
-    <div className="relative flex flex-1 flex-col">
-      <div className="flex flex-1 gap-6 px-8 pt-6 pb-28">
-        <FilterPanel selected={selected} onSelect={setSelected} />
-        <div className="flex flex-1 flex-col gap-6">
-          <AssetOverview selected={selected} />
+    <div className="relative flex flex-1 flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
+        <div className="flex gap-6 px-8 pt-6 pb-28">
+          <FilterPanel selected={selected} onSelect={setSelected} />
+          <div className="flex flex-1 flex-col gap-6">
+            <AssetOverview selected={selected} />
+          </div>
         </div>
       </div>
-      <div className="pointer-events-none fixed inset-x-0 bottom-6 z-20 px-8">
+      <div className="pointer-events-none absolute inset-x-0 bottom-6 px-8">
         <div className="pointer-events-auto mx-auto w-full max-w-2xl">
           <ChatComposer />
         </div>
