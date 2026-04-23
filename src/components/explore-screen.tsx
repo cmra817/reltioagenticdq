@@ -353,7 +353,7 @@ function AssetOverview() {
                 >
                   <td className="px-6 py-4">
                     <Link
-                      to="/asset/$assetSlug"
+                      to="/assets/$assetSlug"
                       params={{ assetSlug: slug }}
                       className="flex items-center gap-2"
                       style={{ color: "var(--ink-900)" }}
