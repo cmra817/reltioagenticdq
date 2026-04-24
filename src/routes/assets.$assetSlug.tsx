@@ -1,6 +1,7 @@
+import * as React from "react";
 import { useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { Columns3, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Check } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ChatComposer } from "@/components/chat-composer";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
@@ -287,7 +288,7 @@ function AssetDetailPage() {
             />
           )}
 
-          {activeTab === "Checks" && <EmptyPanel label="Checks coming soon" />}
+          {activeTab === "Checks" && <ChecksPanel checks={SAMPLE_CHECKS} />}
           {activeTab === "Activity" && <EmptyPanel label="Activity coming soon" />}
         </div>
 
@@ -905,6 +906,241 @@ function FreqTable({ rows }: { rows: { type: string; count: number; pct: number 
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ===================== Checks tab =====================
+
+type CheckStatus = "Passed" | "Failed" | "Warning";
+type CheckChild = { column: string; lastRun: string; status: CheckStatus; passRate: string };
+type CheckRow = {
+  name: string;
+  dimension: "Validity" | "Completeness" | "Uniqueness" | "Accuracy" | "Consistency";
+  lastRun: string;
+  status: CheckStatus;
+  passRate: string;
+  children: CheckChild[];
+};
+
+const SAMPLE_CHECKS: CheckRow[] = [
+  {
+    name: "Email Format Validation",
+    dimension: "Validity",
+    lastRun: "2h ago",
+    status: "Passed",
+    passRate: "98/100 (98%)",
+    children: [
+      { column: "attributes.Email", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.SecondaryEmail", lastRun: "2h ago", status: "Passed", passRate: "98/100 (98%)" },
+      { column: "attributes.WorkEmail", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.RecoveryEmail", lastRun: "2h ago", status: "Passed", passRate: "99/100 (99%)" },
+    ],
+  },
+  {
+    name: "Phone Number Completeness",
+    dimension: "Completeness",
+    lastRun: "2h ago",
+    status: "Failed",
+    passRate: "2/3 (67%)",
+    children: [
+      { column: "attributes.PrimaryPhone", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.MobilePhone", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.WorkPhone", lastRun: "2h ago", status: "Failed", passRate: "42/100 (42%)" },
+    ],
+  },
+  {
+    name: "Customer ID Uniqueness",
+    dimension: "Uniqueness",
+    lastRun: "2h ago",
+    status: "Failed",
+    passRate: "0/1 (0%)",
+    children: [
+      { column: "attributes.CustomerID", lastRun: "2h ago", status: "Failed", passRate: "9821/10000 (98%)" },
+    ],
+  },
+  {
+    name: "Date Range Validation",
+    dimension: "Accuracy",
+    lastRun: "3h ago",
+    status: "Warning",
+    passRate: "4/5 (80%)",
+    children: [
+      { column: "attributes.CreatedAt", lastRun: "3h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.UpdatedAt", lastRun: "3h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.OrderDate", lastRun: "3h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.ShipDate", lastRun: "3h ago", status: "Warning", passRate: "94/100 (94%)" },
+      { column: "attributes.DeliveryDate", lastRun: "3h ago", status: "Passed", passRate: "100/100 (100%)" },
+    ],
+  },
+  {
+    name: "Status Value Set Check",
+    dimension: "Consistency",
+    lastRun: "2h ago",
+    status: "Passed",
+    passRate: "2/2 (100%)",
+    children: [
+      { column: "attributes.OrderStatus", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.PaymentStatus", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+    ],
+  },
+  {
+    name: "Address Completeness",
+    dimension: "Completeness",
+    lastRun: "2h ago",
+    status: "Passed",
+    passRate: "2/2 (100%)",
+    children: [
+      { column: "attributes.BillingAddress", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.ShippingAddress", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+    ],
+  },
+];
+
+function StatusPill({ status }: { status: CheckStatus }) {
+  const styles =
+    status === "Passed"
+      ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+      : status === "Failed"
+        ? "bg-red-50 text-red-700 ring-red-200"
+        : "bg-amber-50 text-amber-700 ring-amber-200";
+  const dot =
+    status === "Passed" ? "bg-emerald-500" : status === "Failed" ? "bg-red-500" : "bg-amber-500";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${styles}`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+      {status}
+    </span>
+  );
+}
+
+function DimensionPill({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-inset ring-slate-200">
+      {label}
+    </span>
+  );
+}
+
+function CoverageBadge({ count }: { count: number }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs text-slate-700">
+      <TableIcon size={13} />
+      {count}
+    </span>
+  );
+}
+
+function ChecksPanel({ checks }: { checks: CheckRow[] }) {
+  const [expanded, setExpanded] = React.useState<Set<string>>(
+    () => new Set(checks.length > 0 ? [checks[0].name] : []),
+  );
+  const toggle = (name: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
+  return (
+    <div className="space-y-3">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            type="text"
+            placeholder="Search checks…"
+            className="h-8 w-full rounded-md border border-slate-200 bg-white pl-8 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+          />
+        </div>
+        <button
+          type="button"
+          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-700 hover:bg-slate-50"
+        >
+          <SlidersHorizontal size={13} />
+          Filter
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium">Name</th>
+              <th className="px-3 py-2 text-left font-medium">Dimension</th>
+              <th className="px-3 py-2 text-left font-medium">Coverage</th>
+              <th className="px-3 py-2 text-left font-medium">Last Run</th>
+              <th className="px-3 py-2 text-left font-medium">Status</th>
+              <th className="px-3 py-2 text-left font-medium">Pass Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {checks.map((check) => {
+              const isOpen = expanded.has(check.name);
+              return (
+                <React.Fragment key={check.name}>
+                  <tr className="border-t border-slate-100 hover:bg-slate-50/60">
+                    <td className="px-3 py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => toggle(check.name)}
+                        className="inline-flex items-center gap-1.5 text-left font-medium text-blue-600 hover:underline"
+                      >
+                        {isOpen ? (
+                          <ChevronDown size={14} className="text-slate-400" />
+                        ) : (
+                          <ChevronRight size={14} className="text-slate-400" />
+                        )}
+                        {check.name}
+                      </button>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <DimensionPill label={check.dimension} />
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <CoverageBadge count={check.children.length} />
+                    </td>
+                    <td className="px-3 py-2.5 text-slate-600">{check.lastRun}</td>
+                    <td className="px-3 py-2.5">
+                      <StatusPill status={check.status} />
+                    </td>
+                    <td className="px-3 py-2.5 text-slate-700">{check.passRate}</td>
+                  </tr>
+                  {isOpen &&
+                    check.children.map((child) => (
+                      <tr
+                        key={`${check.name}::${child.column}`}
+                        className="border-t border-slate-100 bg-slate-50/50"
+                      >
+                        <td className="px-3 py-2 pl-10">
+                          <span className="inline-flex items-center gap-2 text-slate-700">
+                            <Check size={13} className="text-emerald-500" />
+                            <span className="font-mono text-xs">{child.column}</span>
+                          </span>
+                        </td>
+                        <td className="px-3 py-2" />
+                        <td className="px-3 py-2" />
+                        <td className="px-3 py-2 text-slate-600">{child.lastRun}</td>
+                        <td className="px-3 py-2">
+                          <StatusPill status={child.status} />
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">{child.passRate}</td>
+                      </tr>
+                    ))}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
