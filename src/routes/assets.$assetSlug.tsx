@@ -1144,3 +1144,241 @@ function ChecksPanel({ checks }: { checks: CheckRow[] }) {
     </div>
   );
 }
+
+// ============================================================
+// Activity tab
+// ============================================================
+
+type ActivityStatus = "Passed" | "Failed" | "Warning";
+type ActivityEvent = {
+  id: string;
+  check: string;
+  dimension: "Validity" | "Completeness" | "Uniqueness" | "Accuracy" | "Consistency";
+  target: string;
+  ranAt: string; // ISO
+  status: ActivityStatus;
+  detail?: string;
+};
+
+const NOW = new Date();
+function isoOffset(daysAgo: number, hour: number, minute: number): string {
+  const d = new Date(NOW);
+  d.setDate(d.getDate() - daysAgo);
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+}
+
+const SAMPLE_ACTIVITY: ActivityEvent[] = [
+  { id: "a1", check: "ExpectColumnMostCommonValueToBeInSet", dimension: "Validity", target: "first_name", ranAt: isoOffset(0, 2, 45), status: "Passed" },
+  { id: "a2", check: "ExpectColumnValueLengthsToBeBetween", dimension: "Validity", target: "ssn", ranAt: isoOffset(0, 1, 30), status: "Failed", detail: "Expected: Length between 9 and 11 characters. 1,247 records contain SSN values that are shorter or longer than the expected length." },
+  { id: "a3", check: "ExpectColumnValuesToNotBeNull", dimension: "Completeness", target: "email", ranAt: isoOffset(0, 0, 12), status: "Passed" },
+  { id: "a4", check: "ExpectColumnValuesToBeUnique", dimension: "Uniqueness", target: "customer_id", ranAt: isoOffset(1, 23, 5), status: "Failed", detail: "Expected: All values unique. Found 17 duplicate customer_id values." },
+  { id: "a5", check: "ExpectColumnPairValuesAToBeGreaterThanB", dimension: "Consistency", target: "shipped_date, order_date", ranAt: isoOffset(1, 18, 12), status: "Failed", detail: "Expected: shipped_date > order_date. 42 rows violate this constraint." },
+  { id: "a6", check: "ExpectColumnValuesToMatchRegex", dimension: "Validity", target: "phone", ranAt: isoOffset(1, 9, 30), status: "Warning", detail: "Expected: E.164 phone format. 3.2% of values do not match." },
+  { id: "a7", check: "ExpectColumnValuesToBeBetween", dimension: "Accuracy", target: "order_total", ranAt: isoOffset(2, 14, 22), status: "Passed" },
+  { id: "a8", check: "ExpectColumnValuesToNotBeNull", dimension: "Completeness", target: "shipping_address", ranAt: isoOffset(2, 8, 5), status: "Passed" },
+  { id: "a9", check: "ExpectColumnValuesToBeInSet", dimension: "Validity", target: "status", ranAt: isoOffset(3, 16, 40), status: "Passed" },
+  { id: "a10", check: "ExpectColumnValuesToBeUnique", dimension: "Uniqueness", target: "order_id", ranAt: isoOffset(3, 6, 0), status: "Passed" },
+  { id: "a11", check: "ExpectColumnValueLengthsToBeBetween", dimension: "Validity", target: "postal_code", ranAt: isoOffset(5, 11, 18), status: "Failed", detail: "Expected: Length between 5 and 10. 89 rows out of range." },
+  { id: "a12", check: "ExpectColumnValuesToNotBeNull", dimension: "Completeness", target: "phone", ranAt: isoOffset(6, 19, 50), status: "Warning", detail: "Expected: < 1% null. Currently 2.4% null." },
+];
+
+function ActivityStatusPill({ status }: { status: ActivityStatus }) {
+  const styles =
+    status === "Passed"
+      ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+      : status === "Failed"
+      ? "bg-rose-50 text-rose-700 ring-rose-200"
+      : "bg-amber-50 text-amber-700 ring-amber-200";
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${styles}`}>
+      {status}
+    </span>
+  );
+}
+
+function InfoTooltip({ text }: { text: string }) {
+  return (
+    <span className="group relative inline-flex">
+      <Info className="h-4 w-4 text-slate-400 hover:text-slate-600 cursor-help" />
+      <span className="pointer-events-none absolute right-0 top-full z-20 mt-1 hidden w-72 rounded-md bg-slate-900 px-3 py-2 text-xs leading-snug text-slate-100 shadow-lg group-hover:block">
+        {text}
+      </span>
+    </span>
+  );
+}
+
+function formatActivityTime(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const today = new Date(now); today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const target = new Date(d); target.setHours(0, 0, 0, 0);
+  const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (target.getTime() === today.getTime()) return `Today ${time}`;
+  if (target.getTime() === yesterday.getTime()) return `Yesterday ${time}`;
+  const md = d.toLocaleDateString([], { month: "short", day: "numeric" });
+  return `${md} ${time}`;
+}
+
+function activityGroupLabel(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const today = new Date(now); today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 6);
+  const target = new Date(d); target.setHours(0, 0, 0, 0);
+  if (target.getTime() === today.getTime()) return "Today";
+  if (target.getTime() === yesterday.getTime()) return "Yesterday";
+  if (target >= weekAgo) return d.toLocaleDateString([], { weekday: "long" });
+  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+const HEATMAP_PALETTE = ["#EEF2F7", "#D6F0DA", "#9FE0AC", "#5BC074", "#1F8A3E"];
+
+function seededRand(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+function HeatmapCard({ slug }: { slug: string }) {
+  const seed = hashString(slug);
+  const cellSize = 12;
+  const gap = 3;
+  const weeks = 53;
+  const days = 7;
+  const leftPad = 28;
+  const topPad = 18;
+  const width = leftPad + weeks * (cellSize + gap);
+  const height = topPad + days * (cellSize + gap) + 6;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // start grid: go back (weeks-1)*7 + today's day-of-week days
+  const startOffset = (weeks - 1) * 7 + today.getDay();
+  const start = new Date(today);
+  start.setDate(start.getDate() - startOffset);
+
+  type Cell = { date: Date; intensity: number; passed: number; failed: number; isFuture: boolean };
+  const cells: Cell[][] = [];
+  const monthLabels: { x: number; label: string }[] = [];
+  let lastMonth = -1;
+
+  for (let w = 0; w < weeks; w++) {
+    const col: Cell[] = [];
+    for (let dRow = 0; dRow < days; dRow++) {
+      const date = new Date(start);
+      date.setDate(date.getDate() + w * 7 + dRow);
+      const isFuture = date.getTime() > today.getTime();
+      // Bell-shape: greener mid-year, lighter at edges
+      const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000);
+      const seasonal = Math.sin((dayOfYear / 365) * Math.PI); // 0..1
+      const r = seededRand(seed + w * 7 + dRow);
+      let intensity = 0;
+      if (!isFuture) {
+        const score = seasonal * 0.7 + r * 0.5;
+        if (score < 0.2) intensity = 0;
+        else if (score < 0.45) intensity = 1;
+        else if (score < 0.7) intensity = 2;
+        else if (score < 0.95) intensity = 3;
+        else intensity = 4;
+      }
+      const passed = intensity === 0 ? 0 : Math.round(50 + r * 200);
+      const failed = intensity >= 3 ? 0 : intensity === 0 ? 0 : Math.round(r * 8);
+      col.push({ date, intensity, passed, failed, isFuture });
+      if (dRow === 0 && date.getMonth() !== lastMonth) {
+        monthLabels.push({ x: leftPad + w * (cellSize + gap), label: date.toLocaleDateString([], { month: "short" }) });
+        lastMonth = date.getMonth();
+      }
+    }
+    cells.push(col);
+  }
+
+  const dayLabels = ["", "Mon", "", "Wed", "", "Fri", ""];
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4">
+      <div className="overflow-x-auto">
+        <svg width={width} height={height} role="img" aria-label="DQ check activity heatmap">
+          {monthLabels.map((m) => (
+            <text key={`${m.label}-${m.x}`} x={m.x} y={12} fontSize={10} fill="#64748b">{m.label}</text>
+          ))}
+          {dayLabels.map((lbl, i) => lbl ? (
+            <text key={lbl} x={0} y={topPad + i * (cellSize + gap) + cellSize - 2} fontSize={10} fill="#64748b">{lbl}</text>
+          ) : null)}
+          {cells.map((col, wi) => col.map((cell, di) => (
+            <rect
+              key={`${wi}-${di}`}
+              x={leftPad + wi * (cellSize + gap)}
+              y={topPad + di * (cellSize + gap)}
+              width={cellSize}
+              height={cellSize}
+              rx={2}
+              fill={cell.isFuture ? "transparent" : HEATMAP_PALETTE[cell.intensity]}
+            >
+              <title>
+                {cell.date.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
+                {cell.isFuture ? "" : ` — ${cell.passed} passed, ${cell.failed} failed`}
+              </title>
+            </rect>
+          )))}
+        </svg>
+      </div>
+      <div className="mt-3 flex items-center justify-end gap-2 text-xs text-slate-500">
+        <span>Failed</span>
+        {HEATMAP_PALETTE.map((c) => (
+          <span key={c} className="inline-block h-3 w-3 rounded-sm" style={{ backgroundColor: c }} />
+        ))}
+        <span>Passed</span>
+      </div>
+    </div>
+  );
+}
+
+function ActivityPanel({ events, slug }: { events: ActivityEvent[]; slug: string }) {
+  // Group events by label, preserving order
+  const groups: { label: string; items: ActivityEvent[] }[] = [];
+  const sorted = [...events].sort((a, b) => +new Date(b.ranAt) - +new Date(a.ranAt));
+  for (const ev of sorted) {
+    const label = activityGroupLabel(ev.ranAt);
+    const existing = groups.find((g) => g.label === label);
+    if (existing) existing.items.push(ev);
+    else groups.push({ label, items: [ev] });
+  }
+
+  return (
+    <div className="space-y-6">
+      <HeatmapCard slug={slug} />
+
+      {groups.map((g) => (
+        <div key={g.label} className="space-y-2">
+          <h3 className="text-sm font-semibold text-slate-900">{g.label}</h3>
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+            {g.items.map((ev, idx) => (
+              <div
+                key={ev.id}
+                className={`flex items-center gap-3 px-4 py-3 ${idx > 0 ? "border-t border-slate-100" : ""}`}
+              >
+                <div className="min-w-0 flex-1 flex items-center gap-3">
+                  <span className="font-mono text-sm text-slate-900 truncate">{ev.check}</span>
+                  <DimensionPill label={ev.dimension} />
+                  <span className="text-sm text-slate-600 truncate">{ev.target}</span>
+                  {ev.status === "Failed" && ev.detail ? <InfoTooltip text={ev.detail} /> : null}
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-xs text-slate-500">{formatActivityTime(ev.ranAt)}</span>
+                  <ActivityStatusPill status={ev.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
