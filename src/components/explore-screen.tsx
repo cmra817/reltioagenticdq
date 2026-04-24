@@ -113,7 +113,11 @@ type AssetRow = {
   kind: AssetKind;
   description: string;
   source: string;
+  dataset: string;
   columns: number | null;
+  rows: number | null;
+  checks: number;
+  tags: string[];
   lastAnalyzed: string;
 };
 
@@ -129,24 +133,36 @@ const CUSTOMER_DATA_CHILDREN: AssetRow[] = [
     kind: "table",
     description: "Stores all customer order transactions including amounts, dates, and statuses",
     source: "Databricks",
+    dataset: "customer_data",
     columns: 40,
-    lastAnalyzed: "15h ago",
+    rows: 200,
+    checks: 4,
+    tags: ["PII", "Marketing"],
+    lastAnalyzed: "15 hours ago",
   },
   {
     name: "customer_profiles",
     kind: "table",
     description: "Golden customer profile table with attributes from CRM, ERP, and loyalty systems",
     source: "Databricks",
+    dataset: "customer_data",
     columns: 200,
-    lastAnalyzed: "3:30 PM, 11/25/2025",
+    rows: 1_250_000,
+    checks: 12,
+    tags: ["PII", "Sensitive PII", "Analytical"],
+    lastAnalyzed: "2 hours ago",
   },
   {
     name: "revenue_dashboard",
     kind: "chart",
     description: "Shows real-time inventory counts across warehouses and fulfillment centers",
     source: "Databricks",
+    dataset: "customer_data",
     columns: null,
-    lastAnalyzed: "6:01 PM, 11/25/2025",
+    rows: null,
+    checks: 3,
+    tags: ["Analytical", "Confidential business"],
+    lastAnalyzed: "1 hour ago",
   },
 ];
 
@@ -156,16 +172,24 @@ const PRODUCT_CATALOG_CHILDREN: AssetRow[] = [
     kind: "table",
     description: "Master product table with SKU, name, category, and pricing information",
     source: "Databricks",
+    dataset: "product_catalog",
     columns: 28,
-    lastAnalyzed: "2h ago",
+    rows: 84_000,
+    checks: 6,
+    tags: ["Operational", "Analytical"],
+    lastAnalyzed: "2 hours ago",
   },
   {
     name: "categories",
     kind: "table",
     description: "Product taxonomy and category hierarchy",
     source: "Databricks",
+    dataset: "product_catalog",
     columns: 12,
-    lastAnalyzed: "1d ago",
+    rows: 320,
+    checks: 2,
+    tags: ["Operational", "System metadata"],
+    lastAnalyzed: "1 day ago",
   },
 ];
 
@@ -175,16 +199,24 @@ const LOYALTY_POINTS_CHILDREN: AssetRow[] = [
     kind: "table",
     description: "Transaction-level ledger of loyalty points earned and redeemed",
     source: "Databricks",
+    dataset: "loyalty_points",
     columns: 18,
-    lastAnalyzed: "4h ago",
+    rows: 4_200_000,
+    checks: 8,
+    tags: ["PII", "Operational"],
+    lastAnalyzed: "4 hours ago",
   },
   {
     name: "tier_status",
     kind: "table",
     description: "Current loyalty tier per customer with thresholds",
     source: "Databricks",
+    dataset: "loyalty_points",
     columns: 9,
-    lastAnalyzed: "12h ago",
+    rows: 980_000,
+    checks: 3,
+    tags: ["PII", "Marketing"],
+    lastAnalyzed: "12 hours ago",
   },
 ];
 
@@ -218,24 +250,36 @@ const MARKETING_ANALYTICS_CHILDREN: AssetRow[] = [
     kind: "table",
     description: "Daily performance metrics for paid marketing campaigns across channels",
     source: "BigQuery",
+    dataset: "marketing_analytics",
     columns: 24,
-    lastAnalyzed: "2h ago",
+    rows: 540_000,
+    checks: 5,
+    tags: ["Marketing", "Analytical"],
+    lastAnalyzed: "2 hours ago",
   },
   {
     name: "attribution_events",
     kind: "table",
     description: "Multi-touch attribution events linking conversions to marketing touchpoints",
     source: "BigQuery",
+    dataset: "marketing_analytics",
     columns: 16,
-    lastAnalyzed: "5h ago",
+    rows: 8_400_000,
+    checks: 4,
+    tags: ["Marketing", "Operational"],
+    lastAnalyzed: "5 hours ago",
   },
   {
     name: "channel_mix_dashboard",
     kind: "chart",
     description: "Executive dashboard showing channel mix and ROAS trends",
     source: "BigQuery",
+    dataset: "marketing_analytics",
     columns: null,
-    lastAnalyzed: "1d ago",
+    rows: null,
+    checks: 2,
+    tags: ["Marketing", "Confidential business"],
+    lastAnalyzed: "1 day ago",
   },
 ];
 
@@ -245,16 +289,24 @@ const WEB_EVENTS_CHILDREN: AssetRow[] = [
     kind: "table",
     description: "Raw page view events captured from web and mobile properties",
     source: "BigQuery",
+    dataset: "web_events",
     columns: 32,
-    lastAnalyzed: "30m ago",
+    rows: 92_000_000,
+    checks: 6,
+    tags: ["Operational", "Analytical"],
+    lastAnalyzed: "30 minutes ago",
   },
   {
     name: "sessions",
     kind: "table",
     description: "Sessionized user activity with entry/exit pages and duration",
     source: "BigQuery",
+    dataset: "web_events",
     columns: 21,
-    lastAnalyzed: "1h ago",
+    rows: 14_500_000,
+    checks: 4,
+    tags: ["PII", "Analytical"],
+    lastAnalyzed: "1 hour ago",
   },
 ];
 
@@ -264,24 +316,36 @@ const FINANCE_CHILDREN: AssetRow[] = [
     kind: "table",
     description: "General ledger journal entries from the ERP system",
     source: "BigQuery",
+    dataset: "finance",
     columns: 14,
-    lastAnalyzed: "8h ago",
+    rows: 3_100_000,
+    checks: 9,
+    tags: ["Confidential business", "Operational"],
+    lastAnalyzed: "8 hours ago",
   },
   {
     name: "ar_invoices",
     kind: "table",
     description: "Accounts receivable invoices with aging and payment status",
     source: "BigQuery",
+    dataset: "finance",
     columns: 19,
-    lastAnalyzed: "6h ago",
+    rows: 720_000,
+    checks: 7,
+    tags: ["Sensitive PII", "Confidential business"],
+    lastAnalyzed: "6 hours ago",
   },
   {
     name: "revenue_recognition",
     kind: "table",
     description: "Recognized revenue by contract and period (ASC 606)",
     source: "BigQuery",
+    dataset: "finance",
     columns: 11,
-    lastAnalyzed: "1d ago",
+    rows: 410_000,
+    checks: 5,
+    tags: ["Confidential business", "System metadata"],
+    lastAnalyzed: "1 day ago",
   },
 ];
 
@@ -345,6 +409,46 @@ function kindIcon(kind: AssetKind, size = 16) {
   if (kind === "dataset") return <DatasetIcon size={size} />;
   if (kind === "table") return <TableIcon size={size} />;
   return <ChartIcon size={size} />;
+}
+
+function SourceLogo({ source }: { source: string }) {
+  if (source === "BigQuery") {
+    return (
+      <span className="inline-block h-5 w-5">
+        <svg width="20" height="20" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M20 3 4.5 12v16L20 37l15.5-9V12L20 3Z" fill="#4386FA" />
+          <circle cx="18" cy="18" r="6" stroke="white" strokeWidth="2.4" fill="none" />
+          <line x1="22.5" y1="22.5" x2="27" y2="27" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
+        </svg>
+      </span>
+    );
+  }
+  return (
+    <span className="inline-block h-5 w-5">
+      <svg width="20" height="20" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <path d="M20 4 4 12.5l4 2.1L20 8.3l12 6.3 4-2.1L20 4Z" fill="#FF3621" />
+        <path d="M4 19.4 20 27.9l16-8.5-4-2.1-12 6.3-12-6.3-4 2.1Z" fill="#FF3621" opacity="0.85" />
+        <path d="M4 26.4 20 34.9l16-8.5-4-2.1-12 6.3-12-6.3-4 2.1Z" fill="#FF3621" opacity="0.65" />
+      </svg>
+    </span>
+  );
+}
+
+function TagChip({ label }: { label: string }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+      style={{
+        background: "color-mix(in oklab, var(--ink-500) 14%, white)",
+        color: "var(--ink-700)",
+      }}
+    >
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M21.41 11.58 12.41 2.58A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9a2 2 0 0 0 2.83 0l7-7a2 2 0 0 0-.01-2.84zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z" />
+      </svg>
+      {label}
+    </span>
+  );
 }
 
 /* ---------- selection helpers ---------- */
@@ -771,67 +875,74 @@ function AssetOverview({ selected }: { selected: Selection }) {
                 className="border-y text-[11px] uppercase tracking-[0.08em]"
                 style={{ borderColor: "var(--hairline)", color: "var(--ink-300)" }}
               >
-                <th className="w-[22%] px-6 py-3 font-semibold">Name</th>
-                <th className="w-[34%] px-3 py-3 font-semibold">Description</th>
-                <th className="w-[14%] px-3 py-3 font-semibold">Data Source</th>
-                <th className="w-[12%] px-3 py-3 font-semibold">Contents</th>
-                <th className="w-[18%] px-6 py-3 font-semibold">Last Analyzed</th>
+                <th className="w-[46%] px-6 py-3 font-semibold">Name</th>
+                <th className="w-[12%] px-3 py-3 font-semibold">No. of columns</th>
+                <th className="w-[12%] px-3 py-3 font-semibold">No. of rows</th>
+                <th className="w-[12%] px-3 py-3 font-semibold">No. of checks</th>
+                <th className="w-[18%] px-6 py-3 font-semibold">Last analyzed</th>
               </tr>
             </thead>
             <tbody>
               {view.rows.map((a) => {
                 const slug = a.name.toLowerCase().replace(/\s+/g, "-");
-                const isDs = a.kind === "dataset";
-                const isTbl = a.kind === "table";
-                const tableCount = isDs ? DATASET_TABLE_COUNTS[a.name] ?? 0 : 0;
                 return (
                   <tr
                     key={`${a.source}-${a.name}`}
-                    className="border-b transition-colors hover:bg-[color:var(--surface-soft)] cursor-pointer"
+                    className="border-b transition-colors hover:bg-[color:var(--surface-soft)]"
                     style={{ borderColor: "var(--hairline)" }}
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 align-top">
                       <Link
                         to="/assets/$assetSlug"
                         params={{ assetSlug: slug }}
-                        className="flex items-center gap-2"
-                        style={{ color: "var(--ink-900)" }}
+                        className="flex items-start gap-3"
                       >
-                        <span style={{ color: "var(--ink-500)" }}>{kindIcon(a.kind, 16)}</span>
-                        <span className="font-medium">{a.name}</span>
+                        <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
+                          <SourceLogo source={a.source} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-[14px]" style={{ color: "var(--ink-900)" }}>
+                            {a.name}
+                          </div>
+                          <div
+                            className="mt-0.5 flex items-center gap-1.5 text-[12px]"
+                            style={{ color: "var(--ink-500)" }}
+                          >
+                            <span style={{ color: "var(--ink-300)" }}>{kindIcon(a.kind, 13)}</span>
+                            <span className="capitalize">{a.kind}</span>
+                            <span style={{ color: "var(--ink-300)" }}>›</span>
+                            <span style={{ color: "var(--brand-blue)" }}>
+                              <DatasetIcon size={13} />
+                            </span>
+                            <span style={{ color: "var(--ink-700)" }}>{a.dataset}</span>
+                          </div>
+                          <div
+                            className="mt-2 flex items-start justify-between gap-3"
+                          >
+                            <p className="flex-1 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                              {a.description}
+                            </p>
+                            {a.tags.length > 0 && (
+                              <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                                {a.tags.map((t) => (
+                                  <TagChip key={t} label={t} />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </Link>
                     </td>
-                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-700)" }}>
-                      {a.description}
+                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
+                      {a.columns !== null ? a.columns.toLocaleString() : <span style={{ color: "var(--ink-300)" }}>—</span>}
                     </td>
-                    <td className="px-3 py-4">
-                      <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
-                        <StarIcon size={13} />
-                        {a.source}
-                      </span>
+                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
+                      {a.rows !== null ? a.rows.toLocaleString() : <span style={{ color: "var(--ink-300)" }}>—</span>}
                     </td>
-                    <td className="px-3 py-4">
-                      {isDs ? (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
-                          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                          title={`${tableCount} assets`}
-                        >
-                          {tableCount} <GridIcon size={12} />
-                        </span>
-                      ) : isTbl && a.columns !== null ? (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
-                          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                          title={`${a.columns} columns`}
-                        >
-                          {a.columns} <ColumnIcon size={12} />
-                        </span>
-                      ) : (
-                        <span style={{ color: "var(--ink-300)" }}>—</span>
-                      )}
+                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
+                      {a.checks}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 align-top">
                       <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
                         <ClockIcon size={13} />
                         {a.lastAnalyzed}
