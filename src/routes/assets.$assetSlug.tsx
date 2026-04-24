@@ -115,7 +115,7 @@ const PROFILING_COLUMNS = [
   { key: "tag", label: "Tags" },
 ] as const;
 
-const SAMPLE_COLUMN_KEYS = [
+const SAMPLE_FIELD_NAMES = [
   "Order_ID",
   "Customer_ID",
   "Order_Date",
@@ -124,6 +124,17 @@ const SAMPLE_COLUMN_KEYS = [
   "Shipping_Address",
   "Payment_Method",
   "Discount_Code",
+] as const;
+
+const SAMPLE_VALUE_KEYS = [
+  "Sample 1",
+  "Sample 2",
+  "Sample 3",
+  "Sample 4",
+  "Sample 5",
+  "Sample 6",
+  "Sample 7",
+  "Sample 8",
 ] as const;
 
 function AssetDetailPage() {
