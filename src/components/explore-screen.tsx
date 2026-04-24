@@ -933,18 +933,13 @@ function AssetOverview({ selected }: { selected: Selection }) {
                       {a.checks}
                     </td>
                     <td className="px-6 py-4 align-top">
-                      <div className="flex h-full flex-col justify-between gap-3">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {a.tags.length > 0 &&
+                          a.tags.map((t) => <TagChip key={t} label={t} />)}
                         <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
                           <ClockIcon size={13} />
                           {a.lastAnalyzed}
                         </span>
-                        {a.tags.length > 0 && (
-                          <div className="flex flex-wrap items-center justify-end gap-1.5">
-                            {a.tags.map((t) => (
-                              <TagChip key={t} label={t} />
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </td>
                   </tr>
