@@ -483,13 +483,23 @@ function FilterPanel({
           </button>
           <button
             type="button"
-            onClick={() => onSelect("BigQuery")}
+            onClick={() => {
+              setBigqueryOpen(true);
+              onSelect("BigQuery");
+            }}
             className="flex flex-1 items-center gap-2 py-1.5 text-left"
           >
             <GridIcon size={14} />
-            <span className="flex-1 font-medium">BigQuery (2)</span>
+            <span className="flex-1 font-medium">BigQuery ({BIGQUERY_TREE.length})</span>
           </button>
         </div>
+        {bigqueryOpen && (
+          <div className="mt-1">
+            {BIGQUERY_TREE.map((n) => (
+              <TreeRow key={n.name} node={n} depth={1} selected={selected} onSelect={onSelect} />
+            ))}
+          </div>
+        )}
       </div>
 
       <div>
