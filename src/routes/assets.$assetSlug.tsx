@@ -90,15 +90,24 @@ const SAMPLE_COLUMNS: ColumnRow[] = [
 
 type SampleRow = Record<string, string | number>;
 
-const SAMPLE_DATA_ROWS: SampleRow[] = [
-  { Order_ID: 10001, Customer_ID: 5521, Order_Date: "2024-03-12", Total_Amount: "129.99", Status: "Shipped", Shipping_Address: "221B Baker St, London", Payment_Method: "Credit Card", Discount_Code: "SPRING10" },
-  { Order_ID: 10002, Customer_ID: 8830, Order_Date: "2024-03-13", Total_Amount: "49.50", Status: "Delivered", Shipping_Address: "1600 Amphitheatre Pkwy, CA", Payment_Method: "PayPal", Discount_Code: "—" },
-  { Order_ID: 10003, Customer_ID: 1142, Order_Date: "2024-03-13", Total_Amount: "879.00", Status: "Pending", Shipping_Address: "5 Avenue des Champs, Paris", Payment_Method: "Credit Card", Discount_Code: "VIP25" },
-  { Order_ID: 10004, Customer_ID: 6677, Order_Date: "2024-03-14", Total_Amount: "12.75", Status: "Cancelled", Shipping_Address: "10 Downing St, London", Payment_Method: "Apple Pay", Discount_Code: "—" },
-  { Order_ID: 10005, Customer_ID: 4421, Order_Date: "2024-03-15", Total_Amount: "245.50", Status: "Shipped", Shipping_Address: "742 Evergreen Terrace, OR", Payment_Method: "Credit Card", Discount_Code: "SPRING10" },
-  { Order_ID: 10006, Customer_ID: 9912, Order_Date: "2024-03-15", Total_Amount: "60.00", Status: "Delivered", Shipping_Address: "350 5th Ave, NY", Payment_Method: "Debit Card", Discount_Code: "—" },
-  { Order_ID: 10007, Customer_ID: 3308, Order_Date: "2024-03-16", Total_Amount: "1499.00", Status: "Processing", Shipping_Address: "Shibuya Crossing, Tokyo", Payment_Method: "Credit Card", Discount_Code: "VIP25" },
-  { Order_ID: 10008, Customer_ID: 7745, Order_Date: "2024-03-17", Total_Amount: "32.10", Status: "Shipped", Shipping_Address: "Plaza Mayor 1, Madrid", Payment_Method: "PayPal", Discount_Code: "—" },
+const SAMPLE_ATTRIBUTES = [
+  "FIRST_NAME",
+  "LAST_NAME",
+  "TOTAL_ORDERS",
+  "TOTAL_SPENT",
+  "FIRST_ORDER_DATE",
+  "LAST_ORDER_DATE",
+] as const;
+
+const SAMPLE_DATA_ROWS: (SampleRow & { primary: string })[] = [
+  { primary: "123",  FIRST_NAME: "Charles", LAST_NAME: "*********", TOTAL_ORDERS: 3, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
+  { primary: "847",  FIRST_NAME: "Bob",     LAST_NAME: "*********", TOTAL_ORDERS: 5, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
+  { primary: "1738", FIRST_NAME: "Maggie",  LAST_NAME: "*********", TOTAL_ORDERS: 8, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
+  { primary: "3918", FIRST_NAME: "Susan",   LAST_NAME: "*********", TOTAL_ORDERS: 2, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
+  { primary: "839",  FIRST_NAME: "Timmy",   LAST_NAME: "*********", TOTAL_ORDERS: 4, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
+  { primary: "0927", FIRST_NAME: "Zach",    LAST_NAME: "*********", TOTAL_ORDERS: 1, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
+  { primary: "121",  FIRST_NAME: "Justin",  LAST_NAME: "*********", TOTAL_ORDERS: 6, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
+  { primary: "846",  FIRST_NAME: "Emma",    LAST_NAME: "*********", TOTAL_ORDERS: 9, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
 ];
 
 const PROFILING_COLUMNS = [
@@ -113,28 +122,6 @@ const PROFILING_COLUMNS = [
   { key: "uniqueness", label: "Uniqueness" },
   { key: "fillRate", label: "Fill rate" },
   { key: "tag", label: "Tags" },
-] as const;
-
-const SAMPLE_FIELD_NAMES = [
-  "Order_ID",
-  "Customer_ID",
-  "Order_Date",
-  "Total_Amount",
-  "Status",
-  "Shipping_Address",
-  "Payment_Method",
-  "Discount_Code",
-] as const;
-
-const SAMPLE_VALUE_KEYS = [
-  "Sample 1",
-  "Sample 2",
-  "Sample 3",
-  "Sample 4",
-  "Sample 5",
-  "Sample 6",
-  "Sample 7",
-  "Sample 8",
 ] as const;
 
 function AssetDetailPage() {
@@ -432,7 +419,7 @@ function ColumnsPanel({
     () => new Set(PROFILING_COLUMNS.map((c) => c.key)),
   );
   const [visibleSample, setVisibleSample] = useState<Set<string>>(
-    () => new Set(SAMPLE_VALUE_KEYS),
+    () => new Set(SAMPLE_ATTRIBUTES),
   );
 
   const toggleSetItem = (
@@ -445,9 +432,9 @@ function ColumnsPanel({
       return next;
     });
 
-  const sampleOptions = SAMPLE_VALUE_KEYS.map((k) => ({ key: k, label: k }));
+  const sampleOptions = SAMPLE_ATTRIBUTES.map((k) => ({ key: k, label: k }));
   const profilingCols = PROFILING_COLUMNS.filter((c) => visibleProfiling.has(c.key));
-  const sampleCols = SAMPLE_VALUE_KEYS.filter((k) => visibleSample.has(k));
+  const sampleCols = SAMPLE_ATTRIBUTES.filter((k) => visibleSample.has(k));
 
   return (
     <div className="flex flex-col gap-4">
@@ -584,24 +571,21 @@ function ColumnsPanel({
               </tr>
             </thead>
             <tbody>
-              {SAMPLE_FIELD_NAMES.map((fieldName) => (
+              {SAMPLE_DATA_ROWS.map((row) => (
                 <tr
-                  key={fieldName}
+                  key={row.primary}
                   className="border-t"
                   style={{ borderColor: "var(--hairline)" }}
                 >
                   <td className="px-5 py-4 font-semibold" style={{ color: "var(--ink-900)" }}>
-                    {fieldName}
+                    {row.primary}
                   </td>
                   {sampleCols.map((k, i) => {
-                    const sampleIdx = SAMPLE_VALUE_KEYS.indexOf(k as typeof SAMPLE_VALUE_KEYS[number]);
-                    const row = SAMPLE_DATA_ROWS[sampleIdx];
-                    const value = row?.[fieldName] ?? "—";
                     const isLast = i === sampleCols.length - 1;
                     const pad = isLast ? "px-5" : "px-3";
                     return (
                       <td key={k} className={`${pad} py-4`} style={{ color: "var(--ink-700)" }}>
-                        {value}
+                        {row[k]}
                       </td>
                     );
                   })}
