@@ -6,6 +6,7 @@ import { ChatComposer } from "@/components/chat-composer";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useSidebarState } from "@/components/sidebar-context";
 
 export const Route = createFileRoute("/assets/$assetSlug")({
   head: ({ params }) => ({
