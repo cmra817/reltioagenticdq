@@ -199,9 +199,9 @@ const DATASET_TABLE_COUNTS: Record<string, number> = {
 };
 
 const DATABRICKS_ALL: AssetRow[] = [
-  { name: "Customer Data", kind: "dataset", description: "Customer master data including profiles, orders, and revenue dashboards", source: "Databricks", columns: null, lastAnalyzed: "15h ago" },
-  { name: "Product catalog", kind: "dataset", description: "Products, SKUs, and category hierarchy", source: "Databricks", columns: null, lastAnalyzed: "2h ago" },
-  { name: "Loyalty Points", kind: "dataset", description: "Loyalty points ledger and customer tier status", source: "Databricks", columns: null, lastAnalyzed: "4h ago" },
+  ...CUSTOMER_DATA_CHILDREN,
+  ...PRODUCT_CATALOG_CHILDREN,
+  ...LOYALTY_POINTS_CHILDREN,
 ];
 
 const TABLE_COLUMNS: Record<string, ColumnRow[]> = {
