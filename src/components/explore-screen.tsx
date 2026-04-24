@@ -524,7 +524,65 @@ function FilterPanel({
           </div>
         )}
       </div>
+
+      <CheckboxFilterGroup
+        title="Data Assets"
+        options={["Tables", "Dashboards", "Query"]}
+      />
+
+      <CheckboxFilterGroup
+        title="Tags"
+        options={[
+          "PII",
+          "Sensitive PII",
+          "Confidential business",
+          "Operational",
+          "Analytical",
+          "Marketing",
+          "System metadata",
+        ]}
+      />
     </aside>
+  );
+}
+
+/* ---------- checkbox filter group ---------- */
+function CheckboxFilterGroup({ title, options }: { title: string; options: string[] }) {
+  const [checked, setChecked] = useState<Set<string>>(() => new Set());
+  const toggle = (opt: string) =>
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(opt)) next.delete(opt);
+      else next.add(opt);
+      return next;
+    });
+
+  return (
+    <div>
+      <div
+        className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.08em]"
+        style={{ color: "var(--ink-300)" }}
+      >
+        {title}
+      </div>
+      <div className="flex flex-col">
+        {options.map((opt) => {
+          const isOn = checked.has(opt);
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => toggle(opt)}
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
+              style={{ color: isOn ? "var(--brand-blue)" : "var(--ink-700)" }}
+            >
+              <CheckSquare checked={isOn} />
+              <span className="font-medium">{opt}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
