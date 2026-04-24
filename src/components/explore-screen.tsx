@@ -634,7 +634,11 @@ function FilterPanel({
 
       <CheckboxFilterGroup
         title="Data Assets"
-        options={["Tables", "Dashboards", "Query"]}
+        options={[
+          { label: "Tables", icon: <TableIcon size={14} /> },
+          { label: "Dashboards", icon: <ChartIcon size={14} /> },
+          { label: "Query", icon: <QueryIcon size={14} /> },
+        ]}
       />
 
       <CheckboxFilterGroup
@@ -654,7 +658,9 @@ function FilterPanel({
 }
 
 /* ---------- checkbox filter group ---------- */
-function CheckboxFilterGroup({ title, options }: { title: string; options: string[] }) {
+type FilterOption = string | { label: string; icon?: React.ReactNode };
+
+function CheckboxFilterGroup({ title, options }: { title: string; options: FilterOption[] }) {
   const [checked, setChecked] = useState<Set<string>>(() => new Set());
   const toggle = (opt: string) =>
     setChecked((prev) => {
@@ -674,17 +680,24 @@ function CheckboxFilterGroup({ title, options }: { title: string; options: strin
       </div>
       <div className="flex flex-col">
         {options.map((opt) => {
-          const isOn = checked.has(opt);
+          const label = typeof opt === "string" ? opt : opt.label;
+          const icon = typeof opt === "string" ? null : opt.icon;
+          const isOn = checked.has(label);
           return (
             <button
-              key={opt}
+              key={label}
               type="button"
-              onClick={() => toggle(opt)}
+              onClick={() => toggle(label)}
               className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
               style={{ color: isOn ? "var(--brand-blue)" : "var(--ink-700)" }}
             >
               <CheckSquare checked={isOn} />
-              <span className="font-medium">{opt}</span>
+              {icon && (
+                <span style={{ color: isOn ? "var(--brand-blue)" : "var(--ink-500)" }}>
+                  {icon}
+                </span>
+              )}
+              <span className="font-medium">{label}</span>
             </button>
           );
         })}
