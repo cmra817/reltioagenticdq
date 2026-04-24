@@ -18,11 +18,10 @@ export const Route = createFileRoute("/assets/$assetSlug")({
 type AssetDetail = {
   name: string;
   path: string;
-  tables: number;
-  fields: number;
+  columns: number;
   rows: string;
   checks: number;
-  completeness: string;
+  fillRate: string;
   quality: number;
   validity: number;
   accuracy: number;
@@ -32,13 +31,12 @@ type AssetDetail = {
 
 const ASSET_DETAILS: Record<string, AssetDetail> = {
   orders: {
-    name: "customer_data",
-    path: "Databricks/customer_data",
-    tables: 2,
-    fields: 184,
+    name: "Orders",
+    path: "Databricks/customer_data/orders",
+    columns: 184,
     rows: "4,897",
     checks: 21,
-    completeness: "85%",
+    fillRate: "85%",
     quality: 70,
     validity: 70,
     accuracy: 40,
