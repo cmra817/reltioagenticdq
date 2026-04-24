@@ -181,9 +181,9 @@ const LOYALTY_POINTS_CHILDREN: AssetRow[] = [
 ];
 
 const DATABRICKS_TREE: TreeNode[] = [
-  { name: "Customer Data", kind: "dataset", children: CUSTOMER_DATA_CHILDREN.map((c) => ({ name: c.name, kind: c.kind })) },
-  { name: "Product catalog", kind: "dataset", children: PRODUCT_CATALOG_CHILDREN.map((c) => ({ name: c.name, kind: c.kind })) },
-  { name: "Loyalty Points", kind: "dataset", children: LOYALTY_POINTS_CHILDREN.map((c) => ({ name: c.name, kind: c.kind })) },
+  { name: "Customer Data", kind: "dataset" },
+  { name: "Product catalog", kind: "dataset" },
+  { name: "Loyalty Points", kind: "dataset" },
 ];
 
 const DATASET_ASSETS: Record<string, AssetRow[]> = {
