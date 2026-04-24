@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { Columns3 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ChatComposer } from "@/components/chat-composer";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/assets/$assetSlug")({
   head: ({ params }) => ({
