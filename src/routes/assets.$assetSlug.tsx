@@ -556,7 +556,8 @@ function ColumnsPanel({
                     );
                   })}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
