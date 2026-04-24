@@ -74,6 +74,14 @@ function ClockIcon({ size = 14 }: { size?: number }) {
     </svg>
   );
 }
+function XIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
 function CheckSquare({ checked }: { checked: boolean }) {
   return (
     <span
@@ -302,6 +310,16 @@ const BIGQUERY_ALL: AssetRow[] = [
   ...FINANCE_CHILDREN,
 ];
 
+const SOURCE_ALL: Record<string, AssetRow[]> = {
+  Databricks: DATABRICKS_ALL,
+  BigQuery: BIGQUERY_ALL,
+};
+
+const SOURCE_DATASETS: Record<string, string[]> = {
+  Databricks: DATABRICKS_TREE.map((n) => n.name),
+  BigQuery: BIGQUERY_TREE.map((n) => n.name),
+};
+
 const TABLE_COLUMNS: Record<string, ColumnRow[]> = {
   Orders: [
     { name: "order_id", description: "Unique identifier for each order", lastAnalyzed: "15h ago" },
@@ -329,21 +347,34 @@ function kindIcon(kind: AssetKind, size = 16) {
   return <ChartIcon size={size} />;
 }
 
-/* ---------- tree ---------- */
+/* ---------- selection helpers ---------- */
+type Selection = Set<string>;
+
+function isSource(name: string) {
+  return name === "Databricks" || name === "BigQuery";
+}
+function isDataset(name: string) {
+  return DATASET_ASSETS[name] !== undefined;
+}
+function parentSourceOfDataset(name: string): string {
+  return BIGQUERY_DATASET_ASSETS[name] ? "BigQuery" : "Databricks";
+}
+
+/* ---------- tree row (multi-select) ---------- */
 function TreeRow({
   node,
   depth,
   selected,
-  onSelect,
+  onToggle,
 }: {
   node: TreeNode;
   depth: number;
-  selected: string | null;
-  onSelect: (name: string) => void;
+  selected: Selection;
+  onToggle: (name: string) => void;
 }) {
   const [open, setOpen] = useState(true);
   const hasChildren = !!node.children?.length;
-  const isSel = selected === node.name;
+  const isSel = selected.has(node.name);
 
   return (
     <div>
@@ -375,10 +406,11 @@ function TreeRow({
           type="button"
           onClick={() => {
             if (hasChildren) setOpen(true);
-            onSelect(node.name);
+            onToggle(node.name);
           }}
           className="flex flex-1 items-center gap-2 py-1.5 text-left"
         >
+          <CheckSquare checked={isSel} />
           <span style={{ color: isSel ? "var(--brand-blue)" : "var(--ink-500)" }}>
             {kindIcon(node.kind, 14)}
           </span>
@@ -395,7 +427,7 @@ function TreeRow({
       {hasChildren && open && (
         <div>
           {node.children!.map((c) => (
-            <TreeRow key={c.name} node={c} depth={depth + 1} selected={selected} onSelect={onSelect} />
+            <TreeRow key={c.name} node={c} depth={depth + 1} selected={selected} onToggle={onToggle} />
           ))}
         </div>
       )}
@@ -406,15 +438,58 @@ function TreeRow({
 /* ---------- left filter panel ---------- */
 function FilterPanel({
   selected,
-  onSelect,
+  onToggle,
 }: {
-  selected: string | null;
-  onSelect: (n: string) => void;
+  selected: Selection;
+  onToggle: (n: string) => void;
 }) {
   const [databricksOpen, setDatabricksOpen] = useState(true);
   const [bigqueryOpen, setBigqueryOpen] = useState(false);
-  const [types, setTypes] = useState({ Dataset: true, Table: false, Dashboard: false });
-  const [tags, setTags] = useState([true, false, false]);
+
+  const renderSourceHeader = (
+    label: string,
+    count: number,
+    open: boolean,
+    setOpen: (v: boolean) => void,
+  ) => {
+    const isSel = selected.has(label);
+    return (
+      <div
+        className="flex w-full items-center gap-1 rounded-md pr-1 text-[13px] hover:bg-[color:var(--surface-soft)]"
+        style={{
+          color: isSel ? "var(--brand-blue)" : "var(--ink-900)",
+          background: isSel ? "var(--surface-soft)" : "transparent",
+        }}
+      >
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(!open);
+          }}
+          aria-label={open ? "Collapse" : "Expand"}
+          aria-expanded={open}
+          className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-[color:var(--ink-500)] transition-colors hover:bg-[color:var(--hairline)] hover:text-[color:var(--ink-900)]"
+        >
+          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(true);
+            onToggle(label);
+          }}
+          className="flex flex-1 items-center gap-2 py-1.5 text-left"
+        >
+          <CheckSquare checked={isSel} />
+          <GridIcon size={14} />
+          <span className="flex-1 font-medium">
+            {label} ({count})
+          </span>
+        </button>
+      </div>
+    );
+  };
 
   return (
     <aside
@@ -429,159 +504,145 @@ function FilterPanel({
           Data Source
         </div>
 
-        <div
-          className="flex w-full items-center gap-1 rounded-md pr-1 text-[13px] hover:bg-[color:var(--surface-soft)]"
-          style={{ color: "var(--ink-900)" }}
-        >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDatabricksOpen((o) => !o);
-            }}
-            aria-label={databricksOpen ? "Collapse" : "Expand"}
-            aria-expanded={databricksOpen}
-            className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-[color:var(--ink-500)] transition-colors hover:bg-[color:var(--hairline)] hover:text-[color:var(--ink-900)]"
-          >
-            {databricksOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setDatabricksOpen(true);
-              onSelect("Databricks");
-            }}
-            className="flex flex-1 items-center gap-2 py-1.5 text-left"
-          >
-            <GridIcon size={14} />
-            <span className="flex-1 font-medium">Databricks ({DATABRICKS_TREE.length})</span>
-          </button>
-        </div>
+        {renderSourceHeader("Databricks", DATABRICKS_TREE.length, databricksOpen, setDatabricksOpen)}
         {databricksOpen && (
           <div className="mt-1">
             {DATABRICKS_TREE.map((n) => (
-              <TreeRow key={n.name} node={n} depth={1} selected={selected} onSelect={onSelect} />
+              <TreeRow key={n.name} node={n} depth={1} selected={selected} onToggle={onToggle} />
             ))}
           </div>
         )}
 
-        <div
-          className="mt-1 flex w-full items-center gap-1 rounded-md pr-1 text-[13px] hover:bg-[color:var(--surface-soft)]"
-          style={{ color: "var(--ink-900)" }}
-        >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setBigqueryOpen((o) => !o);
-            }}
-            aria-label={bigqueryOpen ? "Collapse" : "Expand"}
-            aria-expanded={bigqueryOpen}
-            className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-[color:var(--ink-500)] transition-colors hover:bg-[color:var(--hairline)] hover:text-[color:var(--ink-900)]"
-          >
-            {bigqueryOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setBigqueryOpen(true);
-              onSelect("BigQuery");
-            }}
-            className="flex flex-1 items-center gap-2 py-1.5 text-left"
-          >
-            <GridIcon size={14} />
-            <span className="flex-1 font-medium">BigQuery ({BIGQUERY_TREE.length})</span>
-          </button>
+        <div className="mt-1">
+          {renderSourceHeader("BigQuery", BIGQUERY_TREE.length, bigqueryOpen, setBigqueryOpen)}
         </div>
         {bigqueryOpen && (
           <div className="mt-1">
             {BIGQUERY_TREE.map((n) => (
-              <TreeRow key={n.name} node={n} depth={1} selected={selected} onSelect={onSelect} />
+              <TreeRow key={n.name} node={n} depth={1} selected={selected} onToggle={onToggle} />
             ))}
           </div>
         )}
-      </div>
-
-      <div>
-        <div
-          className="mb-2 px-1 text-[14px] font-semibold"
-          style={{ color: "var(--ink-900)" }}
-        >
-          Types
-        </div>
-        <ul className="space-y-1">
-          {(["Dataset", "Table", "Dashboard"] as const).map((t) => (
-            <li key={t}>
-              <button
-                type="button"
-                onClick={() => setTypes((s) => ({ ...s, [t]: !s[t] }))}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
-                style={{ color: "var(--ink-700)" }}
-              >
-                <CheckSquare checked={types[t]} />
-                <span style={{ color: "var(--ink-500)" }}>
-                  {t === "Dataset" && <DatasetIcon size={14} />}
-                  {t === "Table" && <TableIcon size={14} />}
-                  {t === "Dashboard" && <ChartIcon size={14} />}
-                </span>
-                <span className="font-medium">{t}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div>
-        <div
-          className="mb-2 px-1 text-[14px] font-semibold"
-          style={{ color: "var(--ink-900)" }}
-        >
-          Tags
-        </div>
-        <ul className="space-y-1">
-          {tags.map((checked, i) => (
-            <li key={i}>
-              <button
-                type="button"
-                onClick={() =>
-                  setTags((arr) => arr.map((v, idx) => (idx === i ? !v : v)))
-                }
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
-                style={{ color: "var(--ink-700)" }}
-              >
-                <CheckSquare checked={checked} />
-                <span className="font-medium">Tag Label</span>
-              </button>
-            </li>
-          ))}
-        </ul>
       </div>
     </aside>
   );
 }
 
-/* ---------- asset overview ---------- */
-type View =
-  | { mode: "source"; title: string; rows: AssetRow[] }
-  | { mode: "dataset"; title: string; rows: AssetRow[] }
-  | { mode: "table"; title: string; columns: ColumnRow[] };
-
-function resolveView(selected: string | null): View {
-  if (!selected || selected === "Databricks") {
-    return { mode: "source", title: "Databricks", rows: DATABRICKS_ALL };
-  }
-  if (selected === "BigQuery") {
-    return { mode: "source", title: "BigQuery", rows: BIGQUERY_ALL };
-  }
-  if (DATASET_ASSETS[selected]) {
-    const parent = BIGQUERY_DATASET_ASSETS[selected] ? "BigQuery" : "Databricks";
-    return { mode: "dataset", title: `${parent} / ${selected}`, rows: DATASET_ASSETS[selected] };
-  }
-  // assume table/dashboard leaf
-  return { mode: "table", title: selected, columns: getColumnsFor(selected) };
+/* ---------- selection chips ---------- */
+function SelectionChips({
+  selected,
+  onRemove,
+  onClear,
+}: {
+  selected: Selection;
+  onRemove: (n: string) => void;
+  onClear: () => void;
+}) {
+  if (selected.size === 0) return null;
+  const items = Array.from(selected);
+  return (
+    <div
+      className="flex flex-wrap items-center gap-2 rounded-2xl border bg-white px-3 py-2"
+      style={{ borderColor: "var(--hairline)" }}
+    >
+      <span className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--ink-300)" }}>
+        Filters
+      </span>
+      {items.map((name) => (
+        <button
+          key={name}
+          type="button"
+          onClick={() => onRemove(name)}
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition-colors hover:opacity-90"
+          style={{
+            background: "color-mix(in oklab, var(--brand-blue) 12%, white)",
+            color: "var(--brand-blue)",
+            border: "1px solid color-mix(in oklab, var(--brand-blue) 25%, transparent)",
+          }}
+        >
+          <span>{name}</span>
+          <XIcon size={11} />
+        </button>
+      ))}
+      {items.length > 1 && (
+        <button
+          type="button"
+          onClick={onClear}
+          className="ml-auto text-[12px] font-medium hover:underline"
+          style={{ color: "var(--ink-500)" }}
+        >
+          Clear all
+        </button>
+      )}
+    </div>
+  );
 }
 
-function AssetOverview({ selected }: { selected: string | null }) {
+/* ---------- view resolution ---------- */
+type View =
+  | { mode: "rows"; title: string; rows: AssetRow[] }
+  | { mode: "table"; title: string; columns: ColumnRow[] };
+
+function dedupeRows(rows: AssetRow[]): AssetRow[] {
+  const seen = new Set<string>();
+  const out: AssetRow[] = [];
+  for (const r of rows) {
+    const key = `${r.source}::${r.name}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(r);
+    }
+  }
+  return out;
+}
+
+function resolveView(selected: Selection): View {
+  // Default: nothing selected → show everything across sources
+  if (selected.size === 0) {
+    return {
+      mode: "rows",
+      title: "All sources",
+      rows: dedupeRows([...DATABRICKS_ALL, ...BIGQUERY_ALL]),
+    };
+  }
+
+  // Single selection of a leaf table/dashboard → column view
+  if (selected.size === 1) {
+    const only = Array.from(selected)[0];
+    if (!isSource(only) && !isDataset(only)) {
+      return { mode: "table", title: only, columns: getColumnsFor(only) };
+    }
+  }
+
+  // Otherwise, merge rows from each selection
+  const merged: AssetRow[] = [];
+  const titleParts: string[] = [];
+  for (const name of selected) {
+    if (isSource(name)) {
+      merged.push(...(SOURCE_ALL[name] ?? []));
+      titleParts.push(name);
+    } else if (isDataset(name)) {
+      merged.push(...(DATASET_ASSETS[name] ?? []));
+      titleParts.push(`${parentSourceOfDataset(name)} / ${name}`);
+    } else {
+      // leaf in a multi-select — surface as a row using its known source
+      const allRows = [...DATABRICKS_ALL, ...BIGQUERY_ALL];
+      const found = allRows.find((r) => r.name === name);
+      if (found) {
+        merged.push(found);
+        titleParts.push(`${found.source} / ${name}`);
+      }
+    }
+  }
+
+  return {
+    mode: "rows",
+    title: titleParts.length > 2 ? `${titleParts.length} selections` : titleParts.join(" + "),
+    rows: dedupeRows(merged),
+  };
+}
+
+function AssetOverview({ selected }: { selected: Selection }) {
   const view = resolveView(selected);
 
   return (
@@ -601,10 +662,6 @@ function AssetOverview({ selected }: { selected: string | null }) {
           {view.mode === "table" ? (
             <>
               {view.columns.length} <ColumnIcon size={12} />
-            </>
-          ) : view.mode === "dataset" ? (
-            <>
-              {view.rows.length} <GridIcon size={12} />
             </>
           ) : (
             <>
@@ -666,12 +723,12 @@ function AssetOverview({ selected }: { selected: string | null }) {
             <tbody>
               {view.rows.map((a) => {
                 const slug = a.name.toLowerCase().replace(/\s+/g, "-");
-                const isDataset = a.kind === "dataset";
-                const isTable = a.kind === "table";
-                const tableCount = isDataset ? DATASET_TABLE_COUNTS[a.name] ?? 0 : 0;
+                const isDs = a.kind === "dataset";
+                const isTbl = a.kind === "table";
+                const tableCount = isDs ? DATASET_TABLE_COUNTS[a.name] ?? 0 : 0;
                 return (
                   <tr
-                    key={a.name}
+                    key={`${a.source}-${a.name}`}
                     className="border-b transition-colors hover:bg-[color:var(--surface-soft)] cursor-pointer"
                     style={{ borderColor: "var(--hairline)" }}
                   >
@@ -696,7 +753,7 @@ function AssetOverview({ selected }: { selected: string | null }) {
                       </span>
                     </td>
                     <td className="px-3 py-4">
-                      {isDataset ? (
+                      {isDs ? (
                         <span
                           className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
                           style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
@@ -704,7 +761,7 @@ function AssetOverview({ selected }: { selected: string | null }) {
                         >
                           {tableCount} <GridIcon size={12} />
                         </span>
-                      ) : isTable && a.columns !== null ? (
+                      ) : isTbl && a.columns !== null ? (
                         <span
                           className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
                           style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
@@ -735,13 +792,45 @@ function AssetOverview({ selected }: { selected: string | null }) {
 
 /* ---------- screen ---------- */
 export function ExploreScreen() {
-  const [selected, setSelected] = useState<string | null>("Databricks");
+  const [selected, setSelected] = useState<Selection>(() => new Set(["Databricks"]));
+
+  const toggle = (name: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        // If selecting a source, drop its child datasets (redundant)
+        if (isSource(name)) {
+          for (const ds of SOURCE_DATASETS[name] ?? []) next.delete(ds);
+        }
+        // If selecting a dataset whose parent source is selected, deselect parent (more specific)
+        if (isDataset(name)) {
+          const parent = parentSourceOfDataset(name);
+          if (next.has(parent)) next.delete(parent);
+        }
+        next.add(name);
+      }
+      return next;
+    });
+  };
+
+  const removeSel = (name: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(name);
+      return next;
+    });
+
+  const clearAll = () => setSelected(new Set());
+
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
         <div className="flex gap-6 px-8 pt-6 pb-28">
-          <FilterPanel selected={selected} onSelect={setSelected} />
-          <div className="flex flex-1 flex-col gap-6">
+          <FilterPanel selected={selected} onToggle={toggle} />
+          <div className="flex flex-1 flex-col gap-4">
+            <SelectionChips selected={selected} onRemove={removeSel} onClear={clearAll} />
             <AssetOverview selected={selected} />
           </div>
         </div>
