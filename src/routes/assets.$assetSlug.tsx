@@ -645,9 +645,17 @@ function ColumnsPanel({
 
 function ColumnDetailPanel({
   column,
+  index,
+  total,
+  onPrev,
+  onNext,
   onClose,
 }: {
   column: ColumnRow | null;
+  index: number | null;
+  total: number;
+  onPrev: () => void;
+  onNext: () => void;
   onClose: () => void;
 }) {
   const open = column !== null;
