@@ -411,6 +411,7 @@ function kindIcon(kind: AssetKind, size = 16) {
   return <ChartIcon size={size} />;
 }
 
+
 function SourceLogo({ source }: { source: string }) {
   if (source === "BigQuery") {
     return (
