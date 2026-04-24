@@ -866,8 +866,16 @@ function resolveView(
   };
 }
 
-function AssetOverview({ selected }: { selected: Selection }) {
-  const view = resolveView(selected);
+function AssetOverview({
+  selected,
+  assetTypes,
+  tags,
+}: {
+  selected: Selection;
+  assetTypes: Set<string>;
+  tags: Set<string>;
+}) {
+  const view = resolveView(selected, assetTypes, tags);
 
   return (
     <section
