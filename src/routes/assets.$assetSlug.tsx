@@ -18,7 +18,8 @@ export const Route = createFileRoute("/assets/$assetSlug")({
 
 type AssetDetail = {
   name: string;
-  path: string;
+  source: string;
+  dataset: string;
   columns: number;
   rows: string;
   checks: number;
@@ -33,7 +34,8 @@ type AssetDetail = {
 const ASSET_DETAILS: Record<string, AssetDetail> = {
   orders: {
     name: "Orders",
-    path: "Databricks/customer_data/orders",
+    source: "Databricks",
+    dataset: "customer_data",
     columns: 184,
     rows: "4,897",
     checks: 21,
