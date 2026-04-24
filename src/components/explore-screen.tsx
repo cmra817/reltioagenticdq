@@ -192,22 +192,17 @@ const DATASET_ASSETS: Record<string, AssetRow[]> = {
   "Loyalty Points": LOYALTY_POINTS_CHILDREN,
 };
 
-const countTables = (rows: AssetRow[]) => rows.filter((r) => r.kind === "table").length;
+const DATASET_TABLE_COUNTS: Record<string, number> = {
+  "Customer Data": CUSTOMER_DATA_CHILDREN.length,
+  "Product catalog": PRODUCT_CATALOG_CHILDREN.length,
+  "Loyalty Points": LOYALTY_POINTS_CHILDREN.length,
+};
 
 const DATABRICKS_ALL: AssetRow[] = [
   { name: "Customer Data", kind: "dataset", description: "Customer master data including profiles, orders, and revenue dashboards", source: "Databricks", columns: null, lastAnalyzed: "15h ago" },
   { name: "Product catalog", kind: "dataset", description: "Products, SKUs, and category hierarchy", source: "Databricks", columns: null, lastAnalyzed: "2h ago" },
   { name: "Loyalty Points", kind: "dataset", description: "Loyalty points ledger and customer tier status", source: "Databricks", columns: null, lastAnalyzed: "4h ago" },
-  ...CUSTOMER_DATA_CHILDREN,
-  ...PRODUCT_CATALOG_CHILDREN,
-  ...LOYALTY_POINTS_CHILDREN,
 ];
-
-const DATASET_TABLE_COUNTS: Record<string, number> = {
-  "Customer Data": countTables(CUSTOMER_DATA_CHILDREN),
-  "Product catalog": countTables(PRODUCT_CATALOG_CHILDREN),
-  "Loyalty Points": countTables(LOYALTY_POINTS_CHILDREN),
-};
 
 const TABLE_COLUMNS: Record<string, ColumnRow[]> = {
   Orders: [
@@ -289,7 +284,14 @@ function TreeRow({
           <span style={{ color: isSel ? "var(--brand-blue)" : "var(--ink-500)" }}>
             {kindIcon(node.kind, 14)}
           </span>
-          <span className="flex-1 truncate font-medium">{node.name}</span>
+          <span className="flex-1 truncate font-medium">
+            {node.name}
+            {hasChildren && (
+              <span className="ml-1 font-normal" style={{ color: "var(--ink-500)" }}>
+                ({node.children!.length})
+              </span>
+            )}
+          </span>
         </button>
       </div>
       {hasChildren && open && (
@@ -354,7 +356,7 @@ function FilterPanel({
             className="flex flex-1 items-center gap-2 py-1.5 text-left"
           >
             <GridIcon size={14} />
-            <span className="flex-1 font-medium">Databricks (633)</span>
+            <span className="flex-1 font-medium">Databricks ({DATABRICKS_TREE.length})</span>
           </button>
         </div>
         {databricksOpen && (
@@ -490,11 +492,11 @@ function AssetOverview({ selected }: { selected: string | null }) {
             </>
           ) : view.mode === "dataset" ? (
             <>
-              {view.rows.filter((r) => r.kind === "table").length} <TableIcon size={12} />
+              {view.rows.length} <GridIcon size={12} />
             </>
           ) : (
             <>
-              {view.rows.length} <GridIcon size={12} />
+              {view.rows.length} <DatasetIcon size={12} />
             </>
           )}
         </span>
@@ -586,9 +588,9 @@ function AssetOverview({ selected }: { selected: string | null }) {
                         <span
                           className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
                           style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                          title={`${tableCount} tables`}
+                          title={`${tableCount} assets`}
                         >
-                          {tableCount} <TableIcon size={12} />
+                          {tableCount} <GridIcon size={12} />
                         </span>
                       ) : isTable && a.columns !== null ? (
                         <span
