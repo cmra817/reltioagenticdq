@@ -670,16 +670,17 @@ function FilterPanel({
 /* ---------- checkbox filter group ---------- */
 type FilterOption = string | { label: string; icon?: React.ReactNode };
 
-function CheckboxFilterGroup({ title, options }: { title: string; options: FilterOption[] }) {
-  const [checked, setChecked] = useState<Set<string>>(() => new Set());
-  const toggle = (opt: string) =>
-    setChecked((prev) => {
-      const next = new Set(prev);
-      if (next.has(opt)) next.delete(opt);
-      else next.add(opt);
-      return next;
-    });
-
+function CheckboxFilterGroup({
+  title,
+  options,
+  checked,
+  onToggle,
+}: {
+  title: string;
+  options: FilterOption[];
+  checked: Set<string>;
+  onToggle: (label: string) => void;
+}) {
   return (
     <div>
       <div
@@ -697,7 +698,7 @@ function CheckboxFilterGroup({ title, options }: { title: string; options: Filte
             <button
               key={label}
               type="button"
-              onClick={() => toggle(label)}
+              onClick={() => onToggle(label)}
               className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
               style={{ color: isOn ? "var(--brand-blue)" : "var(--ink-700)" }}
             >
