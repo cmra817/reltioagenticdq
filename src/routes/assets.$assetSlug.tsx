@@ -419,7 +419,7 @@ function ColumnsPanel({
     () => new Set(PROFILING_COLUMNS.map((c) => c.key)),
   );
   const [visibleSample, setVisibleSample] = useState<Set<string>>(
-    () => new Set(SAMPLE_VALUE_KEYS),
+    () => new Set(SAMPLE_ATTRIBUTES),
   );
 
   const toggleSetItem = (
@@ -432,9 +432,9 @@ function ColumnsPanel({
       return next;
     });
 
-  const sampleOptions = SAMPLE_VALUE_KEYS.map((k) => ({ key: k, label: k }));
+  const sampleOptions = SAMPLE_ATTRIBUTES.map((k) => ({ key: k, label: k }));
   const profilingCols = PROFILING_COLUMNS.filter((c) => visibleProfiling.has(c.key));
-  const sampleCols = SAMPLE_VALUE_KEYS.filter((k) => visibleSample.has(k));
+  const sampleCols = SAMPLE_ATTRIBUTES.filter((k) => visibleSample.has(k));
 
   return (
     <div className="flex flex-col gap-4">
