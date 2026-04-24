@@ -570,11 +570,15 @@ function resolveView(selected: string | null): View {
   if (!selected || selected === "Databricks") {
     return { mode: "source", title: "Databricks", rows: DATABRICKS_ALL };
   }
+  if (selected === "BigQuery") {
+    return { mode: "source", title: "BigQuery", rows: BIGQUERY_ALL };
+  }
   if (DATASET_ASSETS[selected]) {
-    return { mode: "dataset", title: `Databricks / ${selected}`, rows: DATASET_ASSETS[selected] };
+    const parent = BIGQUERY_DATASET_ASSETS[selected] ? "BigQuery" : "Databricks";
+    return { mode: "dataset", title: `${parent} / ${selected}`, rows: DATASET_ASSETS[selected] };
   }
   // assume table/dashboard leaf
-  return { mode: "table", title: `Databricks / ${selected}`, columns: getColumnsFor(selected) };
+  return { mode: "table", title: selected, columns: getColumnsFor(selected) };
 }
 
 function AssetOverview({ selected }: { selected: string | null }) {
