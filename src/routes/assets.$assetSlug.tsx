@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { ChatComposer } from "@/components/chat-composer";
+import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
 
 export const Route = createFileRoute("/assets/$assetSlug")({
   head: ({ params }) => ({
