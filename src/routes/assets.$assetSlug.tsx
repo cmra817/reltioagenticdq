@@ -310,3 +310,118 @@ function QualityDonut({ value }: { value: number }) {
     </svg>
   );
 }
+
+function EmptyPanel({ label }: { label: string }) {
+  return (
+    <div
+      className="rounded-2xl border bg-white p-10 text-center text-[14px]"
+      style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
+    >
+      {label}
+    </div>
+  );
+}
+
+function ColumnsPanel({
+  columns,
+  subTab,
+  onSubTab,
+}: {
+  columns: ColumnRow[];
+  subTab: "Profiling" | "Sample data";
+  onSubTab: (s: "Profiling" | "Sample data") => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Sub-tabs pill */}
+      <div
+        className="inline-flex w-fit items-center gap-1 rounded-lg border bg-white p-1"
+        style={{ borderColor: "var(--hairline)" }}
+      >
+        {(["Profiling", "Sample data"] as const).map((s) => {
+          const active = s === subTab;
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onSubTab(s)}
+              className="rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors"
+              style={{
+                background: active ? "var(--surface-soft)" : "transparent",
+                color: active ? "var(--brand-blue)" : "var(--ink-700)",
+              }}
+            >
+              {s}
+            </button>
+          );
+        })}
+      </div>
+
+      {subTab === "Profiling" ? (
+        <div
+          className="overflow-hidden rounded-2xl border bg-white"
+          style={{ borderColor: "var(--hairline)" }}
+        >
+          <table className="w-full border-collapse text-left text-[13px]">
+            <thead>
+              <tr
+                className="text-[11px] uppercase tracking-[0.08em]"
+                style={{ color: "var(--ink-300)" }}
+              >
+                <th className="px-5 py-3 font-semibold">Name</th>
+                <th className="px-3 py-3 font-semibold">Data type</th>
+                <th className="px-3 py-3 font-semibold">Length</th>
+                <th className="px-3 py-3 font-semibold">Min value</th>
+                <th className="px-3 py-3 font-semibold">Max value</th>
+                <th className="px-3 py-3 font-semibold">Mean value</th>
+                <th className="px-3 py-3 font-semibold">Null count</th>
+                <th className="px-3 py-3 font-semibold">Distinct count</th>
+                <th className="px-3 py-3 font-semibold">Uniqueness</th>
+                <th className="px-3 py-3 font-semibold">Fill rate</th>
+                <th className="px-5 py-3 font-semibold">Tags</th>
+              </tr>
+            </thead>
+            <tbody>
+              {columns.map((c) => (
+                <tr
+                  key={c.name}
+                  className="border-t"
+                  style={{ borderColor: "var(--hairline)" }}
+                >
+                  <td className="px-5 py-4 font-semibold" style={{ color: "var(--ink-900)" }}>
+                    {c.name}
+                  </td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.dataType}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.length}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.min}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.max}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.mean}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.nullCount}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.distinct.toLocaleString()}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.uniqueness}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.fillRate}</td>
+                  <td className="px-5 py-4">
+                    {c.tag && (
+                      <span
+                        className="inline-flex items-center rounded-md border px-2.5 py-1 text-[12px] font-medium"
+                        style={{
+                          borderColor: "var(--hairline)",
+                          color: "var(--ink-700)",
+                          background: "white",
+                        }}
+                      >
+                        {c.tag}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <EmptyPanel label="Sample data coming soon" />
+      )}
+    </div>
+  );
+}
