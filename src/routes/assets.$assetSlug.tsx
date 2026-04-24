@@ -58,10 +58,38 @@ const ASSET_DETAILS: Record<string, AssetDetail> = {
 };
 
 const TABS = ["Overview", "Columns", "Checks", "Activity"] as const;
+type TabName = (typeof TABS)[number];
+
+type ColumnRow = {
+  name: string;
+  dataType: string;
+  length: number;
+  min: string;
+  max: string;
+  mean: string;
+  nullCount: number;
+  distinct: number;
+  uniqueness: string;
+  fillRate: string;
+  tag?: string;
+};
+
+const SAMPLE_COLUMNS: ColumnRow[] = [
+  { name: "Order_ID", dataType: "Integer", length: 8, min: "1", max: "1234", mean: "1234", nullCount: 0, distinct: 1234, uniqueness: "98%", fillRate: "98%", tag: "PII Data" },
+  { name: "Customer_ID", dataType: "Integer", length: 8, min: "1", max: "1234", mean: "1234", nullCount: 0, distinct: 1234, uniqueness: "98%", fillRate: "98%" },
+  { name: "Order_Date", dataType: "Date", length: 10, min: "2023-01-01", max: "2024-12-31", mean: "—", nullCount: 0, distinct: 720, uniqueness: "62%", fillRate: "100%" },
+  { name: "Total_Amount", dataType: "Decimal", length: 10, min: "0.99", max: "9999.00", mean: "245.50", nullCount: 0, distinct: 1180, uniqueness: "97%", fillRate: "100%" },
+  { name: "Status", dataType: "String", length: 12, min: "—", max: "—", mean: "—", nullCount: 0, distinct: 5, uniqueness: "1%", fillRate: "100%" },
+  { name: "Shipping_Address", dataType: "String", length: 120, min: "—", max: "—", mean: "—", nullCount: 12, distinct: 1100, uniqueness: "92%", fillRate: "99%", tag: "PII Data" },
+  { name: "Payment_Method", dataType: "String", length: 24, min: "—", max: "—", mean: "—", nullCount: 0, distinct: 6, uniqueness: "1%", fillRate: "100%" },
+  { name: "Discount_Code", dataType: "String", length: 16, min: "—", max: "—", mean: "—", nullCount: 482, distinct: 28, uniqueness: "3%", fillRate: "60%" },
+];
 
 function AssetDetailPage() {
   const { assetSlug } = useParams({ from: "/assets/$assetSlug" });
   const detail = ASSET_DETAILS[assetSlug.toLowerCase()] ?? ASSET_DETAILS.orders;
+  const [activeTab, setActiveTab] = useState<TabName>("Overview");
+  const [columnsSubTab, setColumnsSubTab] = useState<"Profiling" | "Sample data">("Profiling");
 
   return (
     <AppShell activeNav="explore">
