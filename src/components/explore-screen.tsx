@@ -492,11 +492,11 @@ function AssetOverview({ selected }: { selected: string | null }) {
             </>
           ) : view.mode === "dataset" ? (
             <>
-              {view.rows.filter((r) => r.kind === "table").length} <TableIcon size={12} />
+              {view.rows.length} <GridIcon size={12} />
             </>
           ) : (
             <>
-              {view.rows.length} <GridIcon size={12} />
+              {view.rows.length} <DatasetIcon size={12} />
             </>
           )}
         </span>
