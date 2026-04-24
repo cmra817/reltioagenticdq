@@ -768,8 +768,38 @@ function ColumnDetailPanel({
                 <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>What appears most often</p>
                 <FreqTable
                   rows={Array.from({ length: 6 }).map(() => ({ type: "Databricks", count: 1, pct: 76 }))}
-                />
+              />
               </section>
+            </div>
+
+            {/* Footer nav: prev / current / next */}
+            <div
+              className="flex items-center justify-between border-t bg-white px-6 py-3"
+              style={{ borderColor: "var(--hairline)" }}
+            >
+              <button
+                type="button"
+                onClick={onPrev}
+                aria-label="Previous column"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)] disabled:opacity-40"
+                style={{ color: "var(--ink-700)" }}
+                disabled={total <= 1}
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <div className="text-[12px] font-medium" style={{ color: "var(--ink-700)" }}>
+                {(index ?? 0) + 1} of {total} columns
+              </div>
+              <button
+                type="button"
+                onClick={onNext}
+                aria-label="Next column"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)] disabled:opacity-40"
+                style={{ color: "var(--ink-700)" }}
+                disabled={total <= 1}
+              >
+                <ChevronRight size={18} />
+              </button>
             </div>
           </>
         )}
