@@ -836,67 +836,74 @@ function AssetOverview({ selected }: { selected: Selection }) {
                 className="border-y text-[11px] uppercase tracking-[0.08em]"
                 style={{ borderColor: "var(--hairline)", color: "var(--ink-300)" }}
               >
-                <th className="w-[22%] px-6 py-3 font-semibold">Name</th>
-                <th className="w-[34%] px-3 py-3 font-semibold">Description</th>
-                <th className="w-[14%] px-3 py-3 font-semibold">Data Source</th>
-                <th className="w-[12%] px-3 py-3 font-semibold">Contents</th>
-                <th className="w-[18%] px-6 py-3 font-semibold">Last Analyzed</th>
+                <th className="w-[46%] px-6 py-3 font-semibold">Name</th>
+                <th className="w-[12%] px-3 py-3 font-semibold">No. of columns</th>
+                <th className="w-[12%] px-3 py-3 font-semibold">No. of rows</th>
+                <th className="w-[12%] px-3 py-3 font-semibold">No. of checks</th>
+                <th className="w-[18%] px-6 py-3 font-semibold">Last analyzed</th>
               </tr>
             </thead>
             <tbody>
               {view.rows.map((a) => {
                 const slug = a.name.toLowerCase().replace(/\s+/g, "-");
-                const isDs = a.kind === "dataset";
-                const isTbl = a.kind === "table";
-                const tableCount = isDs ? DATASET_TABLE_COUNTS[a.name] ?? 0 : 0;
                 return (
                   <tr
                     key={`${a.source}-${a.name}`}
-                    className="border-b transition-colors hover:bg-[color:var(--surface-soft)] cursor-pointer"
+                    className="border-b transition-colors hover:bg-[color:var(--surface-soft)]"
                     style={{ borderColor: "var(--hairline)" }}
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 align-top">
                       <Link
                         to="/assets/$assetSlug"
                         params={{ assetSlug: slug }}
-                        className="flex items-center gap-2"
-                        style={{ color: "var(--ink-900)" }}
+                        className="flex items-start gap-3"
                       >
-                        <span style={{ color: "var(--ink-500)" }}>{kindIcon(a.kind, 16)}</span>
-                        <span className="font-medium">{a.name}</span>
+                        <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
+                          <SourceLogo source={a.source} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-[14px]" style={{ color: "var(--ink-900)" }}>
+                            {a.name}
+                          </div>
+                          <div
+                            className="mt-0.5 flex items-center gap-1.5 text-[12px]"
+                            style={{ color: "var(--ink-500)" }}
+                          >
+                            <span style={{ color: "var(--ink-300)" }}>{kindIcon(a.kind, 13)}</span>
+                            <span className="capitalize">{a.kind}</span>
+                            <span style={{ color: "var(--ink-300)" }}>›</span>
+                            <span style={{ color: "var(--brand-blue)" }}>
+                              <DatasetIcon size={13} />
+                            </span>
+                            <span style={{ color: "var(--ink-700)" }}>{a.dataset}</span>
+                          </div>
+                          <div
+                            className="mt-2 flex items-start justify-between gap-3"
+                          >
+                            <p className="flex-1 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                              {a.description}
+                            </p>
+                            {a.tags.length > 0 && (
+                              <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                                {a.tags.map((t) => (
+                                  <TagChip key={t} label={t} />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </Link>
                     </td>
-                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-700)" }}>
-                      {a.description}
+                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
+                      {a.columns !== null ? a.columns.toLocaleString() : <span style={{ color: "var(--ink-300)" }}>—</span>}
                     </td>
-                    <td className="px-3 py-4">
-                      <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
-                        <StarIcon size={13} />
-                        {a.source}
-                      </span>
+                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
+                      {a.rows !== null ? a.rows.toLocaleString() : <span style={{ color: "var(--ink-300)" }}>—</span>}
                     </td>
-                    <td className="px-3 py-4">
-                      {isDs ? (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
-                          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                          title={`${tableCount} assets`}
-                        >
-                          {tableCount} <GridIcon size={12} />
-                        </span>
-                      ) : isTbl && a.columns !== null ? (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
-                          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                          title={`${a.columns} columns`}
-                        >
-                          {a.columns} <ColumnIcon size={12} />
-                        </span>
-                      ) : (
-                        <span style={{ color: "var(--ink-300)" }}>—</span>
-                      )}
+                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
+                      {a.checks}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 align-top">
                       <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
                         <ClockIcon size={13} />
                         {a.lastAnalyzed}
