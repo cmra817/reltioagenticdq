@@ -623,20 +623,12 @@ function ColumnDetailPanel({
   const open = column !== null;
   return (
     <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        className={`fixed inset-0 z-40 bg-black/20 transition-opacity ${
-          open ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-        aria-hidden="true"
-      />
-      {/* Slide-over */}
+      {/* Slide-over (non-modal, does not block clicks elsewhere) */}
       <aside
-        role="dialog"
+        role="complementary"
         aria-label="Column profile details"
-        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-[440px] flex-col border-l bg-white shadow-2xl transition-transform duration-300 ${
-          open ? "translate-x-0" : "translate-x-full"
+        className={`fixed right-0 top-0 z-40 flex h-full w-full max-w-[440px] flex-col border-l bg-white shadow-xl transition-transform duration-300 ${
+          open ? "translate-x-0" : "pointer-events-none translate-x-full"
         }`}
         style={{ borderColor: "var(--hairline)" }}
       >
