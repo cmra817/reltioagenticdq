@@ -484,7 +484,19 @@ function AssetOverview({ selected }: { selected: string | null }) {
           className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5"
           style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
         >
-          {view.mode === "table" ? view.columns.length : view.rows.length} <ColumnIcon size={12} />
+          {view.mode === "table" ? (
+            <>
+              {view.columns.length} <ColumnIcon size={12} />
+            </>
+          ) : view.mode === "dataset" ? (
+            <>
+              {view.rows.filter((r) => r.kind === "table").length} <TableIcon size={12} />
+            </>
+          ) : (
+            <>
+              {view.rows.length} <GridIcon size={12} />
+            </>
+          )}
         </span>
       </div>
 
