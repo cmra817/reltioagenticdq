@@ -128,13 +128,12 @@ function AssetDetailPage() {
           </div>
 
           {/* Stat cards */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {[
-              { label: "Tables", value: String(detail.tables) },
-              { label: "Fields", value: String(detail.fields) },
+              { label: "Columns", value: String(detail.columns) },
               { label: "Rows", value: detail.rows },
               { label: "Checks", value: String(detail.checks) },
-              { label: "Completeness rate", value: detail.completeness },
+              { label: "Fill rate", value: detail.fillRate },
             ].map((s) => (
               <div
                 key={s.label}
