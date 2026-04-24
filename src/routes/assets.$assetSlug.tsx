@@ -473,10 +473,10 @@ function ColumnsPanel({
 
       {subTab === "Profiling" ? (
         <div
-          className="overflow-hidden rounded-2xl border bg-white"
+          className="overflow-x-auto rounded-2xl border bg-white"
           style={{ borderColor: "var(--hairline)" }}
         >
-          <table className="w-full border-collapse text-left text-[13px]">
+          <table className="w-full min-w-[1100px] border-collapse text-left text-[13px]">
             <thead>
               <tr
                 className="text-[11px] uppercase tracking-[0.08em]"
@@ -543,10 +543,10 @@ function ColumnsPanel({
         </div>
       ) : (
         <div
-          className="overflow-hidden rounded-2xl border bg-white"
+          className="overflow-x-auto rounded-2xl border bg-white"
           style={{ borderColor: "var(--hairline)" }}
         >
-          <table className="w-full border-collapse text-left text-[13px]">
+          <table className="w-full min-w-[1100px] border-collapse text-left text-[13px]">
             <thead>
               <tr
                 className="text-[11px] uppercase tracking-[0.08em]"
