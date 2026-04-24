@@ -123,6 +123,9 @@ function AssetDetailPage() {
   const detail = ASSET_DETAILS[assetSlug.toLowerCase()] ?? ASSET_DETAILS.orders;
   const [activeTab, setActiveTab] = useState<TabName>("Overview");
   const [columnsSubTab, setColumnsSubTab] = useState<"Profiling" | "Sample data">("Profiling");
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const selectedColumn = selectedIndex === null ? null : SAMPLE_COLUMNS[selectedIndex] ?? null;
+  const rightPanelOpen = activeTab === "Columns" && selectedColumn !== null;
 
   return (
     <AppShell activeNav="explore">
