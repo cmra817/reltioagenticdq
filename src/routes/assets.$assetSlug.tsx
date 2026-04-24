@@ -90,24 +90,17 @@ const SAMPLE_COLUMNS: ColumnRow[] = [
 
 type SampleRow = Record<string, string | number>;
 
-const SAMPLE_ATTRIBUTES = [
-  "FIRST_NAME",
-  "LAST_NAME",
-  "TOTAL_ORDERS",
-  "TOTAL_SPENT",
-  "FIRST_ORDER_DATE",
-  "LAST_ORDER_DATE",
-] as const;
+const SAMPLE_ATTRIBUTES = SAMPLE_COLUMNS.map((c) => c.name);
 
 const SAMPLE_DATA_ROWS: (SampleRow & { primary: string })[] = [
-  { primary: "123",  FIRST_NAME: "Charles", LAST_NAME: "*********", TOTAL_ORDERS: 3, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
-  { primary: "847",  FIRST_NAME: "Bob",     LAST_NAME: "*********", TOTAL_ORDERS: 5, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
-  { primary: "1738", FIRST_NAME: "Maggie",  LAST_NAME: "*********", TOTAL_ORDERS: 8, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
-  { primary: "3918", FIRST_NAME: "Susan",   LAST_NAME: "*********", TOTAL_ORDERS: 2, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
-  { primary: "839",  FIRST_NAME: "Timmy",   LAST_NAME: "*********", TOTAL_ORDERS: 4, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
-  { primary: "0927", FIRST_NAME: "Zach",    LAST_NAME: "*********", TOTAL_ORDERS: 1, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
-  { primary: "121",  FIRST_NAME: "Justin",  LAST_NAME: "*********", TOTAL_ORDERS: 6, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
-  { primary: "846",  FIRST_NAME: "Emma",    LAST_NAME: "*********", TOTAL_ORDERS: 9, TOTAL_SPENT: "$357.87", FIRST_ORDER_DATE: "08-09-2023", LAST_ORDER_DATE: "10-21-2025" },
+  { primary: "1",    Order_ID: 1001, Customer_ID: 123,  Order_Date: "2024-01-15", Total_Amount: "$245.50", Status: "Shipped",   Shipping_Address: "123 Maple St, Austin TX",     Payment_Method: "Credit Card", Discount_Code: "WELCOME10" },
+  { primary: "2",    Order_ID: 1002, Customer_ID: 847,  Order_Date: "2024-02-03", Total_Amount: "$89.99",  Status: "Delivered", Shipping_Address: "47 Oak Ave, Seattle WA",      Payment_Method: "PayPal",      Discount_Code: "—" },
+  { primary: "3",    Order_ID: 1003, Customer_ID: 1738, Order_Date: "2024-02-21", Total_Amount: "$1,299.00", Status: "Pending",  Shipping_Address: "920 Pine Rd, Denver CO",      Payment_Method: "Credit Card", Discount_Code: "SPRING25" },
+  { primary: "4",    Order_ID: 1004, Customer_ID: 3918, Order_Date: "2024-03-08", Total_Amount: "$57.25",  Status: "Cancelled", Shipping_Address: "12 Birch Ln, Miami FL",       Payment_Method: "Apple Pay",   Discount_Code: "—" },
+  { primary: "5",    Order_ID: 1005, Customer_ID: 839,  Order_Date: "2024-03-19", Total_Amount: "$432.10", Status: "Shipped",   Shipping_Address: "88 Cedar Ct, Boston MA",      Payment_Method: "Credit Card", Discount_Code: "—" },
+  { primary: "6",    Order_ID: 1006, Customer_ID: 927,  Order_Date: "2024-04-02", Total_Amount: "$15.00",  Status: "Delivered", Shipping_Address: "5 Elm St, Portland OR",       Payment_Method: "Debit Card",  Discount_Code: "FREESHIP" },
+  { primary: "7",    Order_ID: 1007, Customer_ID: 121,  Order_Date: "2024-04-14", Total_Amount: "$782.40", Status: "Shipped",   Shipping_Address: "330 Walnut Way, Chicago IL",  Payment_Method: "Credit Card", Discount_Code: "—" },
+  { primary: "8",    Order_ID: 1008, Customer_ID: 846,  Order_Date: "2024-04-28", Total_Amount: "$199.95", Status: "Delivered", Shipping_Address: "76 Spruce Blvd, Phoenix AZ",  Payment_Method: "PayPal",      Discount_Code: "SAVE15" },
 ];
 
 const PROFILING_COLUMNS = [
