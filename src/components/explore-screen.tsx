@@ -114,7 +114,11 @@ type AssetRow = {
   kind: AssetKind;
   description: string;
   source: string;
+  dataset: string;
   columns: number | null;
+  rows: number | null;
+  checks: number;
+  tags: string[];
   lastAnalyzed: string;
 };
 
