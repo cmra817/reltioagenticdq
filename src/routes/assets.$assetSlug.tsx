@@ -83,10 +83,11 @@ function AssetDetailPage() {
                 aria-hidden="true"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <ellipse cx="12" cy="6" rx="8" ry="3" />
-                  <path d="M4 6v12c0 1.66 3.58 3 8 3s8-1.34 8-3V6" />
-                  <path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3" />
-                  <circle cx="18" cy="18" r="3" />
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <line x1="3" y1="15" x2="21" y2="15" />
+                  <line x1="9" y1="4" x2="9" y2="20" />
+                  <line x1="15" y1="4" x2="15" y2="20" />
                 </svg>
               </span>
               <div className="flex-1">
