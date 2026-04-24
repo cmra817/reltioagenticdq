@@ -519,12 +519,12 @@ function ColumnsPanel({
               </tr>
             </thead>
             <tbody>
-              {columns.map((row) => {
-                const isSelected = selectedColumn?.name === row.name;
+              {columns.map((row, idx) => {
+                const isSelected = selectedIndex === idx;
                 return (
                 <tr
                   key={row.name}
-                  onClick={() => setSelectedColumn(row)}
+                  onClick={() => onSelectIndex(idx)}
                   className="cursor-pointer border-t transition-colors hover:bg-[color:var(--surface-soft)]"
                   style={{
                     borderColor: "var(--hairline)",
