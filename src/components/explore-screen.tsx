@@ -588,9 +588,9 @@ function AssetOverview({ selected }: { selected: string | null }) {
                         <span
                           className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
                           style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                          title={`${tableCount} tables`}
+                          title={`${tableCount} assets`}
                         >
-                          {tableCount} <TableIcon size={12} />
+                          {tableCount} <GridIcon size={12} />
                         </span>
                       ) : isTable && a.columns !== null ? (
                         <span
