@@ -992,15 +992,14 @@ export function ExploreScreen() {
       const next = new Set(prev);
       if (next.has(name)) {
         next.delete(name);
-      } else {
-        // If selecting a source, drop its child datasets (redundant)
+        // Toggling a source OFF also deselects its datasets
         if (isSource(name)) {
           for (const ds of SOURCE_DATASETS[name] ?? []) next.delete(ds);
         }
-        // If selecting a dataset whose parent source is selected, deselect parent (more specific)
-        if (isDataset(name)) {
-          const parent = parentSourceOfDataset(name);
-          if (next.has(parent)) next.delete(parent);
+      } else {
+        // Toggling a source ON auto-selects all its datasets
+        if (isSource(name)) {
+          for (const ds of SOURCE_DATASETS[name] ?? []) next.add(ds);
         }
         next.add(name);
       }
