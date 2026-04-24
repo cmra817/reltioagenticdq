@@ -424,10 +424,14 @@ function ColumnsPanel({
   columns,
   subTab,
   onSubTab,
+  selectedIndex,
+  onSelectIndex,
 }: {
   columns: ColumnRow[];
   subTab: "Profiling" | "Sample data";
   onSubTab: (s: "Profiling" | "Sample data") => void;
+  selectedIndex: number | null;
+  onSelectIndex: (i: number | null) => void;
 }) {
   const [visibleProfiling, setVisibleProfiling] = useState<Set<string>>(
     () => new Set(PROFILING_COLUMNS.map((c) => c.key)),
@@ -435,7 +439,7 @@ function ColumnsPanel({
   const [visibleSample, setVisibleSample] = useState<Set<string>>(
     () => new Set(SAMPLE_ATTRIBUTES),
   );
-  const [selectedColumn, setSelectedColumn] = useState<ColumnRow | null>(null);
+  const selectedColumn = selectedIndex === null ? null : columns[selectedIndex] ?? null;
 
   const toggleSetItem = (
     setter: React.Dispatch<React.SetStateAction<Set<string>>>,
