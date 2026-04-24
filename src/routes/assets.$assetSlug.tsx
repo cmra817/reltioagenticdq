@@ -6,6 +6,7 @@ import { ChatComposer } from "@/components/chat-composer";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useSidebarState } from "@/components/sidebar-context";
 
 export const Route = createFileRoute("/assets/$assetSlug")({
   head: ({ params }) => ({
@@ -285,16 +286,27 @@ function AssetDetailPage() {
           {activeTab === "Activity" && <EmptyPanel label="Activity coming soon" />}
         </div>
 
-        {/* floating composer */}
-        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-30 px-8">
-          <div className="pointer-events-auto mx-auto w-full max-w-2xl">
-            <ChatComposer />
-          </div>
-        </div>
+        {/* floating composer (centered over content area, not full viewport) */}
+        <FloatingComposer />
       </div>
     </AppShell>
   );
 }
+
+function FloatingComposer() {
+  const { collapsed } = useSidebarState();
+  return (
+    <div
+      className="pointer-events-none fixed bottom-6 z-30 px-8"
+      style={{ left: collapsed ? 0 : 260, right: 0 }}
+    >
+      <div className="pointer-events-auto mx-auto w-full max-w-2xl">
+        <ChatComposer />
+      </div>
+    </div>
+  );
+}
+
 
 function Bar({ label, value }: { label: string; value: number }) {
   return (
