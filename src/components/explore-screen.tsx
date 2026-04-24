@@ -554,9 +554,17 @@ function TreeRow({
 function FilterPanel({
   selected,
   onToggle,
+  assetTypes,
+  onToggleAssetType,
+  tags,
+  onToggleTag,
 }: {
   selected: Selection;
   onToggle: (n: string) => void;
+  assetTypes: Set<string>;
+  onToggleAssetType: (label: string) => void;
+  tags: Set<string>;
+  onToggleTag: (label: string) => void;
 }) {
   const [databricksOpen, setDatabricksOpen] = useState(true);
   const [bigqueryOpen, setBigqueryOpen] = useState(false);
