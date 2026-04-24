@@ -1,44 +1,54 @@
 
 
-# Refactor Activity Feed into a Single Table
+# "Create New Domain" Modal
 
-Replace the current grouped "card list" layout under the heatmap with one continuous table. Date groupings become subtle full-width separator rows inside the same table, so column headers render only once at the top.
+When the user clicks **Create new domain** in the topbar's `+ New` dropdown, open a centered modal that lets them name a new domain and confirm. Layout/content follow the wireframe; styling matches the rest of the app (Reltio blue accents, hairline borders, soft shadow, Inter type scale).
 
-## Recommendation on repeating headers
+## Trigger
 
-Don't repeat headers per date block — it's visual noise and breaks scan-ability. Use a single sticky-ish header row at the top of the table, with lightweight inline date dividers (`Today`, `Yesterday`, `Apr 22`, …) spanning all columns between groups. This is the standard pattern (Linear, GitHub Actions, Datadog event feeds) and keeps the eye moving down a stable column grid.
+In `src/components/agentflow-topbar.tsx`, the existing `NewMenu` dropdown's **Create new domain** item currently just closes the menu. Change it to:
+1. Close the dropdown.
+2. Open the new `CreateDomainDialog` (local `useState` in `AgentflowTopbar`).
 
-## Layout
+The **Add new dataset** item stays a no-op for now.
 
-```text
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ CHECK                          │ DIMENSION    │ COLUMN     │ RAN ON   │ STATUS │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ ── Today ────────────────────────────────────────────────────────────────── │
-│ ExpectColumnMostCommonValue…   │ [Validity]   │ first_name │ 2:45 AM  │ Passed │
-│ ExpectColumnValueLengthsToBe…  │ [Validity]   │ ssn        │ 1:30 AM  │ Failed ⓘ│
-├──────────────────────────────────────────────────────────────────────────────┤
-│ ── Yesterday ─────────────────────────────────────────────────────────────── │
-│ ExpectColumnValuesToNotBeNull  │ [Completen.] │ email      │ 6:12 PM  │ Passed │
-│ ExpectColumnPairValuesAToBeG…  │ [Consist.]   │ shipped…   │ 3:01 PM  │ Failed ⓘ│
-├──────────────────────────────────────────────────────────────────────────────┤
-│ ── Apr 22 ────────────────────────────────────────────────────────────────── │
-│ …                              │ …            │ …          │ …        │ …      │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+## Dialog visual spec
 
-## Component changes (in `src/routes/assets.$assetSlug.tsx`)
+Use the existing `@/components/ui/dialog` primitives (already in the project) so we get the overlay, focus trap, Escape-to-close, and the built-in `X` close button "for free" — that matches the wireframe's top-right close.
 
-1. **`ActivityPanel`** — remove the per-group `<div>` cards. Render one `<table>` (same border / typography tokens as the Checks table) wrapped in a single rounded card under the heatmap.
-2. **Row generation** — flatten events into a single ordered array. Walk it once; whenever the group label (`Today` / `Yesterday` / weekday / `MMM D`) changes, emit a divider row: `<tr><td colSpan={5} className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 px-4 py-2">{label}</td></tr>`, then emit the event row.
-3. **Columns** — exactly five: Check, Dimension, Column, Ran on, Status. Drop the previous "Target" terminology; use the existing `target` field as the Column cell.
-4. **Status cell** — render `<ActivityStatusPill />` and, only when `status === "Failed"` and `detail` exists, an `<InfoTooltip />` immediately to the right of the pill (small gap, same row, right-aligned cell).
-5. **Ran on** — keep `formatActivityTime`, but inside a date group show only the time portion (e.g. `2:45 AM`) since the group label already conveys the day. For older `MMM D` groups, show just the time too.
-6. **Cleanup** — remove now-unused per-group card styling. Keep `activityGroupLabel`, `formatActivityTime`, `ActivityStatusPill`, `InfoTooltip`, and `DimensionPill` helpers.
+- Width: `max-w-[560px]`, `rounded-2xl`, white background, `border` in `var(--hairline)`, shadow `0 24px 60px rgba(15,23,42,0.18)`.
+- Padding: `px-10 pt-12 pb-10`.
+- Content stack, centered text:
+  - **Title** (`DialogTitle`): "Let's get you started with a new domain" — 22px, `font-semibold`, `var(--ink-900)`, `text-center`.
+  - **Description** (`DialogDescription`): "A domain is your team's corner of the data catalog — a curated space for the assets that matter to you." — 14px, `var(--ink-500)`, `text-center`, `max-w-[440px] mx-auto`, `mt-3`.
+  - Spacer `mt-8`.
+  - **Input**: full-width, `h-12`, `rounded-lg`, `border` in `var(--hairline)`, placeholder "Name your domain", 15px text, focus border `var(--brand-blue)` + faint focus ring `0 0 0 3px rgba(67,134,250,0.15)`. Reuse `@/components/ui/input` and override height/radius via className.
+  - Spacer `mt-10`.
+  - **Footer** (`DialogFooter` overridden to `justify-center`): single primary button **Get started**, filled `var(--brand-blue)`, white text, `h-11 px-8 rounded-lg`, `font-medium`, hover slightly darker (`brightness-95`). Disabled (50% opacity, `cursor-not-allowed`) when the input is empty/whitespace.
 
-## Out of scope
+The default Radix `X` close button from `DialogContent` already sits top-right and matches the wireframe — no custom close button needed.
 
-- Sticky header on scroll.
-- Column sorting / filtering.
-- Click-through to the Checks tab.
+## Behavior
+
+- Local state inside `CreateDomainDialog`: `const [name, setName] = useState("")`.
+- Pressing **Enter** in the input triggers **Get started** when `name.trim()` is non-empty.
+- On submit (this turn): just close the dialog and reset `name` — no persistence, no toast, no sidebar update yet. We'll wire it into the sidebar's `DomainPill` domain list in a follow-up turn.
+- Closing the dialog (X, overlay click, Escape, or successful submit) resets `name` to `""`.
+
+## Component changes
+
+New file: `src/components/create-domain-dialog.tsx`
+- Props: `{ open: boolean; onOpenChange: (open: boolean) => void; onCreate?: (name: string) => void; }`.
+- Renders the `Dialog` / `DialogContent` / `DialogHeader` / `DialogTitle` / `DialogDescription` / `Input` / `DialogFooter` / `Button` tree described above.
+
+Edit: `src/components/agentflow-topbar.tsx`
+- Import `useState` (if not already), the new `CreateDomainDialog`.
+- Lift dialog open state into `AgentflowTopbar` (or co-locate with `NewMenu` and pass a callback). Simpler: keep `NewMenu` self-contained — add `const [domainOpen, setDomainOpen] = useState(false)` inside `NewMenu`, render `<CreateDomainDialog open={domainOpen} onOpenChange={setDomainOpen} />` as a sibling of the menu, and have the **Create new domain** item call `setOpen(false); setDomainOpen(true);`.
+
+## Out of scope (this turn)
+
+- Persisting the new domain into the sidebar `DomainPill` list (currently local state in that component — needs lifting in a follow-up).
+- Validation beyond "non-empty after trim" (e.g., uniqueness, length cap, allowed characters).
+- Wiring **Add new dataset** to its own modal/flow.
+- Success toast / animation.
 
