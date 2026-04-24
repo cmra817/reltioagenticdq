@@ -496,7 +496,7 @@ function AssetOverview({ selected }: { selected: string | null }) {
             </>
           ) : (
             <>
-              {view.rows.length} <DatasetIcon size={12} />
+              {view.rows.length} <GridIcon size={12} />
             </>
           )}
         </span>
