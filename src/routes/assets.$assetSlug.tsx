@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { Columns3, X } from "lucide-react";
+import { Columns3, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ChatComposer } from "@/components/chat-composer";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
@@ -123,6 +123,9 @@ function AssetDetailPage() {
   const detail = ASSET_DETAILS[assetSlug.toLowerCase()] ?? ASSET_DETAILS.orders;
   const [activeTab, setActiveTab] = useState<TabName>("Overview");
   const [columnsSubTab, setColumnsSubTab] = useState<"Profiling" | "Sample data">("Profiling");
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const selectedColumn = selectedIndex === null ? null : SAMPLE_COLUMNS[selectedIndex] ?? null;
+  const rightPanelOpen = activeTab === "Columns" && selectedColumn !== null;
 
   return (
     <AppShell activeNav="explore">
@@ -279,6 +282,8 @@ function AssetDetailPage() {
               columns={SAMPLE_COLUMNS}
               subTab={columnsSubTab}
               onSubTab={setColumnsSubTab}
+              selectedIndex={selectedIndex}
+              onSelectIndex={setSelectedIndex}
             />
           )}
 
@@ -287,18 +292,22 @@ function AssetDetailPage() {
         </div>
 
         {/* floating composer (centered over content area, not full viewport) */}
-        <FloatingComposer />
+        <FloatingComposer rightPanelOpen={rightPanelOpen} />
       </div>
     </AppShell>
   );
 }
 
-function FloatingComposer() {
+function FloatingComposer({ rightPanelOpen }: { rightPanelOpen: boolean }) {
   const { collapsed } = useSidebarState();
+  const PANEL_WIDTH = 440;
   return (
     <div
       className="pointer-events-none fixed bottom-6 z-30 px-8"
-      style={{ left: collapsed ? 0 : 260, right: 0 }}
+      style={{
+        left: collapsed ? 0 : 260,
+        right: rightPanelOpen ? PANEL_WIDTH : 0,
+      }}
     >
       <div className="pointer-events-auto mx-auto w-full max-w-2xl">
         <ChatComposer />
@@ -415,10 +424,14 @@ function ColumnsPanel({
   columns,
   subTab,
   onSubTab,
+  selectedIndex,
+  onSelectIndex,
 }: {
   columns: ColumnRow[];
   subTab: "Profiling" | "Sample data";
   onSubTab: (s: "Profiling" | "Sample data") => void;
+  selectedIndex: number | null;
+  onSelectIndex: (i: number | null) => void;
 }) {
   const [visibleProfiling, setVisibleProfiling] = useState<Set<string>>(
     () => new Set(PROFILING_COLUMNS.map((c) => c.key)),
@@ -426,7 +439,7 @@ function ColumnsPanel({
   const [visibleSample, setVisibleSample] = useState<Set<string>>(
     () => new Set(SAMPLE_ATTRIBUTES),
   );
-  const [selectedColumn, setSelectedColumn] = useState<ColumnRow | null>(null);
+  const selectedColumn = selectedIndex === null ? null : columns[selectedIndex] ?? null;
 
   const toggleSetItem = (
     setter: React.Dispatch<React.SetStateAction<Set<string>>>,
@@ -506,12 +519,12 @@ function ColumnsPanel({
               </tr>
             </thead>
             <tbody>
-              {columns.map((row) => {
-                const isSelected = selectedColumn?.name === row.name;
+              {columns.map((row, idx) => {
+                const isSelected = selectedIndex === idx;
                 return (
                 <tr
                   key={row.name}
-                  onClick={() => setSelectedColumn(row)}
+                  onClick={() => onSelectIndex(idx)}
                   className="cursor-pointer border-t transition-colors hover:bg-[color:var(--surface-soft)]"
                   style={{
                     borderColor: "var(--hairline)",
@@ -608,16 +621,41 @@ function ColumnsPanel({
         </div>
       )}
 
-      <ColumnDetailPanel column={selectedColumn} onClose={() => setSelectedColumn(null)} />
+      <ColumnDetailPanel
+        column={selectedColumn}
+        index={selectedIndex}
+        total={columns.length}
+        onPrev={() =>
+          onSelectIndex(
+            selectedIndex === null
+              ? null
+              : (selectedIndex - 1 + columns.length) % columns.length,
+          )
+        }
+        onNext={() =>
+          onSelectIndex(
+            selectedIndex === null ? null : (selectedIndex + 1) % columns.length,
+          )
+        }
+        onClose={() => onSelectIndex(null)}
+      />
     </div>
   );
 }
 
 function ColumnDetailPanel({
   column,
+  index,
+  total,
+  onPrev,
+  onNext,
   onClose,
 }: {
   column: ColumnRow | null;
+  index: number | null;
+  total: number;
+  onPrev: () => void;
+  onNext: () => void;
   onClose: () => void;
 }) {
   const open = column !== null;
@@ -730,8 +768,38 @@ function ColumnDetailPanel({
                 <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>What appears most often</p>
                 <FreqTable
                   rows={Array.from({ length: 6 }).map(() => ({ type: "Databricks", count: 1, pct: 76 }))}
-                />
+              />
               </section>
+            </div>
+
+            {/* Footer nav: prev / current / next */}
+            <div
+              className="flex items-center justify-between border-t bg-white px-6 py-3"
+              style={{ borderColor: "var(--hairline)" }}
+            >
+              <button
+                type="button"
+                onClick={onPrev}
+                aria-label="Previous column"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)] disabled:opacity-40"
+                style={{ color: "var(--ink-700)" }}
+                disabled={total <= 1}
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <div className="text-[12px] font-medium" style={{ color: "var(--ink-700)" }}>
+                {(index ?? 0) + 1} of {total} columns
+              </div>
+              <button
+                type="button"
+                onClick={onNext}
+                aria-label="Next column"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)] disabled:opacity-40"
+                style={{ color: "var(--ink-700)" }}
+                disabled={total <= 1}
+              >
+                <ChevronRight size={18} />
+              </button>
             </div>
           </>
         )}
