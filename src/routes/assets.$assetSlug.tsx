@@ -81,17 +81,10 @@ function AssetDetailPage() {
                 </svg>
               </Link>
               <span
-                className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-md"
-                style={{ background: "var(--surface-soft)", color: "var(--brand-blue)" }}
+                className="mt-0.5 inline-flex h-9 w-9 items-center justify-center"
                 aria-hidden="true"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="16" rx="2" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                  <line x1="3" y1="15" x2="21" y2="15" />
-                  <line x1="9" y1="4" x2="9" y2="20" />
-                  <line x1="15" y1="4" x2="15" y2="20" />
-                </svg>
+                <SourceLogo source={detail.source} />
               </span>
               <div className="flex-1">
                 <h1
@@ -100,9 +93,20 @@ function AssetDetailPage() {
                 >
                   {detail.name}
                 </h1>
-                <p className="mt-0.5 text-[13px]" style={{ color: "var(--ink-500)" }}>
-                  {detail.path}
-                </p>
+                <div
+                  className="mt-1 flex items-center gap-1.5 text-[12px]"
+                  style={{ color: "var(--ink-500)" }}
+                >
+                  <span style={{ color: "var(--ink-300)" }}>
+                    <TableIcon size={13} />
+                  </span>
+                  <span>Table</span>
+                  <span style={{ color: "var(--ink-300)" }}>›</span>
+                  <span style={{ color: "var(--brand-blue)" }}>
+                    <DatasetIcon size={13} />
+                  </span>
+                  <span style={{ color: "var(--ink-700)" }}>{detail.dataset}</span>
+                </div>
               </div>
             </div>
 
