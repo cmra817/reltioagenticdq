@@ -1250,19 +1250,29 @@ function HeatmapCard({ slug }: { slug: string }) {
   const seed = hashString(slug);
   const cellSize = 12;
   const gap = 3;
-  const weeks = 53;
   const days = 7;
   const leftPad = 28;
   const topPad = 18;
-  const width = leftPad + weeks * (cellSize + gap);
-  const height = topPad + days * (cellSize + gap) + 6;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  // start grid: go back (weeks-1)*7 + today's day-of-week days
-  const startOffset = (weeks - 1) * 7 + today.getDay();
-  const start = new Date(today);
-  start.setDate(start.getDate() - startOffset);
+
+  // Start at the Sunday on/before Jan 1 of current year so column 0 = first week of January.
+  const year = today.getFullYear();
+  const jan1 = new Date(year, 0, 1);
+  const start = new Date(jan1);
+  start.setDate(start.getDate() - jan1.getDay()); // back up to Sunday
+
+  // End at the Saturday on/after Dec 31 of current year.
+  const dec31 = new Date(year, 11, 31);
+  const end = new Date(dec31);
+  end.setDate(end.getDate() + (6 - dec31.getDay()));
+
+  const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+  const weeks = totalDays / 7;
+
+  const width = leftPad + weeks * (cellSize + gap);
+  const height = topPad + days * (cellSize + gap) + 6;
 
   type Cell = { date: Date; intensity: number; passed: number; failed: number; isFuture: boolean };
   const cells: Cell[][] = [];
@@ -1275,9 +1285,8 @@ function HeatmapCard({ slug }: { slug: string }) {
       const date = new Date(start);
       date.setDate(date.getDate() + w * 7 + dRow);
       const isFuture = date.getTime() > today.getTime();
-      // Bell-shape: greener mid-year, lighter at edges
       const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000);
-      const seasonal = Math.sin((dayOfYear / 365) * Math.PI); // 0..1
+      const seasonal = Math.sin((dayOfYear / 365) * Math.PI);
       const r = seededRand(seed + w * 7 + dRow);
       let intensity = 0;
       if (!isFuture) {
@@ -1291,7 +1300,7 @@ function HeatmapCard({ slug }: { slug: string }) {
       const passed = intensity === 0 ? 0 : Math.round(50 + r * 200);
       const failed = intensity >= 3 ? 0 : intensity === 0 ? 0 : Math.round(r * 8);
       col.push({ date, intensity, passed, failed, isFuture });
-      if (dRow === 0 && date.getMonth() !== lastMonth) {
+      if (dRow === 0 && date.getMonth() !== lastMonth && date.getFullYear() === year) {
         monthLabels.push({ x: leftPad + w * (cellSize + gap), label: date.toLocaleDateString([], { month: "short" }) });
         lastMonth = date.getMonth();
       }
@@ -1303,32 +1312,37 @@ function HeatmapCard({ slug }: { slug: string }) {
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <div className="overflow-x-auto">
-        <svg width={width} height={height} role="img" aria-label="DQ check activity heatmap">
-          {monthLabels.map((m) => (
-            <text key={`${m.label}-${m.x}`} x={m.x} y={12} fontSize={10} fill="#64748b">{m.label}</text>
-          ))}
-          {dayLabels.map((lbl, i) => lbl ? (
-            <text key={lbl} x={0} y={topPad + i * (cellSize + gap) + cellSize - 2} fontSize={10} fill="#64748b">{lbl}</text>
-          ) : null)}
-          {cells.map((col, wi) => col.map((cell, di) => (
-            <rect
-              key={`${wi}-${di}`}
-              x={leftPad + wi * (cellSize + gap)}
-              y={topPad + di * (cellSize + gap)}
-              width={cellSize}
-              height={cellSize}
-              rx={2}
-              fill={cell.isFuture ? "transparent" : HEATMAP_PALETTE[cell.intensity]}
-            >
-              <title>
-                {cell.date.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
-                {cell.isFuture ? "" : ` — ${cell.passed} passed, ${cell.failed} failed`}
-              </title>
-            </rect>
-          )))}
-        </svg>
-      </div>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMidYMid meet"
+        width="100%"
+        height="auto"
+        role="img"
+        aria-label="DQ check activity heatmap"
+      >
+        {monthLabels.map((m) => (
+          <text key={`${m.label}-${m.x}`} x={m.x} y={12} fontSize={10} fill="#64748b">{m.label}</text>
+        ))}
+        {dayLabels.map((lbl, i) => lbl ? (
+          <text key={lbl} x={0} y={topPad + i * (cellSize + gap) + cellSize - 2} fontSize={10} fill="#64748b">{lbl}</text>
+        ) : null)}
+        {cells.map((col, wi) => col.map((cell, di) => (
+          <rect
+            key={`${wi}-${di}`}
+            x={leftPad + wi * (cellSize + gap)}
+            y={topPad + di * (cellSize + gap)}
+            width={cellSize}
+            height={cellSize}
+            rx={2}
+            fill={cell.isFuture ? "transparent" : HEATMAP_PALETTE[cell.intensity]}
+          >
+            <title>
+              {cell.date.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
+              {cell.isFuture ? "" : ` — ${cell.passed} passed, ${cell.failed} failed`}
+            </title>
+          </rect>
+        )))}
+      </svg>
       <div className="mt-3 flex items-center justify-end gap-2 text-xs text-slate-500">
         <span>Failed</span>
         {HEATMAP_PALETTE.map((c) => (
