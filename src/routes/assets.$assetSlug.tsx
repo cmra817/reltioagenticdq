@@ -572,10 +572,11 @@ function ColumnsPanel({
                 className="text-[11px] uppercase tracking-[0.08em]"
                 style={{ color: "var(--ink-300)" }}
               >
+                <th className="px-5 py-3 font-semibold">Name</th>
                 {sampleCols.map((k, i) => (
                   <th
                     key={k}
-                    className={`${i === 0 || i === sampleCols.length - 1 ? "px-5" : "px-3"} py-3 font-semibold`}
+                    className={`${i === sampleCols.length - 1 ? "px-5" : "px-3"} py-3 font-semibold`}
                   >
                     {k}
                   </th>
@@ -583,23 +584,24 @@ function ColumnsPanel({
               </tr>
             </thead>
             <tbody>
-              {SAMPLE_DATA_ROWS.map((row, idx) => (
+              {SAMPLE_FIELD_NAMES.map((fieldName) => (
                 <tr
-                  key={idx}
+                  key={fieldName}
                   className="border-t"
                   style={{ borderColor: "var(--hairline)" }}
                 >
+                  <td className="px-5 py-4 font-semibold" style={{ color: "var(--ink-900)" }}>
+                    {fieldName}
+                  </td>
                   {sampleCols.map((k, i) => {
-                    const isFirst = i === 0;
+                    const sampleIdx = SAMPLE_VALUE_KEYS.indexOf(k as typeof SAMPLE_VALUE_KEYS[number]);
+                    const row = SAMPLE_DATA_ROWS[sampleIdx];
+                    const value = row?.[fieldName] ?? "—";
                     const isLast = i === sampleCols.length - 1;
-                    const pad = isFirst || isLast ? "px-5" : "px-3";
+                    const pad = isLast ? "px-5" : "px-3";
                     return (
-                      <td
-                        key={k}
-                        className={`${pad} py-4 ${isFirst ? "font-semibold" : ""}`}
-                        style={{ color: isFirst ? "var(--ink-900)" : "var(--ink-700)" }}
-                      >
-                        {row[k]}
+                      <td key={k} className={`${pad} py-4`} style={{ color: "var(--ink-700)" }}>
+                        {value}
                       </td>
                     );
                   })}
