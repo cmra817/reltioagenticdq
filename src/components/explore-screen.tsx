@@ -1043,18 +1043,18 @@ function AssetOverview({
 /* ---------- screen ---------- */
 export function ExploreScreen() {
   const [selected, setSelected] = useState<Selection>(() => new Set(["Databricks"]));
+  const [assetTypes, setAssetTypes] = useState<Set<string>>(() => new Set());
+  const [tags, setTags] = useState<Set<string>>(() => new Set());
 
   const toggle = (name: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(name)) {
         next.delete(name);
-        // Toggling a source OFF also deselects its datasets
         if (isSource(name)) {
           for (const ds of SOURCE_DATASETS[name] ?? []) next.delete(ds);
         }
       } else {
-        // Toggling a source ON auto-selects all its datasets
         if (isSource(name)) {
           for (const ds of SOURCE_DATASETS[name] ?? []) next.add(ds);
         }
@@ -1063,6 +1063,20 @@ export function ExploreScreen() {
       return next;
     });
   };
+
+  const toggleSetItem = (
+    setter: React.Dispatch<React.SetStateAction<Set<string>>>,
+  ) =>
+    (label: string) =>
+      setter((prev) => {
+        const next = new Set(prev);
+        if (next.has(label)) next.delete(label);
+        else next.add(label);
+        return next;
+      });
+
+  const toggleAssetType = toggleSetItem(setAssetTypes);
+  const toggleTag = toggleSetItem(setTags);
 
   const removeSel = (name: string) =>
     setSelected((prev) => {
@@ -1077,10 +1091,17 @@ export function ExploreScreen() {
     <div className="relative flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
         <div className="flex gap-6 px-8 pt-6 pb-28">
-          <FilterPanel selected={selected} onToggle={toggle} />
+          <FilterPanel
+            selected={selected}
+            onToggle={toggle}
+            assetTypes={assetTypes}
+            onToggleAssetType={toggleAssetType}
+            tags={tags}
+            onToggleTag={toggleTag}
+          />
           <div className="flex flex-1 flex-col gap-4">
             <SelectionChips selected={selected} onRemove={removeSel} onClear={clearAll} />
-            <AssetOverview selected={selected} />
+            <AssetOverview selected={selected} assetTypes={assetTypes} tags={tags} />
           </div>
         </div>
       </div>
