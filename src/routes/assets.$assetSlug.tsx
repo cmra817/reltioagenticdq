@@ -282,6 +282,8 @@ function AssetDetailPage() {
               columns={SAMPLE_COLUMNS}
               subTab={columnsSubTab}
               onSubTab={setColumnsSubTab}
+              selectedIndex={selectedIndex}
+              onSelectIndex={setSelectedIndex}
             />
           )}
 
@@ -290,7 +292,7 @@ function AssetDetailPage() {
         </div>
 
         {/* floating composer (centered over content area, not full viewport) */}
-        <FloatingComposer />
+        <FloatingComposer rightPanelOpen={rightPanelOpen} />
       </div>
     </AppShell>
   );
