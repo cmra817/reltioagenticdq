@@ -192,6 +192,8 @@ const DATASET_ASSETS: Record<string, AssetRow[]> = {
   "Loyalty Points": LOYALTY_POINTS_CHILDREN,
 };
 
+const countTables = (rows: AssetRow[]) => rows.filter((r) => r.kind === "table").length;
+
 const DATABRICKS_ALL: AssetRow[] = [
   { name: "Customer Data", kind: "dataset", description: "Customer master data including profiles, orders, and revenue dashboards", source: "Databricks", columns: null, lastAnalyzed: "15h ago" },
   { name: "Product catalog", kind: "dataset", description: "Products, SKUs, and category hierarchy", source: "Databricks", columns: null, lastAnalyzed: "2h ago" },
@@ -200,6 +202,12 @@ const DATABRICKS_ALL: AssetRow[] = [
   ...PRODUCT_CATALOG_CHILDREN,
   ...LOYALTY_POINTS_CHILDREN,
 ];
+
+const DATASET_TABLE_COUNTS: Record<string, number> = {
+  "Customer Data": countTables(CUSTOMER_DATA_CHILDREN),
+  "Product catalog": countTables(PRODUCT_CATALOG_CHILDREN),
+  "Loyalty Points": countTables(LOYALTY_POINTS_CHILDREN),
+};
 
 const TABLE_COLUMNS: Record<string, ColumnRow[]> = {
   Orders: [
