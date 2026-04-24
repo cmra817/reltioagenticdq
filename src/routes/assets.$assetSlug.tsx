@@ -18,11 +18,10 @@ export const Route = createFileRoute("/assets/$assetSlug")({
 type AssetDetail = {
   name: string;
   path: string;
-  tables: number;
-  fields: number;
+  columns: number;
   rows: string;
   checks: number;
-  completeness: string;
+  fillRate: string;
   quality: number;
   validity: number;
   accuracy: number;
@@ -32,13 +31,12 @@ type AssetDetail = {
 
 const ASSET_DETAILS: Record<string, AssetDetail> = {
   orders: {
-    name: "customer_data",
-    path: "Databricks/customer_data",
-    tables: 2,
-    fields: 184,
+    name: "Orders",
+    path: "Databricks/customer_data/orders",
+    columns: 184,
     rows: "4,897",
     checks: 21,
-    completeness: "85%",
+    fillRate: "85%",
     quality: 70,
     validity: 70,
     accuracy: 40,
@@ -55,7 +53,7 @@ const ASSET_DETAILS: Record<string, AssetDetail> = {
   },
 };
 
-const TABS = ["Overview", "Assets", "Checks", "Activity"] as const;
+const TABS = ["Overview", "Columns", "Checks", "Activity"] as const;
 
 function AssetDetailPage() {
   const { assetSlug } = useParams({ from: "/assets/$assetSlug" });
@@ -85,10 +83,11 @@ function AssetDetailPage() {
                 aria-hidden="true"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <ellipse cx="12" cy="6" rx="8" ry="3" />
-                  <path d="M4 6v12c0 1.66 3.58 3 8 3s8-1.34 8-3V6" />
-                  <path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3" />
-                  <circle cx="18" cy="18" r="3" />
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <line x1="3" y1="15" x2="21" y2="15" />
+                  <line x1="9" y1="4" x2="9" y2="20" />
+                  <line x1="15" y1="4" x2="15" y2="20" />
                 </svg>
               </span>
               <div className="flex-1">
@@ -129,13 +128,12 @@ function AssetDetailPage() {
           </div>
 
           {/* Stat cards */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {[
-              { label: "Tables", value: String(detail.tables) },
-              { label: "Fields", value: String(detail.fields) },
+              { label: "Columns", value: String(detail.columns) },
               { label: "Rows", value: detail.rows },
               { label: "Checks", value: String(detail.checks) },
-              { label: "Completeness rate", value: detail.completeness },
+              { label: "Fill rate", value: detail.fillRate },
             ].map((s) => (
               <div
                 key={s.label}
