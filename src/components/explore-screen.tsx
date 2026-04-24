@@ -354,7 +354,7 @@ function FilterPanel({
             className="flex flex-1 items-center gap-2 py-1.5 text-left"
           >
             <GridIcon size={14} />
-            <span className="flex-1 font-medium">Databricks (633)</span>
+            <span className="flex-1 font-medium">Databricks ({DATABRICKS_TREE.length})</span>
           </button>
         </div>
         {databricksOpen && (
