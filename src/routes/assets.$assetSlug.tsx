@@ -552,7 +552,7 @@ function ColumnsPanel({
                 className="text-[11px] uppercase tracking-[0.08em]"
                 style={{ color: "var(--ink-300)" }}
               >
-                <th className="px-5 py-3 font-semibold">Column</th>
+                <th className="px-5 py-3 font-semibold">Name</th>
                 {sampleCols.map((k, i) => (
                   <th
                     key={k}
