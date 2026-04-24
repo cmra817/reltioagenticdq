@@ -657,6 +657,8 @@ function FilterPanel({
           { label: "Dashboards", icon: <ChartIcon size={14} /> },
           { label: "Query", icon: <QueryIcon size={14} /> },
         ]}
+        checked={assetTypes}
+        onToggle={onToggleAssetType}
       />
 
       <CheckboxFilterGroup
@@ -670,6 +672,8 @@ function FilterPanel({
           "Marketing",
           "System metadata",
         ]}
+        checked={tags}
+        onToggle={onToggleTag}
       />
     </aside>
   );
