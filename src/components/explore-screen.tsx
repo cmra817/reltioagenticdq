@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChatComposer } from "./chat-composer";
-import { DatabricksIcon, BigQueryIcon } from "./brand-icons";
 
 /* ---------- icons ---------- */
 function ChevronDown({ size = 14, className = "" }: { size?: number; className?: string }) {
