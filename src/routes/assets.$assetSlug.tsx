@@ -571,24 +571,21 @@ function ColumnsPanel({
               </tr>
             </thead>
             <tbody>
-              {SAMPLE_FIELD_NAMES.map((fieldName) => (
+              {SAMPLE_DATA_ROWS.map((row) => (
                 <tr
-                  key={fieldName}
+                  key={row.primary}
                   className="border-t"
                   style={{ borderColor: "var(--hairline)" }}
                 >
                   <td className="px-5 py-4 font-semibold" style={{ color: "var(--ink-900)" }}>
-                    {fieldName}
+                    {row.primary}
                   </td>
                   {sampleCols.map((k, i) => {
-                    const sampleIdx = SAMPLE_VALUE_KEYS.indexOf(k as typeof SAMPLE_VALUE_KEYS[number]);
-                    const row = SAMPLE_DATA_ROWS[sampleIdx];
-                    const value = row?.[fieldName] ?? "—";
                     const isLast = i === sampleCols.length - 1;
                     const pad = isLast ? "px-5" : "px-3";
                     return (
                       <td key={k} className={`${pad} py-4`} style={{ color: "var(--ink-700)" }}>
-                        {value}
+                        {row[k]}
                       </td>
                     );
                   })}
