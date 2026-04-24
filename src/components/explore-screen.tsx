@@ -893,46 +893,44 @@ function AssetOverview({ selected }: { selected: Selection }) {
                     style={{ borderColor: "var(--hairline)" }}
                   >
                     <td className="px-6 py-4 align-top">
-                      <Link
-                        to="/assets/$assetSlug"
-                        params={{ assetSlug: slug }}
-                        className="flex items-start gap-3"
-                      >
-                        <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
-                          <SourceLogo source={a.source} />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-[14px]" style={{ color: "var(--ink-900)" }}>
-                            {a.name}
-                          </div>
-                          <div
-                            className="mt-0.5 flex items-center gap-1.5 text-[12px]"
-                            style={{ color: "var(--ink-500)" }}
-                          >
-                            <span style={{ color: "var(--ink-300)" }}>{kindIcon(a.kind, 13)}</span>
-                            <span className="capitalize">{a.kind}</span>
-                            <span style={{ color: "var(--ink-300)" }}>›</span>
-                            <span style={{ color: "var(--brand-blue)" }}>
-                              <DatasetIcon size={13} />
-                            </span>
-                            <span style={{ color: "var(--ink-700)" }}>{a.dataset}</span>
-                          </div>
-                          <div
-                            className="mt-2 flex items-start justify-between gap-3"
-                          >
-                            <p className="flex-1 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                      <div className="flex items-start gap-3">
+                        <Link
+                          to="/assets/$assetSlug"
+                          params={{ assetSlug: slug }}
+                          className="flex flex-1 items-start gap-3"
+                        >
+                          <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
+                            <SourceLogo source={a.source} />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-[14px]" style={{ color: "var(--ink-900)" }}>
+                              {a.name}
+                            </div>
+                            <div
+                              className="mt-0.5 flex items-center gap-1.5 text-[12px]"
+                              style={{ color: "var(--ink-500)" }}
+                            >
+                              <span style={{ color: "var(--ink-300)" }}>{kindIcon(a.kind, 13)}</span>
+                              <span className="capitalize">{a.kind}</span>
+                              <span style={{ color: "var(--ink-300)" }}>›</span>
+                              <span style={{ color: "var(--brand-blue)" }}>
+                                <DatasetIcon size={13} />
+                              </span>
+                              <span style={{ color: "var(--ink-700)" }}>{a.dataset}</span>
+                            </div>
+                            <p className="mt-2 text-[13px]" style={{ color: "var(--ink-700)" }}>
                               {a.description}
                             </p>
-                            {a.tags.length > 0 && (
-                              <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-                                {a.tags.map((t) => (
-                                  <TagChip key={t} label={t} />
-                                ))}
-                              </div>
-                            )}
                           </div>
-                        </div>
-                      </Link>
+                        </Link>
+                        {a.tags.length > 0 && (
+                          <div className="flex shrink-0 flex-wrap items-end justify-end gap-1.5 self-end">
+                            {a.tags.map((t) => (
+                              <TagChip key={t} label={t} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
                       {a.columns !== null ? a.columns.toLocaleString() : <span style={{ color: "var(--ink-300)" }}>—</span>}
