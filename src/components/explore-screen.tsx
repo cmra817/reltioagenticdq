@@ -932,15 +932,20 @@ function AssetOverview({ selected }: { selected: Selection }) {
                     <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
                       {a.checks}
                     </td>
-                    <td className="px-6 py-4 align-top">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        {a.tags.length > 0 &&
-                          a.tags.map((t) => <TagChip key={t} label={t} />)}
+                    <td className="relative px-6 py-4 align-top">
+                      <div className="text-right">
                         <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
                           <ClockIcon size={13} />
                           {a.lastAnalyzed}
                         </span>
                       </div>
+                      {a.tags.length > 0 && (
+                        <div className="absolute right-6 bottom-4 flex flex-nowrap items-center gap-1.5">
+                          {a.tags.map((t) => (
+                            <TagChip key={t} label={t} />
+                          ))}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
