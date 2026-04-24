@@ -621,7 +621,24 @@ function ColumnsPanel({
         </div>
       )}
 
-      <ColumnDetailPanel column={selectedColumn} onClose={() => setSelectedColumn(null)} />
+      <ColumnDetailPanel
+        column={selectedColumn}
+        index={selectedIndex}
+        total={columns.length}
+        onPrev={() =>
+          onSelectIndex(
+            selectedIndex === null
+              ? null
+              : (selectedIndex - 1 + columns.length) % columns.length,
+          )
+        }
+        onNext={() =>
+          onSelectIndex(
+            selectedIndex === null ? null : (selectedIndex + 1) % columns.length,
+          )
+        }
+        onClose={() => onSelectIndex(null)}
+      />
     </div>
   );
 }
