@@ -587,7 +587,9 @@ function FilterPanel({
           className="flex flex-1 items-center gap-2 py-1.5 text-left"
         >
           <CheckSquare checked={isSel} />
-          <GridIcon size={14} />
+          <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center">
+            <SourceLogo source={label} />
+          </span>
           <span className="flex-1 font-medium">
             {label} ({count})
           </span>
