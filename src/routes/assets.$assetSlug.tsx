@@ -307,16 +307,6 @@ function FloatingComposer() {
   );
 }
 
-function _UnusedAfterComposer() {
-  return (
-    <>
-        <div className="pointer-events-none hidden">
-          <ChatComposer />
-        </div>
-      </div>
-    </AppShell>
-  );
-}
 
 function Bar({ label, value }: { label: string; value: number }) {
   return (
