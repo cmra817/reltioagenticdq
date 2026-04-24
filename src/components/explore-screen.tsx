@@ -289,7 +289,14 @@ function TreeRow({
           <span style={{ color: isSel ? "var(--brand-blue)" : "var(--ink-500)" }}>
             {kindIcon(node.kind, 14)}
           </span>
-          <span className="flex-1 truncate font-medium">{node.name}</span>
+          <span className="flex-1 truncate font-medium">
+            {node.name}
+            {hasChildren && (
+              <span className="ml-1 font-normal" style={{ color: "var(--ink-500)" }}>
+                ({node.children!.length})
+              </span>
+            )}
+          </span>
         </button>
       </div>
       {hasChildren && open && (
