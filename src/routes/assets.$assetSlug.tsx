@@ -93,14 +93,14 @@ type SampleRow = Record<string, string | number>;
 const SAMPLE_ATTRIBUTES = SAMPLE_COLUMNS.map((c) => c.name);
 
 const SAMPLE_DATA_ROWS: (SampleRow & { primary: string })[] = [
-  { primary: "1",    Order_ID: 1001, Customer_ID: 123,  Order_Date: "2024-01-15", Total_Amount: "$245.50", Status: "Shipped",   Shipping_Address: "123 Maple St, Austin TX",     Payment_Method: "Credit Card", Discount_Code: "WELCOME10" },
-  { primary: "2",    Order_ID: 1002, Customer_ID: 847,  Order_Date: "2024-02-03", Total_Amount: "$89.99",  Status: "Delivered", Shipping_Address: "47 Oak Ave, Seattle WA",      Payment_Method: "PayPal",      Discount_Code: "—" },
-  { primary: "3",    Order_ID: 1003, Customer_ID: 1738, Order_Date: "2024-02-21", Total_Amount: "$1,299.00", Status: "Pending",  Shipping_Address: "920 Pine Rd, Denver CO",      Payment_Method: "Credit Card", Discount_Code: "SPRING25" },
-  { primary: "4",    Order_ID: 1004, Customer_ID: 3918, Order_Date: "2024-03-08", Total_Amount: "$57.25",  Status: "Cancelled", Shipping_Address: "12 Birch Ln, Miami FL",       Payment_Method: "Apple Pay",   Discount_Code: "—" },
-  { primary: "5",    Order_ID: 1005, Customer_ID: 839,  Order_Date: "2024-03-19", Total_Amount: "$432.10", Status: "Shipped",   Shipping_Address: "88 Cedar Ct, Boston MA",      Payment_Method: "Credit Card", Discount_Code: "—" },
-  { primary: "6",    Order_ID: 1006, Customer_ID: 927,  Order_Date: "2024-04-02", Total_Amount: "$15.00",  Status: "Delivered", Shipping_Address: "5 Elm St, Portland OR",       Payment_Method: "Debit Card",  Discount_Code: "FREESHIP" },
-  { primary: "7",    Order_ID: 1007, Customer_ID: 121,  Order_Date: "2024-04-14", Total_Amount: "$782.40", Status: "Shipped",   Shipping_Address: "330 Walnut Way, Chicago IL",  Payment_Method: "Credit Card", Discount_Code: "—" },
-  { primary: "8",    Order_ID: 1008, Customer_ID: 846,  Order_Date: "2024-04-28", Total_Amount: "$199.95", Status: "Delivered", Shipping_Address: "76 Spruce Blvd, Phoenix AZ",  Payment_Method: "PayPal",      Discount_Code: "SAVE15" },
+  { primary: "Sally Smith",      Order_ID: 1001, Customer_ID: 123,  Order_Date: "2024-01-15", Total_Amount: "$245.50",   Status: "Shipped",   Shipping_Address: "123 Maple St, Austin TX",     Payment_Method: "Credit Card", Discount_Code: "WELCOME10" },
+  { primary: "John Smith",       Order_ID: 1002, Customer_ID: 847,  Order_Date: "2024-02-03", Total_Amount: "$89.99",    Status: "Delivered", Shipping_Address: "47 Oak Ave, Seattle WA",      Payment_Method: "PayPal",      Discount_Code: "—" },
+  { primary: "Carina Alabanza",  Order_ID: 1003, Customer_ID: 1738, Order_Date: "2024-02-21", Total_Amount: "$1,299.00", Status: "Pending",   Shipping_Address: "920 Pine Rd, Denver CO",      Payment_Method: "Credit Card", Discount_Code: "SPRING25" },
+  { primary: "Diego Martinez",   Order_ID: 1004, Customer_ID: 3918, Order_Date: "2024-03-08", Total_Amount: "$57.25",    Status: "Cancelled", Shipping_Address: "12 Birch Ln, Miami FL",       Payment_Method: "Apple Pay",   Discount_Code: "—" },
+  { primary: "Priya Patel",      Order_ID: 1005, Customer_ID: 839,  Order_Date: "2024-03-19", Total_Amount: "$432.10",   Status: "Shipped",   Shipping_Address: "88 Cedar Ct, Boston MA",      Payment_Method: "Credit Card", Discount_Code: "—" },
+  { primary: "Marcus Lee",       Order_ID: 1006, Customer_ID: 927,  Order_Date: "2024-04-02", Total_Amount: "$15.00",    Status: "Delivered", Shipping_Address: "5 Elm St, Portland OR",       Payment_Method: "Debit Card",  Discount_Code: "FREESHIP" },
+  { primary: "Emma Johnson",     Order_ID: 1007, Customer_ID: 121,  Order_Date: "2024-04-14", Total_Amount: "$782.40",   Status: "Shipped",   Shipping_Address: "330 Walnut Way, Chicago IL",  Payment_Method: "Credit Card", Discount_Code: "—" },
+  { primary: "Liam Chen",        Order_ID: 1008, Customer_ID: 846,  Order_Date: "2024-04-28", Total_Amount: "$199.95",   Status: "Delivered", Shipping_Address: "76 Spruce Blvd, Phoenix AZ",  Payment_Method: "PayPal",      Discount_Code: "SAVE15" },
 ];
 
 const PROFILING_COLUMNS = [
