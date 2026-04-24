@@ -412,6 +412,46 @@ function kindIcon(kind: AssetKind, size = 16) {
   return <ChartIcon size={size} />;
 }
 
+function SourceLogo({ source }: { source: string }) {
+  if (source === "BigQuery") {
+    return (
+      <span className="inline-block h-5 w-5">
+        <svg width="20" height="20" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M20 3 4.5 12v16L20 37l15.5-9V12L20 3Z" fill="#4386FA" />
+          <circle cx="18" cy="18" r="6" stroke="white" strokeWidth="2.4" fill="none" />
+          <line x1="22.5" y1="22.5" x2="27" y2="27" stroke="white" strokeWidth="2.4" strokeLinecap="round" />
+        </svg>
+      </span>
+    );
+  }
+  return (
+    <span className="inline-block h-5 w-5">
+      <svg width="20" height="20" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <path d="M20 4 4 12.5l4 2.1L20 8.3l12 6.3 4-2.1L20 4Z" fill="#FF3621" />
+        <path d="M4 19.4 20 27.9l16-8.5-4-2.1-12 6.3-12-6.3-4 2.1Z" fill="#FF3621" opacity="0.85" />
+        <path d="M4 26.4 20 34.9l16-8.5-4-2.1-12 6.3-12-6.3-4 2.1Z" fill="#FF3621" opacity="0.65" />
+      </svg>
+    </span>
+  );
+}
+
+function TagChip({ label }: { label: string }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+      style={{
+        background: "color-mix(in oklab, var(--ink-500) 14%, white)",
+        color: "var(--ink-700)",
+      }}
+    >
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M21.41 11.58 12.41 2.58A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9a2 2 0 0 0 2.83 0l7-7a2 2 0 0 0-.01-2.84zM6.5 8A1.5 1.5 0 1 1 8 6.5 1.5 1.5 0 0 1 6.5 8z" />
+      </svg>
+      {label}
+    </span>
+  );
+}
+
 /* ---------- selection helpers ---------- */
 type Selection = Set<string>;
 
