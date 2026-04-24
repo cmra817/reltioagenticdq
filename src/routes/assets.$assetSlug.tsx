@@ -115,7 +115,7 @@ const PROFILING_COLUMNS = [
   { key: "tag", label: "Tags" },
 ] as const;
 
-const SAMPLE_COLUMN_KEYS = [
+const SAMPLE_FIELD_NAMES = [
   "Order_ID",
   "Customer_ID",
   "Order_Date",
@@ -124,6 +124,17 @@ const SAMPLE_COLUMN_KEYS = [
   "Shipping_Address",
   "Payment_Method",
   "Discount_Code",
+] as const;
+
+const SAMPLE_VALUE_KEYS = [
+  "Sample 1",
+  "Sample 2",
+  "Sample 3",
+  "Sample 4",
+  "Sample 5",
+  "Sample 6",
+  "Sample 7",
+  "Sample 8",
 ] as const;
 
 function AssetDetailPage() {
@@ -421,7 +432,7 @@ function ColumnsPanel({
     () => new Set(PROFILING_COLUMNS.map((c) => c.key)),
   );
   const [visibleSample, setVisibleSample] = useState<Set<string>>(
-    () => new Set(SAMPLE_COLUMN_KEYS),
+    () => new Set(SAMPLE_VALUE_KEYS),
   );
 
   const toggleSetItem = (
@@ -434,9 +445,9 @@ function ColumnsPanel({
       return next;
     });
 
-  const sampleOptions = SAMPLE_COLUMN_KEYS.map((k) => ({ key: k, label: k }));
+  const sampleOptions = SAMPLE_VALUE_KEYS.map((k) => ({ key: k, label: k }));
   const profilingCols = PROFILING_COLUMNS.filter((c) => visibleProfiling.has(c.key));
-  const sampleCols = SAMPLE_COLUMN_KEYS.filter((k) => visibleSample.has(k));
+  const sampleCols = SAMPLE_VALUE_KEYS.filter((k) => visibleSample.has(k));
 
   return (
     <div className="flex flex-col gap-4">
@@ -561,10 +572,11 @@ function ColumnsPanel({
                 className="text-[11px] uppercase tracking-[0.08em]"
                 style={{ color: "var(--ink-300)" }}
               >
+                <th className="px-5 py-3 font-semibold">Name</th>
                 {sampleCols.map((k, i) => (
                   <th
                     key={k}
-                    className={`${i === 0 || i === sampleCols.length - 1 ? "px-5" : "px-3"} py-3 font-semibold`}
+                    className={`${i === sampleCols.length - 1 ? "px-5" : "px-3"} py-3 font-semibold`}
                   >
                     {k}
                   </th>
@@ -572,23 +584,24 @@ function ColumnsPanel({
               </tr>
             </thead>
             <tbody>
-              {SAMPLE_DATA_ROWS.map((row, idx) => (
+              {SAMPLE_FIELD_NAMES.map((fieldName) => (
                 <tr
-                  key={idx}
+                  key={fieldName}
                   className="border-t"
                   style={{ borderColor: "var(--hairline)" }}
                 >
+                  <td className="px-5 py-4 font-semibold" style={{ color: "var(--ink-900)" }}>
+                    {fieldName}
+                  </td>
                   {sampleCols.map((k, i) => {
-                    const isFirst = i === 0;
+                    const sampleIdx = SAMPLE_VALUE_KEYS.indexOf(k as typeof SAMPLE_VALUE_KEYS[number]);
+                    const row = SAMPLE_DATA_ROWS[sampleIdx];
+                    const value = row?.[fieldName] ?? "—";
                     const isLast = i === sampleCols.length - 1;
-                    const pad = isFirst || isLast ? "px-5" : "px-3";
+                    const pad = isLast ? "px-5" : "px-3";
                     return (
-                      <td
-                        key={k}
-                        className={`${pad} py-4 ${isFirst ? "font-semibold" : ""}`}
-                        style={{ color: isFirst ? "var(--ink-900)" : "var(--ink-700)" }}
-                      >
-                        {row[k]}
+                      <td key={k} className={`${pad} py-4`} style={{ color: "var(--ink-700)" }}>
+                        {value}
                       </td>
                     );
                   })}
