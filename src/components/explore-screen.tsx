@@ -321,19 +321,34 @@ function FilterPanel({
           Data Source
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            setDatabricksOpen((o) => !o);
-            onSelect("Databricks");
-          }}
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
+        <div
+          className="flex w-full items-center gap-1 rounded-md pr-1 text-[13px] hover:bg-[color:var(--surface-soft)]"
           style={{ color: "var(--ink-900)" }}
         >
-          <GridIcon size={14} />
-          <span className="flex-1 font-medium">Databricks (633)</span>
-          {databricksOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDatabricksOpen((o) => !o);
+            }}
+            aria-label={databricksOpen ? "Collapse" : "Expand"}
+            aria-expanded={databricksOpen}
+            className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-[color:var(--ink-500)] transition-colors hover:bg-[color:var(--hairline)] hover:text-[color:var(--ink-900)]"
+          >
+            {databricksOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setDatabricksOpen(true);
+              onSelect("Databricks");
+            }}
+            className="flex flex-1 items-center gap-2 py-1.5 text-left"
+          >
+            <GridIcon size={14} />
+            <span className="flex-1 font-medium">Databricks (633)</span>
+          </button>
+        </div>
         {databricksOpen && (
           <div className="mt-1">
             {DATABRICKS_TREE.map((n) => (
@@ -342,16 +357,31 @@ function FilterPanel({
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={() => setBigqueryOpen((o) => !o)}
-          className="mt-1 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
+        <div
+          className="mt-1 flex w-full items-center gap-1 rounded-md pr-1 text-[13px] hover:bg-[color:var(--surface-soft)]"
           style={{ color: "var(--ink-900)" }}
         >
-          <GridIcon size={14} />
-          <span className="flex-1 font-medium">BigQuery (2)</span>
-          {bigqueryOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setBigqueryOpen((o) => !o);
+            }}
+            aria-label={bigqueryOpen ? "Collapse" : "Expand"}
+            aria-expanded={bigqueryOpen}
+            className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-[color:var(--ink-500)] transition-colors hover:bg-[color:var(--hairline)] hover:text-[color:var(--ink-900)]"
+          >
+            {bigqueryOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+          <button
+            type="button"
+            onClick={() => onSelect("BigQuery")}
+            className="flex flex-1 items-center gap-2 py-1.5 text-left"
+          >
+            <GridIcon size={14} />
+            <span className="flex-1 font-medium">BigQuery (2)</span>
+          </button>
+        </div>
       </div>
 
       <div>
