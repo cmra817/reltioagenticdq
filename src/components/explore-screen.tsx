@@ -554,9 +554,17 @@ function TreeRow({
 function FilterPanel({
   selected,
   onToggle,
+  assetTypes,
+  onToggleAssetType,
+  tags,
+  onToggleTag,
 }: {
   selected: Selection;
   onToggle: (n: string) => void;
+  assetTypes: Set<string>;
+  onToggleAssetType: (label: string) => void;
+  tags: Set<string>;
+  onToggleTag: (label: string) => void;
 }) {
   const [databricksOpen, setDatabricksOpen] = useState(true);
   const [bigqueryOpen, setBigqueryOpen] = useState(false);
@@ -649,6 +657,8 @@ function FilterPanel({
           { label: "Dashboards", icon: <ChartIcon size={14} /> },
           { label: "Query", icon: <QueryIcon size={14} /> },
         ]}
+        checked={assetTypes}
+        onToggle={onToggleAssetType}
       />
 
       <CheckboxFilterGroup
@@ -662,6 +672,8 @@ function FilterPanel({
           "Marketing",
           "System metadata",
         ]}
+        checked={tags}
+        onToggle={onToggleTag}
       />
     </aside>
   );
@@ -670,16 +682,17 @@ function FilterPanel({
 /* ---------- checkbox filter group ---------- */
 type FilterOption = string | { label: string; icon?: React.ReactNode };
 
-function CheckboxFilterGroup({ title, options }: { title: string; options: FilterOption[] }) {
-  const [checked, setChecked] = useState<Set<string>>(() => new Set());
-  const toggle = (opt: string) =>
-    setChecked((prev) => {
-      const next = new Set(prev);
-      if (next.has(opt)) next.delete(opt);
-      else next.add(opt);
-      return next;
-    });
-
+function CheckboxFilterGroup({
+  title,
+  options,
+  checked,
+  onToggle,
+}: {
+  title: string;
+  options: FilterOption[];
+  checked: Set<string>;
+  onToggle: (label: string) => void;
+}) {
   return (
     <div>
       <div
@@ -697,7 +710,7 @@ function CheckboxFilterGroup({ title, options }: { title: string; options: Filte
             <button
               key={label}
               type="button"
-              onClick={() => toggle(label)}
+              onClick={() => onToggle(label)}
               className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
               style={{ color: isOn ? "var(--brand-blue)" : "var(--ink-700)" }}
             >
@@ -784,18 +797,54 @@ function dedupeRows(rows: AssetRow[]): AssetRow[] {
   return out;
 }
 
-function resolveView(selected: Selection): View {
+const ASSET_TYPE_TO_KIND: Record<string, AssetKind> = {
+  Tables: "table",
+  Dashboards: "chart",
+  // "Query" has no matching kind in current data — will filter to nothing if selected alone
+};
+
+function applySecondaryFilters(
+  rows: AssetRow[],
+  assetTypes: Set<string>,
+  tags: Set<string>,
+): AssetRow[] {
+  let out = rows;
+  if (assetTypes.size > 0) {
+    const allowedKinds = new Set<AssetKind>();
+    for (const t of assetTypes) {
+      const k = ASSET_TYPE_TO_KIND[t];
+      if (k) allowedKinds.add(k);
+    }
+    out = out.filter((r) => allowedKinds.has(r.kind));
+  }
+  if (tags.size > 0) {
+    out = out.filter((r) => r.tags.some((t) => tags.has(t)));
+  }
+  return out;
+}
+
+function resolveView(
+  selected: Selection,
+  assetTypes: Set<string>,
+  tags: Set<string>,
+): View {
+  const hasSecondary = assetTypes.size > 0 || tags.size > 0;
+
   // Default: nothing selected → show everything across sources
   if (selected.size === 0) {
     return {
       mode: "rows",
       title: "All sources",
-      rows: dedupeRows([...DATABRICKS_ALL, ...BIGQUERY_ALL]),
+      rows: applySecondaryFilters(
+        dedupeRows([...DATABRICKS_ALL, ...BIGQUERY_ALL]),
+        assetTypes,
+        tags,
+      ),
     };
   }
 
-  // Single selection of a leaf table/dashboard → column view
-  if (selected.size === 1) {
+  // Single selection of a leaf table/dashboard → column view (skip if secondary filters active)
+  if (selected.size === 1 && !hasSecondary) {
     const only = Array.from(selected)[0];
     if (!isSource(only) && !isDataset(only)) {
       return { mode: "table", title: only, columns: getColumnsFor(only) };
@@ -826,12 +875,20 @@ function resolveView(selected: Selection): View {
   return {
     mode: "rows",
     title: titleParts.length > 2 ? `${titleParts.length} selections` : titleParts.join(" + "),
-    rows: dedupeRows(merged),
+    rows: applySecondaryFilters(dedupeRows(merged), assetTypes, tags),
   };
 }
 
-function AssetOverview({ selected }: { selected: Selection }) {
-  const view = resolveView(selected);
+function AssetOverview({
+  selected,
+  assetTypes,
+  tags,
+}: {
+  selected: Selection;
+  assetTypes: Set<string>;
+  tags: Set<string>;
+}) {
+  const view = resolveView(selected, assetTypes, tags);
 
   return (
     <section
@@ -935,7 +992,7 @@ function AssetOverview({ selected }: { selected: Selection }) {
                             style={{ color: "var(--ink-500)" }}
                           >
                             <span style={{ color: "var(--ink-300)" }}>{kindIcon(a.kind, 13)}</span>
-                            <span className="capitalize">{a.kind}</span>
+                            <span>{a.kind === "chart" ? "Dashboard" : a.kind === "table" ? "Table" : "Dataset"}</span>
                             <span style={{ color: "var(--ink-300)" }}>›</span>
                             <span style={{ color: "var(--brand-blue)" }}>
                               <DatasetIcon size={13} />
@@ -986,18 +1043,18 @@ function AssetOverview({ selected }: { selected: Selection }) {
 /* ---------- screen ---------- */
 export function ExploreScreen() {
   const [selected, setSelected] = useState<Selection>(() => new Set(["Databricks"]));
+  const [assetTypes, setAssetTypes] = useState<Set<string>>(() => new Set());
+  const [tags, setTags] = useState<Set<string>>(() => new Set());
 
   const toggle = (name: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(name)) {
         next.delete(name);
-        // Toggling a source OFF also deselects its datasets
         if (isSource(name)) {
           for (const ds of SOURCE_DATASETS[name] ?? []) next.delete(ds);
         }
       } else {
-        // Toggling a source ON auto-selects all its datasets
         if (isSource(name)) {
           for (const ds of SOURCE_DATASETS[name] ?? []) next.add(ds);
         }
@@ -1006,6 +1063,20 @@ export function ExploreScreen() {
       return next;
     });
   };
+
+  const toggleSetItem = (
+    setter: React.Dispatch<React.SetStateAction<Set<string>>>,
+  ) =>
+    (label: string) =>
+      setter((prev) => {
+        const next = new Set(prev);
+        if (next.has(label)) next.delete(label);
+        else next.add(label);
+        return next;
+      });
+
+  const toggleAssetType = toggleSetItem(setAssetTypes);
+  const toggleTag = toggleSetItem(setTags);
 
   const removeSel = (name: string) =>
     setSelected((prev) => {
@@ -1020,10 +1091,17 @@ export function ExploreScreen() {
     <div className="relative flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
         <div className="flex gap-6 px-8 pt-6 pb-28">
-          <FilterPanel selected={selected} onToggle={toggle} />
+          <FilterPanel
+            selected={selected}
+            onToggle={toggle}
+            assetTypes={assetTypes}
+            onToggleAssetType={toggleAssetType}
+            tags={tags}
+            onToggleTag={toggleTag}
+          />
           <div className="flex flex-1 flex-col gap-4">
             <SelectionChips selected={selected} onRemove={removeSel} onClear={clearAll} />
-            <AssetOverview selected={selected} />
+            <AssetOverview selected={selected} assetTypes={assetTypes} tags={tags} />
           </div>
         </div>
       </div>
