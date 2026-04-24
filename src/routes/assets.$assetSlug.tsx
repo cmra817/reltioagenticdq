@@ -1355,44 +1355,72 @@ function HeatmapCard({ slug }: { slug: string }) {
 }
 
 function ActivityPanel({ events, slug }: { events: ActivityEvent[]; slug: string }) {
-  // Group events by label, preserving order
-  const groups: { label: string; items: ActivityEvent[] }[] = [];
   const sorted = [...events].sort((a, b) => +new Date(b.ranAt) - +new Date(a.ranAt));
+
+  // Build a flat row sequence with divider markers when group label changes
+  const rows: Array<
+    | { kind: "divider"; label: string }
+    | { kind: "event"; ev: ActivityEvent }
+  > = [];
+  let lastLabel: string | null = null;
   for (const ev of sorted) {
     const label = activityGroupLabel(ev.ranAt);
-    const existing = groups.find((g) => g.label === label);
-    if (existing) existing.items.push(ev);
-    else groups.push({ label, items: [ev] });
+    if (label !== lastLabel) {
+      rows.push({ kind: "divider", label });
+      lastLabel = label;
+    }
+    rows.push({ kind: "event", ev });
   }
+
+  const formatTimeOnly = (iso: string) =>
+    new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   return (
     <div className="space-y-6">
       <HeatmapCard slug={slug} />
 
-      {groups.map((g) => (
-        <div key={g.label} className="space-y-2">
-          <h3 className="text-sm font-semibold text-slate-900">{g.label}</h3>
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-            {g.items.map((ev, idx) => (
-              <div
-                key={ev.id}
-                className={`flex items-center gap-3 px-4 py-3 ${idx > 0 ? "border-t border-slate-100" : ""}`}
-              >
-                <div className="min-w-0 flex-1 flex items-center gap-3">
-                  <span className="font-mono text-sm text-slate-900 truncate">{ev.check}</span>
-                  <DimensionPill label={ev.dimension} />
-                  <span className="text-sm text-slate-600 truncate">{ev.target}</span>
-                  {ev.status === "Failed" && ev.detail ? <InfoTooltip text={ev.detail} /> : null}
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-xs text-slate-500">{formatActivityTime(ev.ranAt)}</span>
-                  <ActivityStatusPill status={ev.status} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-2 text-left font-medium">Check</th>
+              <th className="px-4 py-2 text-left font-medium">Dimension</th>
+              <th className="px-4 py-2 text-left font-medium">Column</th>
+              <th className="px-4 py-2 text-left font-medium">Ran on</th>
+              <th className="px-4 py-2 text-right font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) =>
+              row.kind === "divider" ? (
+                <tr key={`d-${i}-${row.label}`}>
+                  <td
+                    colSpan={5}
+                    className="bg-slate-50/70 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-slate-500 border-y border-slate-200"
+                  >
+                    {row.label}
+                  </td>
+                </tr>
+              ) : (
+                <tr key={row.ev.id} className="border-t border-slate-100">
+                  <td className="px-4 py-3 font-mono text-[13px] text-slate-900">{row.ev.check}</td>
+                  <td className="px-4 py-3"><DimensionPill label={row.ev.dimension} /></td>
+                  <td className="px-4 py-3 text-slate-700">{row.ev.target}</td>
+                  <td className="px-4 py-3 text-slate-500">{formatTimeOnly(row.ev.ranAt)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-2">
+                      <ActivityStatusPill status={row.ev.status} />
+                      {row.ev.status === "Failed" && row.ev.detail ? (
+                        <InfoTooltip text={row.ev.detail} />
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              )
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
