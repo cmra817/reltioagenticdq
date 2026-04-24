@@ -130,8 +130,8 @@ function AssetDetailPage() {
 
   return (
     <AppShell activeNav="explore">
-      <div className="relative flex flex-1 flex-col">
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-8 pt-6 pb-28">
+      <div className="relative flex flex-1 flex-col min-h-0">
+        <div className="flex flex-1 min-h-0 flex-col gap-5 overflow-y-auto px-8 pt-6 pb-28">
           {/* Header */}
           <div className="rounded-2xl border bg-white p-5" style={{ borderColor: "var(--hairline)" }}>
             <div className="flex items-start gap-3">
