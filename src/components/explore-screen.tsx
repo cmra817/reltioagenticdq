@@ -935,7 +935,7 @@ function AssetOverview({ selected }: { selected: Selection }) {
                             style={{ color: "var(--ink-500)" }}
                           >
                             <span style={{ color: "var(--ink-300)" }}>{kindIcon(a.kind, 13)}</span>
-                            <span className="capitalize">{a.kind}</span>
+                            <span>{a.kind === "chart" ? "Dashboard" : a.kind === "table" ? "Table" : "Dataset"}</span>
                             <span style={{ color: "var(--ink-300)" }}>›</span>
                             <span style={{ color: "var(--brand-blue)" }}>
                               <DatasetIcon size={13} />
