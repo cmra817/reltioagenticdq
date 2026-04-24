@@ -53,7 +53,7 @@ const ASSET_DETAILS: Record<string, AssetDetail> = {
   },
 };
 
-const TABS = ["Overview", "Assets", "Checks", "Activity"] as const;
+const TABS = ["Overview", "Columns", "Checks", "Activity"] as const;
 
 function AssetDetailPage() {
   const { assetSlug } = useParams({ from: "/assets/$assetSlug" });
