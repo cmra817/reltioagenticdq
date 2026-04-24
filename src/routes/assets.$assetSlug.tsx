@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { Columns3, X } from "lucide-react";
+import { Columns3, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ChatComposer } from "@/components/chat-composer";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
