@@ -422,7 +422,7 @@ function kindIcon(kind: AssetKind, size = 16) {
 }
 
 
-function SourceLogo({ source }: { source: string }) {
+export function SourceLogo({ source }: { source: string }) {
   if (source === "BigQuery") {
     return (
       <span className="inline-block h-5 w-5">
