@@ -784,18 +784,54 @@ function dedupeRows(rows: AssetRow[]): AssetRow[] {
   return out;
 }
 
-function resolveView(selected: Selection): View {
+const ASSET_TYPE_TO_KIND: Record<string, AssetKind> = {
+  Tables: "table",
+  Dashboards: "chart",
+  // "Query" has no matching kind in current data — will filter to nothing if selected alone
+};
+
+function applySecondaryFilters(
+  rows: AssetRow[],
+  assetTypes: Set<string>,
+  tags: Set<string>,
+): AssetRow[] {
+  let out = rows;
+  if (assetTypes.size > 0) {
+    const allowedKinds = new Set<AssetKind>();
+    for (const t of assetTypes) {
+      const k = ASSET_TYPE_TO_KIND[t];
+      if (k) allowedKinds.add(k);
+    }
+    out = out.filter((r) => allowedKinds.has(r.kind));
+  }
+  if (tags.size > 0) {
+    out = out.filter((r) => r.tags.some((t) => tags.has(t)));
+  }
+  return out;
+}
+
+function resolveView(
+  selected: Selection,
+  assetTypes: Set<string>,
+  tags: Set<string>,
+): View {
+  const hasSecondary = assetTypes.size > 0 || tags.size > 0;
+
   // Default: nothing selected → show everything across sources
   if (selected.size === 0) {
     return {
       mode: "rows",
       title: "All sources",
-      rows: dedupeRows([...DATABRICKS_ALL, ...BIGQUERY_ALL]),
+      rows: applySecondaryFilters(
+        dedupeRows([...DATABRICKS_ALL, ...BIGQUERY_ALL]),
+        assetTypes,
+        tags,
+      ),
     };
   }
 
-  // Single selection of a leaf table/dashboard → column view
-  if (selected.size === 1) {
+  // Single selection of a leaf table/dashboard → column view (skip if secondary filters active)
+  if (selected.size === 1 && !hasSecondary) {
     const only = Array.from(selected)[0];
     if (!isSource(only) && !isDataset(only)) {
       return { mode: "table", title: only, columns: getColumnsFor(only) };
@@ -826,7 +862,7 @@ function resolveView(selected: Selection): View {
   return {
     mode: "rows",
     title: titleParts.length > 2 ? `${titleParts.length} selections` : titleParts.join(" + "),
-    rows: dedupeRows(merged),
+    rows: applySecondaryFilters(dedupeRows(merged), assetTypes, tags),
   };
 }
 
