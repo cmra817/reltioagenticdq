@@ -608,6 +608,244 @@ function ColumnsPanel({
           </table>
         </div>
       )}
+
+      <ColumnDetailPanel column={selectedColumn} onClose={() => setSelectedColumn(null)} />
+    </div>
+  );
+}
+
+function ColumnDetailPanel({
+  column,
+  onClose,
+}: {
+  column: ColumnRow | null;
+  onClose: () => void;
+}) {
+  const open = column !== null;
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        className={`fixed inset-0 z-40 bg-black/20 transition-opacity ${
+          open ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        aria-hidden="true"
+      />
+      {/* Slide-over */}
+      <aside
+        role="dialog"
+        aria-label="Column profile details"
+        className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-[440px] flex-col border-l bg-white shadow-2xl transition-transform duration-300 ${
+          open ? "translate-x-0" : "translate-x-full"
+        }`}
+        style={{ borderColor: "var(--hairline)" }}
+      >
+        {column && (
+          <>
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 border-b px-6 py-5" style={{ borderColor: "var(--hairline)" }}>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] font-mono" style={{ color: "var(--ink-300)" }}>123</span>
+                  <h3 className="text-[18px] font-semibold" style={{ color: "var(--ink-900)" }}>
+                    {column.name}
+                  </h3>
+                  {column.tag && (
+                    <span
+                      className="inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium"
+                      style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                    >
+                      {column.tag}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
+                  Finance Sales Data &gt; Orders &gt; {column.name}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)]"
+                style={{ color: "var(--ink-700)" }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+              {/* Completeness */}
+              <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
+                <h4 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>Completeness</h4>
+                <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>How distinct are the value</p>
+                <div className="mt-4 flex items-center gap-5">
+                  <CompletenessDonut fill={parseInt(column.fillRate)} />
+                  <div className="flex-1 space-y-3">
+                    <MiniBar label="Fill Rate:" value={parseInt(column.fillRate)} />
+                    <MiniBar label="Null" value={100 - parseInt(column.fillRate)} />
+                  </div>
+                </div>
+              </section>
+
+              {/* Uniqueness */}
+              <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
+                <h4 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>Uniqueness</h4>
+                <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>How distinct are the value</p>
+                <div className="mt-4 space-y-3">
+                  <StatBar label="Uniqueness" valueText={`${column.uniqueness} (20)`} pct={parseInt(column.uniqueness)} />
+                  <StatBar label="Distinct" valueText={`24% (${Math.min(column.distinct, 10)})`} pct={24} />
+                </div>
+              </section>
+
+              {/* Distribution */}
+              <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
+                <h4 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>Distribution</h4>
+                <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>How the values are spread</p>
+                <DistributionChart />
+                <div className="mt-4 grid grid-cols-4 gap-2 text-center">
+                  {[
+                    { label: "Min Length", value: 2 },
+                    { label: "Max Length", value: 3 },
+                    { label: "Mean Length", value: 3 },
+                    { label: "Median Length", value: 3 },
+                  ].map((s) => (
+                    <div key={s.label}>
+                      <div className="text-[20px] font-semibold" style={{ color: "var(--brand-blue)" }}>{s.value}</div>
+                      <div className="text-[11px]" style={{ color: "var(--ink-500)" }}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Pattern */}
+              <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
+                <h4 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>Pattern</h4>
+                <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>What format do values follow</p>
+                <FreqTable
+                  rows={[
+                    { type: "xxx-xxxx", count: 200, pct: 76 },
+                    { type: "xxxxxxx", count: 150, pct: 76 },
+                    { type: "xxx.xxxx", count: 100, pct: 76 },
+                  ]}
+                />
+              </section>
+
+              {/* Most frequent value */}
+              <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
+                <h4 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>Most frequent value</h4>
+                <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>What appears most often</p>
+                <FreqTable
+                  rows={Array.from({ length: 6 }).map(() => ({ type: "Databricks", count: 1, pct: 76 }))}
+                />
+              </section>
+            </div>
+          </>
+        )}
+      </aside>
+    </>
+  );
+}
+
+function MiniBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between text-[12px]">
+        <span style={{ color: "var(--ink-500)" }}>{label}</span>
+        <span className="font-semibold" style={{ color: "var(--ink-900)" }}>{value}%</span>
+      </div>
+      <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: "white" }}>
+        <div className="h-full rounded-full" style={{ width: `${value}%`, background: "#14a6a6" }} />
+      </div>
+    </div>
+  );
+}
+
+function StatBar({ label, valueText, pct }: { label: string; valueText: string; pct: number }) {
+  return (
+    <div>
+      <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>{label}</div>
+      <div className="mt-1 flex items-center gap-3">
+        <div className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>{valueText}</div>
+        <div className="flex-1 h-1.5 overflow-hidden rounded-full" style={{ background: "white" }}>
+          <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, background: "#14a6a6" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompletenessDonut({ fill }: { fill: number }) {
+  const r = 32;
+  const C = 2 * Math.PI * r;
+  const dash = (fill / 100) * C;
+  return (
+    <svg width="90" height="90" viewBox="0 0 90 90" aria-label={`Fill rate ${fill}%`}>
+      <circle cx="45" cy="45" r={r} fill="none" stroke="#e6e8eb" strokeWidth="12" />
+      <circle
+        cx="45"
+        cy="45"
+        r={r}
+        fill="none"
+        stroke="#14a6a6"
+        strokeWidth="12"
+        strokeLinecap="round"
+        strokeDasharray={`${dash} ${C}`}
+        transform="rotate(-90 45 45)"
+      />
+    </svg>
+  );
+}
+
+function DistributionChart() {
+  // bell curve path approximation
+  const points: string[] = [];
+  for (let i = 0; i <= 60; i++) {
+    const x = i * 5; // 0..300
+    const t = (i - 30) / 10;
+    const y = 110 - 90 * Math.exp(-(t * t) / 2);
+    points.push(`${x},${y}`);
+  }
+  return (
+    <svg viewBox="0 0 320 140" className="mt-3 w-full">
+      {/* grid */}
+      {[0, 1, 2, 3, 4].map((i) => (
+        <line key={i} x1="20" x2="310" y1={20 + i * 22} y2={20 + i * 22} stroke="#e6e8eb" strokeWidth="1" />
+      ))}
+      <polyline fill="none" stroke="#e89b3a" strokeWidth="2" points={points.map((p) => {
+        const [x, y] = p.split(",").map(Number);
+        return `${20 + (x / 300) * 290},${y + 10}`;
+      }).join(" ")} />
+      {/* x-axis labels */}
+      {[-30, -20, -10, 0, 10, 20, 30].map((v, i) => (
+        <text key={v} x={20 + (i / 6) * 290} y="135" textAnchor="middle" fontSize="9" fill="#9aa3ad">{v}</text>
+      ))}
+    </svg>
+  );
+}
+
+function FreqTable({ rows }: { rows: { type: string; count: number; pct: number }[] }) {
+  return (
+    <div className="mt-3 overflow-hidden rounded-lg border" style={{ borderColor: "var(--hairline)", background: "white" }}>
+      <div className="grid grid-cols-[1fr_70px_1.4fr] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)", background: "var(--surface-soft)" }}>
+        <span>Type</span>
+        <span>Count</span>
+        <span>Percentage</span>
+      </div>
+      {rows.map((r, i) => (
+        <div key={i} className="grid grid-cols-[1fr_70px_1.4fr] items-center border-t px-3 py-2.5 text-[12px]" style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}>
+          <span>{r.type}</span>
+          <span>{r.count}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-medium" style={{ color: "var(--ink-900)" }}>{r.pct}%</span>
+            <div className="flex-1 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-soft)" }}>
+              <div className="h-full rounded-full" style={{ width: `${r.pct}%`, background: "#c9c2f5" }} />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
