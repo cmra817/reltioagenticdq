@@ -141,12 +141,13 @@ function AssetDetailPage() {
 
             {/* Tabs */}
             <div className="mt-5 flex items-center gap-6 border-b" style={{ borderColor: "var(--hairline)" }}>
-              {TABS.map((t, i) => {
-                const active = i === 0;
+              {TABS.map((t) => {
+                const active = t === activeTab;
                 return (
                   <button
                     key={t}
                     type="button"
+                    onClick={() => setActiveTab(t)}
                     className="relative pb-2.5 text-[14px] font-medium transition-colors"
                     style={{ color: active ? "var(--brand-blue)" : "var(--ink-700)" }}
                   >
@@ -163,80 +164,93 @@ function AssetDetailPage() {
             </div>
           </div>
 
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {[
-              { label: "Columns", value: String(detail.columns) },
-              { label: "Rows", value: detail.rows },
-              { label: "Checks", value: String(detail.checks) },
-              { label: "Fill rate", value: detail.fillRate },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="rounded-2xl border bg-white p-4"
-                style={{ borderColor: "var(--hairline)" }}
-              >
-                <div className="text-[13px]" style={{ color: "var(--ink-500)" }}>
-                  {s.label}
-                </div>
-                <div
-                  className="mt-2 text-[26px] font-semibold leading-none"
-                  style={{ color: "var(--brand-blue)" }}
-                >
-                  {s.value}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Quality + Classification */}
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {/* Quality score */}
-            <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
-              <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                Quality score
-              </h2>
-              <div className="mt-5 flex items-center gap-8">
-                <QualityDonut value={detail.quality} />
-                <div className="flex-1 space-y-4">
-                  <Bar label="Validity" value={detail.validity} />
-                  <Bar label="Accuracy" value={detail.accuracy} />
-                  <Bar label="Consistency" value={detail.consistency} />
-                </div>
-              </div>
-            </div>
-
-            {/* Classification */}
-            <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
-              <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                Classification
-              </h2>
-              <ul className="mt-4 space-y-3">
-                {detail.classification.map((c) => (
-                  <li key={c.label} className="grid grid-cols-[150px_1fr_36px] items-center gap-3">
-                    <span className="text-[13px]" style={{ color: "var(--ink-700)" }}>
-                      {c.label}
-                    </span>
-                    <div
-                      className="h-1.5 overflow-hidden rounded-full"
-                      style={{ background: "var(--surface-soft)" }}
-                    >
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${Math.min(c.pct, 100)}%`, background: "var(--teal-500, #14a6a6)" }}
-                      />
+          {activeTab === "Overview" && (
+            <>
+              {/* Stat cards */}
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {[
+                  { label: "Columns", value: String(detail.columns) },
+                  { label: "Rows", value: detail.rows },
+                  { label: "Checks", value: String(detail.checks) },
+                  { label: "Fill rate", value: detail.fillRate },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="rounded-2xl border bg-white p-4"
+                    style={{ borderColor: "var(--hairline)" }}
+                  >
+                    <div className="text-[13px]" style={{ color: "var(--ink-500)" }}>
+                      {s.label}
                     </div>
-                    <span
-                      className="text-right text-[12px] font-medium"
-                      style={{ color: "var(--ink-700)" }}
+                    <div
+                      className="mt-2 text-[26px] font-semibold leading-none"
+                      style={{ color: "var(--brand-blue)" }}
                     >
-                      {c.pct}%
-                    </span>
-                  </li>
+                      {s.value}
+                    </div>
+                  </div>
                 ))}
-              </ul>
-            </div>
-          </div>
+              </div>
+
+              {/* Quality + Classification */}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
+                  <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
+                    Quality score
+                  </h2>
+                  <div className="mt-5 flex items-center gap-8">
+                    <QualityDonut value={detail.quality} />
+                    <div className="flex-1 space-y-4">
+                      <Bar label="Validity" value={detail.validity} />
+                      <Bar label="Accuracy" value={detail.accuracy} />
+                      <Bar label="Consistency" value={detail.consistency} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
+                  <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
+                    Classification
+                  </h2>
+                  <ul className="mt-4 space-y-3">
+                    {detail.classification.map((c) => (
+                      <li key={c.label} className="grid grid-cols-[150px_1fr_36px] items-center gap-3">
+                        <span className="text-[13px]" style={{ color: "var(--ink-700)" }}>
+                          {c.label}
+                        </span>
+                        <div
+                          className="h-1.5 overflow-hidden rounded-full"
+                          style={{ background: "var(--surface-soft)" }}
+                        >
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${Math.min(c.pct, 100)}%`, background: "var(--teal-500, #14a6a6)" }}
+                          />
+                        </div>
+                        <span
+                          className="text-right text-[12px] font-medium"
+                          style={{ color: "var(--ink-700)" }}
+                        >
+                          {c.pct}%
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "Columns" && (
+            <ColumnsPanel
+              columns={SAMPLE_COLUMNS}
+              subTab={columnsSubTab}
+              onSubTab={setColumnsSubTab}
+            />
+          )}
+
+          {activeTab === "Checks" && <EmptyPanel label="Checks coming soon" />}
+          {activeTab === "Activity" && <EmptyPanel label="Activity coming soon" />}
         </div>
 
         {/* floating composer */}
