@@ -204,6 +204,104 @@ const DATABRICKS_ALL: AssetRow[] = [
   ...LOYALTY_POINTS_CHILDREN,
 ];
 
+const MARKETING_ANALYTICS_CHILDREN: AssetRow[] = [
+  {
+    name: "campaign_performance",
+    kind: "table",
+    description: "Daily performance metrics for paid marketing campaigns across channels",
+    source: "BigQuery",
+    columns: 24,
+    lastAnalyzed: "2h ago",
+  },
+  {
+    name: "attribution_events",
+    kind: "table",
+    description: "Multi-touch attribution events linking conversions to marketing touchpoints",
+    source: "BigQuery",
+    columns: 16,
+    lastAnalyzed: "5h ago",
+  },
+  {
+    name: "channel_mix_dashboard",
+    kind: "chart",
+    description: "Executive dashboard showing channel mix and ROAS trends",
+    source: "BigQuery",
+    columns: null,
+    lastAnalyzed: "1d ago",
+  },
+];
+
+const WEB_EVENTS_CHILDREN: AssetRow[] = [
+  {
+    name: "page_views",
+    kind: "table",
+    description: "Raw page view events captured from web and mobile properties",
+    source: "BigQuery",
+    columns: 32,
+    lastAnalyzed: "30m ago",
+  },
+  {
+    name: "sessions",
+    kind: "table",
+    description: "Sessionized user activity with entry/exit pages and duration",
+    source: "BigQuery",
+    columns: 21,
+    lastAnalyzed: "1h ago",
+  },
+];
+
+const FINANCE_CHILDREN: AssetRow[] = [
+  {
+    name: "gl_journal",
+    kind: "table",
+    description: "General ledger journal entries from the ERP system",
+    source: "BigQuery",
+    columns: 14,
+    lastAnalyzed: "8h ago",
+  },
+  {
+    name: "ar_invoices",
+    kind: "table",
+    description: "Accounts receivable invoices with aging and payment status",
+    source: "BigQuery",
+    columns: 19,
+    lastAnalyzed: "6h ago",
+  },
+  {
+    name: "revenue_recognition",
+    kind: "table",
+    description: "Recognized revenue by contract and period (ASC 606)",
+    source: "BigQuery",
+    columns: 11,
+    lastAnalyzed: "1d ago",
+  },
+];
+
+const BIGQUERY_TREE: TreeNode[] = [
+  { name: "Marketing Analytics", kind: "dataset" },
+  { name: "Web Events", kind: "dataset" },
+  { name: "Finance", kind: "dataset" },
+];
+
+const BIGQUERY_DATASET_ASSETS: Record<string, AssetRow[]> = {
+  "Marketing Analytics": MARKETING_ANALYTICS_CHILDREN,
+  "Web Events": WEB_EVENTS_CHILDREN,
+  Finance: FINANCE_CHILDREN,
+};
+
+Object.assign(DATASET_ASSETS, BIGQUERY_DATASET_ASSETS);
+Object.assign(DATASET_TABLE_COUNTS, {
+  "Marketing Analytics": MARKETING_ANALYTICS_CHILDREN.length,
+  "Web Events": WEB_EVENTS_CHILDREN.length,
+  Finance: FINANCE_CHILDREN.length,
+});
+
+const BIGQUERY_ALL: AssetRow[] = [
+  ...MARKETING_ANALYTICS_CHILDREN,
+  ...WEB_EVENTS_CHILDREN,
+  ...FINANCE_CHILDREN,
+];
+
 const TABLE_COLUMNS: Record<string, ColumnRow[]> = {
   Orders: [
     { name: "order_id", description: "Unique identifier for each order", lastAnalyzed: "15h ago" },
