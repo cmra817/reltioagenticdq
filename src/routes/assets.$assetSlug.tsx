@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { Columns3 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { ChatComposer } from "@/components/chat-composer";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/assets/$assetSlug")({
   head: ({ params }) => ({
@@ -84,6 +87,44 @@ const SAMPLE_COLUMNS: ColumnRow[] = [
   { name: "Payment_Method", dataType: "String", length: 24, min: "—", max: "—", mean: "—", nullCount: 0, distinct: 6, uniqueness: "1%", fillRate: "100%" },
   { name: "Discount_Code", dataType: "String", length: 16, min: "—", max: "—", mean: "—", nullCount: 482, distinct: 28, uniqueness: "3%", fillRate: "60%" },
 ];
+
+type SampleRow = Record<string, string | number>;
+
+const SAMPLE_DATA_ROWS: SampleRow[] = [
+  { Order_ID: 10001, Customer_ID: 5521, Order_Date: "2024-03-12", Total_Amount: "129.99", Status: "Shipped", Shipping_Address: "221B Baker St, London", Payment_Method: "Credit Card", Discount_Code: "SPRING10" },
+  { Order_ID: 10002, Customer_ID: 8830, Order_Date: "2024-03-13", Total_Amount: "49.50", Status: "Delivered", Shipping_Address: "1600 Amphitheatre Pkwy, CA", Payment_Method: "PayPal", Discount_Code: "—" },
+  { Order_ID: 10003, Customer_ID: 1142, Order_Date: "2024-03-13", Total_Amount: "879.00", Status: "Pending", Shipping_Address: "5 Avenue des Champs, Paris", Payment_Method: "Credit Card", Discount_Code: "VIP25" },
+  { Order_ID: 10004, Customer_ID: 6677, Order_Date: "2024-03-14", Total_Amount: "12.75", Status: "Cancelled", Shipping_Address: "10 Downing St, London", Payment_Method: "Apple Pay", Discount_Code: "—" },
+  { Order_ID: 10005, Customer_ID: 4421, Order_Date: "2024-03-15", Total_Amount: "245.50", Status: "Shipped", Shipping_Address: "742 Evergreen Terrace, OR", Payment_Method: "Credit Card", Discount_Code: "SPRING10" },
+  { Order_ID: 10006, Customer_ID: 9912, Order_Date: "2024-03-15", Total_Amount: "60.00", Status: "Delivered", Shipping_Address: "350 5th Ave, NY", Payment_Method: "Debit Card", Discount_Code: "—" },
+  { Order_ID: 10007, Customer_ID: 3308, Order_Date: "2024-03-16", Total_Amount: "1499.00", Status: "Processing", Shipping_Address: "Shibuya Crossing, Tokyo", Payment_Method: "Credit Card", Discount_Code: "VIP25" },
+  { Order_ID: 10008, Customer_ID: 7745, Order_Date: "2024-03-17", Total_Amount: "32.10", Status: "Shipped", Shipping_Address: "Plaza Mayor 1, Madrid", Payment_Method: "PayPal", Discount_Code: "—" },
+];
+
+const PROFILING_COLUMNS = [
+  { key: "name", label: "Name" },
+  { key: "dataType", label: "Data type" },
+  { key: "length", label: "Length" },
+  { key: "min", label: "Min value" },
+  { key: "max", label: "Max value" },
+  { key: "mean", label: "Mean value" },
+  { key: "nullCount", label: "Null count" },
+  { key: "distinct", label: "Distinct count" },
+  { key: "uniqueness", label: "Uniqueness" },
+  { key: "fillRate", label: "Fill rate" },
+  { key: "tag", label: "Tags" },
+] as const;
+
+const SAMPLE_COLUMN_KEYS = [
+  "Order_ID",
+  "Customer_ID",
+  "Order_Date",
+  "Total_Amount",
+  "Status",
+  "Shipping_Address",
+  "Payment_Method",
+  "Discount_Code",
+] as const;
 
 function AssetDetailPage() {
   const { assetSlug } = useParams({ from: "/assets/$assetSlug" });
@@ -322,6 +363,51 @@ function EmptyPanel({ label }: { label: string }) {
   );
 }
 
+function ColumnsToggle({
+  options,
+  visible,
+  onToggle,
+}: {
+  options: readonly { key: string; label: string }[];
+  visible: Set<string>;
+  onToggle: (key: string) => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label="Show or hide columns"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md border bg-white transition-colors hover:bg-[color:var(--surface-soft)]"
+          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+        >
+          <Columns3 size={16} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-56 p-2">
+        <div className="px-2 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
+          Show columns
+        </div>
+        <div className="flex flex-col">
+          {options.map((opt) => {
+            const checked = visible.has(opt.key);
+            return (
+              <label
+                key={opt.key}
+                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[13px] hover:bg-[color:var(--surface-soft)]"
+                style={{ color: "var(--ink-700)" }}
+              >
+                <Checkbox checked={checked} onCheckedChange={() => onToggle(opt.key)} />
+                <span>{opt.label}</span>
+              </label>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function ColumnsPanel({
   columns,
   subTab,
@@ -331,30 +417,67 @@ function ColumnsPanel({
   subTab: "Profiling" | "Sample data";
   onSubTab: (s: "Profiling" | "Sample data") => void;
 }) {
+  const [visibleProfiling, setVisibleProfiling] = useState<Set<string>>(
+    () => new Set(PROFILING_COLUMNS.map((c) => c.key)),
+  );
+  const [visibleSample, setVisibleSample] = useState<Set<string>>(
+    () => new Set(SAMPLE_COLUMN_KEYS),
+  );
+
+  const toggleSetItem = (
+    setter: React.Dispatch<React.SetStateAction<Set<string>>>,
+  ) => (key: string) =>
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+  const sampleOptions = SAMPLE_COLUMN_KEYS.map((k) => ({ key: k, label: k }));
+  const profilingCols = PROFILING_COLUMNS.filter((c) => visibleProfiling.has(c.key));
+  const sampleCols = SAMPLE_COLUMN_KEYS.filter((k) => visibleSample.has(k));
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Sub-tabs pill */}
-      <div
-        className="inline-flex w-fit items-center gap-1 rounded-lg border bg-white p-1"
-        style={{ borderColor: "var(--hairline)" }}
-      >
-        {(["Profiling", "Sample data"] as const).map((s) => {
-          const active = s === subTab;
-          return (
-            <button
-              key={s}
-              type="button"
-              onClick={() => onSubTab(s)}
-              className="rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors"
-              style={{
-                background: active ? "var(--surface-soft)" : "transparent",
-                color: active ? "var(--brand-blue)" : "var(--ink-700)",
-              }}
-            >
-              {s}
-            </button>
-          );
-        })}
+      {/* Sub-tabs row with show/hide toggle */}
+      <div className="flex items-center justify-between">
+        <div
+          className="inline-flex w-fit items-center gap-1 rounded-lg border bg-white p-1"
+          style={{ borderColor: "var(--hairline)" }}
+        >
+          {(["Profiling", "Sample data"] as const).map((s) => {
+            const active = s === subTab;
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => onSubTab(s)}
+                className="rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors"
+                style={{
+                  background: active ? "var(--surface-soft)" : "transparent",
+                  color: active ? "var(--brand-blue)" : "var(--ink-700)",
+                }}
+              >
+                {s}
+              </button>
+            );
+          })}
+        </div>
+
+        {subTab === "Profiling" ? (
+          <ColumnsToggle
+            options={PROFILING_COLUMNS}
+            visible={visibleProfiling}
+            onToggle={toggleSetItem(setVisibleProfiling)}
+          />
+        ) : (
+          <ColumnsToggle
+            options={sampleOptions}
+            visible={visibleSample}
+            onToggle={toggleSetItem(setVisibleSample)}
+          />
+        )}
       </div>
 
       {subTab === "Profiling" ? (
@@ -368,59 +491,112 @@ function ColumnsPanel({
                 className="text-[11px] uppercase tracking-[0.08em]"
                 style={{ color: "var(--ink-300)" }}
               >
-                <th className="px-5 py-3 font-semibold">Name</th>
-                <th className="px-3 py-3 font-semibold">Data type</th>
-                <th className="px-3 py-3 font-semibold">Length</th>
-                <th className="px-3 py-3 font-semibold">Min value</th>
-                <th className="px-3 py-3 font-semibold">Max value</th>
-                <th className="px-3 py-3 font-semibold">Mean value</th>
-                <th className="px-3 py-3 font-semibold">Null count</th>
-                <th className="px-3 py-3 font-semibold">Distinct count</th>
-                <th className="px-3 py-3 font-semibold">Uniqueness</th>
-                <th className="px-3 py-3 font-semibold">Fill rate</th>
-                <th className="px-5 py-3 font-semibold">Tags</th>
+                {profilingCols.map((c, i) => (
+                  <th
+                    key={c.key}
+                    className={`${i === 0 || i === profilingCols.length - 1 ? "px-5" : "px-3"} py-3 font-semibold`}
+                  >
+                    {c.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {columns.map((c) => (
+              {columns.map((row) => (
                 <tr
-                  key={c.name}
+                  key={row.name}
                   className="border-t"
                   style={{ borderColor: "var(--hairline)" }}
                 >
-                  <td className="px-5 py-4 font-semibold" style={{ color: "var(--ink-900)" }}>
-                    {c.name}
-                  </td>
-                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.dataType}</td>
-                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.length}</td>
-                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.min}</td>
-                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.max}</td>
-                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.mean}</td>
-                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.nullCount}</td>
-                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.distinct.toLocaleString()}</td>
-                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.uniqueness}</td>
-                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.fillRate}</td>
-                  <td className="px-5 py-4">
-                    {c.tag && (
-                      <span
-                        className="inline-flex items-center rounded-md border px-2.5 py-1 text-[12px] font-medium"
-                        style={{
-                          borderColor: "var(--hairline)",
-                          color: "var(--ink-700)",
-                          background: "white",
-                        }}
+                  {profilingCols.map((c, i) => {
+                    const isFirst = i === 0;
+                    const isLast = i === profilingCols.length - 1;
+                    const pad = isFirst || isLast ? "px-5" : "px-3";
+                    if (c.key === "tag") {
+                      return (
+                        <td key={c.key} className={`${pad} py-4`}>
+                          {row.tag && (
+                            <span
+                              className="inline-flex items-center rounded-md border px-2.5 py-1 text-[12px] font-medium"
+                              style={{
+                                borderColor: "var(--hairline)",
+                                color: "var(--ink-700)",
+                                background: "white",
+                              }}
+                            >
+                              {row.tag}
+                            </span>
+                          )}
+                        </td>
+                      );
+                    }
+                    const raw = row[c.key as keyof ColumnRow];
+                    const value =
+                      c.key === "distinct" && typeof raw === "number"
+                        ? raw.toLocaleString()
+                        : raw ?? "";
+                    return (
+                      <td
+                        key={c.key}
+                        className={`${pad} py-4 ${isFirst ? "font-semibold" : ""}`}
+                        style={{ color: isFirst ? "var(--ink-900)" : "var(--ink-700)" }}
                       >
-                        {c.tag}
-                      </span>
-                    )}
-                  </td>
+                        {value as string | number}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       ) : (
-        <EmptyPanel label="Sample data coming soon" />
+        <div
+          className="overflow-hidden rounded-2xl border bg-white"
+          style={{ borderColor: "var(--hairline)" }}
+        >
+          <table className="w-full border-collapse text-left text-[13px]">
+            <thead>
+              <tr
+                className="text-[11px] uppercase tracking-[0.08em]"
+                style={{ color: "var(--ink-300)" }}
+              >
+                {sampleCols.map((k, i) => (
+                  <th
+                    key={k}
+                    className={`${i === 0 || i === sampleCols.length - 1 ? "px-5" : "px-3"} py-3 font-semibold`}
+                  >
+                    {k}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {SAMPLE_DATA_ROWS.map((row, idx) => (
+                <tr
+                  key={idx}
+                  className="border-t"
+                  style={{ borderColor: "var(--hairline)" }}
+                >
+                  {sampleCols.map((k, i) => {
+                    const isFirst = i === 0;
+                    const isLast = i === sampleCols.length - 1;
+                    const pad = isFirst || isLast ? "px-5" : "px-3";
+                    return (
+                      <td
+                        key={k}
+                        className={`${pad} py-4 ${isFirst ? "font-semibold" : ""}`}
+                        style={{ color: isFirst ? "var(--ink-900)" : "var(--ink-700)" }}
+                      >
+                        {row[k]}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
