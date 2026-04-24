@@ -506,11 +506,17 @@ function ColumnsPanel({
               </tr>
             </thead>
             <tbody>
-              {columns.map((row) => (
+              {columns.map((row) => {
+                const isSelected = selectedColumn?.name === row.name;
+                return (
                 <tr
                   key={row.name}
-                  className="border-t"
-                  style={{ borderColor: "var(--hairline)" }}
+                  onClick={() => setSelectedColumn(row)}
+                  className="cursor-pointer border-t transition-colors hover:bg-[color:var(--surface-soft)]"
+                  style={{
+                    borderColor: "var(--hairline)",
+                    background: isSelected ? "var(--surface-soft)" : undefined,
+                  }}
                 >
                   {profilingCols.map((c, i) => {
                     const isFirst = i === 0;
