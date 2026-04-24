@@ -533,13 +533,16 @@ function AssetOverview({ selected }: { selected: string | null }) {
                 <th className="w-[22%] px-6 py-3 font-semibold">Name</th>
                 <th className="w-[34%] px-3 py-3 font-semibold">Description</th>
                 <th className="w-[14%] px-3 py-3 font-semibold">Data Source</th>
-                <th className="w-[12%] px-3 py-3 font-semibold">Columns</th>
+                <th className="w-[12%] px-3 py-3 font-semibold">Contents</th>
                 <th className="w-[18%] px-6 py-3 font-semibold">Last Analyzed</th>
               </tr>
             </thead>
             <tbody>
               {view.rows.map((a) => {
                 const slug = a.name.toLowerCase().replace(/\s+/g, "-");
+                const isDataset = a.kind === "dataset";
+                const isTable = a.kind === "table";
+                const tableCount = isDataset ? DATASET_TABLE_COUNTS[a.name] ?? 0 : 0;
                 return (
                   <tr
                     key={a.name}
@@ -567,10 +570,19 @@ function AssetOverview({ selected }: { selected: string | null }) {
                       </span>
                     </td>
                     <td className="px-3 py-4">
-                      {a.columns !== null ? (
+                      {isDataset ? (
                         <span
                           className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
                           style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                          title={`${tableCount} tables`}
+                        >
+                          {tableCount} <TableIcon size={12} />
+                        </span>
+                      ) : isTable && a.columns !== null ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
+                          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                          title={`${a.columns} columns`}
                         >
                           {a.columns} <ColumnIcon size={12} />
                         </span>
