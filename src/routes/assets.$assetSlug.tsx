@@ -88,6 +88,44 @@ const SAMPLE_COLUMNS: ColumnRow[] = [
   { name: "Discount_Code", dataType: "String", length: 16, min: "—", max: "—", mean: "—", nullCount: 482, distinct: 28, uniqueness: "3%", fillRate: "60%" },
 ];
 
+type SampleRow = Record<string, string | number>;
+
+const SAMPLE_DATA_ROWS: SampleRow[] = [
+  { Order_ID: 10001, Customer_ID: 5521, Order_Date: "2024-03-12", Total_Amount: "129.99", Status: "Shipped", Shipping_Address: "221B Baker St, London", Payment_Method: "Credit Card", Discount_Code: "SPRING10" },
+  { Order_ID: 10002, Customer_ID: 8830, Order_Date: "2024-03-13", Total_Amount: "49.50", Status: "Delivered", Shipping_Address: "1600 Amphitheatre Pkwy, CA", Payment_Method: "PayPal", Discount_Code: "—" },
+  { Order_ID: 10003, Customer_ID: 1142, Order_Date: "2024-03-13", Total_Amount: "879.00", Status: "Pending", Shipping_Address: "5 Avenue des Champs, Paris", Payment_Method: "Credit Card", Discount_Code: "VIP25" },
+  { Order_ID: 10004, Customer_ID: 6677, Order_Date: "2024-03-14", Total_Amount: "12.75", Status: "Cancelled", Shipping_Address: "10 Downing St, London", Payment_Method: "Apple Pay", Discount_Code: "—" },
+  { Order_ID: 10005, Customer_ID: 4421, Order_Date: "2024-03-15", Total_Amount: "245.50", Status: "Shipped", Shipping_Address: "742 Evergreen Terrace, OR", Payment_Method: "Credit Card", Discount_Code: "SPRING10" },
+  { Order_ID: 10006, Customer_ID: 9912, Order_Date: "2024-03-15", Total_Amount: "60.00", Status: "Delivered", Shipping_Address: "350 5th Ave, NY", Payment_Method: "Debit Card", Discount_Code: "—" },
+  { Order_ID: 10007, Customer_ID: 3308, Order_Date: "2024-03-16", Total_Amount: "1499.00", Status: "Processing", Shipping_Address: "Shibuya Crossing, Tokyo", Payment_Method: "Credit Card", Discount_Code: "VIP25" },
+  { Order_ID: 10008, Customer_ID: 7745, Order_Date: "2024-03-17", Total_Amount: "32.10", Status: "Shipped", Shipping_Address: "Plaza Mayor 1, Madrid", Payment_Method: "PayPal", Discount_Code: "—" },
+];
+
+const PROFILING_COLUMNS = [
+  { key: "name", label: "Name" },
+  { key: "dataType", label: "Data type" },
+  { key: "length", label: "Length" },
+  { key: "min", label: "Min value" },
+  { key: "max", label: "Max value" },
+  { key: "mean", label: "Mean value" },
+  { key: "nullCount", label: "Null count" },
+  { key: "distinct", label: "Distinct count" },
+  { key: "uniqueness", label: "Uniqueness" },
+  { key: "fillRate", label: "Fill rate" },
+  { key: "tag", label: "Tags" },
+] as const;
+
+const SAMPLE_COLUMN_KEYS = [
+  "Order_ID",
+  "Customer_ID",
+  "Order_Date",
+  "Total_Amount",
+  "Status",
+  "Shipping_Address",
+  "Payment_Method",
+  "Discount_Code",
+] as const;
+
 function AssetDetailPage() {
   const { assetSlug } = useParams({ from: "/assets/$assetSlug" });
   const detail = ASSET_DETAILS[assetSlug.toLowerCase()] ?? ASSET_DETAILS.orders;
