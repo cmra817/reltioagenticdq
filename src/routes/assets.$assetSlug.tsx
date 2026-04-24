@@ -286,7 +286,7 @@ function AssetDetailPage() {
         </div>
 
         {/* floating composer */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-6 px-8">
+        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-30 px-8">
           <div className="pointer-events-auto mx-auto w-full max-w-2xl">
             <ChatComposer />
           </div>
