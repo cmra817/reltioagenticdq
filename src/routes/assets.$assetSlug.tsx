@@ -298,12 +298,16 @@ function AssetDetailPage() {
   );
 }
 
-function FloatingComposer() {
+function FloatingComposer({ rightPanelOpen }: { rightPanelOpen: boolean }) {
   const { collapsed } = useSidebarState();
+  const PANEL_WIDTH = 440;
   return (
     <div
       className="pointer-events-none fixed bottom-6 z-30 px-8"
-      style={{ left: collapsed ? 0 : 260, right: 0 }}
+      style={{
+        left: collapsed ? 0 : 260,
+        right: rightPanelOpen ? PANEL_WIDTH : 0,
+      }}
     >
       <div className="pointer-events-auto mx-auto w-full max-w-2xl">
         <ChatComposer />
