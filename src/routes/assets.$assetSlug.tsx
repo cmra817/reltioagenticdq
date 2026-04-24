@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { ChatComposer } from "@/components/chat-composer";
@@ -57,10 +58,38 @@ const ASSET_DETAILS: Record<string, AssetDetail> = {
 };
 
 const TABS = ["Overview", "Columns", "Checks", "Activity"] as const;
+type TabName = (typeof TABS)[number];
+
+type ColumnRow = {
+  name: string;
+  dataType: string;
+  length: number;
+  min: string;
+  max: string;
+  mean: string;
+  nullCount: number;
+  distinct: number;
+  uniqueness: string;
+  fillRate: string;
+  tag?: string;
+};
+
+const SAMPLE_COLUMNS: ColumnRow[] = [
+  { name: "Order_ID", dataType: "Integer", length: 8, min: "1", max: "1234", mean: "1234", nullCount: 0, distinct: 1234, uniqueness: "98%", fillRate: "98%", tag: "PII Data" },
+  { name: "Customer_ID", dataType: "Integer", length: 8, min: "1", max: "1234", mean: "1234", nullCount: 0, distinct: 1234, uniqueness: "98%", fillRate: "98%" },
+  { name: "Order_Date", dataType: "Date", length: 10, min: "2023-01-01", max: "2024-12-31", mean: "—", nullCount: 0, distinct: 720, uniqueness: "62%", fillRate: "100%" },
+  { name: "Total_Amount", dataType: "Decimal", length: 10, min: "0.99", max: "9999.00", mean: "245.50", nullCount: 0, distinct: 1180, uniqueness: "97%", fillRate: "100%" },
+  { name: "Status", dataType: "String", length: 12, min: "—", max: "—", mean: "—", nullCount: 0, distinct: 5, uniqueness: "1%", fillRate: "100%" },
+  { name: "Shipping_Address", dataType: "String", length: 120, min: "—", max: "—", mean: "—", nullCount: 12, distinct: 1100, uniqueness: "92%", fillRate: "99%", tag: "PII Data" },
+  { name: "Payment_Method", dataType: "String", length: 24, min: "—", max: "—", mean: "—", nullCount: 0, distinct: 6, uniqueness: "1%", fillRate: "100%" },
+  { name: "Discount_Code", dataType: "String", length: 16, min: "—", max: "—", mean: "—", nullCount: 482, distinct: 28, uniqueness: "3%", fillRate: "60%" },
+];
 
 function AssetDetailPage() {
   const { assetSlug } = useParams({ from: "/assets/$assetSlug" });
   const detail = ASSET_DETAILS[assetSlug.toLowerCase()] ?? ASSET_DETAILS.orders;
+  const [activeTab, setActiveTab] = useState<TabName>("Overview");
+  const [columnsSubTab, setColumnsSubTab] = useState<"Profiling" | "Sample data">("Profiling");
 
   return (
     <AppShell activeNav="explore">
@@ -112,12 +141,13 @@ function AssetDetailPage() {
 
             {/* Tabs */}
             <div className="mt-5 flex items-center gap-6 border-b" style={{ borderColor: "var(--hairline)" }}>
-              {TABS.map((t, i) => {
-                const active = i === 0;
+              {TABS.map((t) => {
+                const active = t === activeTab;
                 return (
                   <button
                     key={t}
                     type="button"
+                    onClick={() => setActiveTab(t)}
                     className="relative pb-2.5 text-[14px] font-medium transition-colors"
                     style={{ color: active ? "var(--brand-blue)" : "var(--ink-700)" }}
                   >
@@ -134,80 +164,93 @@ function AssetDetailPage() {
             </div>
           </div>
 
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {[
-              { label: "Columns", value: String(detail.columns) },
-              { label: "Rows", value: detail.rows },
-              { label: "Checks", value: String(detail.checks) },
-              { label: "Fill rate", value: detail.fillRate },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="rounded-2xl border bg-white p-4"
-                style={{ borderColor: "var(--hairline)" }}
-              >
-                <div className="text-[13px]" style={{ color: "var(--ink-500)" }}>
-                  {s.label}
-                </div>
-                <div
-                  className="mt-2 text-[26px] font-semibold leading-none"
-                  style={{ color: "var(--brand-blue)" }}
-                >
-                  {s.value}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Quality + Classification */}
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {/* Quality score */}
-            <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
-              <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                Quality score
-              </h2>
-              <div className="mt-5 flex items-center gap-8">
-                <QualityDonut value={detail.quality} />
-                <div className="flex-1 space-y-4">
-                  <Bar label="Validity" value={detail.validity} />
-                  <Bar label="Accuracy" value={detail.accuracy} />
-                  <Bar label="Consistency" value={detail.consistency} />
-                </div>
-              </div>
-            </div>
-
-            {/* Classification */}
-            <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
-              <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                Classification
-              </h2>
-              <ul className="mt-4 space-y-3">
-                {detail.classification.map((c) => (
-                  <li key={c.label} className="grid grid-cols-[150px_1fr_36px] items-center gap-3">
-                    <span className="text-[13px]" style={{ color: "var(--ink-700)" }}>
-                      {c.label}
-                    </span>
-                    <div
-                      className="h-1.5 overflow-hidden rounded-full"
-                      style={{ background: "var(--surface-soft)" }}
-                    >
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${Math.min(c.pct, 100)}%`, background: "var(--teal-500, #14a6a6)" }}
-                      />
+          {activeTab === "Overview" && (
+            <>
+              {/* Stat cards */}
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {[
+                  { label: "Columns", value: String(detail.columns) },
+                  { label: "Rows", value: detail.rows },
+                  { label: "Checks", value: String(detail.checks) },
+                  { label: "Fill rate", value: detail.fillRate },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="rounded-2xl border bg-white p-4"
+                    style={{ borderColor: "var(--hairline)" }}
+                  >
+                    <div className="text-[13px]" style={{ color: "var(--ink-500)" }}>
+                      {s.label}
                     </div>
-                    <span
-                      className="text-right text-[12px] font-medium"
-                      style={{ color: "var(--ink-700)" }}
+                    <div
+                      className="mt-2 text-[26px] font-semibold leading-none"
+                      style={{ color: "var(--brand-blue)" }}
                     >
-                      {c.pct}%
-                    </span>
-                  </li>
+                      {s.value}
+                    </div>
+                  </div>
                 ))}
-              </ul>
-            </div>
-          </div>
+              </div>
+
+              {/* Quality + Classification */}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
+                  <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
+                    Quality score
+                  </h2>
+                  <div className="mt-5 flex items-center gap-8">
+                    <QualityDonut value={detail.quality} />
+                    <div className="flex-1 space-y-4">
+                      <Bar label="Validity" value={detail.validity} />
+                      <Bar label="Accuracy" value={detail.accuracy} />
+                      <Bar label="Consistency" value={detail.consistency} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
+                  <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
+                    Classification
+                  </h2>
+                  <ul className="mt-4 space-y-3">
+                    {detail.classification.map((c) => (
+                      <li key={c.label} className="grid grid-cols-[150px_1fr_36px] items-center gap-3">
+                        <span className="text-[13px]" style={{ color: "var(--ink-700)" }}>
+                          {c.label}
+                        </span>
+                        <div
+                          className="h-1.5 overflow-hidden rounded-full"
+                          style={{ background: "var(--surface-soft)" }}
+                        >
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${Math.min(c.pct, 100)}%`, background: "var(--teal-500, #14a6a6)" }}
+                          />
+                        </div>
+                        <span
+                          className="text-right text-[12px] font-medium"
+                          style={{ color: "var(--ink-700)" }}
+                        >
+                          {c.pct}%
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "Columns" && (
+            <ColumnsPanel
+              columns={SAMPLE_COLUMNS}
+              subTab={columnsSubTab}
+              onSubTab={setColumnsSubTab}
+            />
+          )}
+
+          {activeTab === "Checks" && <EmptyPanel label="Checks coming soon" />}
+          {activeTab === "Activity" && <EmptyPanel label="Activity coming soon" />}
         </div>
 
         {/* floating composer */}
@@ -265,5 +308,120 @@ function QualityDonut({ value }: { value: number }) {
         {value}%
       </text>
     </svg>
+  );
+}
+
+function EmptyPanel({ label }: { label: string }) {
+  return (
+    <div
+      className="rounded-2xl border bg-white p-10 text-center text-[14px]"
+      style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
+    >
+      {label}
+    </div>
+  );
+}
+
+function ColumnsPanel({
+  columns,
+  subTab,
+  onSubTab,
+}: {
+  columns: ColumnRow[];
+  subTab: "Profiling" | "Sample data";
+  onSubTab: (s: "Profiling" | "Sample data") => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Sub-tabs pill */}
+      <div
+        className="inline-flex w-fit items-center gap-1 rounded-lg border bg-white p-1"
+        style={{ borderColor: "var(--hairline)" }}
+      >
+        {(["Profiling", "Sample data"] as const).map((s) => {
+          const active = s === subTab;
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onSubTab(s)}
+              className="rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors"
+              style={{
+                background: active ? "var(--surface-soft)" : "transparent",
+                color: active ? "var(--brand-blue)" : "var(--ink-700)",
+              }}
+            >
+              {s}
+            </button>
+          );
+        })}
+      </div>
+
+      {subTab === "Profiling" ? (
+        <div
+          className="overflow-hidden rounded-2xl border bg-white"
+          style={{ borderColor: "var(--hairline)" }}
+        >
+          <table className="w-full border-collapse text-left text-[13px]">
+            <thead>
+              <tr
+                className="text-[11px] uppercase tracking-[0.08em]"
+                style={{ color: "var(--ink-300)" }}
+              >
+                <th className="px-5 py-3 font-semibold">Name</th>
+                <th className="px-3 py-3 font-semibold">Data type</th>
+                <th className="px-3 py-3 font-semibold">Length</th>
+                <th className="px-3 py-3 font-semibold">Min value</th>
+                <th className="px-3 py-3 font-semibold">Max value</th>
+                <th className="px-3 py-3 font-semibold">Mean value</th>
+                <th className="px-3 py-3 font-semibold">Null count</th>
+                <th className="px-3 py-3 font-semibold">Distinct count</th>
+                <th className="px-3 py-3 font-semibold">Uniqueness</th>
+                <th className="px-3 py-3 font-semibold">Fill rate</th>
+                <th className="px-5 py-3 font-semibold">Tags</th>
+              </tr>
+            </thead>
+            <tbody>
+              {columns.map((c) => (
+                <tr
+                  key={c.name}
+                  className="border-t"
+                  style={{ borderColor: "var(--hairline)" }}
+                >
+                  <td className="px-5 py-4 font-semibold" style={{ color: "var(--ink-900)" }}>
+                    {c.name}
+                  </td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.dataType}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.length}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.min}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.max}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.mean}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.nullCount}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.distinct.toLocaleString()}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.uniqueness}</td>
+                  <td className="px-3 py-4" style={{ color: "var(--ink-700)" }}>{c.fillRate}</td>
+                  <td className="px-5 py-4">
+                    {c.tag && (
+                      <span
+                        className="inline-flex items-center rounded-md border px-2.5 py-1 text-[12px] font-medium"
+                        style={{
+                          borderColor: "var(--hairline)",
+                          color: "var(--ink-700)",
+                          background: "white",
+                        }}
+                      >
+                        {c.tag}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <EmptyPanel label="Sample data coming soon" />
+      )}
+    </div>
   );
 }
