@@ -1,92 +1,44 @@
 
 
-# Build "Activity" Tab
+# Refactor Activity Feed into a Single Table
 
-Replace the empty Activity tab placeholder with a real activity feed showing DQ check run events for the current table, plus a GitHub-style yearly heatmap.
+Replace the current grouped "card list" layout under the heatmap with one continuous table. Date groupings become subtle full-width separator rows inside the same table, so column headers render only once at the top.
+
+## Recommendation on repeating headers
+
+Don't repeat headers per date block — it's visual noise and breaks scan-ability. Use a single sticky-ish header row at the top of the table, with lightweight inline date dividers (`Today`, `Yesterday`, `Apr 22`, …) spanning all columns between groups. This is the standard pattern (Linear, GitHub Actions, Datadog event feeds) and keeps the eye moving down a stable column grid.
 
 ## Layout
 
 ```text
-┌────────────────────────────────────────────────────────────────────────┐
-│  ┌──────────────────────────────────────────────────────────────────┐ │
-│  │           Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  │ │
-│  │  Sun     ▢▢▢▢ ▢▢▢▢ ▢▢▢▢ ▢▢▢▢ ▢▢▣▣ ▣▣▣▣ ▣▣▣▣ ▣▣▣▣ ▣▣▣▣ …          │ │
-│  │  Mon     …                                                        │ │
-│  │  Sat                                          Passed ▢▣▣▣▣ Failed │ │
-│  └──────────────────────────────────────────────────────────────────┘ │
-│                                                                        │
-│  Today                                                                 │
-│  ┌──────────────────────────────────────────────────────────────────┐ │
-│  │ ExpectColumnMostCommonValueToBeInSet  [Validity]  first_name     │ │
-│  │                                          Today 2:45 AM   [Passed]│ │
-│  ├──────────────────────────────────────────────────────────────────┤ │
-│  │ ExpectColumnValueLengthsToBeBetween   [Validity]  ssn         ⓘ  │ │
-│  │                                          Today 1:30 AM   [Failed]│ │
-│  └──────────────────────────────────────────────────────────────────┘ │
-│                                                                        │
-│  Yesterday                                                             │
-│  ┌──────────────────────────────────────────────────────────────────┐ │
-│  │ …                                                                │ │
-│  └──────────────────────────────────────────────────────────────────┘ │
-└────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ CHECK                          │ DIMENSION    │ COLUMN     │ RAN ON   │ STATUS │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ ── Today ────────────────────────────────────────────────────────────────── │
+│ ExpectColumnMostCommonValue…   │ [Validity]   │ first_name │ 2:45 AM  │ Passed │
+│ ExpectColumnValueLengthsToBe…  │ [Validity]   │ ssn        │ 1:30 AM  │ Failed ⓘ│
+├──────────────────────────────────────────────────────────────────────────────┤
+│ ── Yesterday ─────────────────────────────────────────────────────────────── │
+│ ExpectColumnValuesToNotBeNull  │ [Completen.] │ email      │ 6:12 PM  │ Passed │
+│ ExpectColumnPairValuesAToBeG…  │ [Consist.]   │ shipped…   │ 3:01 PM  │ Failed ⓘ│
+├──────────────────────────────────────────────────────────────────────────────┤
+│ ── Apr 22 ────────────────────────────────────────────────────────────────── │
+│ …                              │ …            │ …          │ …        │ …      │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Top card: yearly heatmap, 7 rows (Sun→Sat) × 53 weekly columns. Cell colors represent pass/fail intensity (5 shades from light grey "no run" to deep green "all passed", with subtle yellow-green for mixed). Month labels span the top. Hovering a cell shows a date tooltip (e.g. `Aug 30, 2025`).
-- Below: activity sections grouped by date label (`Today`, `Yesterday`, `This Week`, then weekly).
-- Each event row: check name (mono-ish), dimension pill, target column(s), timestamp on the right, status pill (Passed = green, Failed = red).
-- Failed rows show a small ⓘ trailing icon; hovering it reveals a dark tooltip with `Expected:` and a short failure description.
+## Component changes (in `src/routes/assets.$assetSlug.tsx`)
 
-## Data model
+1. **`ActivityPanel`** — remove the per-group `<div>` cards. Render one `<table>` (same border / typography tokens as the Checks table) wrapped in a single rounded card under the heatmap.
+2. **Row generation** — flatten events into a single ordered array. Walk it once; whenever the group label (`Today` / `Yesterday` / weekday / `MMM D`) changes, emit a divider row: `<tr><td colSpan={5} className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 px-4 py-2">{label}</td></tr>`, then emit the event row.
+3. **Columns** — exactly five: Check, Dimension, Column, Ran on, Status. Drop the previous "Target" terminology; use the existing `target` field as the Column cell.
+4. **Status cell** — render `<ActivityStatusPill />` and, only when `status === "Failed"` and `detail` exists, an `<InfoTooltip />` immediately to the right of the pill (small gap, same row, right-aligned cell).
+5. **Ran on** — keep `formatActivityTime`, but inside a date group show only the time portion (e.g. `2:45 AM`) since the group label already conveys the day. For older `MMM D` groups, show just the time too.
+6. **Cleanup** — remove now-unused per-group card styling. Keep `activityGroupLabel`, `formatActivityTime`, `ActivityStatusPill`, `InfoTooltip`, and `DimensionPill` helpers.
 
-Add to `src/routes/assets.$assetSlug.tsx`:
+## Out of scope
 
-```ts
-type ActivityStatus = "Passed" | "Failed" | "Warning";
-type ActivityEvent = {
-  id: string;
-  check: string;          // e.g. "ExpectColumnValueLengthsToBeBetween"
-  dimension: "Validity" | "Completeness" | "Uniqueness" | "Accuracy" | "Consistency";
-  target: string;         // e.g. "ssn" or "shipped_date, order_date"
-  ranAt: string;          // ISO; rendered as "Today 2:45 AM" / "Yesterday 6:12 PM" / "Apr 19 9:05 AM"
-  status: ActivityStatus;
-  detail?: string;        // shown in ⓘ tooltip when present (failed rows)
-};
-
-type HeatmapCell = { date: string; passed: number; failed: number };
-// Generate 365 cells deterministically from the slug so the chart is stable.
-```
-
-## Component changes
-
-In `src/routes/assets.$assetSlug.tsx`:
-1. Replace `{activeTab === "Activity" && <EmptyPanel … />}` with `<ActivityPanel events={SAMPLE_ACTIVITY} />`.
-2. Add `ActivityPanel`:
-   - Renders `<HeatmapCard />` then a list of date-grouped sections.
-   - Groups events by `Today` / `Yesterday` / weekday name for current week / `MMM D` otherwise.
-3. Add `HeatmapCard`:
-   - Builds a 53-week × 7-day grid using a deterministic pseudo-random seeded by the asset slug + date so the visual is stable and trends greener mid-year (matches screenshot).
-   - Renders inline SVG (~880×170) with month labels along the top and Sun/Mon/…/Sat row labels on the left.
-   - Bottom-right legend: `Passed ▢▣▣▣▣ Failed` using the same 5-step color scale.
-   - Native `<title>` element inside each `<rect>` for the hover tooltip (date + counts).
-4. Add small helpers (kept inside the file, no new files):
-   - `ActivityStatusPill({ status })` – reuses the same green/red/amber tokens as `StatusPill`.
-   - `InfoTooltip({ text })` – ⓘ icon (lucide `Info`) wrapped in a custom tooltip (absolute-positioned dark bubble on hover, matching the screenshot's dark popover with light text).
-   - `formatActivityTime(iso: string)` – returns `"Today 2:45 AM"`, `"Yesterday 6:12 PM"`, or `"Apr 19 9:05 AM"`.
-
-## Visual tokens
-
-- Heatmap palette (light → dark): `#EEF2F7`, `#D6F0DA`, `#9FE0AC`, `#5BC074`, `#1F8A3E`. (Same green family as the existing Passed pill.)
-- Section headers (`Today`, `Yesterday`): existing heading style used by other panel section labels.
-- Cards: same `border / rounded-lg / bg-white` tokens as the Checks and Profiling panels for consistency.
-
-## Sample data
-
-~12 events spread across Today / Yesterday / earlier-this-week, mirroring the screenshot (e.g. `ExpectColumnMostCommonValueToBeInSet` Validity Passed, `ExpectColumnValueLengthsToBeBetween` Validity Failed with `detail: "Length between 9 and 11 characters. 1,247 records contain SSN values that are shorter or longer than the expected length…"`, `ExpectColumnValuesToNotNull` Completeness, `ExpectColumnPairValuesAToBeGreaterThanB` Consistency Failed, etc.).
-
-## Out of scope (this turn)
-
-- Date range filtering on the heatmap.
-- Pagination / infinite scroll for older activity.
-- Real navigation when clicking a check name (will deep-link to the Checks tab in a later pass).
-- Click-to-filter from heatmap cell to the events on that day.
+- Sticky header on scroll.
+- Column sorting / filtering.
+- Click-through to the Checks tab.
 
