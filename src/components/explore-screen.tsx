@@ -876,11 +876,11 @@ function AssetOverview({ selected }: { selected: Selection }) {
                 className="border-y text-[11px] uppercase tracking-[0.08em]"
                 style={{ borderColor: "var(--hairline)", color: "var(--ink-300)" }}
               >
-                <th className="w-[46%] px-6 py-3 font-semibold">Name</th>
-                <th className="w-[12%] px-3 py-3 font-semibold">No. of columns</th>
-                <th className="w-[12%] px-3 py-3 font-semibold">No. of rows</th>
-                <th className="w-[12%] px-3 py-3 font-semibold">No. of checks</th>
-                <th className="w-[18%] px-6 py-3 font-semibold">Last analyzed</th>
+                <th className="w-[38%] px-6 py-3 font-semibold">Name</th>
+                <th className="w-[10%] px-3 py-3 font-semibold">No. of columns</th>
+                <th className="w-[10%] px-3 py-3 font-semibold">No. of rows</th>
+                <th className="w-[10%] px-3 py-3 font-semibold">No. of checks</th>
+                <th className="w-[32%] px-6 py-3 text-right font-semibold">Last analyzed</th>
               </tr>
             </thead>
             <tbody>
