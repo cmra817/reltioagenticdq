@@ -192,6 +192,8 @@ const DATASET_ASSETS: Record<string, AssetRow[]> = {
   "Loyalty Points": LOYALTY_POINTS_CHILDREN,
 };
 
+const countTables = (rows: AssetRow[]) => rows.filter((r) => r.kind === "table").length;
+
 const DATABRICKS_ALL: AssetRow[] = [
   { name: "Customer Data", kind: "dataset", description: "Customer master data including profiles, orders, and revenue dashboards", source: "Databricks", columns: null, lastAnalyzed: "15h ago" },
   { name: "Product catalog", kind: "dataset", description: "Products, SKUs, and category hierarchy", source: "Databricks", columns: null, lastAnalyzed: "2h ago" },
@@ -200,6 +202,12 @@ const DATABRICKS_ALL: AssetRow[] = [
   ...PRODUCT_CATALOG_CHILDREN,
   ...LOYALTY_POINTS_CHILDREN,
 ];
+
+const DATASET_TABLE_COUNTS: Record<string, number> = {
+  "Customer Data": countTables(CUSTOMER_DATA_CHILDREN),
+  "Product catalog": countTables(PRODUCT_CATALOG_CHILDREN),
+  "Loyalty Points": countTables(LOYALTY_POINTS_CHILDREN),
+};
 
 const TABLE_COLUMNS: Record<string, ColumnRow[]> = {
   Orders: [
@@ -476,7 +484,19 @@ function AssetOverview({ selected }: { selected: string | null }) {
           className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5"
           style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
         >
-          {view.mode === "table" ? view.columns.length : view.rows.length} <ColumnIcon size={12} />
+          {view.mode === "table" ? (
+            <>
+              {view.columns.length} <ColumnIcon size={12} />
+            </>
+          ) : view.mode === "dataset" ? (
+            <>
+              {view.rows.filter((r) => r.kind === "table").length} <TableIcon size={12} />
+            </>
+          ) : (
+            <>
+              {view.rows.length} <GridIcon size={12} />
+            </>
+          )}
         </span>
       </div>
 
@@ -525,13 +545,16 @@ function AssetOverview({ selected }: { selected: string | null }) {
                 <th className="w-[22%] px-6 py-3 font-semibold">Name</th>
                 <th className="w-[34%] px-3 py-3 font-semibold">Description</th>
                 <th className="w-[14%] px-3 py-3 font-semibold">Data Source</th>
-                <th className="w-[12%] px-3 py-3 font-semibold">Columns</th>
+                <th className="w-[12%] px-3 py-3 font-semibold">Contents</th>
                 <th className="w-[18%] px-6 py-3 font-semibold">Last Analyzed</th>
               </tr>
             </thead>
             <tbody>
               {view.rows.map((a) => {
                 const slug = a.name.toLowerCase().replace(/\s+/g, "-");
+                const isDataset = a.kind === "dataset";
+                const isTable = a.kind === "table";
+                const tableCount = isDataset ? DATASET_TABLE_COUNTS[a.name] ?? 0 : 0;
                 return (
                   <tr
                     key={a.name}
@@ -559,10 +582,19 @@ function AssetOverview({ selected }: { selected: string | null }) {
                       </span>
                     </td>
                     <td className="px-3 py-4">
-                      {a.columns !== null ? (
+                      {isDataset ? (
                         <span
                           className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
                           style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                          title={`${tableCount} tables`}
+                        >
+                          {tableCount} <TableIcon size={12} />
+                        </span>
+                      ) : isTable && a.columns !== null ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px]"
+                          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                          title={`${a.columns} columns`}
                         >
                           {a.columns} <ColumnIcon size={12} />
                         </span>
