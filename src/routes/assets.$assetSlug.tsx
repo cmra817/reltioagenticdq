@@ -426,6 +426,7 @@ function ColumnsPanel({
   const [visibleSample, setVisibleSample] = useState<Set<string>>(
     () => new Set(SAMPLE_ATTRIBUTES),
   );
+  const [selectedColumn, setSelectedColumn] = useState<ColumnRow | null>(null);
 
   const toggleSetItem = (
     setter: React.Dispatch<React.SetStateAction<Set<string>>>,
