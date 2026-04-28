@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, Search, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { AssetRow } from "./AssetRow";
+import { BigQueryIcon, DatabricksIcon, SnowflakeIcon } from "@/components/brand-icons";
 import {
   WAREHOUSES,
   assetKey,
@@ -9,6 +10,20 @@ import {
   type Connection,
   type WarehouseType,
 } from "./mock-warehouses";
+
+function WarehouseLogo({ warehouse }: { warehouse: WarehouseType }) {
+  const Icon =
+    warehouse === "Databricks"
+      ? DatabricksIcon
+      : warehouse === "Snowflake"
+        ? SnowflakeIcon
+        : BigQueryIcon;
+  return (
+    <span className="inline-flex h-4 w-4 items-center justify-center [&>svg]:h-4 [&>svg]:w-4">
+      <Icon />
+    </span>
+  );
+}
 
 type ActiveSchema = { connId: string; schema: string } | null;
 
@@ -81,16 +96,18 @@ export function Step1SelectData({
                 <button
                   type="button"
                   onClick={() => toggleGroup(warehouse)}
-                  className="flex w-full items-center gap-1.5 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide"
-                  style={{ color: "var(--ink-300)" }}
+                  className="flex w-full items-center gap-2 px-4 py-1.5 text-[12px] font-semibold"
+                  style={{ color: "var(--ink-700)" }}
                 >
                   <ChevronDown
                     size={12}
                     style={{
                       transform: groupCollapsed ? "rotate(-90deg)" : "rotate(0)",
                       transition: "transform 150ms",
+                      color: "var(--ink-300)",
                     }}
                   />
+                  <WarehouseLogo warehouse={warehouse} />
                   {warehouse}
                 </button>
                 {!groupCollapsed &&

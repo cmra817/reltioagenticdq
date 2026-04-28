@@ -1,5 +1,7 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TableIcon } from "@/components/explore-screen";
+import { Eye } from "lucide-react";
 import type { Asset } from "./mock-warehouses";
 import { formatRows, relativeTime } from "./mock-warehouses";
 
@@ -31,15 +33,15 @@ export function AssetRow({
           <TooltipTrigger asChild>
             <span
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex h-5 w-5 shrink-0 cursor-help items-center justify-center rounded text-[10px] font-semibold"
+              className="inline-flex h-6 w-6 shrink-0 cursor-help items-center justify-center rounded"
               style={
                 asset.type === "table"
-                  ? { background: "rgba(67,134,250,0.12)", color: "var(--brand-blue)" }
-                  : { background: "rgba(120,80,220,0.12)", color: "#7850dc" }
+                  ? { color: "var(--brand-blue)" }
+                  : { color: "#7850dc" }
               }
               aria-label={asset.type === "table" ? "Table" : "View"}
             >
-              {asset.type === "table" ? "T" : "V"}
+              {asset.type === "table" ? <TableIcon size={16} /> : <Eye size={16} strokeWidth={1.8} />}
             </span>
           </TooltipTrigger>
           <TooltipContent side="top">
