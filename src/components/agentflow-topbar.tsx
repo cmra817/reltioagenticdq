@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import lockupUrl from "@/assets/reltio-agentflow-lockup.png";
 import { ChevronDownIcon, PlusIcon, SidebarToggleIcon } from "./brand-icons";
 import { useSidebarState } from "./sidebar-context";
+import { useDomainState } from "./domain-context";
 import { CreateDomainDialog } from "./create-domain-dialog";
 import { AddDatasetModal } from "./add-dataset/AddDatasetModal";
 
@@ -9,9 +10,12 @@ const tabs = ["Agents", "Unstructured", "Quality"] as const;
 type Tab = (typeof tabs)[number];
 
 function NewMenu() {
+  const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
   const [open, setOpen] = useState(false);
   const [domainOpen, setDomainOpen] = useState(false);
   const [datasetOpen, setDatasetOpen] = useState(false);
+  // Domain that the dataset wizard should attach to once finished.
+  const [pendingDomain, setPendingDomain] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
