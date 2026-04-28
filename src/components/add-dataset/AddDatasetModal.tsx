@@ -129,6 +129,15 @@ export function AddDatasetModal({
         <div className="mt-6">
           <Stepper steps={STEPS} current={step} />
         </div>
+        {step === 0 && (
+          <div className="mt-4">
+            <HeaderChips
+              selected={selected}
+              onRemove={(k) => toggle(k)}
+              onClear={() => setSelected(new Set())}
+            />
+          </div>
+        )}
       </header>
 
       {/* Body */}
@@ -136,15 +145,6 @@ export function AddDatasetModal({
         {step === 0 && <Step1SelectData selected={selected} onToggle={toggle} />}
         {step === 1 && <Step2Placeholder count={selected.size} />}
       </div>
-
-      {/* Footer chip strip */}
-      {step === 0 && (
-        <FooterChips
-          selected={selected}
-          onRemove={(k) => toggle(k)}
-          onClear={() => setSelected(new Set())}
-        />
-      )}
     </div>
   );
 }
