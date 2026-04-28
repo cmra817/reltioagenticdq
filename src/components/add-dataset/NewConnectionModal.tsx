@@ -143,6 +143,12 @@ export function NewConnectionModal({
         {view === "configure" && platform && (
           <ConfigureView
             platform={platform}
+            connName={connName}
+            setConnName={setConnName}
+            catalog={catalog}
+            setCatalog={setCatalog}
+            schema={schema}
+            setSchema={setSchema}
             onCancel={() => onOpenChange(false)}
             onSave={() => setView("success")}
           />
@@ -151,6 +157,9 @@ export function NewConnectionModal({
         {view === "success" && platform && (
           <SuccessView
             platform={platform}
+            connName={connName}
+            catalog={catalog}
+            schema={schema}
             onDone={() => {
               onSelect(platform.id);
               onOpenChange(false);
