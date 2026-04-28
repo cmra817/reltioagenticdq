@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Stepper } from "./Stepper";
 import { Step1SelectData } from "./Step1SelectData";
+import { AgentChatPanel } from "./AgentChatPanel";
 
 const STEPS = [{ label: "Select data" }, { label: "Apply checks" }];
 
@@ -59,12 +60,13 @@ export function AddDatasetModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex flex-col"
+      className="fixed inset-0 z-[60] flex"
       style={{ background: "var(--canvas)" }}
       role="dialog"
       aria-modal="true"
       aria-label="Add data asset"
     >
+      <div className="flex flex-1 flex-col overflow-hidden">
       {/* Header */}
       <header
         className="shrink-0 border-b bg-white px-10 pt-8 pb-6"
@@ -142,6 +144,8 @@ export function AddDatasetModal({
         )}
         {step === 1 && <Step2Placeholder count={selected.size} />}
       </div>
+      </div>
+      <AgentChatPanel />
     </div>
   );
 }
