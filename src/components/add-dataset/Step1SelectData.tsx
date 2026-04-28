@@ -22,7 +22,6 @@ export function Step1SelectData({
   const [activeSchema, setActiveSchema] = useState<ActiveSchema>(null);
   const [query, setQuery] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [collapsedConns, setCollapsedConns] = useState<Set<string>>(new Set());
 
   const grouped = useMemo(() => {
     const map = new Map<WarehouseType, Connection[]>();
@@ -41,13 +40,6 @@ export function Step1SelectData({
     setCollapsedGroups((s) => {
       const n = new Set(s);
       n.has(g) ? n.delete(g) : n.add(g);
-      return n;
-    });
-
-  const toggleConn = (id: string) =>
-    setCollapsedConns((s) => {
-      const n = new Set(s);
-      n.has(id) ? n.delete(id) : n.add(id);
       return n;
     });
 
@@ -103,58 +95,46 @@ export function Step1SelectData({
                 </button>
                 {!groupCollapsed &&
                   conns.map((conn) => {
-                    const connCollapsed = collapsedConns.has(conn.id);
                     return (
-                      <div key={conn.id} className="mb-1">
-                        <button
-                          type="button"
-                          onClick={() => toggleConn(conn.id)}
-                          className="flex w-full items-center gap-1.5 px-4 py-1.5 text-[13px] font-medium"
+                      <div key={conn.id} className="mb-2">
+                        <div
+                          className="px-4 py-1.5 text-[13px] font-medium"
                           style={{ color: "var(--ink-700)" }}
                         >
-                          <ChevronDown
-                            size={12}
-                            style={{
-                              transform: connCollapsed ? "rotate(-90deg)" : "rotate(0)",
-                              transition: "transform 150ms",
-                              color: "var(--ink-300)",
-                            }}
-                          />
                           {conn.name}
-                        </button>
-                        {!connCollapsed &&
-                          conn.schemas.map((sch) => {
-                            const isActive =
-                              activeSchema?.connId === conn.id &&
-                              activeSchema.schema === sch.name;
-                            return (
-                              <button
-                                key={sch.name}
-                                type="button"
-                                onClick={() =>
-                                  setActiveSchema({ connId: conn.id, schema: sch.name })
-                                }
-                                className="flex w-full items-center justify-between py-1.5 pl-9 pr-4 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
-                                style={{
-                                  background: isActive
-                                    ? "rgba(67,134,250,0.10)"
-                                    : "transparent",
-                                  color: isActive ? "var(--brand-blue)" : "var(--ink-700)",
-                                  borderLeft: isActive
-                                    ? "2px solid var(--brand-blue)"
-                                    : "2px solid transparent",
-                                }}
+                        </div>
+                        {conn.schemas.map((sch) => {
+                          const isActive =
+                            activeSchema?.connId === conn.id &&
+                            activeSchema.schema === sch.name;
+                          return (
+                            <button
+                              key={sch.name}
+                              type="button"
+                              onClick={() =>
+                                setActiveSchema({ connId: conn.id, schema: sch.name })
+                              }
+                              className="flex w-full items-center justify-between py-1.5 pl-7 pr-4 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
+                              style={{
+                                background: isActive
+                                  ? "rgba(67,134,250,0.10)"
+                                  : "transparent",
+                                color: isActive ? "var(--brand-blue)" : "var(--ink-700)",
+                                borderLeft: isActive
+                                  ? "2px solid var(--brand-blue)"
+                                  : "2px solid transparent",
+                              }}
+                            >
+                              <span className="truncate font-mono text-[12px]">{sch.name}</span>
+                              <span
+                                className="ml-2 text-[11px]"
+                                style={{ color: "var(--ink-300)" }}
                               >
-                                <span className="truncate font-mono text-[12px]">{sch.name}</span>
-                                <span
-                                  className="ml-2 text-[11px]"
-                                  style={{ color: "var(--ink-300)" }}
-                                >
-                                  {sch.assets.length}
-                                </span>
-                              </button>
-                            );
-                          })}
+                                {sch.assets.length}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     );
                   })}
