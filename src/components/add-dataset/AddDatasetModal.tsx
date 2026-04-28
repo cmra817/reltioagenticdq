@@ -168,7 +168,7 @@ function Step2Placeholder({ count }: { count: number }) {
   );
 }
 
-function FooterChips({
+function HeaderChips({
   selected,
   onRemove,
   onClear,
@@ -182,10 +182,7 @@ function FooterChips({
   const overflow = keys.length - visible.length;
 
   return (
-    <div
-      className="shrink-0 border-t bg-white px-10 py-3"
-      style={{ borderColor: "var(--hairline)" }}
-    >
+    <div>
       {keys.length === 0 ? (
         <div className="text-[13px]" style={{ color: "var(--ink-500)" }}>
           Select tables to start monitoring.
