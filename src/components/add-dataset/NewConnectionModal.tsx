@@ -55,12 +55,18 @@ export function NewConnectionModal({
   const [view, setView] = useState<View>("pick");
   const [platformId, setPlatformId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [connName, setConnName] = useState("");
+  const [catalog, setCatalog] = useState("");
+  const [schema, setSchema] = useState("");
 
   useEffect(() => {
     if (!open) {
       setQuery("");
       setView("pick");
       setPlatformId(null);
+      setConnName("");
+      setCatalog("");
+      setSchema("");
     }
   }, [open]);
 
