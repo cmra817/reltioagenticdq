@@ -13,6 +13,7 @@ import {
   UserIcon,
   UsersGearIcon,
 } from "./brand-icons";
+import { useDomainState } from "./domain-context";
 
 function NavItem({
   icon,
