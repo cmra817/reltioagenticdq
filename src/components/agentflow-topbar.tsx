@@ -3,6 +3,7 @@ import lockupUrl from "@/assets/reltio-agentflow-lockup.png";
 import { ChevronDownIcon, PlusIcon, SidebarToggleIcon } from "./brand-icons";
 import { useSidebarState } from "./sidebar-context";
 import { CreateDomainDialog } from "./create-domain-dialog";
+import { AddDatasetModal } from "./add-dataset/AddDatasetModal";
 
 const tabs = ["Agents", "Unstructured", "Quality"] as const;
 type Tab = (typeof tabs)[number];
@@ -10,6 +11,7 @@ type Tab = (typeof tabs)[number];
 function NewMenu() {
   const [open, setOpen] = useState(false);
   const [domainOpen, setDomainOpen] = useState(false);
+  const [datasetOpen, setDatasetOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,7 +74,10 @@ function NewMenu() {
           <button
             type="button"
             role="menuitem"
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setOpen(false);
+              setDatasetOpen(true);
+            }}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-[14px] transition-colors hover:bg-[color:var(--surface-soft)]"
             style={{ color: "var(--ink-900)" }}
           >
@@ -96,6 +101,7 @@ function NewMenu() {
       )}
 
       <CreateDomainDialog open={domainOpen} onOpenChange={setDomainOpen} />
+      <AddDatasetModal open={datasetOpen} onOpenChange={setDatasetOpen} />
     </div>
   );
 }
