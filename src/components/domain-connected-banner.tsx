@@ -1,11 +1,20 @@
+import { useEffect } from "react";
 import { useDomainState } from "./domain-context";
 
 /**
- * Breadcrumb-style banner that confirms a domain was just connected with its
- * tables and checks. Shown right under the topbar across the app.
+ * Toast/snackbar that confirms a domain was just connected with its tables
+ * and checks. Floats at the bottom-center of the app.
  */
 export function DomainConnectedBanner() {
   const { justConnected, dismissJustConnected } = useDomainState();
+
+  // Auto-dismiss after a short delay so it behaves like a snackbar.
+  useEffect(() => {
+    if (!justConnected) return;
+    const id = window.setTimeout(() => dismissJustConnected(), 6000);
+    return () => window.clearTimeout(id);
+  }, [justConnected, dismissJustConnected]);
+
   if (!justConnected) return null;
 
   const { name, tables, checkCount } = justConnected;
@@ -15,16 +24,18 @@ export function DomainConnectedBanner() {
 
   return (
     <div
+      className="pointer-events-none fixed inset-x-0 bottom-6 z-[70] flex justify-center px-4"
       role="status"
       aria-live="polite"
-      className="mx-4 mt-1 mb-2 flex items-center justify-between gap-4 rounded-xl border px-4 py-2.5"
-      style={{
-        borderColor: "rgba(67,134,250,0.35)",
-        background:
-          "linear-gradient(90deg, rgba(67,134,250,0.10), rgba(103,240,255,0.10))",
-      }}
     >
-      <div className="flex min-w-0 items-center gap-3 text-[13px]">
+      <div
+        className="pointer-events-auto flex max-w-[720px] items-center gap-3 rounded-xl border px-4 py-2.5 text-[13px]"
+        style={{
+          borderColor: "rgba(67,134,250,0.35)",
+          background: "white",
+          boxShadow: "0 12px 32px rgba(15,23,42,0.16)",
+        }}
+      >
         <span
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white"
           style={{ background: "var(--brand-blue)" }}
@@ -74,15 +85,15 @@ export function DomainConnectedBanner() {
             </span>
           )}
         </nav>
+        <button
+          type="button"
+          onClick={dismissJustConnected}
+          className="ml-2 shrink-0 rounded-md px-2 py-1 text-[12px] font-medium transition-colors hover:bg-[color:var(--surface-soft)]"
+          style={{ color: "var(--ink-700)" }}
+        >
+          Dismiss
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={dismissJustConnected}
-        className="shrink-0 rounded-md px-2 py-1 text-[12px] font-medium transition-colors hover:bg-white/60"
-        style={{ color: "var(--ink-700)" }}
-      >
-        Dismiss
-      </button>
     </div>
   );
 }
