@@ -370,10 +370,18 @@ function ConfigureView({
 
             <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="Catalog name">
-                <Input placeholder="Enter catalog name" />
+                <Input
+                  placeholder="Enter catalog name"
+                  value={catalog}
+                  onChange={(e) => setCatalog(e.target.value)}
+                />
               </Field>
               <Field label="Schema name">
-                <Input placeholder="Enter schema name" />
+                <Input
+                  placeholder="Enter schema name"
+                  value={schema}
+                  onChange={(e) => setSchema(e.target.value)}
+                />
               </Field>
             </div>
           </div>
