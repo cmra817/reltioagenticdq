@@ -94,12 +94,24 @@ export function AddDatasetModal({
         style={{ borderColor: "var(--hairline)" }}
       >
         <div className="flex items-center justify-between">
-          <h1
-            className="text-[28px] font-semibold leading-tight"
-            style={{ color: "var(--ink-900)" }}
-          >
-            Add data asset
-          </h1>
+          <div className="flex flex-col gap-1">
+            {domainName && (
+              <div
+                className="flex items-center gap-1.5 text-[12px] font-medium"
+                style={{ color: "var(--ink-500)" }}
+              >
+                <span>Domain</span>
+                <span aria-hidden="true">/</span>
+                <span style={{ color: "var(--brand-blue)" }}>{domainName}</span>
+              </div>
+            )}
+            <h1
+              className="text-[28px] font-semibold leading-tight"
+              style={{ color: "var(--ink-900)" }}
+            >
+              Add data asset
+            </h1>
+          </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
