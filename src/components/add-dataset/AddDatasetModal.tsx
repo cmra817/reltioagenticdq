@@ -145,7 +145,16 @@ export function AddDatasetModal({
         {step === 1 && <Step2Placeholder count={selected.size} />}
       </div>
       </div>
-      <AgentChatPanel />
+      <AgentChatPanel
+        selected={selected}
+        onAddMany={(keys) =>
+          setSelected((s) => {
+            const n = new Set(s);
+            for (const k of keys) n.add(k);
+            return n;
+          })
+        }
+      />
     </div>
   );
 }
