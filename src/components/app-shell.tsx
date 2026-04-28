@@ -35,6 +35,7 @@ function AppShellInner({
       />
       <div className="relative z-10 flex h-screen flex-col">
         <AgentflowTopbar active={activeTab ?? "Quality"} />
+        <DomainConnectedBanner />
         <div className="flex flex-1 overflow-hidden">
           {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "new-chat"} />}
           <main className="flex flex-1 flex-col overflow-hidden">{children}</main>
