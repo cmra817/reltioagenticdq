@@ -129,20 +129,17 @@ export function AddDatasetModal({
         <div className="mt-6">
           <Stepper steps={STEPS} current={step} />
         </div>
-        {step === 0 && (
-          <div className="mt-4">
-            <HeaderChips
-              selected={selected}
-              onRemove={(k) => toggle(k)}
-              onClear={() => setSelected(new Set())}
-            />
-          </div>
-        )}
       </header>
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
-        {step === 0 && <Step1SelectData selected={selected} onToggle={toggle} />}
+        {step === 0 && (
+          <Step1SelectData
+            selected={selected}
+            onToggle={toggle}
+            onClear={() => setSelected(new Set())}
+          />
+        )}
         {step === 1 && <Step2Placeholder count={selected.size} />}
       </div>
     </div>
