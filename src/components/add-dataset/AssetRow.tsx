@@ -1,14 +1,14 @@
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { TableIcon } from "@/components/explore-screen";
+import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
 import { Eye } from "lucide-react";
-import type { Asset } from "./mock-warehouses";
+import type { Asset, WarehouseType } from "./mock-warehouses";
 import { formatRows, relativeTime } from "./mock-warehouses";
 
 export function AssetRow({
   asset,
   schema,
   connection,
+  warehouse,
   selected,
   onToggle,
   highlight,
@@ -16,57 +16,54 @@ export function AssetRow({
   asset: Asset;
   schema: string;
   connection: string;
+  warehouse: WarehouseType;
   selected: boolean;
   onToggle: () => void;
   highlight?: string;
 }) {
+  const isTable = asset.type === "table";
   return (
     <button
       type="button"
       onClick={onToggle}
-      className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-[color:var(--surface-soft)]"
+      className="group flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-[color:var(--surface-soft)]"
       style={{ background: selected ? "rgba(67,134,250,0.06)" : undefined }}
     >
-      <Checkbox checked={selected} onCheckedChange={onToggle} className="pointer-events-none" />
-      <TooltipProvider delayDuration={150}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex h-6 w-6 shrink-0 cursor-help items-center justify-center rounded"
-              style={
-                asset.type === "table"
-                  ? { color: "var(--brand-blue)" }
-                  : { color: "#7850dc" }
-              }
-              aria-label={asset.type === "table" ? "Table" : "View"}
-            >
-              {asset.type === "table" ? <TableIcon size={16} /> : <Eye size={16} strokeWidth={1.8} />}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            {asset.type === "table"
-              ? "Table — physical stored data"
-              : "View — saved query over other tables"}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Checkbox
+        checked={selected}
+        onCheckedChange={onToggle}
+        className="pointer-events-none mt-1"
+      />
+      <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
+        <SourceLogo source={warehouse} />
+      </span>
       <div className="min-w-0 flex-1">
-        <div className="font-mono text-[13px] leading-tight" style={{ color: "var(--ink-900)" }}>
+        <div
+          className="text-[14px] font-semibold leading-tight"
+          style={{ color: "var(--ink-900)" }}
+        >
           {highlight ? <Highlighted text={asset.name} q={highlight} /> : asset.name}
         </div>
         <div
-          className="mt-0.5 line-clamp-1 text-[12px]"
+          className="mt-0.5 flex items-center gap-1.5 text-[12px]"
           style={{ color: "var(--ink-500)" }}
         >
+          <span style={{ color: "var(--ink-300)" }}>
+            {isTable ? <TableIcon size={13} /> : <Eye size={13} strokeWidth={1.8} />}
+          </span>
+          <span>{isTable ? "Table" : "View"}</span>
+          <span style={{ color: "var(--ink-300)" }}>›</span>
+          <span style={{ color: "var(--brand-blue)" }}>
+            <DatasetIcon size={13} />
+          </span>
+          <span style={{ color: "var(--ink-700)" }}>{schema}</span>
+        </div>
+        <p className="mt-2 text-[13px]" style={{ color: "var(--ink-700)" }}>
           {asset.description}
-        </div>
-        <div className="mt-0.5 text-[11px]" style={{ color: "var(--ink-300)" }}>
-          {schema} · {connection}
-        </div>
+        </p>
       </div>
       <div
-        className="flex shrink-0 items-center gap-6 text-[12px]"
+        className="flex shrink-0 items-center gap-6 pt-1 text-[12px]"
         style={{ color: "var(--ink-500)" }}
       >
         <span className="tabular-nums">{formatRows(asset.rows)} rows</span>
