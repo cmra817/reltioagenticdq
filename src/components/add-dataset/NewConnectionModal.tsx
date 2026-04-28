@@ -317,7 +317,11 @@ function ConfigureView({
           style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)" }}
         >
           <Field label="Connection Name" hint="Enter a unique name.">
-            <Input placeholder="e.g. Research Documents" />
+            <Input
+              placeholder="e.g. Research Documents"
+              value={connName}
+              onChange={(e) => setConnName(e.target.value)}
+            />
           </Field>
 
           <div
