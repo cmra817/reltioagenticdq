@@ -1,4 +1,5 @@
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Asset } from "./mock-warehouses";
 import { formatRows, relativeTime } from "./mock-warehouses";
 
