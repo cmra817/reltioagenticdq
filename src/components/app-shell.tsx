@@ -2,6 +2,7 @@ import { AgentflowSidebar } from "@/components/agentflow-sidebar";
 import { AgentflowTopbar } from "@/components/agentflow-topbar";
 import { SidebarProvider, useSidebarState } from "@/components/sidebar-context";
 import { DomainProvider } from "@/components/domain-context";
+import { DomainConnectedBanner } from "@/components/domain-connected-banner";
 
 function AppShellInner({
   children,
