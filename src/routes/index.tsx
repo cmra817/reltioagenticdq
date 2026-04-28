@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { WarehouseRow } from "@/components/warehouse-card";
 import { ChatComposer } from "@/components/chat-composer";
+import searchTablesHero from "@/assets/search-tables-hero.png";
 
 export const Route = createFileRoute("/")({
   component: Index,
