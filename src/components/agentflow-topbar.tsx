@@ -100,7 +100,11 @@ function NewMenu() {
         </div>
       )}
 
-      <CreateDomainDialog open={domainOpen} onOpenChange={setDomainOpen} />
+      <CreateDomainDialog
+        open={domainOpen}
+        onOpenChange={setDomainOpen}
+        onCreate={() => setDatasetOpen(true)}
+      />
       <AddDatasetModal open={datasetOpen} onOpenChange={setDatasetOpen} />
     </div>
   );
