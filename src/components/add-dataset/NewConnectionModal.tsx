@@ -486,12 +486,21 @@ function Input({
 
 function SuccessView({
   platform,
+  connName,
+  catalog,
+  schema,
   onDone,
 }: {
   platform: Platform;
+  connName: string;
+  catalog: string;
+  schema: string;
   onDone: () => void;
 }) {
   const { Icon } = platform;
+  const displayName = connName.trim() || `${platform.name} connection`;
+  const cat = catalog.trim() || "—";
+  const sch = schema.trim() || "—";
   return (
     <>
       <div className="px-7 py-8">
@@ -511,7 +520,7 @@ function SuccessView({
             className="mt-5 text-[20px] font-semibold"
             style={{ color: "var(--ink-900)" }}
           >
-            Connected to {platform.name}
+            Successfully connected
           </div>
           <p
             className="mx-auto mt-2 max-w-md text-[13px]"
@@ -537,10 +546,10 @@ function SuccessView({
                   className="text-[14px] font-semibold"
                   style={{ color: "var(--ink-900)" }}
                 >
-                  {platform.name}
+                  {displayName}
                 </div>
                 <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-                  Status: Active
+                  {cat} / {sch}
                 </div>
               </div>
             </div>
@@ -556,6 +565,7 @@ function SuccessView({
             </span>
           </div>
         </div>
+      </div>
       </div>
 
       <div
