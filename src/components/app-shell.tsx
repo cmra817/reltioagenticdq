@@ -1,6 +1,7 @@
 import { AgentflowSidebar } from "@/components/agentflow-sidebar";
 import { AgentflowTopbar } from "@/components/agentflow-topbar";
 import { SidebarProvider, useSidebarState } from "@/components/sidebar-context";
+import { DomainProvider } from "@/components/domain-context";
 
 function AppShellInner({
   children,
