@@ -287,10 +287,22 @@ function PlatformCard({
 
 function ConfigureView({
   platform,
+  connName,
+  setConnName,
+  catalog,
+  setCatalog,
+  schema,
+  setSchema,
   onCancel,
   onSave,
 }: {
   platform: Platform;
+  connName: string;
+  setConnName: (v: string) => void;
+  catalog: string;
+  setCatalog: (v: string) => void;
+  schema: string;
+  setSchema: (v: string) => void;
   onCancel: () => void;
   onSave: () => void;
 }) {
