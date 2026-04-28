@@ -4,15 +4,25 @@ import { Stepper } from "./Stepper";
 import { Step1SelectData } from "./Step1SelectData";
 import { Step2ApplyChecks } from "./Step2ApplyChecks";
 import { AgentChatPanel } from "./AgentChatPanel";
+import { generateChecks } from "./mock-checks";
 
 const STEPS = [{ label: "Select data" }, { label: "Apply checks" }];
+
+export type AddDatasetCompletion = {
+  tables: string[];
+  checkCount: number;
+};
 
 export function AddDatasetModal({
   open,
   onOpenChange,
+  domainName,
+  onComplete,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  domainName?: string;
+  onComplete?: (result: AddDatasetCompletion) => void;
 }) {
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
