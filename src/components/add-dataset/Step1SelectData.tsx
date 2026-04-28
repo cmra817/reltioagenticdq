@@ -229,6 +229,7 @@ export function Step1SelectData({
               </div>
             );
           })}
+          </div>
         </aside>
 
         {/* Right panel */}
