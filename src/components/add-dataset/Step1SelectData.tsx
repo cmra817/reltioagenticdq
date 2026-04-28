@@ -142,9 +142,24 @@ export function Step1SelectData({
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside
-          className="w-[280px] shrink-0 overflow-y-auto border-r py-3"
+          className="flex w-[280px] shrink-0 flex-col overflow-hidden border-r"
           style={{ borderColor: "var(--hairline)" }}
         >
+          <div
+            className="border-b px-4 py-3"
+            style={{ borderColor: "var(--hairline)" }}
+          >
+            <button
+              type="button"
+              onClick={() => setNewConnOpen(true)}
+              className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-soft)]"
+              style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+            >
+              <Plus size={14} />
+              Add connection
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto py-3">
           {grouped.map(([warehouse, conns]) => {
             const groupCollapsed = collapsedGroups.has(warehouse);
             return (
