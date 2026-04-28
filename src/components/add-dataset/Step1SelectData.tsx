@@ -98,7 +98,7 @@ export function Step1SelectData({
                     return (
                       <div key={conn.id} className="mb-2">
                         <div
-                          className="px-4 py-1.5 text-[13px] font-medium"
+                          className="py-1.5 pl-[34px] pr-4 text-[13px] font-medium"
                           style={{ color: "var(--ink-700)" }}
                         >
                           {conn.name}
@@ -114,7 +114,7 @@ export function Step1SelectData({
                               onClick={() =>
                                 setActiveSchema({ connId: conn.id, schema: sch.name })
                               }
-                              className="flex w-full items-center justify-between py-1.5 pl-7 pr-4 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
+                              className="flex w-full items-center justify-between py-1.5 pl-[50px] pr-4 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
                               style={{
                                 background: isActive
                                   ? "rgba(67,134,250,0.10)"
