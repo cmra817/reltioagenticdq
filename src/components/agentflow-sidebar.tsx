@@ -56,17 +56,6 @@ function SectionDivider() {
   return <div className="mx-3 my-2 h-px" style={{ background: "var(--hairline)" }} />;
 }
 
-const DEFAULT_DOMAINS = [
-  "Finance",
-  "Marketing",
-  "Sales",
-  "Human Resources",
-  "Operations",
-  "Customer Success",
-  "Product",
-  "Supply Chain",
-];
-
 function DomainPill() {
   const { domains, selected, selectDomain, addDomain, connections } = useDomainState();
   const [open, setOpen] = useState(false);
