@@ -1,8 +1,25 @@
-import { Checkbox } from "@/components/ui/checkbox";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
 import { Eye } from "lucide-react";
 import type { Asset, WarehouseType } from "./mock-warehouses";
 import { formatRows, relativeTime } from "./mock-warehouses";
+
+function CheckSquare({ checked }: { checked: boolean }) {
+  return (
+    <span
+      className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border"
+      style={{
+        background: checked ? "var(--brand-blue)" : "white",
+        borderColor: checked ? "var(--brand-blue)" : "var(--hairline)",
+      }}
+    >
+      {checked && (
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      )}
+    </span>
+  );
+}
 
 export function AssetRow({
   asset,
@@ -29,11 +46,7 @@ export function AssetRow({
       className="group flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-[color:var(--surface-soft)]"
       style={{ background: selected ? "rgba(67,134,250,0.06)" : undefined }}
     >
-      <Checkbox
-        checked={selected}
-        onCheckedChange={onToggle}
-        className="pointer-events-none mt-1"
-      />
+      <CheckSquare checked={selected} />
       <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
         <SourceLogo source={warehouse} />
       </span>
