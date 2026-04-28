@@ -49,9 +49,11 @@ function buildRecommendations(): Recommendation[] {
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 export function AgentChatPanel({
+  step,
   selected,
   onAddMany,
 }: {
+  step: number;
   selected: Set<string>;
   onAddMany: (keys: string[]) => void;
 }) {
@@ -78,6 +80,8 @@ export function AgentChatPanel({
       ),
     },
   ]);
+  // Track whether we've already shown the Step 2 intro so we don't repeat it.
+  const [step2Introduced, setStep2Introduced] = useState(false);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
