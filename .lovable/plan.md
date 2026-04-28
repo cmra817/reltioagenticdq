@@ -1,123 +1,70 @@
+## Step 2 — Apply checks
 
-# "Add new dataset" — Full-Page Stepper Modal
+Build out the placeholder Step 2 into a full "Apply checks" experience that mirrors the Step 1 layout (left content area + right AgentFlow chat panel already provided by the modal shell).
 
-Wire the topbar's **Add new dataset** menu item to a full-page modal that takes over the viewport. It uses the same workflow stepper structure as the reference "Create new template" screen, scoped to two steps for this flow:
+### Layout
 
-1. **Select data**
-2. **Apply checks** (placeholder content this turn)
-
-Only **Step 1** body is built out; Step 2 renders a simple placeholder card so the stepper, Continue, Back, and Cancel wiring all work end-to-end.
-
-Styling reuses existing Reltio tokens (`--brand-blue`, `--ink-900/700/500/300`, `--hairline`, `--surface-soft`, `--canvas`, Inter). Reference image drives header/stepper layout only.
-
-## Trigger
-
-`src/components/agentflow-topbar.tsx` → `NewMenu`:
-- Add `datasetOpen` state alongside `domainOpen`.
-- **Add new dataset** menu item: `setOpen(false); setDatasetOpen(true);`
-- Render `<AddDatasetModal open={datasetOpen} onOpenChange={setDatasetOpen} />`.
-
-## Header & stepper structure (matches reference)
-
-Full-bleed white header, `pt-8 pb-6 px-10`, hairline-bottom. Two rows:
-
-**Row 1** — flex justify-between, items-center:
-- Left: page title `Add data asset` (28px, `font-semibold`, `--ink-900`).
-- Right cluster: `Cancel` ghost pill button + `Back` outline pill (only when `step > 1`) + `Continue` filled pill (`--brand-blue`, white text, rounded-full, `h-10 px-7`). All buttons rounded-full to match the reference.
-
-**Row 2** — horizontal stepper, left-aligned, `mt-6`:
 ```text
-(1)─────(2)
-Select data   Apply checks
-```
-- Each step: 28px circle + label below.
-- **Current** step: filled `--brand-blue` circle, white number, label `--ink-900` font-semibold.
-- **Completed** step: filled `--brand-blue` circle with check icon, label `--ink-700`.
-- **Upcoming** step: white circle, hairline border, `--ink-300` number and label.
-- Connectors: thin `--hairline` line between circles, fills with `--brand-blue` once that segment is completed.
-- Steps are **not** clickable (forward navigation only via Continue).
-
-**Continue button behavior:**
-- Step 1: enabled only when `selected.size > 0`. Label `Continue`. Advances to step 2.
-- Step 2 (placeholder): label changes to `Add N assets`. Closes modal on click.
-- `Cancel` always closes the modal and resets state. `Back` returns to previous step.
-
-## Body shell
-
-Full-width below header, `bg-[var(--canvas)]`, scrollable region. Each step renders inside this region.
-
-## Step 1: Select data
-
-Two-panel layout in a single rounded card (`bg-white`, hairline border, `rounded-2xl`, `mx-10 my-8`, `min-h-[calc(100vh-260px)]`).
-
-### Sub-header inside card (full width)
-- Subtitle row: `Select tables to monitor` (15px `--ink-700`) on the left.
-- Right: ghost **+ Add connection** button (`h-9 px-3 text-[13px]`, `--ink-700`, hairline border, hover `--surface-soft`) → on click, sonner `toast.info("Add connection coming soon")`.
-- Hairline divider below.
-
-### Two panels
-```text
-┌───────────────────────────────────────────────────────────┐
-│ Sidebar 280px  │           Right Panel (flex-1)           │
-│  scrollable    │  search + (idle | browse | search)       │
-└───────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┬──────────────┐
+│ Sub-header: "Apply data quality checks"            │              │
+├────────────────────────────────────────────────────┤              │
+│ Tabs: [ customers (14) ] [ orders (7) ]   +Add ▸  │  AgentFlow   │
+├────────────────────────────────────────────────────┤  chat panel  │
+│ Checks table for the active tab:                   │  (existing)  │
+│  ☑ Rule | Description | DQ dimension | Field       │              │
+│  ☑ customer_id is not null  …  Completeness  …     │              │
+│  ☑ customer_id is unique    …  Uniqueness    …     │              │
+│  …                                                 │              │
+└────────────────────────────────────────────────────┴──────────────┘
 ```
 
-#### Left sidebar (`w-[280px]`, hairline-right, scroll-y)
-- Grouped by **warehouse type** (Databricks, Snowflake, BigQuery).
-- Group label: uppercase 11px `--ink-300`, `tracking-wide`, with caret (rotates) — collapsible. All expanded by default.
-- Under each: connections (small db icon + name, 13px `--ink-700`).
-- Under each connection: schemas — clickable rows showing `<schema name>` + right-aligned `<n>` table count (`--ink-300`, 12px). Active schema: bg `rgba(67,134,250,0.10)`, text `--brand-blue`, 2px left edge `--brand-blue`.
+The right AgentFlow panel already lives at the modal level, so Step 2 only needs to render the left content. The modal's existing header (Cancel / Back / Continue) stays — the final Continue button label already reads `Add N assets`.
 
-#### Right panel — three states
-Driven by `query` and `activeSchema`:
-- empty query + no schema → **Idle**
-- empty query + active schema → **Browse**
-- non-empty query → **Search**
+### What gets built
 
-**Idle:** Centered vertically + horizontally. Large search input (`h-12 w-[520px] rounded-xl`, hairline, search icon left, placeholder `Search tables across all connections`). Hint below: `Or select a schema on the left to browse its tables.` (13px `--ink-500`).
+**1. New file: `src/components/add-dataset/Step2ApplyChecks.tsx`**
 
-**Browse / Search:** Search bar shrinks to `h-10 w-full max-w-[640px]` and anchors top-left of right panel (`mt-6 ml-8`). Use `transition-all duration-200` on the wrapper for the slide-up animation.
+- Props: `selected: Set<string>` (the asset keys carried over from Step 1).
+- Derives the list of selected assets from `WAREHOUSES` + `selected` keys (parse `connId::schema::asset`).
+- Tabs across the top — one per selected table, label = `name (checkCount)`. Active tab styled with a bottom underline using `var(--brand-blue)`, inactive in `var(--ink-500)`.
+- A "+ Add checks" pill on the far right of the tab strip (visual only for now, matches the wireframe's blue chip).
+- Below the tabs, a checks table with columns: **Rule**, **Description**, **DQ dimension**, **Field applied**.
+- Each row has a checkbox (controlled, default checked). Toggling updates local state so the tab counts can update live.
+- A small lightning-bolt badge in the top-right of the card matches the wireframe accent.
 
-- **Browse body:** breadcrumb `Connection › SCHEMA` (13px `--ink-500`, schema bold `--ink-900`); meta row `{n} tables · {totalRows} rows · {selectedInSchema} selected` (12px `--ink-500`); scrollable list of `AssetRow`s.
-- **Search body:** results grouped by connection. If `activeSchema` is set, that connection's group floats to top. Match: case-insensitive substring on asset name. Highlight matched chars with `<mark>` styled `bg-[rgba(67,134,250,0.18)] text-[--ink-900] rounded-sm px-0.5`.
-- **Clearing rules:** clearing search with active schema → Browse; clearing with no schema → Idle.
+**2. Mock checks generator: `src/components/add-dataset/mock-checks.ts`**
 
-#### `AssetRow`
-Full-width clickable row, `py-2.5 px-4 rounded-lg hover:bg-[--surface-soft]`, click anywhere toggles selection.
-- Left: shadcn `Checkbox` (controlled).
-- Type indicator badge: `T` (table, blue tint) or `V` (view, purple tint).
-- Asset name in `font-mono text-[13px] text-[--ink-900]`.
-- Below name: `{schema} · {connection}` (11px `--ink-300`).
-- Right side (`text-[12px] text-[--ink-500]`, gap-6): row count formatted (`1.2M`, `48K`), `Updated 2h ago` (relative), `Table`/`View` label.
+- Exports `generateChecks(assetName: string): Check[]` returning a deterministic set of suggested checks per asset (seeded from the asset name so two tabs always show different recommendations).
+- `Check` type: `{ id, rule, description, dimension: 'Completeness'|'Uniqueness'|'Validity'|'Consistency'|'Timeliness', field }`.
+- Hand-curated examples for `dim_customers`, `fct_orders_daily`, plus a generic fallback that uses common patterns (`*_id is not null`, `*_id is unique`, `email matches valid format`, `created_at is not null`, etc.) so any selected asset gets a plausible list.
 
-### Footer strip inside card (sticky bottom)
-- Empty state: hint `Select tables to start monitoring.` (13px `--ink-500`).
-- With selections: chips for selected (max 4 visible, then `+N more`). Each chip: small pill with asset name + `×` to remove. **Clear all** ghost button.
-- (Primary CTA lives in the global header `Continue` button — not duplicated here.)
+**3. Modal wiring: `src/components/add-dataset/AddDatasetModal.tsx`**
 
-## Step 2: Apply checks (placeholder)
+- Replace `Step2Placeholder` with `<Step2ApplyChecks selected={selected} />`.
+- Remove the now-unused placeholder component.
 
-Renders a centered card inside the body region: `Apply checks — coming next` with the count of carried-over assets (`{n} assets selected`). The header's primary button label switches to `Add {n} assets` and closing it dismisses the modal.
+**4. AgentFlow step-aware intro: `src/components/add-dataset/AgentChatPanel.tsx`**
 
-## New files
+- Accept a new `step: number` prop from the modal.
+- When `step === 1`, seed an additional agent message summarizing the Step 2 context (mirrors the wireframe copy):
+  - "Based on the N tables you selected, I've analyzed the column names and data types."
+  - "I recommend starting with X data quality checks across your tables. I've automatically selected these for you based on common validation patterns."
+  - Bulleted breakdown: `customers: 14 checks`, `orders: 7 checks`, etc.
+  - "Would you like to see details on why I recommended specific checks, or are you ready to proceed to profiling?"
+- The existing Step 1 keyword handling (`freshness`, `recommend`, etc.) is preserved for `step === 0`.
+- The modal passes `step={step}` to `<AgentChatPanel>`.
 
-- `src/components/add-dataset/mock-warehouses.ts` — types + static mock (4 connections, 2-3 warehouse types, 2-4 schemas each, 6-12 assets per schema with realistic names, row counts, last-synced timestamps, health).
-- `src/components/add-dataset/AddDatasetModal.tsx` — top-level modal: overlay, header + stepper, body switcher, owns `step`, `selected`, `activeSchema`, `query` state. Uses `sonner` for the Add-connection placeholder toast.
-- `src/components/add-dataset/Step1SelectData.tsx` — sidebar + right-panel layout with the three states described above.
-- `src/components/add-dataset/AssetRow.tsx` — selectable asset row.
-- `src/components/add-dataset/Stepper.tsx` — small reusable stepper (numbered circles + connectors + labels).
+### Visual conventions (matches existing components)
 
-## Files edited
+- Card chrome: white bg, `1px solid var(--hairline)`, `rounded-2xl`.
+- Row separators: bottom border `var(--hairline)`.
+- Checkbox: native `<input type="checkbox">` styled with `accent-color: var(--brand-blue)` (same approach used elsewhere in this folder).
+- Tab underline: 2px `var(--brand-blue)`; inactive tabs use `var(--ink-500)`.
+- Lightning badge: small yellow square in the card's top-right corner (purely decorative).
 
-- `src/components/agentflow-topbar.tsx` — wire **Add new dataset** menu item to open the new modal.
+### Out of scope (intentionally)
 
-## Out of scope (this turn)
-
-- Real Step 2 (Apply checks) content — placeholder only.
-- Real "Add connection" flow.
-- Persisting selected assets anywhere outside modal state.
-- Keyboard arrow navigation through the asset list.
-- Virtualization (mock data is small).
-- Step circles being clickable for backward navigation (use the `Back` button in header).
-
+- Persisting checks anywhere — purely local state for now.
+- The "+ Add checks" button opening a real picker — visual only, no handler.
+- Editing rule descriptions or field mappings.
+- Actually running the chat-driven check explanations beyond the seeded intro message.
