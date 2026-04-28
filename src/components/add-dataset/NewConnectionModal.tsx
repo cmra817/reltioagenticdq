@@ -566,7 +566,6 @@ function SuccessView({
           </div>
         </div>
       </div>
-      </div>
 
       <div
         className="flex items-center justify-end border-t px-7 py-4"
