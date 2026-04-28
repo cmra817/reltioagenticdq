@@ -80,6 +80,8 @@ function NewMenu() {
             role="menuitem"
             onClick={() => {
               setOpen(false);
+              // "Add new dataset" attaches to the currently selected domain.
+              setPendingDomain(selected);
               setDatasetOpen(true);
             }}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-[14px] transition-colors hover:bg-[color:var(--surface-soft)]"
@@ -107,9 +109,34 @@ function NewMenu() {
       <CreateDomainDialog
         open={domainOpen}
         onOpenChange={setDomainOpen}
-        onCreate={() => setDatasetOpen(true)}
+        onCreate={(name) => {
+          // Create the domain immediately so it appears in the selector,
+          // then open the dataset wizard scoped to this new domain.
+          addDomain(name);
+          selectDomain(name);
+          setPendingDomain(name);
+          setDatasetOpen(true);
+        }}
       />
-      <AddDatasetModal open={datasetOpen} onOpenChange={setDatasetOpen} />
+      <AddDatasetModal
+        open={datasetOpen}
+        onOpenChange={(o) => {
+          setDatasetOpen(o);
+          if (!o) setPendingDomain(null);
+        }}
+        domainName={pendingDomain ?? selected}
+        onComplete={({ tables, checkCount }) => {
+          completeConnection({
+            domain: pendingDomain ?? selected,
+            tables,
+            checkCount,
+          });
+          setPendingDomain(null);
+        }}
+      />
+    </div>
+  );
+}
     </div>
   );
 }
