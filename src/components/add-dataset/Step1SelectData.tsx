@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, Search, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { AssetRow } from "./AssetRow";
+import { NewConnectionModal } from "./NewConnectionModal";
 import { BigQueryIcon, DatabricksIcon, SnowflakeIcon } from "@/components/brand-icons";
 import {
   WAREHOUSES,
@@ -37,6 +38,7 @@ export function Step1SelectData({
   const [activeSchema, setActiveSchema] = useState<ActiveSchema>(null);
   const [query, setQuery] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [newConnOpen, setNewConnOpen] = useState(false);
 
   const grouped = useMemo(() => {
     const map = new Map<WarehouseType, Connection[]>();
@@ -73,7 +75,7 @@ export function Step1SelectData({
         </div>
         <button
           type="button"
-          onClick={() => toast.info("Add connection coming soon")}
+          onClick={() => setNewConnOpen(true)}
           className="flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-soft)]"
           style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
         >
@@ -81,6 +83,15 @@ export function Step1SelectData({
           Add connection
         </button>
       </div>
+
+      <NewConnectionModal
+        open={newConnOpen}
+        onOpenChange={setNewConnOpen}
+        onSelect={(id) => {
+          setNewConnOpen(false);
+          toast.info(`Connect to ${id} — configuration coming next`);
+        }}
+      />
 
       {/* Two panels */}
       <div className="flex flex-1 overflow-hidden">
