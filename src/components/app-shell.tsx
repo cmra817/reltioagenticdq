@@ -50,7 +50,9 @@ export function AppShell(props: {
 }) {
   return (
     <SidebarProvider>
-      <AppShellInner {...props} />
+      <DomainProvider>
+        <AppShellInner {...props} />
+      </DomainProvider>
     </SidebarProvider>
   );
 }
