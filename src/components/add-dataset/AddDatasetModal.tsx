@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Stepper } from "./Stepper";
 import { Step1SelectData } from "./Step1SelectData";
+import { Step2ApplyChecks } from "./Step2ApplyChecks";
 import { AgentChatPanel } from "./AgentChatPanel";
 
 const STEPS = [{ label: "Select data" }, { label: "Apply checks" }];
@@ -142,10 +143,11 @@ export function AddDatasetModal({
             onClear={() => setSelected(new Set())}
           />
         )}
-        {step === 1 && <Step2Placeholder count={selected.size} />}
+        {step === 1 && <Step2ApplyChecks selected={selected} />}
       </div>
       </div>
       <AgentChatPanel
+        step={step}
         selected={selected}
         onAddMany={(keys) =>
           setSelected((s) => {
@@ -155,25 +157,6 @@ export function AddDatasetModal({
           })
         }
       />
-    </div>
-  );
-}
-
-function Step2Placeholder({ count }: { count: number }) {
-  return (
-    <div className="flex h-full items-center justify-center px-10 py-16">
-      <div
-        className="max-w-md rounded-2xl border bg-white px-10 py-12 text-center"
-        style={{ borderColor: "var(--hairline)" }}
-      >
-        <div className="text-[20px] font-semibold" style={{ color: "var(--ink-900)" }}>
-          Apply checks
-        </div>
-        <p className="mt-2 text-[14px]" style={{ color: "var(--ink-500)" }}>
-          {count} {count === 1 ? "asset" : "assets"} selected. Configure data quality checks here
-          — coming next.
-        </p>
-      </div>
     </div>
   );
 }
