@@ -145,7 +145,8 @@ const ordersChecks: Omit<Check, "id">[] = [
   },
 ];
 
-function genericChecks(assetName: string): Omit<Check, "id">[] = [
+function genericChecks(assetName: string): Omit<Check, "id">[] {
+  return [
   {
     rule: "Primary key is not null",
     description: "Primary key must never be null, nulls break joins and dedupe logic",
@@ -182,7 +183,8 @@ function genericChecks(assetName: string): Omit<Check, "id">[] = [
     dimension: "Consistency",
     field: "(table)",
   },
-];
+  ];
+}
 
 export function generateChecks(assetName: string): Check[] {
   const lower = assetName.toLowerCase();
