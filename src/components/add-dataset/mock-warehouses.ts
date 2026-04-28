@@ -27,8 +27,8 @@ const daysAgo = (d: number) => hoursAgo(d * 24);
 
 export const WAREHOUSES: Connection[] = [
   {
-    id: "dbx-prod",
-    name: "Databricks · Prod",
+    id: "dbx-data-science",
+    name: "Data Science",
     warehouse: "Databricks",
     schemas: [
       {
@@ -69,8 +69,8 @@ export const WAREHOUSES: Connection[] = [
     ],
   },
   {
-    id: "dbx-staging",
-    name: "Databricks · Staging",
+    id: "dbx-ml",
+    name: "ML",
     warehouse: "Databricks",
     schemas: [
       {
@@ -98,8 +98,8 @@ export const WAREHOUSES: Connection[] = [
     ],
   },
   {
-    id: "snow-edw",
-    name: "Snowflake · EDW",
+    id: "snow-finance",
+    name: "Finance DW",
     warehouse: "Snowflake",
     schemas: [
       {
@@ -152,8 +152,8 @@ export const WAREHOUSES: Connection[] = [
     ],
   },
   {
-    id: "bq-analytics",
-    name: "BigQuery · Analytics",
+    id: "bq-eu",
+    name: "EU (Belgium)",
     warehouse: "BigQuery",
     schemas: [
       {
