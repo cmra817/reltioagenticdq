@@ -280,6 +280,7 @@ function BrowseBody({
               asset={a}
               schema={sch.name}
               connection={conn.name}
+              warehouse={conn.warehouse}
               selected={selected.has(k)}
               onToggle={() => onToggle(k)}
             />
@@ -347,6 +348,7 @@ function SearchBody({
                   asset={asset}
                   schema={schema}
                   connection={conn.name}
+                  warehouse={conn.warehouse}
                   selected={selected.has(k)}
                   onToggle={() => onToggle(k)}
                   highlight={query}
