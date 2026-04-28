@@ -91,7 +91,7 @@ export function NewConnectionModal({
       ? "New connection"
       : view === "configure"
         ? `Connect to ${platform?.name ?? ""}`
-        : "Connection successful";
+        : "Successfully connected";
 
   return (
     <div
