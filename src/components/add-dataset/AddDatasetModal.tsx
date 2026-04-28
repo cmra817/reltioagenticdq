@@ -129,20 +129,17 @@ export function AddDatasetModal({
         <div className="mt-6">
           <Stepper steps={STEPS} current={step} />
         </div>
-        {step === 0 && (
-          <div className="mt-4">
-            <HeaderChips
-              selected={selected}
-              onRemove={(k) => toggle(k)}
-              onClear={() => setSelected(new Set())}
-            />
-          </div>
-        )}
       </header>
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
-        {step === 0 && <Step1SelectData selected={selected} onToggle={toggle} />}
+        {step === 0 && (
+          <Step1SelectData
+            selected={selected}
+            onToggle={toggle}
+            onClear={() => setSelected(new Set())}
+          />
+        )}
         {step === 1 && <Step2Placeholder count={selected.size} />}
       </div>
     </div>
@@ -164,74 +161,6 @@ function Step2Placeholder({ count }: { count: number }) {
           — coming next.
         </p>
       </div>
-    </div>
-  );
-}
-
-function HeaderChips({
-  selected,
-  onRemove,
-  onClear,
-}: {
-  selected: Set<string>;
-  onRemove: (k: string) => void;
-  onClear: () => void;
-}) {
-  const keys = Array.from(selected);
-  const visible = keys.slice(0, 4);
-  const overflow = keys.length - visible.length;
-
-  return (
-    <div>
-      {keys.length === 0 ? (
-        <div className="text-[13px]" style={{ color: "var(--ink-500)" }}>
-          Select tables to start monitoring.
-        </div>
-      ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          {visible.map((k) => {
-            const name = k.split("::")[2];
-            return (
-              <span
-                key={k}
-                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px]"
-                style={{
-                  borderColor: "var(--hairline)",
-                  background: "var(--surface-soft)",
-                  color: "var(--ink-900)",
-                }}
-              >
-                <span className="font-mono">{name}</span>
-                <button
-                  type="button"
-                  onClick={() => onRemove(k)}
-                  className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-white"
-                  style={{ color: "var(--ink-500)" }}
-                  aria-label={`Remove ${name}`}
-                >
-                  <X size={12} />
-                </button>
-              </span>
-            );
-          })}
-          {overflow > 0 && (
-            <span
-              className="rounded-full px-3 py-1 text-[12px]"
-              style={{ background: "var(--surface-soft)", color: "var(--ink-700)" }}
-            >
-              +{overflow} more
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={onClear}
-            className="ml-2 text-[12px] font-medium underline-offset-2 hover:underline"
-            style={{ color: "var(--ink-500)" }}
-          >
-            Clear all
-          </button>
-        </div>
-      )}
     </div>
   );
 }
