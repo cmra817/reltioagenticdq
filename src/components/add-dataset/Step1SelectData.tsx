@@ -72,19 +72,10 @@ export function Step1SelectData({
         className="border-b"
         style={{ borderColor: "var(--hairline)" }}
       >
-        <div className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center px-6 py-4">
           <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
             Select tables to monitor
           </div>
-          <button
-            type="button"
-            onClick={() => setNewConnOpen(true)}
-            className="flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-soft)]"
-            style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-          >
-            <Plus size={14} />
-            Add connection
-          </button>
         </div>
         {selected.size > 0 && (
           <div
