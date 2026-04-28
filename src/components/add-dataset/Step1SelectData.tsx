@@ -69,63 +69,65 @@ export function Step1SelectData({
     >
       {/* Sub-header / toolbar */}
       <div
-        className="border-b"
+        className="flex items-center gap-4 border-b px-6 py-3"
         style={{ borderColor: "var(--hairline)" }}
       >
-        <div className="flex items-center px-6 py-4">
-          <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
-            Select tables to monitor
-          </div>
+        <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
+          Select tables to monitor
         </div>
         {selected.size > 0 && (
-          <div
-            className="flex flex-wrap items-center gap-2 border-t px-6 py-3"
-            style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)" }}
-          >
-            <span
-              className="text-[12px] font-medium"
-              style={{ color: "var(--ink-700)" }}
-            >
-              {selected.size} selected
-            </span>
-            {Array.from(selected).slice(0, 6).map((k) => {
-              const name = k.split("::")[2];
-              return (
-                <span
-                  key={k}
-                  className="inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[12px]"
-                  style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
-                >
-                  <span className="font-mono">{name}</span>
-                  <button
-                    type="button"
-                    onClick={() => onToggle(k)}
-                    className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-[color:var(--surface-soft)]"
-                    style={{ color: "var(--ink-500)" }}
-                    aria-label={`Remove ${name}`}
-                  >
-                    <X size={12} />
-                  </button>
-                </span>
-              );
-            })}
-            {selected.size > 6 && (
+          <>
+            <div
+              className="h-5 w-px"
+              style={{ background: "var(--hairline)" }}
+              aria-hidden="true"
+            />
+            <div className="flex flex-1 flex-wrap items-center gap-2">
               <span
-                className="rounded-full bg-white px-2.5 py-1 text-[12px]"
+                className="text-[12px] font-medium"
                 style={{ color: "var(--ink-700)" }}
               >
-                +{selected.size - 6} more
+                {selected.size} selected
               </span>
-            )}
-            <button
-              type="button"
-              onClick={onClear}
-              className="ml-auto text-[12px] font-medium underline-offset-2 hover:underline"
-              style={{ color: "var(--ink-500)" }}
-            >
-              Clear all
-            </button>
-          </div>
+              {Array.from(selected).slice(0, 6).map((k) => {
+                const name = k.split("::")[2];
+                return (
+                  <span
+                    key={k}
+                    className="inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[12px]"
+                    style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+                  >
+                    <span className="font-mono">{name}</span>
+                    <button
+                      type="button"
+                      onClick={() => onToggle(k)}
+                      className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-[color:var(--surface-soft)]"
+                      style={{ color: "var(--ink-500)" }}
+                      aria-label={`Remove ${name}`}
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                );
+              })}
+              {selected.size > 6 && (
+                <span
+                  className="rounded-full bg-[color:var(--surface-soft)] px-2.5 py-1 text-[12px]"
+                  style={{ color: "var(--ink-700)" }}
+                >
+                  +{selected.size - 6} more
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={onClear}
+                className="ml-auto text-[12px] font-medium underline-offset-2 hover:underline"
+                style={{ color: "var(--ink-500)" }}
+              >
+                Clear all
+              </button>
+            </div>
+          </>
         )}
       </div>
 
