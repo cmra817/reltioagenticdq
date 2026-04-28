@@ -55,12 +55,18 @@ export function NewConnectionModal({
   const [view, setView] = useState<View>("pick");
   const [platformId, setPlatformId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [connName, setConnName] = useState("");
+  const [catalog, setCatalog] = useState("");
+  const [schema, setSchema] = useState("");
 
   useEffect(() => {
     if (!open) {
       setQuery("");
       setView("pick");
       setPlatformId(null);
+      setConnName("");
+      setCatalog("");
+      setSchema("");
     }
   }, [open]);
 
@@ -85,7 +91,7 @@ export function NewConnectionModal({
       ? "New connection"
       : view === "configure"
         ? `Connect to ${platform?.name ?? ""}`
-        : "Connection successful";
+        : "Successfully connected";
 
   return (
     <div
@@ -137,6 +143,12 @@ export function NewConnectionModal({
         {view === "configure" && platform && (
           <ConfigureView
             platform={platform}
+            connName={connName}
+            setConnName={setConnName}
+            catalog={catalog}
+            setCatalog={setCatalog}
+            schema={schema}
+            setSchema={setSchema}
             onCancel={() => onOpenChange(false)}
             onSave={() => setView("success")}
           />
@@ -145,6 +157,9 @@ export function NewConnectionModal({
         {view === "success" && platform && (
           <SuccessView
             platform={platform}
+            connName={connName}
+            catalog={catalog}
+            schema={schema}
             onDone={() => {
               onSelect(platform.id);
               onOpenChange(false);
@@ -272,10 +287,22 @@ function PlatformCard({
 
 function ConfigureView({
   platform,
+  connName,
+  setConnName,
+  catalog,
+  setCatalog,
+  schema,
+  setSchema,
   onCancel,
   onSave,
 }: {
   platform: Platform;
+  connName: string;
+  setConnName: (v: string) => void;
+  catalog: string;
+  setCatalog: (v: string) => void;
+  schema: string;
+  setSchema: (v: string) => void;
   onCancel: () => void;
   onSave: () => void;
 }) {
@@ -290,7 +317,11 @@ function ConfigureView({
           style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)" }}
         >
           <Field label="Connection Name" hint="Enter a unique name.">
-            <Input placeholder="e.g. Research Documents" />
+            <Input
+              placeholder="e.g. Research Documents"
+              value={connName}
+              onChange={(e) => setConnName(e.target.value)}
+            />
           </Field>
 
           <div
@@ -339,10 +370,18 @@ function ConfigureView({
 
             <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="Catalog name">
-                <Input placeholder="Enter catalog name" />
+                <Input
+                  placeholder="Enter catalog name"
+                  value={catalog}
+                  onChange={(e) => setCatalog(e.target.value)}
+                />
               </Field>
               <Field label="Schema name">
-                <Input placeholder="Enter schema name" />
+                <Input
+                  placeholder="Enter schema name"
+                  value={schema}
+                  onChange={(e) => setSchema(e.target.value)}
+                />
               </Field>
             </div>
           </div>
@@ -447,12 +486,21 @@ function Input({
 
 function SuccessView({
   platform,
+  connName,
+  catalog,
+  schema,
   onDone,
 }: {
   platform: Platform;
+  connName: string;
+  catalog: string;
+  schema: string;
   onDone: () => void;
 }) {
   const { Icon } = platform;
+  const displayName = connName.trim() || `${platform.name} connection`;
+  const cat = catalog.trim() || "—";
+  const sch = schema.trim() || "—";
   return (
     <>
       <div className="px-7 py-8">
@@ -472,7 +520,7 @@ function SuccessView({
             className="mt-5 text-[20px] font-semibold"
             style={{ color: "var(--ink-900)" }}
           >
-            Connected to {platform.name}
+            Successfully connected
           </div>
           <p
             className="mx-auto mt-2 max-w-md text-[13px]"
@@ -498,10 +546,10 @@ function SuccessView({
                   className="text-[14px] font-semibold"
                   style={{ color: "var(--ink-900)" }}
                 >
-                  {platform.name}
+                  {displayName}
                 </div>
                 <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-                  Status: Active
+                  {cat} / {sch}
                 </div>
               </div>
             </div>
