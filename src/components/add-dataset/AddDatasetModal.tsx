@@ -4,15 +4,25 @@ import { Stepper } from "./Stepper";
 import { Step1SelectData } from "./Step1SelectData";
 import { Step2ApplyChecks } from "./Step2ApplyChecks";
 import { AgentChatPanel } from "./AgentChatPanel";
+import { generateChecks } from "./mock-checks";
 
 const STEPS = [{ label: "Select data" }, { label: "Apply checks" }];
+
+export type AddDatasetCompletion = {
+  tables: string[];
+  checkCount: number;
+};
 
 export function AddDatasetModal({
   open,
   onOpenChange,
+  domainName,
+  onComplete,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  domainName?: string;
+  onComplete?: (result: AddDatasetCompletion) => void;
 }) {
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -53,6 +63,16 @@ export function AddDatasetModal({
   const onContinue = () => {
     if (continueDisabled) return;
     if (isLastStep) {
+      // Derive table names + total recommended checks from the selection.
+      const tables: string[] = [];
+      let checkCount = 0;
+      for (const key of selected) {
+        const parts = key.split("::");
+        const name = parts[2] ?? parts[parts.length - 1];
+        tables.push(name);
+        checkCount += generateChecks(name).length;
+      }
+      onComplete?.({ tables, checkCount });
       onOpenChange(false);
     } else {
       setStep((s) => s + 1);
@@ -74,12 +94,24 @@ export function AddDatasetModal({
         style={{ borderColor: "var(--hairline)" }}
       >
         <div className="flex items-center justify-between">
-          <h1
-            className="text-[28px] font-semibold leading-tight"
-            style={{ color: "var(--ink-900)" }}
-          >
-            Add data asset
-          </h1>
+          <div className="flex flex-col gap-1">
+            {domainName && (
+              <div
+                className="flex items-center gap-1.5 text-[12px] font-medium"
+                style={{ color: "var(--ink-500)" }}
+              >
+                <span>Domain</span>
+                <span aria-hidden="true">/</span>
+                <span style={{ color: "var(--brand-blue)" }}>{domainName}</span>
+              </div>
+            )}
+            <h1
+              className="text-[28px] font-semibold leading-tight"
+              style={{ color: "var(--ink-900)" }}
+            >
+              Add data asset
+            </h1>
+          </div>
           <div className="flex items-center gap-3">
             <button
               type="button"

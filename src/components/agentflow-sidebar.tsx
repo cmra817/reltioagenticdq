@@ -13,6 +13,7 @@ import {
   UserIcon,
   UsersGearIcon,
 } from "./brand-icons";
+import { useDomainState } from "./domain-context";
 
 function NavItem({
   icon,
@@ -55,20 +56,8 @@ function SectionDivider() {
   return <div className="mx-3 my-2 h-px" style={{ background: "var(--hairline)" }} />;
 }
 
-const DEFAULT_DOMAINS = [
-  "Finance",
-  "Marketing",
-  "Sales",
-  "Human Resources",
-  "Operations",
-  "Customer Success",
-  "Product",
-  "Supply Chain",
-];
-
 function DomainPill() {
-  const [domains, setDomains] = useState<string[]>(DEFAULT_DOMAINS);
-  const [selected, setSelected] = useState<string>("Finance");
+  const { domains, selected, selectDomain, addDomain, connections } = useDomainState();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState("");
@@ -88,7 +77,7 @@ function DomainPill() {
   }, [open]);
 
   function handleSelect(name: string) {
-    setSelected(name);
+    selectDomain(name);
     setOpen(false);
     setCreating(false);
     setDraft("");
@@ -97,8 +86,8 @@ function DomainPill() {
   function handleCreate() {
     const name = draft.trim();
     if (!name) return;
-    if (!domains.includes(name)) setDomains((d) => [...d, name]);
-    setSelected(name);
+    addDomain(name);
+    selectDomain(name);
     setDraft("");
     setCreating(false);
     setOpen(false);
@@ -138,15 +127,27 @@ function DomainPill() {
           <ul className="max-h-64 overflow-y-auto py-1">
             {domains.map((d) => {
               const isSel = d === selected;
+              const conn = connections[d];
               return (
                 <li key={d}>
                   <button
                     type="button"
                     onClick={() => handleSelect(d)}
-                    className="flex w-full items-center justify-between px-3 py-2 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
+                    className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
                     style={{ color: isSel ? "var(--brand-blue)" : "var(--ink-900)" }}
                   >
-                    <span className="font-medium">{d}</span>
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate font-medium">{d}</span>
+                      {conn && (
+                        <span
+                          className="truncate text-[11px] font-normal"
+                          style={{ color: "var(--ink-500)" }}
+                        >
+                          {conn.tables.length} table{conn.tables.length === 1 ? "" : "s"} ·{" "}
+                          {conn.checkCount} check{conn.checkCount === 1 ? "" : "s"}
+                        </span>
+                      )}
+                    </span>
                     {isSel && (
                       <svg
                         width="14"

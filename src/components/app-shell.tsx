@@ -1,6 +1,8 @@
 import { AgentflowSidebar } from "@/components/agentflow-sidebar";
 import { AgentflowTopbar } from "@/components/agentflow-topbar";
 import { SidebarProvider, useSidebarState } from "@/components/sidebar-context";
+import { DomainProvider } from "@/components/domain-context";
+import { DomainConnectedBanner } from "@/components/domain-connected-banner";
 
 function AppShellInner({
   children,
@@ -33,6 +35,7 @@ function AppShellInner({
       />
       <div className="relative z-10 flex h-screen flex-col">
         <AgentflowTopbar active={activeTab ?? "Quality"} />
+        <DomainConnectedBanner />
         <div className="flex flex-1 overflow-hidden">
           {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "new-chat"} />}
           <main className="flex flex-1 flex-col overflow-hidden">{children}</main>
@@ -49,7 +52,9 @@ export function AppShell(props: {
 }) {
   return (
     <SidebarProvider>
-      <AppShellInner {...props} />
+      <DomainProvider>
+        <AppShellInner {...props} />
+      </DomainProvider>
     </SidebarProvider>
   );
 }
