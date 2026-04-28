@@ -1,4 +1,5 @@
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Asset } from "./mock-warehouses";
 import { formatRows, relativeTime } from "./mock-warehouses";
 
@@ -25,20 +26,38 @@ export function AssetRow({
       style={{ background: selected ? "rgba(67,134,250,0.06)" : undefined }}
     >
       <Checkbox checked={selected} onCheckedChange={onToggle} className="pointer-events-none" />
-      <span
-        className="inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-semibold"
-        style={
-          asset.type === "table"
-            ? { background: "rgba(67,134,250,0.12)", color: "var(--brand-blue)" }
-            : { background: "rgba(120,80,220,0.12)", color: "#7850dc" }
-        }
-        aria-hidden
-      >
-        {asset.type === "table" ? "T" : "V"}
-      </span>
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex h-5 w-5 shrink-0 cursor-help items-center justify-center rounded text-[10px] font-semibold"
+              style={
+                asset.type === "table"
+                  ? { background: "rgba(67,134,250,0.12)", color: "var(--brand-blue)" }
+                  : { background: "rgba(120,80,220,0.12)", color: "#7850dc" }
+              }
+              aria-label={asset.type === "table" ? "Table" : "View"}
+            >
+              {asset.type === "table" ? "T" : "V"}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {asset.type === "table"
+              ? "Table — physical stored data"
+              : "View — saved query over other tables"}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <div className="min-w-0 flex-1">
         <div className="font-mono text-[13px] leading-tight" style={{ color: "var(--ink-900)" }}>
           {highlight ? <Highlighted text={asset.name} q={highlight} /> : asset.name}
+        </div>
+        <div
+          className="mt-0.5 line-clamp-1 text-[12px]"
+          style={{ color: "var(--ink-500)" }}
+        >
+          {asset.description}
         </div>
         <div className="mt-0.5 text-[11px]" style={{ color: "var(--ink-300)" }}>
           {schema} · {connection}
