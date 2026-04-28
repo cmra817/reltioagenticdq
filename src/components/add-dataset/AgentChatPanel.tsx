@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BarChart3 } from "lucide-react";
 import { SendIcon } from "@/components/brand-icons";
 import { WAREHOUSES, assetKey, formatRows, relativeTime } from "./mock-warehouses";
+import { generateChecks } from "./mock-checks";
 
 type Recommendation = {
   key: string;
@@ -89,6 +90,63 @@ export function AgentChatPanel({
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, typing]);
+
+  // Seed a Step 2 intro the first time the user reaches "Apply checks".
+  useEffect(() => {
+    if (step !== 1 || step2Introduced) return;
+    setStep2Introduced(true);
+    const tables = Array.from(selected)
+      .map((key) => {
+        const [connId, schemaName, assetName] = key.split("::");
+        const conn = WAREHOUSES.find((c) => c.id === connId);
+        const sch = conn?.schemas.find((s) => s.name === schemaName);
+        const asset = sch?.assets.find((a) => a.name === assetName);
+        if (!asset) return null;
+        return { name: asset.name, count: generateChecks(asset.name).length };
+      })
+      .filter((x): x is { name: string; count: number } => x !== null);
+    const total = tables.reduce((sum, t) => sum + t.count, 0);
+    setTyping(true);
+    window.setTimeout(() => {
+      setTyping(false);
+      setMessages((m) => [
+        ...m,
+        {
+          id: uid(),
+          role: "agent",
+          content: (
+            <>
+              <p>
+                Based on the {tables.length} {tables.length === 1 ? "table" : "tables"} you
+                selected, I've analyzed the column names and data types.
+              </p>
+              <p className="mt-3">
+                I recommend starting with <strong>{total} data quality checks</strong> across
+                your tables. I've automatically selected these for you based on common
+                validation patterns.
+              </p>
+              <p className="mt-3">Here's what I've set up:</p>
+              <ul className="mt-1 space-y-0.5">
+                {tables.map((t) => (
+                  <li key={t.name}>
+                    📊 <span className="font-mono">{t.name}</span>: {t.count} checks
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3">
+                These are basic validations like email format, uniqueness for IDs, and null
+                checks for required fields.
+              </p>
+              <p className="mt-3">
+                Would you like to see details on why I recommended specific checks, or are you
+                ready to proceed to profiling?
+              </p>
+            </>
+          ),
+        },
+      ]);
+    }, 600);
+  }, [step, step2Introduced, selected]);
 
   const pushUser = (text: string) =>
     setMessages((m) => [...m, { id: uid(), role: "user", content: text }]);
