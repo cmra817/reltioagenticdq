@@ -63,6 +63,16 @@ export function AddDatasetModal({
   const onContinue = () => {
     if (continueDisabled) return;
     if (isLastStep) {
+      // Derive table names + total recommended checks from the selection.
+      const tables: string[] = [];
+      let checkCount = 0;
+      for (const key of selected) {
+        const parts = key.split("::");
+        const name = parts[2] ?? parts[parts.length - 1];
+        tables.push(name);
+        checkCount += generateChecks(name).length;
+      }
+      onComplete?.({ tables, checkCount });
       onOpenChange(false);
     } else {
       setStep((s) => s + 1);
