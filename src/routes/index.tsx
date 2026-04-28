@@ -53,7 +53,14 @@ function Index() {
         </div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-6 px-8">
-          <div className="pointer-events-auto mx-auto w-full max-w-2xl">
+          <div className="pointer-events-auto mx-auto flex w-full max-w-2xl flex-col items-center gap-4">
+            <img
+              src={searchTablesHero}
+              alt="Illustration of a magnifying glass searching through data tables"
+              width={220}
+              height={147}
+              className="h-auto w-[220px] opacity-90"
+            />
             <ChatComposer />
           </div>
         </div>
