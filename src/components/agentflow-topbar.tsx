@@ -137,9 +137,6 @@ function NewMenu() {
     </div>
   );
 }
-    </div>
-  );
-}
 
 export function AgentflowTopbar({ active = "Quality" as Tab }: { active?: Tab }) {
   const { toggle, collapsed } = useSidebarState();
