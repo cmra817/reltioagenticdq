@@ -81,7 +81,6 @@ export function AssetRow({
       >
         <span className="tabular-nums">{formatRows(asset.rows)} rows</span>
         <span>{relativeTime(asset.lastSyncedISO)}</span>
-        <span className="w-10 text-right capitalize">{asset.type}</span>
       </div>
     </button>
   );
