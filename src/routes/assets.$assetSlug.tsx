@@ -718,6 +718,12 @@ function ColumnDetailPanel({
                     <MiniBar label="Null" value={100 - parseInt(column.fillRate)} />
                   </div>
                 </div>
+                <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--hairline)" }}>
+                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
+                    Trend · last 5 runs
+                  </div>
+                  <TrendRow label="Fill rate" values={makeHistory(`${column.name}:fill`, parseInt(column.fillRate), 4)} />
+                </div>
               </section>
 
               {/* Uniqueness */}
@@ -727,6 +733,13 @@ function ColumnDetailPanel({
                 <div className="mt-4 space-y-3">
                   <StatBar label="Uniqueness" valueText={`${column.uniqueness} (20)`} pct={parseInt(column.uniqueness)} />
                   <StatBar label="Distinct" valueText={`24% (${Math.min(column.distinct, 10)})`} pct={24} />
+                </div>
+                <div className="mt-4 space-y-2 border-t pt-3" style={{ borderColor: "var(--hairline)" }}>
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
+                    Trend · last 5 runs
+                  </div>
+                  <TrendRow label="Uniqueness" values={makeHistory(`${column.name}:uniq`, parseInt(column.uniqueness), 5)} />
+                  <TrendRow label="Distinct" values={makeHistory(`${column.name}:dist`, 24, 6)} />
                 </div>
               </section>
 
@@ -756,9 +769,9 @@ function ColumnDetailPanel({
                 <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>What format do values follow</p>
                 <FreqTable
                   rows={[
-                    { type: "xxx-xxxx", count: 200, pct: 76 },
-                    { type: "xxxxxxx", count: 150, pct: 76 },
-                    { type: "xxx.xxxx", count: 100, pct: 76 },
+                    { type: "xxx-xxxx", count: 200, pct: 76, trend: makeHistory(`${column.name}:p1`, 76, 5) },
+                    { type: "xxxxxxx", count: 150, pct: 76, trend: makeHistory(`${column.name}:p2`, 60, 8) },
+                    { type: "xxx.xxxx", count: 100, pct: 76, isNew: true },
                   ]}
                 />
               </section>
@@ -768,8 +781,15 @@ function ColumnDetailPanel({
                 <h4 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>Most frequent value</h4>
                 <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>What appears most often</p>
                 <FreqTable
-                  rows={Array.from({ length: 6 }).map(() => ({ type: "Databricks", count: 1, pct: 76 }))}
-              />
+                  rows={[
+                    { type: "Databricks", count: 1, pct: 76, trend: makeHistory(`${column.name}:v1`, 76, 4) },
+                    { type: "Snowflake", count: 1, pct: 62, trend: makeHistory(`${column.name}:v2`, 62, 5) },
+                    { type: "BigQuery", count: 1, pct: 48, trend: makeHistory(`${column.name}:v3`, 48, 6) },
+                    { type: "Redshift", count: 1, pct: 34, isNew: true },
+                    { type: "Postgres", count: 1, pct: 22, trend: makeHistory(`${column.name}:v5`, 22, 5) },
+                    { type: "MySQL", count: 1, pct: 12, isNew: true },
+                  ]}
+                />
               </section>
             </div>
 
