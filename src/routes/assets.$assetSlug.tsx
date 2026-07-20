@@ -886,26 +886,205 @@ function DistributionChart() {
   );
 }
 
-function FreqTable({ rows }: { rows: { type: string; count: number; pct: number }[] }) {
+type FreqRow = {
+  type: string;
+  count: number;
+  pct: number;
+  trend?: number[];
+  isNew?: boolean;
+};
+
+function FreqTable({ rows }: { rows: FreqRow[] }) {
+  const showTrend = rows.some((r) => r.trend || r.isNew);
+  const cols = showTrend
+    ? "grid-cols-[1fr_60px_1.2fr_92px]"
+    : "grid-cols-[1fr_70px_1.4fr]";
   return (
     <div className="mt-3 overflow-hidden rounded-lg border" style={{ borderColor: "var(--hairline)", background: "white" }}>
-      <div className="grid grid-cols-[1fr_70px_1.4fr] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)", background: "var(--surface-soft)" }}>
+      <div className={`grid ${cols} px-3 py-2 text-[10px] font-semibold uppercase tracking-wide`} style={{ color: "var(--ink-500)", background: "var(--surface-soft)" }}>
         <span>Type</span>
         <span>Count</span>
         <span>Percentage</span>
+        {showTrend && <span>Last 5 runs</span>}
       </div>
-      {rows.map((r, i) => (
-        <div key={i} className="grid grid-cols-[1fr_70px_1.4fr] items-center border-t px-3 py-2.5 text-[12px]" style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}>
-          <span>{r.type}</span>
-          <span>{r.count}</span>
-          <div className="flex items-center gap-2">
-            <span className="font-medium" style={{ color: "var(--ink-900)" }}>{r.pct}%</span>
-            <div className="flex-1 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-soft)" }}>
-              <div className="h-full rounded-full" style={{ width: `${r.pct}%`, background: "#c9c2f5" }} />
+      {rows.map((r, i) => {
+        const dir = r.trend ? trendDirection(r.trend) : "flat";
+        return (
+          <div key={i} className={`grid ${cols} items-center border-t px-3 py-2.5 text-[12px]`} style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}>
+            <span>{r.type}</span>
+            <span>{r.count}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium" style={{ color: "var(--ink-900)" }}>{r.pct}%</span>
+              <div className="flex-1 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-soft)" }}>
+                <div className="h-full rounded-full" style={{ width: `${r.pct}%`, background: "#c9c2f5" }} />
+              </div>
             </div>
+            {showTrend && (
+              <div className="flex items-center justify-end gap-1.5">
+                {r.isNew ? (
+                  <NewBadge />
+                ) : r.trend ? (
+                  <>
+                    <Sparkline values={r.trend} color={dir === "down" ? "#ef4444" : "#14a6a6"} />
+                    <DeltaArrow direction={dir} />
+                  </>
+                ) : null}
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------- history helpers ---------- */
+
+function hashSeed(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function makeHistory(seed: string, current: number, spread = 6, points = 5): number[] {
+  let h = hashSeed(seed);
+  const out: number[] = [];
+  for (let i = 0; i < points - 1; i++) {
+    h = (h * 1664525 + 1013904223) >>> 0;
+    const jitter = ((h % 1000) / 1000 - 0.5) * 2 * spread;
+    out.push(Math.max(0, Math.min(100, Math.round(current + jitter))));
+  }
+  out.push(current);
+  return out;
+}
+
+function trendDirection(values: number[]): "up" | "down" | "flat" {
+  if (values.length < 2) return "flat";
+  const a = values[values.length - 2];
+  const b = values[values.length - 1];
+  if (b - a > 0.5) return "up";
+  if (a - b > 0.5) return "down";
+  return "flat";
+}
+
+function trendDelta(values: number[]): number {
+  if (values.length < 2) return 0;
+  return values[values.length - 1] - values[values.length - 2];
+}
+
+function Sparkline({
+  values,
+  color = "#14a6a6",
+  width = 72,
+  height = 24,
+}: {
+  values: number[];
+  color?: string;
+  width?: number;
+  height?: number;
+}) {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const pad = 2;
+  const stepX = (width - pad * 2) / (values.length - 1);
+  const pts = values.map((v, i) => {
+    const x = pad + i * stepX;
+    const y = pad + (height - pad * 2) * (1 - (v - min) / range);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const path = "M" + pts.join(" L");
+  const area = `${path} L${width - pad},${height - pad} L${pad},${height - pad} Z`;
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
+      <path d={area} fill={`${color}22`} />
+      <path d={path} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={pts[pts.length - 1].split(",")[0]} cy={pts[pts.length - 1].split(",")[1]} r="1.8" fill={color} />
+    </svg>
+  );
+}
+
+function DeltaChip({
+  values,
+  suffix = "%",
+}: {
+  values: number[];
+  suffix?: string;
+}) {
+  const d = trendDelta(values);
+  const dir = trendDirection(values);
+  const positive = dir === "up";
+  const flat = dir === "flat";
+  const color = flat ? "var(--ink-500)" : positive ? "#16a34a" : "#dc2626";
+  const bg = flat
+    ? "var(--surface-soft)"
+    : positive
+      ? "rgba(34,197,94,0.10)"
+      : "rgba(239,68,68,0.10)";
+  const arrow = flat ? "=" : positive ? "↑" : "↓";
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium"
+      style={{ background: bg, color }}
+    >
+      <span aria-hidden="true">{arrow}</span>
+      {Math.abs(d).toFixed(Math.abs(d) < 10 ? 1 : 0)}
+      {suffix}
+    </span>
+  );
+}
+
+function DeltaArrow({ direction }: { direction: "up" | "down" | "flat" }) {
+  const color = direction === "flat" ? "var(--ink-500)" : direction === "up" ? "#16a34a" : "#dc2626";
+  const glyph = direction === "flat" ? "=" : direction === "up" ? "↑" : "↓";
+  return (
+    <span className="text-[11px] font-semibold" style={{ color }} aria-hidden="true">
+      {glyph}
+    </span>
+  );
+}
+
+function NewBadge() {
+  return (
+    <span
+      className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+      style={{ background: "rgba(67,134,250,0.10)", color: "var(--brand-blue)" }}
+    >
+      New
+    </span>
+  );
+}
+
+function TrendRow({
+  label,
+  values,
+  suffix = "%",
+}: {
+  label: string;
+  values: number[];
+  suffix?: string;
+}) {
+  const dir = trendDirection(values);
+  const color = dir === "down" ? "#ef4444" : "#14a6a6";
+  return (
+    <div
+      className="flex items-center justify-between gap-3 rounded-md px-3 py-2"
+      style={{ background: "white" }}
+    >
+      <span className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+        {label}
+      </span>
+      <div className="flex items-center gap-2">
+        <Sparkline values={values} color={color} />
+        <span className="text-[12px] font-semibold" style={{ color: "var(--ink-900)" }}>
+          {values[values.length - 1]}
+          {suffix}
+        </span>
+        <DeltaChip values={values} suffix={suffix} />
+      </div>
     </div>
   );
 }
