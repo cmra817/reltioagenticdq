@@ -1,70 +1,51 @@
-## Step 2 — Apply checks
+## Goal
 
-Build out the placeholder Step 2 into a full "Apply checks" experience that mirrors the Step 1 layout (left content area + right AgentFlow chat panel already provided by the modal shell).
+Turn the right-panel profile stats from point-in-time snapshots into a compact "last 5 runs" history so users can see whether each metric went up, down, or stayed flat since the previous profiling run — and whether any new patterns/values appeared.
 
-### Layout
+## Scope
 
-```text
-┌────────────────────────────────────────────────────┬──────────────┐
-│ Sub-header: "Apply data quality checks"            │              │
-├────────────────────────────────────────────────────┤              │
-│ Tabs: [ customers (14) ] [ orders (7) ]   +Add ▸  │  AgentFlow   │
-├────────────────────────────────────────────────────┤  chat panel  │
-│ Checks table for the active tab:                   │  (existing)  │
-│  ☑ Rule | Description | DQ dimension | Field       │              │
-│  ☑ customer_id is not null  …  Completeness  …     │              │
-│  ☑ customer_id is unique    …  Uniqueness    …     │              │
-│  …                                                 │              │
-└────────────────────────────────────────────────────┴──────────────┘
-```
+Edits are confined to `src/routes/assets.$assetSlug.tsx` (right panel + small helper components). Mock data only; no backend.
 
-The right AgentFlow panel already lives at the modal level, so Step 2 only needs to render the left content. The modal's existing header (Cancel / Back / Continue) stays — the final Continue button label already reads `Add N assets`.
+## Changes
 
-### What gets built
+### 1. Mock history helper
+Add a small helper near the existing mock data that, given a column name + metric key, returns a deterministic 5-point series (seeded by column name so it's stable across renders). Series values fluctuate ±a few points around the current value. Also produces:
+- `delta` (last vs previous run, in the metric's units)
+- `direction` ("up" | "down" | "flat")
 
-**1. New file: `src/components/add-dataset/Step2ApplyChecks.tsx`**
+### 2. New atoms
+- `Sparkline({ values, color, width?, height? })` — tiny inline SVG line + soft area fill, 5 points, no axes.
+- `DeltaChip({ delta, direction, suffix })` — small pill like `↑ 2.1%` / `↓ 0.4%` / `= 0`, colored green/red/neutral, matches the existing `DeltaPill` style in `data-health-dashboard.tsx` for consistency.
+- `NewBadge` — small "NEW" pill (light-blue tint, brand-blue text) for patterns/values that didn't appear in the previous run.
 
-- Props: `selected: Set<string>` (the asset keys carried over from Step 1).
-- Derives the list of selected assets from `WAREHOUSES` + `selected` keys (parse `connId::schema::asset`).
-- Tabs across the top — one per selected table, label = `name (checkCount)`. Active tab styled with a bottom underline using `var(--brand-blue)`, inactive in `var(--ink-500)`.
-- A "+ Add checks" pill on the far right of the tab strip (visual only for now, matches the wireframe's blue chip).
-- Below the tabs, a checks table with columns: **Rule**, **Description**, **DQ dimension**, **Field applied**.
-- Each row has a checkbox (controlled, default checked). Toggling updates local state so the tab counts can update live.
-- A small lightning-bolt badge in the top-right of the card matches the wireframe accent.
+### 3. Completeness section
+Under the donut + fill-rate/null bars, add a single-row `Trend over last 5 runs` block:
+- Label "Fill rate — last 5 runs"
+- `Sparkline` + current value + `DeltaChip` vs previous run
 
-**2. Mock checks generator: `src/components/add-dataset/mock-checks.ts`**
+### 4. Uniqueness section
+Same treatment: a row per stat (`Uniqueness`, `Distinct`) with sparkline + delta chip beside the existing bars.
 
-- Exports `generateChecks(assetName: string): Check[]` returning a deterministic set of suggested checks per asset (seeded from the asset name so two tabs always show different recommendations).
-- `Check` type: `{ id, rule, description, dimension: 'Completeness'|'Uniqueness'|'Validity'|'Consistency'|'Timeliness', field }`.
-- Hand-curated examples for `dim_customers`, `fct_orders_daily`, plus a generic fallback that uses common patterns (`*_id is not null`, `*_id is unique`, `email matches valid format`, `created_at is not null`, etc.) so any selected asset gets a plausible list.
+### 5. Pattern section (`FreqTable` for patterns)
+Extend each row to include a small trailing cell:
+- If pattern existed last run: `Sparkline` (5-run frequency) + `DeltaChip` (change in count/pct)
+- If pattern is new this run: `NewBadge` instead of the sparkline
+Mark 1 of the 3 mock patterns as NEW so stakeholders can see the state.
 
-**3. Modal wiring: `src/components/add-dataset/AddDatasetModal.tsx`**
+### 6. Most frequent value section
+Same trailing cell as Pattern:
+- Sparkline of that value's frequency across last 5 runs, plus `DeltaChip`
+- 1–2 rows flagged `NEW` to demonstrate newly-introduced frequent values
 
-- Replace `Step2Placeholder` with `<Step2ApplyChecks selected={selected} />`.
-- Remove the now-unused placeholder component.
+### 7. Layout notes
+- Sparklines: ~72×24, stroke `#14a6a6` for stable metrics, red `#ef4444` when trending down for the metric's meaning.
+- Reuse existing tokens (`var(--hairline)`, `var(--ink-*)`, `var(--surface-soft)`); no new CSS variables.
+- Each section keeps its rounded-xl soft-surface card; history sits inside, below the current widgets, separated by a thin hairline divider.
 
-**4. AgentFlow step-aware intro: `src/components/add-dataset/AgentChatPanel.tsx`**
+## Out of scope
+- Wiring to real profiling history.
+- Historical charts for Distribution stats (min/max/mean length) — not requested.
+- Timeline modal / drill-in view.
 
-- Accept a new `step: number` prop from the modal.
-- When `step === 1`, seed an additional agent message summarizing the Step 2 context (mirrors the wireframe copy):
-  - "Based on the N tables you selected, I've analyzed the column names and data types."
-  - "I recommend starting with X data quality checks across your tables. I've automatically selected these for you based on common validation patterns."
-  - Bulleted breakdown: `customers: 14 checks`, `orders: 7 checks`, etc.
-  - "Would you like to see details on why I recommended specific checks, or are you ready to proceed to profiling?"
-- The existing Step 1 keyword handling (`freshness`, `recommend`, etc.) is preserved for `step === 0`.
-- The modal passes `step={step}` to `<AgentChatPanel>`.
-
-### Visual conventions (matches existing components)
-
-- Card chrome: white bg, `1px solid var(--hairline)`, `rounded-2xl`.
-- Row separators: bottom border `var(--hairline)`.
-- Checkbox: native `<input type="checkbox">` styled with `accent-color: var(--brand-blue)` (same approach used elsewhere in this folder).
-- Tab underline: 2px `var(--brand-blue)`; inactive tabs use `var(--ink-500)`.
-- Lightning badge: small yellow square in the card's top-right corner (purely decorative).
-
-### Out of scope (intentionally)
-
-- Persisting checks anywhere — purely local state for now.
-- The "+ Add checks" button opening a real picker — visual only, no handler.
-- Editing rule descriptions or field mappings.
-- Actually running the chat-driven check explanations beyond the seeded intro message.
+## Technical notes
+All changes stay client-side, deterministic mocks derived from column name so re-renders are stable. No new dependencies. No changes to routing, loaders, or global state.
