@@ -708,40 +708,24 @@ function ColumnDetailPanel({
             {/* Body */}
             <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
               {/* Completeness */}
-              <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
-                <h4 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>Completeness</h4>
-                <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>How distinct are the value</p>
-                <div className="mt-4 flex items-center gap-5">
-                  <CompletenessDonut fill={parseInt(column.fillRate)} />
-                  <div className="flex-1 space-y-3">
-                    <MiniBar label="Fill Rate:" value={parseInt(column.fillRate)} />
-                    <MiniBar label="Null" value={100 - parseInt(column.fillRate)} />
-                  </div>
-                </div>
-                <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--hairline)" }}>
-                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
-                    Trend · last 5 runs
-                  </div>
-                  <TrendRow label="Fill rate" values={makeHistory(`${column.name}:fill`, parseInt(column.fillRate), 4)} />
-                </div>
-              </section>
+              <MetricTrendSection
+                title="Completeness"
+                subtitle="How full is this column"
+                trendLabel="Fill rate trend"
+                values={makeHistory(`${column.name}:fill`, parseInt(column.fillRate), 4)}
+              >
+                <FillNullBar fill={parseInt(column.fillRate)} />
+              </MetricTrendSection>
 
               {/* Uniqueness */}
-              <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
-                <h4 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>Uniqueness</h4>
-                <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>How distinct are the value</p>
-                <div className="mt-4 space-y-3">
-                  <StatBar label="Uniqueness" valueText={`${column.uniqueness} (20)`} pct={parseInt(column.uniqueness)} />
-                  <StatBar label="Distinct" valueText={`24% (${Math.min(column.distinct, 10)})`} pct={24} />
-                </div>
-                <div className="mt-4 space-y-2 border-t pt-3" style={{ borderColor: "var(--hairline)" }}>
-                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
-                    Trend · last 5 runs
-                  </div>
-                  <TrendRow label="Uniqueness" values={makeHistory(`${column.name}:uniq`, parseInt(column.uniqueness), 5)} />
-                  <TrendRow label="Distinct" values={makeHistory(`${column.name}:dist`, 24, 6)} />
-                </div>
-              </section>
+              <MetricTrendSection
+                title="Uniqueness"
+                subtitle="How distinct are the values"
+                trendLabel="Uniqueness trend"
+                values={makeHistory(`${column.name}:uniq`, parseInt(column.uniqueness), 5)}
+              >
+                <UniqueDupBar unique={parseInt(column.uniqueness)} uniqueCount={20} dupCount={10} />
+              </MetricTrendSection>
 
               {/* Distribution */}
               <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
