@@ -901,7 +901,7 @@ type FreqRow = {
 function FreqTable({ rows }: { rows: FreqRow[] }) {
   const showTrend = rows.some((r) => r.trend || r.isNew);
   const cols = showTrend
-    ? "grid-cols-[1fr_60px_1.2fr_92px]"
+    ? "grid-cols-[1fr_60px_1.2fr_120px]"
     : "grid-cols-[1fr_70px_1.4fr]";
   return (
     <div className="mt-3 overflow-hidden rounded-lg border" style={{ borderColor: "var(--hairline)", background: "white" }}>
@@ -930,7 +930,7 @@ function FreqTable({ rows }: { rows: FreqRow[] }) {
                 ) : r.trend ? (
                   <>
                     <Sparkline values={r.trend} color={dir === "down" ? "#ef4444" : "#14a6a6"} />
-                    <DeltaArrow direction={dir} />
+                    <DeltaPts values={r.trend} />
                   </>
                 ) : null}
               </div>
@@ -1047,6 +1047,21 @@ function DeltaArrow({ direction }: { direction: "up" | "down" | "flat" }) {
   return (
     <span className="text-[11px] font-semibold" style={{ color }} aria-hidden="true">
       {glyph}
+    </span>
+  );
+}
+
+function DeltaPts({ values, suffix = "pts" }: { values: number[]; suffix?: string }) {
+  const d = trendDelta(values);
+  const dir = trendDirection(values);
+  const flat = dir === "flat";
+  const positive = dir === "up";
+  const color = flat ? "var(--ink-500)" : positive ? "#16a34a" : "#dc2626";
+  const glyph = flat ? "=" : positive ? "↑" : "↓";
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold whitespace-nowrap" style={{ color }}>
+      <span aria-hidden="true">{glyph}</span>
+      {Math.abs(d).toFixed(Math.abs(d) < 10 ? 1 : 0)} {suffix}
     </span>
   );
 }
