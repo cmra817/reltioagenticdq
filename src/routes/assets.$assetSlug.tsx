@@ -708,40 +708,24 @@ function ColumnDetailPanel({
             {/* Body */}
             <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
               {/* Completeness */}
-              <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
-                <h4 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>Completeness</h4>
-                <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>How distinct are the value</p>
-                <div className="mt-4 flex items-center gap-5">
-                  <CompletenessDonut fill={parseInt(column.fillRate)} />
-                  <div className="flex-1 space-y-3">
-                    <MiniBar label="Fill Rate:" value={parseInt(column.fillRate)} />
-                    <MiniBar label="Null" value={100 - parseInt(column.fillRate)} />
-                  </div>
-                </div>
-                <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--hairline)" }}>
-                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
-                    Trend · last 5 runs
-                  </div>
-                  <TrendRow label="Fill rate" values={makeHistory(`${column.name}:fill`, parseInt(column.fillRate), 4)} />
-                </div>
-              </section>
+              <MetricTrendSection
+                title="Completeness"
+                subtitle="How full is this column"
+                trendLabel="Fill rate trend"
+                values={makeHistory(`${column.name}:fill`, parseInt(column.fillRate), 4)}
+              >
+                <FillNullBar fill={parseInt(column.fillRate)} />
+              </MetricTrendSection>
 
               {/* Uniqueness */}
-              <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
-                <h4 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>Uniqueness</h4>
-                <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>How distinct are the value</p>
-                <div className="mt-4 space-y-3">
-                  <StatBar label="Uniqueness" valueText={`${column.uniqueness} (20)`} pct={parseInt(column.uniqueness)} />
-                  <StatBar label="Distinct" valueText={`24% (${Math.min(column.distinct, 10)})`} pct={24} />
-                </div>
-                <div className="mt-4 space-y-2 border-t pt-3" style={{ borderColor: "var(--hairline)" }}>
-                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
-                    Trend · last 5 runs
-                  </div>
-                  <TrendRow label="Uniqueness" values={makeHistory(`${column.name}:uniq`, parseInt(column.uniqueness), 5)} />
-                  <TrendRow label="Distinct" values={makeHistory(`${column.name}:dist`, 24, 6)} />
-                </div>
-              </section>
+              <MetricTrendSection
+                title="Uniqueness"
+                subtitle="How distinct are the values"
+                trendLabel="Uniqueness trend"
+                values={makeHistory(`${column.name}:uniq`, parseInt(column.uniqueness), 5)}
+              >
+                <UniqueDupBar unique={parseInt(column.uniqueness)} uniqueCount={20} dupCount={10} />
+              </MetricTrendSection>
 
               {/* Distribution */}
               <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
@@ -1108,6 +1092,158 @@ function TrendRow({
     </div>
   );
 }
+/* ---------- large trend chart used in Completeness / Uniqueness ---------- */
+
+function MetricTrendSection({
+  title,
+  subtitle,
+  trendLabel,
+  values,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  trendLabel: string;
+  values: number[];
+  children: React.ReactNode;
+}) {
+  const delta = trendDelta(values);
+  const dir = trendDirection(values);
+  const positive = dir === "up";
+  const flat = dir === "flat";
+  const color = flat ? "var(--ink-500)" : positive ? "#16a34a" : "#dc2626";
+  const verb = flat ? "No change" : positive ? "Increased" : "Decreased";
+  const arrow = flat ? "→" : positive ? "↗" : "↘";
+  return (
+    <section className="rounded-xl p-4" style={{ background: "var(--surface-soft)" }}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h4 className="text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>{title}</h4>
+          <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>{subtitle}</p>
+        </div>
+        <span className="inline-flex items-center gap-1 whitespace-nowrap text-[12px]" style={{ color }}>
+          <span aria-hidden="true">{arrow}</span>
+          {flat ? verb : `${verb} ${Math.abs(delta).toFixed(1)} pts`} from last run
+        </span>
+      </div>
+      <div className="mt-4">{children}</div>
+      <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--hairline)" }}>
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
+          {trendLabel}
+        </div>
+        <TrendChart values={values} />
+      </div>
+    </section>
+  );
+}
+
+function FillNullBar({ fill }: { fill: number }) {
+  const nullPct = 100 - fill;
+  return (
+    <div>
+      <div className="flex h-9 w-full overflow-hidden rounded-md" style={{ background: "white" }}>
+        <div
+          className="flex items-center px-3 text-[13px] font-semibold text-white"
+          style={{ width: `${fill}%`, background: "#4CAF7A" }}
+        >
+          {fill}%
+        </div>
+        <div className="flex flex-1 items-center justify-end px-3 text-[13px] font-semibold" style={{ color: "var(--ink-900)" }}>
+          {nullPct}%
+        </div>
+      </div>
+      <div className="mt-1 flex items-center justify-between text-[12px]" style={{ color: "var(--ink-500)" }}>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-sm" style={{ background: "#4CAF7A" }} aria-hidden="true" />
+          Filled
+        </span>
+        <span>Null</span>
+      </div>
+    </div>
+  );
+}
+
+function UniqueDupBar({ unique, uniqueCount, dupCount }: { unique: number; uniqueCount: number; dupCount: number }) {
+  const dup = 100 - unique;
+  return (
+    <div>
+      <div className="flex h-9 w-full overflow-hidden rounded-md" style={{ background: "white" }}>
+        <div
+          className="flex items-center gap-1 px-3 text-[13px] font-semibold text-white"
+          style={{ width: `${unique}%`, background: "#4CAF7A" }}
+        >
+          {unique}% <span className="opacity-80">({uniqueCount})</span>
+        </div>
+        <div className="flex flex-1 items-center justify-end gap-1 px-3 text-[13px] font-semibold" style={{ color: "var(--ink-900)" }}>
+          {dup}% <span style={{ color: "var(--ink-500)" }}>({dupCount})</span>
+        </div>
+      </div>
+      <div className="mt-1 flex items-center justify-between text-[12px]" style={{ color: "var(--ink-500)" }}>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-sm" style={{ background: "#4CAF7A" }} aria-hidden="true" />
+          Unique
+        </span>
+        <span>Duplicated</span>
+      </div>
+    </div>
+  );
+}
+
+function TrendChart({ values }: { values: number[] }) {
+  const width = 320;
+  const height = 160;
+  const padL = 32;
+  const padR = 16;
+  const padT = 18;
+  const padB = 24;
+
+  // Fixed 90-100 domain to match design
+  const yMin = 90;
+  const yMax = 100;
+  const yTicks = [90, 95, 100];
+
+  // Deterministic date labels ending "today"
+  const now = new Date();
+  const dates = values.map((_, i) => {
+    const d = new Date(now);
+    d.setDate(now.getDate() - (values.length - 1 - i) * 3);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  });
+
+  const stepX = (width - padL - padR) / (values.length - 1);
+  const yFor = (v: number) => padT + (height - padT - padB) * (1 - (Math.max(yMin, Math.min(yMax, v)) - yMin) / (yMax - yMin));
+  const pts = values.map((v, i) => ({ x: padL + i * stepX, y: yFor(v), v }));
+  const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  const last = pts[pts.length - 1];
+  const stroke = "#4CAF7A";
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} role="img" aria-label="Trend over last 5 runs">
+      {yTicks.map((t) => {
+        const y = yFor(t);
+        return (
+          <g key={t}>
+            <line x1={padL} x2={width - padR} y1={y} y2={y} stroke="var(--hairline)" strokeDasharray="3 4" />
+            <text x={padL - 6} y={y + 3} fontSize="10" textAnchor="end" fill="var(--ink-500)">{t}</text>
+          </g>
+        );
+      })}
+      <path d={path} fill="none" stroke={stroke} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      {pts.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r="3.5" fill={stroke} />
+      ))}
+      <text x={last.x} y={last.y - 8} fontSize="11" fontWeight="600" textAnchor="middle" fill={stroke}>
+        {Math.round(last.v)}%
+      </text>
+      {dates.map((d, i) => (
+        <text key={i} x={pts[i].x} y={height - 6} fontSize="10" textAnchor="middle" fill="var(--ink-500)">
+          {d}
+        </text>
+      ))}
+    </svg>
+  );
+}
+
 
 // ===================== Checks tab =====================
 
