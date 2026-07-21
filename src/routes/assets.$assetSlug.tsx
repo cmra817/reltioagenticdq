@@ -901,7 +901,7 @@ type FreqRow = {
 function FreqTable({ rows }: { rows: FreqRow[] }) {
   const showTrend = rows.some((r) => r.trend || r.isNew);
   const cols = showTrend
-    ? "grid-cols-[1fr_60px_1.2fr_92px]"
+    ? "grid-cols-[1fr_60px_1.2fr_120px]"
     : "grid-cols-[1fr_70px_1.4fr]";
   return (
     <div className="mt-3 overflow-hidden rounded-lg border" style={{ borderColor: "var(--hairline)", background: "white" }}>
