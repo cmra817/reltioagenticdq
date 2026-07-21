@@ -930,7 +930,7 @@ function FreqTable({ rows }: { rows: FreqRow[] }) {
                 ) : r.trend ? (
                   <>
                     <Sparkline values={r.trend} color={dir === "down" ? "#ef4444" : "#14a6a6"} />
-                    <DeltaArrow direction={dir} />
+                    <DeltaPts values={r.trend} />
                   </>
                 ) : null}
               </div>
