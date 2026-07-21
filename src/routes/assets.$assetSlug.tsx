@@ -1051,6 +1051,21 @@ function DeltaArrow({ direction }: { direction: "up" | "down" | "flat" }) {
   );
 }
 
+function DeltaPts({ values, suffix = "pts" }: { values: number[]; suffix?: string }) {
+  const d = trendDelta(values);
+  const dir = trendDirection(values);
+  const flat = dir === "flat";
+  const positive = dir === "up";
+  const color = flat ? "var(--ink-500)" : positive ? "#16a34a" : "#dc2626";
+  const glyph = flat ? "=" : positive ? "↑" : "↓";
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold whitespace-nowrap" style={{ color }}>
+      <span aria-hidden="true">{glyph}</span>
+      {Math.abs(d).toFixed(Math.abs(d) < 10 ? 1 : 0)} {suffix}
+    </span>
+  );
+}
+
 function NewBadge() {
   return (
     <span
