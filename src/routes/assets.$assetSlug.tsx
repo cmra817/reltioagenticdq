@@ -1,12 +1,14 @@
 import * as React from "react";
 import { useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Check, Info } from "lucide-react";
+import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Check, Info, MoreVertical } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { ChatComposer } from "@/components/chat-composer";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useSidebarState } from "@/components/sidebar-context";
 
 export const Route = createFileRoute("/assets/$assetSlug")({
