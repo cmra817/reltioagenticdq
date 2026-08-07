@@ -199,8 +199,6 @@ export function AddDatasetModal({
       <AgentChatPanel
         step={step}
         selected={selected}
-        profilingSchedule={profilingSchedule}
-        checksSchedule={checksSchedule}
         onSetProfilingSchedule={setProfilingSchedule}
         onSetChecksSchedule={setChecksSchedule}
         onAddMany={(keys) =>

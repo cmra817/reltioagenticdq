@@ -97,16 +97,12 @@ export function AgentChatPanel({
   step,
   selected,
   onAddMany,
-  profilingSchedule,
-  checksSchedule,
   onSetProfilingSchedule,
   onSetChecksSchedule,
 }: {
   step: number;
   selected: Set<string>;
   onAddMany: (keys: string[]) => void;
-  profilingSchedule: ScheduleConfig;
-  checksSchedule: ScheduleConfig;
   onSetProfilingSchedule: (c: ScheduleConfig) => void;
   onSetChecksSchedule: (c: ScheduleConfig) => void;
 }) {
