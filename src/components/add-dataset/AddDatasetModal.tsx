@@ -3,10 +3,11 @@ import { X } from "lucide-react";
 import { Stepper } from "./Stepper";
 import { Step1SelectData } from "./Step1SelectData";
 import { Step2ApplyChecks } from "./Step2ApplyChecks";
+import { Step3Schedule, DEFAULT_SCHEDULE, type ScheduleConfig } from "./Step3Schedule";
 import { AgentChatPanel } from "./AgentChatPanel";
 import { generateChecks } from "./mock-checks";
 
-const STEPS = [{ label: "Select data" }, { label: "Apply checks" }];
+const STEPS = [{ label: "Select data" }, { label: "Apply checks" }, { label: "Schedule" }];
 
 export type AddDatasetCompletion = {
   tables: string[];
@@ -26,12 +27,16 @@ export function AddDatasetModal({
 }) {
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [profilingSchedule, setProfilingSchedule] = useState<ScheduleConfig>(DEFAULT_SCHEDULE);
+  const [checksSchedule, setChecksSchedule] = useState<ScheduleConfig>(DEFAULT_SCHEDULE);
 
   // Reset when closed
   useEffect(() => {
     if (!open) {
       setStep(0);
       setSelected(new Set());
+      setProfilingSchedule(DEFAULT_SCHEDULE);
+      setChecksSchedule(DEFAULT_SCHEDULE);
     }
   }, [open]);
 
@@ -54,10 +59,14 @@ export function AddDatasetModal({
       return n;
     });
 
+  const totalChecks = Array.from(selected).reduce((sum, key) => {
+    const parts = key.split("::");
+    const name = parts[2] ?? parts[parts.length - 1];
+    return sum + generateChecks(name).length;
+  }, 0);
+
   const isLastStep = step === STEPS.length - 1;
-  const continueLabel = isLastStep
-    ? `Add ${selected.size} ${selected.size === 1 ? "asset" : "assets"}`
-    : "Continue";
+  const continueLabel = isLastStep ? "Finish setup" : "Continue";
   const continueDisabled = selected.size === 0;
 
   const onContinue = () => {
@@ -176,11 +185,22 @@ export function AddDatasetModal({
           />
         )}
         {step === 1 && <Step2ApplyChecks selected={selected} />}
+        {step === 2 && (
+          <Step3Schedule
+            checkCount={totalChecks}
+            profiling={profilingSchedule}
+            checks={checksSchedule}
+            onChangeProfiling={setProfilingSchedule}
+            onChangeChecks={setChecksSchedule}
+          />
+        )}
       </div>
       </div>
       <AgentChatPanel
         step={step}
         selected={selected}
+        onSetProfilingSchedule={setProfilingSchedule}
+        onSetChecksSchedule={setChecksSchedule}
         onAddMany={(keys) =>
           setSelected((s) => {
             const n = new Set(s);

@@ -3,6 +3,50 @@ import { BarChart3 } from "lucide-react";
 import { SendIcon } from "@/components/brand-icons";
 import { WAREHOUSES, assetKey, formatRows, relativeTime } from "./mock-warehouses";
 import { generateChecks } from "./mock-checks";
+import {
+  DEFAULT_SCHEDULE,
+  frequencyLabel,
+  type Frequency,
+  type ScheduleConfig,
+} from "./Step3Schedule";
+
+// Parse a natural-language cadence like "run profiling daily" or
+// "check every 12 hours" into a partial schedule update.
+function parseCadence(text: string): {
+  target: "profiling" | "checks" | "both";
+  config: ScheduleConfig;
+} | null {
+  const lower = text.toLowerCase();
+  let frequency: Frequency | null = null;
+  let custom: Partial<ScheduleConfig> = {};
+
+  if (/\b6\s*hours?\b|\bsix hours?\b/.test(lower)) frequency = "6h";
+  else if (/\b12\s*hours?\b|\btwelve hours?\b/.test(lower)) frequency = "12h";
+  else if (/\bdaily\b|\bevery day\b|\bonce a day\b/.test(lower)) frequency = "daily";
+  else if (/\bweekly\b|\bevery week\b|\bonce a week\b/.test(lower)) frequency = "weekly";
+  else {
+    const m = lower.match(/every\s+(\d+)\s+(hour|day|week)s?/);
+    if (m) {
+      frequency = "custom";
+      custom = {
+        repeatEvery: Number(m[1]),
+        repeatUnit: (m[2] + "s") as ScheduleConfig["repeatUnit"],
+      };
+    }
+  }
+  if (!frequency) return null;
+
+  const mentionsProfiling = /profil/.test(lower);
+  const mentionsChecks = /check|dq|quality|rule/.test(lower);
+  const target =
+    mentionsProfiling && !mentionsChecks
+      ? "profiling"
+      : mentionsChecks && !mentionsProfiling
+        ? "checks"
+        : "both";
+
+  return { target, config: { ...DEFAULT_SCHEDULE, frequency, ...custom } };
+}
 
 type Recommendation = {
   key: string;
@@ -53,10 +97,14 @@ export function AgentChatPanel({
   step,
   selected,
   onAddMany,
+  onSetProfilingSchedule,
+  onSetChecksSchedule,
 }: {
   step: number;
   selected: Set<string>;
   onAddMany: (keys: string[]) => void;
+  onSetProfilingSchedule: (c: ScheduleConfig) => void;
+  onSetChecksSchedule: (c: ScheduleConfig) => void;
 }) {
   const recommendations = useMemo(() => buildRecommendations(), []);
 
@@ -83,6 +131,7 @@ export function AgentChatPanel({
   ]);
   // Track whether we've already shown the Step 2 intro so we don't repeat it.
   const [step2Introduced, setStep2Introduced] = useState(false);
+  const [step3Introduced, setStep3Introduced] = useState(false);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -148,6 +197,40 @@ export function AgentChatPanel({
     }, 600);
   }, [step, step2Introduced, selected]);
 
+  // Seed a Step 3 intro the first time the user reaches "Schedule".
+  useEffect(() => {
+    if (step !== 2 || step3Introduced) return;
+    setStep3Introduced(true);
+    setTyping(true);
+    window.setTimeout(() => {
+      setTyping(false);
+      setMessages((m) => [
+        ...m,
+        {
+          id: uid(),
+          role: "agent",
+          content: (
+            <>
+              <p>
+                Last step — let's set the cadence. I've defaulted both profiling and DQ checks to{" "}
+                <strong>every 6 hours</strong>, which works well for tables that land several
+                times a day.
+              </p>
+              <p className="mt-3">
+                Tell me a cadence in plain language and I'll set it, for example:
+              </p>
+              <ul className="mt-1 list-inside list-disc space-y-0.5">
+                <li>"Run profiling daily"</li>
+                <li>"Run DQ checks every 12 hours"</li>
+                <li>"Run everything every 3 days"</li>
+              </ul>
+            </>
+          ),
+        },
+      ]);
+    }, 600);
+  }, [step, step3Introduced]);
+
   const pushUser = (text: string) =>
     setMessages((m) => [...m, { id: uid(), role: "user", content: text }]);
 
@@ -167,6 +250,26 @@ export function AgentChatPanel({
     if (!text) return;
     setInput("");
     pushUser(text);
+
+    const cadence = parseCadence(text);
+    if (cadence) {
+      const { target, config } = cadence;
+      if (target !== "checks") onSetProfilingSchedule(config);
+      if (target !== "profiling") onSetChecksSchedule(config);
+      const label = frequencyLabel(config).toLowerCase();
+      const what =
+        target === "both" ? "profiling and DQ checks" : target === "profiling" ? "profiling" : "DQ checks";
+      respondAfter(600, () =>
+        pushAgent(
+          <>
+            Done — I've scheduled <strong>{what}</strong> to run {label}. The first run starts
+            immediately after setup. You can fine-tune it on the cards, or pick{" "}
+            <em>Custom</em> for an end date or run limit.
+          </>,
+        ),
+      );
+      return;
+    }
 
     const lower = text.toLowerCase();
     const isFreshness =
@@ -376,7 +479,10 @@ export function AgentChatPanel({
           </button>
         </form>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {["Show me tables by freshness", "Recommend tables for revenue"].map((s) => (
+          {(step === 2
+            ? ["Run profiling daily", "Run DQ checks every 12 hours"]
+            : ["Show me tables by freshness", "Recommend tables for revenue"]
+          ).map((s) => (
             <button
               key={s}
               type="button"
