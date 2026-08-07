@@ -136,46 +136,72 @@ function AssetDetailPage() {
         <div className="flex flex-1 min-h-0 flex-col gap-5 overflow-y-auto px-8 pt-6 pb-28">
           {/* Header */}
           <div className="rounded-2xl border bg-white p-5" style={{ borderColor: "var(--hairline)" }}>
-            <div className="flex items-start gap-3">
-              <Link
-                to="/explore"
-                aria-label="Back to Explore"
-                className="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)]"
-                style={{ color: "var(--ink-700)" }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <line x1="19" y1="12" x2="5" y2="12" />
-                  <polyline points="12 19 5 12 12 5" />
-                </svg>
-              </Link>
-              <span
-                className="mt-0.5 inline-flex h-9 w-9 items-center justify-center"
-                aria-hidden="true"
-              >
-                <SourceLogo source={detail.source} />
-              </span>
-              <div className="flex-1">
-                <h1
-                  className="text-[22px] font-semibold leading-tight"
-                  style={{ color: "var(--brand-blue)" }}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <Link
+                  to="/explore"
+                  aria-label="Back to Explore"
+                  className="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)]"
+                  style={{ color: "var(--ink-700)" }}
                 >
-                  {detail.name}
-                </h1>
-                <div
-                  className="mt-1 flex items-center gap-1.5 text-[12px]"
-                  style={{ color: "var(--ink-500)" }}
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                  </svg>
+                </Link>
+                <span
+                  className="mt-0.5 inline-flex h-9 w-9 items-center justify-center"
+                  aria-hidden="true"
                 >
-                  <span style={{ color: "var(--ink-300)" }}>
-                    <TableIcon size={13} />
-                  </span>
-                  <span>Table</span>
-                  <span style={{ color: "var(--ink-300)" }}>›</span>
-                  <span style={{ color: "var(--brand-blue)" }}>
-                    <DatasetIcon size={13} />
-                  </span>
-                  <span style={{ color: "var(--ink-700)" }}>{detail.dataset}</span>
+                  <SourceLogo source={detail.source} />
+                </span>
+                <div>
+                  <h1
+                    className="text-[22px] font-semibold leading-tight"
+                    style={{ color: "var(--brand-blue)" }}
+                  >
+                    {detail.name}
+                  </h1>
+                  <div
+                    className="mt-1 flex items-center gap-1.5 text-[12px]"
+                    style={{ color: "var(--ink-500)" }}
+                  >
+                    <span style={{ color: "var(--ink-300)" }}>
+                      <TableIcon size={13} />
+                    </span>
+                    <span>Table</span>
+                    <span style={{ color: "var(--ink-300)" }}>›</span>
+                    <span style={{ color: "var(--brand-blue)" }}>
+                      <DatasetIcon size={13} />
+                    </span>
+                    <span style={{ color: "var(--ink-700)" }}>{detail.dataset}</span>
+                  </div>
                 </div>
               </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Table actions"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)]"
+                    style={{ color: "var(--ink-700)" }}
+                  >
+                    <MoreVertical size={18} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[160px]">
+                  <DropdownMenuItem onClick={() => toast("Profiling started")}>
+                    Run profiling
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => toast("DQ checks started")}>
+                    Run DQ checks
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => toast("Loading to Reltio...")}>
+                    Load to Reltio
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Tabs */}
