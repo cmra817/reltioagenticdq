@@ -201,82 +201,8 @@ function AssetDetailPage() {
             </div>
           </div>
 
-          {activeTab === "Overview" && (
-            <>
-              {/* Stat cards */}
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                {[
-                  { label: "Columns", value: String(detail.columns) },
-                  { label: "Rows", value: detail.rows },
-                  { label: "Checks", value: String(detail.checks) },
-                  { label: "Fill rate", value: detail.fillRate },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="rounded-2xl border bg-white p-4"
-                    style={{ borderColor: "var(--hairline)" }}
-                  >
-                    <div className="text-[13px]" style={{ color: "var(--ink-500)" }}>
-                      {s.label}
-                    </div>
-                    <div
-                      className="mt-2 text-[26px] font-semibold leading-none"
-                      style={{ color: "var(--brand-blue)" }}
-                    >
-                      {s.value}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {activeTab === "Overview" && <OverviewPanel detail={detail} />}
 
-              {/* Quality + Classification */}
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
-                  <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                    Quality score
-                  </h2>
-                  <div className="mt-5 flex items-center gap-8">
-                    <QualityDonut value={detail.quality} />
-                    <div className="flex-1 space-y-4">
-                      <Bar label="Validity" value={detail.validity} />
-                      <Bar label="Accuracy" value={detail.accuracy} />
-                      <Bar label="Consistency" value={detail.consistency} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
-                  <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                    Classification
-                  </h2>
-                  <ul className="mt-4 space-y-3">
-                    {detail.classification.map((c) => (
-                      <li key={c.label} className="grid grid-cols-[150px_1fr_36px] items-center gap-3">
-                        <span className="text-[13px]" style={{ color: "var(--ink-700)" }}>
-                          {c.label}
-                        </span>
-                        <div
-                          className="h-1.5 overflow-hidden rounded-full"
-                          style={{ background: "var(--surface-soft)" }}
-                        >
-                          <div
-                            className="h-full rounded-full"
-                            style={{ width: `${Math.min(c.pct, 100)}%`, background: "var(--teal-500, #14a6a6)" }}
-                          />
-                        </div>
-                        <span
-                          className="text-right text-[12px] font-medium"
-                          style={{ color: "var(--ink-700)" }}
-                        >
-                          {c.pct}%
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </>
-          )}
 
           {activeTab === "Columns" && (
             <ColumnsPanel
@@ -318,52 +244,188 @@ function FloatingComposer({ rightPanelOpen }: { rightPanelOpen: boolean }) {
 }
 
 
-function Bar({ label, value }: { label: string; value: number }) {
+// ============================================================
+// Overview tab
+// ============================================================
+
+const OVERVIEW_ACTIVITY = [
+  { label: "Last profiled", value: "6 hrs ago", tip: "When this table was last scanned to compute column profiles and statistics." },
+  { label: "Checks run", value: "6 hrs ago", tip: "The most recent execution of the quality checks attached to this table." },
+  { label: "Last synced", value: "2 hrs ago", tip: "When metadata and row counts were last refreshed from the source warehouse." },
+  { label: "Loaded to Reltio", value: "3 days ago", tip: "When records from this table were last loaded into Reltio." },
+] as const;
+
+type OverviewStat = {
+  label: string;
+  value: string;
+  trend?: number[];
+  color?: string;
+  note: string;
+};
+
+const OVERVIEW_CHECK_CATEGORIES = [
+  { label: "Validity", passing: 3, failing: 0 },
+  { label: "Completeness", passing: 4, failing: 0 },
+  { label: "Accuracy", passing: 3, failing: 1 },
+  { label: "Consistency", passing: 3, failing: 0 },
+  { label: "Uniqueness", passing: 2, failing: 0 },
+  { label: "Referential integrity", passing: 2, failing: 1 },
+  { label: "Format and range", passing: 2, failing: 0 },
+];
+
+const TOP_AFFECTED_COLUMNS = [
+  { column: "customer_id", check: "Referential integrity", example: "CUST-88213 (no match)" },
+  { column: "order_total", check: "Accuracy", example: "-42.00" },
+  { column: "order_date", check: "Format and range", example: "13/45/2026" },
+];
+
+const PASS_GREEN = "#4CAF50";
+const FAIL_RED = "#d05252";
+
+function OverviewPanel({ detail }: { detail: AssetDetail }) {
+  const stats: OverviewStat[] = [
+    { label: "Columns", value: String(detail.columns), note: "No change from last run" },
+    { label: "Rows", value: detail.rows, trend: [5320, 5290, 5310, 5240, 5260, 5180, 4897], color: FAIL_RED, note: "Decreased 8% from last run" },
+    { label: "Fill rate", value: detail.fillRate, trend: [82, 82.5, 83, 83.2, 83.6, 83.8, 85], color: "#4386fa", note: "Increased 1.2 pts from last run" },
+    { label: "Checks passing", value: `19/${detail.checks}`, trend: [21, 21, 20, 20, 20, 20, 19], color: FAIL_RED, note: "Decreased 1 from last run" },
+    { label: "Timeliness", value: "On time", note: "Synced 2 hrs ago" },
+  ];
+
   return (
-    <div>
-      <div className="flex items-center gap-2 text-[13px]">
-        <span style={{ color: "var(--ink-700)" }}>{label}</span>
-        <span className="font-semibold" style={{ color: "#14a6a6" }}>
-          {value}%
-        </span>
+    <div className="flex flex-col gap-6">
+      {/* Activity strip — intentionally uncarded */}
+      <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
+        {OVERVIEW_ACTIVITY.map((a) => (
+          <div key={a.label}>
+            <div className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-500)" }}>
+              <span>{a.label}</span>
+              <InfoTooltip text={a.tip} />
+            </div>
+            <div className="mt-1 text-[15px] font-medium" style={{ color: "var(--ink-900)" }}>
+              {a.value}
+            </div>
+          </div>
+        ))}
       </div>
-      <div
-        className="mt-1.5 h-1.5 overflow-hidden rounded-full"
-        style={{ background: "var(--surface-soft)" }}
-      >
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${value}%`, background: "#14a6a6" }}
-        />
+
+      <div className="h-px w-full" style={{ background: "var(--hairline)" }} />
+
+      {/* Stat cards with sparklines */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            className="flex flex-col rounded-2xl border bg-white p-4"
+            style={{ borderColor: "var(--hairline)" }}
+          >
+            <div className="text-[13px]" style={{ color: "var(--ink-500)" }}>
+              {s.label}
+            </div>
+            <div
+              className="mt-2 text-[26px] font-semibold leading-none"
+              style={{ color: "var(--brand-blue)" }}
+            >
+              {s.value}
+            </div>
+            <div className="mt-3 h-[24px]">
+              {s.trend && <Sparkline values={s.trend} color={s.color} width={96} height={24} />}
+            </div>
+            <div className="mt-2 text-[12px] leading-snug" style={{ color: "var(--ink-500)" }}>
+              {s.note}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Checks by category */}
+      <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
+        <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
+          Checks by category
+        </h2>
+        <ChecksByCategoryChart rows={OVERVIEW_CHECK_CATEGORIES} />
+        <div className="mt-4 flex items-center gap-5 text-[12px]" style={{ color: "var(--ink-700)" }}>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: PASS_GREEN }} aria-hidden="true" />
+            Passing
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: FAIL_RED }} aria-hidden="true" />
+            Failing
+          </span>
+        </div>
+      </div>
+
+      {/* Top affected columns */}
+      <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
+        <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
+          Top affected columns
+        </h2>
+        <table className="mt-4 w-full text-[13px]">
+          <thead>
+            <tr style={{ color: "var(--ink-500)" }}>
+              <th className="pb-2 text-left font-medium">Column</th>
+              <th className="pb-2 text-left font-medium">Check failed</th>
+              <th className="pb-2 text-left font-medium">Example failed value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {TOP_AFFECTED_COLUMNS.map((r) => (
+              <tr key={r.column} className="border-t" style={{ borderColor: "var(--hairline)" }}>
+                <td className="py-2.5 font-mono text-[13px]" style={{ color: "var(--ink-900)" }}>
+                  {r.column}
+                </td>
+                <td className="py-2.5" style={{ color: FAIL_RED }}>
+                  {r.check}
+                </td>
+                <td className="py-2.5 font-mono text-[12px]" style={{ color: "var(--ink-700)" }}>
+                  {r.example}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
-function QualityDonut({ value }: { value: number }) {
-  const r = 56;
-  const C = 2 * Math.PI * r;
-  const dash = (value / 100) * C;
+function ChecksByCategoryChart({
+  rows,
+}: {
+  rows: { label: string; passing: number; failing: number }[];
+}) {
+  const max = Math.max(4, ...rows.map((r) => r.passing + r.failing));
+  const ticks = Array.from({ length: max * 2 + 1 }, (_, i) => i / 2);
   return (
-    <svg width="150" height="150" viewBox="0 0 150 150" aria-label={`Quality score ${value}%`}>
-      <circle cx="75" cy="75" r={r} fill="none" stroke="var(--surface-soft)" strokeWidth="14" />
-      <circle
-        cx="75"
-        cy="75"
-        r={r}
-        fill="none"
-        stroke="#14a6a6"
-        strokeWidth="14"
-        strokeLinecap="round"
-        strokeDasharray={`${dash} ${C}`}
-        transform="rotate(-90 75 75)"
-      />
-      <text x="75" y="82" textAnchor="middle" fontSize="26" fontWeight="600" fill="#14a6a6">
-        {value}%
-      </text>
-    </svg>
+    <div className="mt-5">
+      <div className="space-y-2">
+        {rows.map((r) => (
+          <div key={r.label} className="grid grid-cols-[140px_1fr] items-center gap-3">
+            <span className="truncate text-right text-[12px]" style={{ color: "var(--ink-500)" }}>
+              {r.label}
+            </span>
+            <div className="relative h-6" style={{ background: "var(--surface-soft)" }}>
+              <div className="absolute inset-0 flex h-full">
+                <div style={{ width: `${(r.passing / max) * 100}%`, background: PASS_GREEN }} />
+                <div style={{ width: `${(r.failing / max) * 100}%`, background: FAIL_RED }} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 grid grid-cols-[140px_1fr] gap-3">
+        <span />
+        <div className="flex justify-between text-[11px]" style={{ color: "var(--ink-500)" }}>
+          {ticks.map((t) => (
+            <span key={t}>{t % 1 === 0 ? t.toFixed(1) : t.toFixed(1)}</span>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
+
+
 
 function EmptyPanel({ label }: { label: string }) {
   return (
