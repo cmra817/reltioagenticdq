@@ -288,30 +288,31 @@ function OverviewPanel({ detail }: { detail: AssetDetail }) {
     { label: "Rows", value: detail.rows, trend: [5320, 5290, 5310, 5240, 5260, 5180, 4897], color: FAIL_RED, note: "Decreased 8% from last run" },
     { label: "Fill rate", value: detail.fillRate, trend: [82, 82.5, 83, 83.2, 83.6, 83.8, 85], color: "#4386fa", note: "Increased 1.2 pts from last run" },
     { label: "Checks passing", value: `19/${detail.checks}`, trend: [21, 21, 20, 20, 20, 20, 19], color: FAIL_RED, note: "Decreased 1 from last run" },
-    { label: "Timeliness", value: "On time", note: "Synced 2 hrs ago" },
   ];
 
   return (
     <div className="flex flex-col gap-6">
       {/* Activity strip — intentionally uncarded */}
-      <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
-        {OVERVIEW_ACTIVITY.map((a) => (
-          <div key={a.label}>
-            <div className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-500)" }}>
-              <span>{a.label}</span>
-              <InfoTooltip text={a.tip} />
+      <div className="pl-4">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
+          {OVERVIEW_ACTIVITY.map((a) => (
+            <div key={a.label}>
+              <div className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-500)" }}>
+                <span>{a.label}</span>
+                <InfoTooltip text={a.tip} />
+              </div>
+              <div className="mt-1 text-[15px] font-medium" style={{ color: "var(--ink-900)" }}>
+                {a.value}
+              </div>
             </div>
-            <div className="mt-1 text-[15px] font-medium" style={{ color: "var(--ink-900)" }}>
-              {a.value}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <div className="h-px w-full" style={{ background: "var(--hairline)" }} />
 
       {/* Stat cards with sparklines */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map((s) => (
           <div
             key={s.label}
