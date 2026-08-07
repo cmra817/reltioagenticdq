@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Check, Info, MoreVertical } from "lucide-react";
+import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Check, Info } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { ChatComposer } from "@/components/chat-composer";
@@ -183,11 +183,11 @@ function AssetDetailPage() {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    aria-label="Table actions"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)]"
-                    style={{ color: "var(--ink-700)" }}
+                    className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-soft)]"
+                    style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
                   >
-                    <MoreVertical size={18} />
+                    Actions
+                    <ChevronDown size={14} />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[160px]">
