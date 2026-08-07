@@ -426,51 +426,6 @@ function ChecksByCategoryChart({
 }
 
 
-  return (
-    <div>
-      <div className="flex items-center gap-2 text-[13px]">
-        <span style={{ color: "var(--ink-700)" }}>{label}</span>
-        <span className="font-semibold" style={{ color: "#14a6a6" }}>
-          {value}%
-        </span>
-      </div>
-      <div
-        className="mt-1.5 h-1.5 overflow-hidden rounded-full"
-        style={{ background: "var(--surface-soft)" }}
-      >
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${value}%`, background: "#14a6a6" }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function QualityDonut({ value }: { value: number }) {
-  const r = 56;
-  const C = 2 * Math.PI * r;
-  const dash = (value / 100) * C;
-  return (
-    <svg width="150" height="150" viewBox="0 0 150 150" aria-label={`Quality score ${value}%`}>
-      <circle cx="75" cy="75" r={r} fill="none" stroke="var(--surface-soft)" strokeWidth="14" />
-      <circle
-        cx="75"
-        cy="75"
-        r={r}
-        fill="none"
-        stroke="#14a6a6"
-        strokeWidth="14"
-        strokeLinecap="round"
-        strokeDasharray={`${dash} ${C}`}
-        transform="rotate(-90 75 75)"
-      />
-      <text x="75" y="82" textAnchor="middle" fontSize="26" fontWeight="600" fill="#14a6a6">
-        {value}%
-      </text>
-    </svg>
-  );
-}
 
 function EmptyPanel({ label }: { label: string }) {
   return (
