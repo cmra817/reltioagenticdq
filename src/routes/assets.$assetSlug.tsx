@@ -1641,12 +1641,22 @@ function ActivityStatusPill({ status }: { status: ActivityStatus }) {
 
 function InfoTooltip({ text }: { text: string }) {
   return (
-    <span className="group relative inline-flex">
-      <Info className="h-4 w-4 text-slate-400 hover:text-slate-600 cursor-help" />
-      <span className="pointer-events-none absolute right-0 top-full z-20 mt-1 hidden w-72 rounded-md bg-slate-900 px-3 py-2 text-xs leading-snug text-slate-100 shadow-lg group-hover:block">
-        {text}
-      </span>
-    </span>
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex cursor-help">
+            <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent
+          side="bottom"
+          align="start"
+          className="max-w-xs bg-slate-900 px-3 py-2 text-xs leading-snug text-slate-100 shadow-lg border-slate-800"
+        >
+          {text}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
