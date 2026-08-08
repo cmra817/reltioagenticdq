@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { NotificationProvider } from "@/components/notification-context";
+import { CreatedAssetsProvider } from "@/components/created-assets-context";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -74,9 +75,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <NotificationProvider>
-      <Outlet />
-      <Toaster />
-    </NotificationProvider>
+    <CreatedAssetsProvider>
+      <NotificationProvider>
+        <Outlet />
+        <Toaster />
+      </NotificationProvider>
+    </CreatedAssetsProvider>
   );
 }

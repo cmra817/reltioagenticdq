@@ -5,12 +5,21 @@ import { Step2ApplyChecks } from "./Step2ApplyChecks";
 import { Step3Schedule, DEFAULT_SCHEDULE, type ScheduleConfig } from "./Step3Schedule";
 import { AgentChatPanel } from "./AgentChatPanel";
 import { generateChecks } from "./mock-checks";
+import { WAREHOUSES } from "./mock-warehouses";
+import type { CreatedAssetInput } from "../created-assets-context";
+
+function tableNameFromKey(key: string) {
+  const parts = key.split("::");
+  return parts[2] ?? parts[parts.length - 1];
+}
 
 const STEPS = [{ label: "Select data" }, { label: "Apply checks" }, { label: "Schedule" }];
 
 export type AddDatasetCompletion = {
   tables: string[];
   checkCount: number;
+  /** Fully resolved assets (with kept checks + schedules) to register in Explore. */
+  assets: CreatedAssetInput[];
 };
 
 export function AddDatasetModal({
@@ -28,6 +37,34 @@ export function AddDatasetModal({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [profilingSchedule, setProfilingSchedule] = useState<ScheduleConfig>(DEFAULT_SCHEDULE);
   const [checksSchedule, setChecksSchedule] = useState<ScheduleConfig>(DEFAULT_SCHEDULE);
+  // checked[selectionKey] = Set<checkId> the user kept enabled in step 2
+  const [checked, setChecked] = useState<Record<string, Set<string>>>({});
+
+  // Keep the check map in sync with the table selection: new tables default to all checks on.
+  useEffect(() => {
+    setChecked((prev) => {
+      const next: Record<string, Set<string>> = {};
+      let changed = false;
+      for (const key of selected) {
+        if (prev[key]) {
+          next[key] = prev[key];
+        } else {
+          next[key] = new Set(generateChecks(tableNameFromKey(key)).map((c) => c.id));
+          changed = true;
+        }
+      }
+      if (Object.keys(prev).length !== Object.keys(next).length) changed = true;
+      return changed ? next : prev;
+    });
+  }, [selected]);
+
+  const toggleCheck = (assetKey: string, checkId: string) =>
+    setChecked((prev) => {
+      const set = new Set(prev[assetKey] ?? []);
+      if (set.has(checkId)) set.delete(checkId);
+      else set.add(checkId);
+      return { ...prev, [assetKey]: set };
+    });
 
   // Reset when closed
   useEffect(() => {
@@ -36,6 +73,7 @@ export function AddDatasetModal({
       setSelected(new Set());
       setProfilingSchedule(DEFAULT_SCHEDULE);
       setChecksSchedule(DEFAULT_SCHEDULE);
+      setChecked({});
     }
   }, [open]);
 
@@ -58,11 +96,10 @@ export function AddDatasetModal({
       return n;
     });
 
-  const totalChecks = Array.from(selected).reduce((sum, key) => {
-    const parts = key.split("::");
-    const name = parts[2] ?? parts[parts.length - 1];
-    return sum + generateChecks(name).length;
-  }, 0);
+  const totalChecks = Array.from(selected).reduce(
+    (sum, key) => sum + (checked[key]?.size ?? generateChecks(tableNameFromKey(key)).length),
+    0,
+  );
 
   const isLastStep = step === STEPS.length - 1;
   const continueLabel = isLastStep ? "Finish setup" : "Continue";
@@ -71,16 +108,37 @@ export function AddDatasetModal({
   const onContinue = () => {
     if (continueDisabled) return;
     if (isLastStep) {
-      // Derive table names + total recommended checks from the selection.
+      // Derive tables, kept checks and source metadata from the wizard state.
       const tables: string[] = [];
+      const assets: CreatedAssetInput[] = [];
       let checkCount = 0;
       for (const key of selected) {
-        const parts = key.split("::");
-        const name = parts[2] ?? parts[parts.length - 1];
+        const [connId, schemaName, assetName] = key.split("::");
+        const name = assetName ?? tableNameFromKey(key);
+        const keptIds = checked[key];
+        const allChecks = generateChecks(name);
+        const keptChecks = keptIds ? allChecks.filter((c) => keptIds.has(c.id)) : allChecks;
         tables.push(name);
-        checkCount += generateChecks(name).length;
+        checkCount += keptChecks.length;
+
+        const conn = WAREHOUSES.find((c) => c.id === connId);
+        const schema = conn?.schemas.find((s) => s.name === schemaName);
+        const asset = schema?.assets.find((a) => a.name === assetName);
+        assets.push({
+          name,
+          type: asset?.type ?? "table",
+          source: conn?.warehouse ?? "Databricks",
+          connection: conn?.name ?? "New connection",
+          schema: schemaName ?? "default",
+          description: asset?.description ?? "Newly added data asset.",
+          rows: asset?.rows ?? 0,
+          checks: keptChecks,
+          profilingSchedule,
+          checksSchedule,
+          domain: domainName ?? "",
+        });
       }
-      onComplete?.({ tables, checkCount });
+      onComplete?.({ tables, checkCount, assets });
       onOpenChange(false);
     } else {
       setStep((s) => s + 1);
@@ -174,7 +232,9 @@ export function AddDatasetModal({
             onClear={() => setSelected(new Set())}
           />
         )}
-        {step === 1 && <Step2ApplyChecks selected={selected} />}
+        {step === 1 && (
+          <Step2ApplyChecks selected={selected} checked={checked} onToggleCheck={toggleCheck} />
+        )}
         {step === 2 && (
           <Step3Schedule
             checkCount={totalChecks}

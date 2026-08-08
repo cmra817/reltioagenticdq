@@ -12,6 +12,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useSidebarState } from "@/components/sidebar-context";
+import { useCreatedAssets, type CreatedAsset } from "@/components/created-assets-context";
+import { frequencyLabel } from "@/components/add-dataset/Step3Schedule";
 
 export const Route = createFileRoute("/assets/$assetSlug")({
   head: ({ params }) => ({
@@ -65,6 +67,87 @@ const ASSET_DETAILS: Record<string, AssetDetail> = {
     ],
   },
 };
+
+/* ---------- newly created assets (from the Add data asset wizard) ---------- */
+
+function createdToDetail(c: CreatedAsset): AssetDetail {
+  return {
+    name: c.name,
+    source: c.source,
+    dataset: c.schema,
+    columns: c.columnCount,
+    rows: c.rows.toLocaleString(),
+    checks: c.checks.length,
+    fillRate: "97%",
+    quality: 96,
+    validity: 98,
+    accuracy: 96,
+    consistency: 97,
+    classification: [],
+  };
+}
+
+function guessDataType(field: string): string {
+  if (/(_at|date|time)$/.test(field)) return "Timestamp";
+  if (/(_id|count|qty|quantity|num)/.test(field)) return "Integer";
+  if (/(amount|total|price|rate|score)/.test(field)) return "Decimal";
+  if (/(is_|has_|flag)/.test(field)) return "Boolean";
+  return "String";
+}
+
+function createdColumns(c: CreatedAsset): ColumnRow[] {
+  const fields: string[] = [];
+  for (const chk of c.checks) if (!fields.includes(chk.field)) fields.push(chk.field);
+  return fields.map((field) => {
+    const seed = hashString(`${c.name}:${field}`);
+    const fill = 92 + (seed % 9);
+    const uniq = 20 + (seed % 79);
+    const dataType = guessDataType(field);
+    return {
+      name: field,
+      dataType,
+      length: dataType === "String" ? 12 + (seed % 40) : 8,
+      min: dataType === "Integer" || dataType === "Decimal" ? "1" : "—",
+      max: dataType === "Integer" || dataType === "Decimal" ? String(1000 + (seed % 9000)) : "—",
+      mean: dataType === "Decimal" ? (100 + (seed % 400)).toFixed(2) : "—",
+      nullCount: Math.round((c.rows || 1000) * (100 - fill) / 100 / 100),
+      distinct: Math.max(2, Math.round(((c.rows || 1000) * uniq) / 100 / 100)),
+      uniqueness: `${uniq}%`,
+      fillRate: `${fill}%`,
+    };
+  });
+}
+
+function createdCheckRows(c: CreatedAsset): CheckRow[] {
+  return c.checks.map((chk) => ({
+    name: chk.rule,
+    dimension: chk.dimension,
+    lastRun: "Just now",
+    status: "Passed" as CheckStatus,
+    passRate: "100/100 (100%)",
+    children: [
+      { column: chk.field, lastRun: "Just now", status: "Passed" as CheckStatus, passRate: "100/100 (100%)" },
+    ],
+  }));
+}
+
+function createdActivity(c: CreatedAsset): ActivityEvent[] {
+  const ranAt = new Date(c.createdAt).toISOString();
+  return c.checks.map((chk, i) => ({
+    id: `c-${i}`,
+    check: chk.rule,
+    dimension: chk.dimension,
+    target: chk.field,
+    ranAt,
+    status: "Passed" as ActivityStatus,
+  }));
+}
+
+function createdCheckCategories(c: CreatedAsset) {
+  const counts = new Map<string, number>();
+  for (const chk of c.checks) counts.set(chk.dimension, (counts.get(chk.dimension) ?? 0) + 1);
+  return Array.from(counts.entries()).map(([label, passing]) => ({ label, passing, failing: 0 }));
+}
 
 const TABS = ["Overview", "Columns", "Checks", "Activity"] as const;
 type TabName = (typeof TABS)[number];
@@ -125,11 +208,21 @@ const PROFILING_COLUMNS = [
 
 function AssetDetailPage() {
   const { assetSlug } = useParams({ from: "/assets/$assetSlug" });
-  const detail = ASSET_DETAILS[assetSlug.toLowerCase()] ?? ASSET_DETAILS.orders;
+  const { bySlug } = useCreatedAssets();
+  const created = bySlug[assetSlug.toLowerCase()] ?? null;
+  const detail = created
+    ? createdToDetail(created)
+    : ASSET_DETAILS[assetSlug.toLowerCase()] ?? ASSET_DETAILS.orders;
+  // A freshly added asset has run exactly once, so there is no history to trend against.
+  const firstRun = created !== null;
+  const columns = React.useMemo(
+    () => (created ? createdColumns(created) : SAMPLE_COLUMNS),
+    [created],
+  );
   const [activeTab, setActiveTab] = useState<TabName>("Overview");
   const [columnsSubTab, setColumnsSubTab] = useState<"Profiling" | "Sample data">("Profiling");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const selectedColumn = selectedIndex === null ? null : SAMPLE_COLUMNS[selectedIndex] ?? null;
+  const selectedColumn = selectedIndex === null ? null : columns[selectedIndex] ?? null;
   const { runJob } = useNotifications();
 
   const rightPanelOpen = activeTab === "Columns" && selectedColumn !== null;
@@ -180,6 +273,28 @@ function AssetDetailPage() {
                     </span>
                     <span style={{ color: "var(--ink-700)" }}>{detail.dataset}</span>
                   </div>
+                  {created && (
+                    <div
+                      className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]"
+                      style={{ color: "var(--ink-500)" }}
+                    >
+                      <span
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+                        style={{ background: "rgba(67,134,250,0.10)", color: "var(--brand-blue)" }}
+                      >
+                        New
+                      </span>
+                      <span>Profiling: {frequencyLabel(created.profilingSchedule)}</span>
+                      <span style={{ color: "var(--ink-300)" }}>·</span>
+                      <span>DQ checks: {frequencyLabel(created.checksSchedule)}</span>
+                      {created.domain && (
+                        <>
+                          <span style={{ color: "var(--ink-300)" }}>·</span>
+                          <span>Domain: {created.domain}</span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -237,12 +352,15 @@ function AssetDetailPage() {
             </div>
           </div>
 
-          {activeTab === "Overview" && <OverviewPanel detail={detail} />}
+          {activeTab === "Overview" && (
+            <OverviewPanel detail={detail} created={created} />
+          )}
 
 
           {activeTab === "Columns" && (
             <ColumnsPanel
-              columns={SAMPLE_COLUMNS}
+              columns={columns}
+              hasHistory={!firstRun}
               subTab={columnsSubTab}
               onSubTab={setColumnsSubTab}
               selectedIndex={selectedIndex}
@@ -250,8 +368,16 @@ function AssetDetailPage() {
             />
           )}
 
-          {activeTab === "Checks" && <ChecksPanel checks={SAMPLE_CHECKS} />}
-          {activeTab === "Activity" && <ActivityPanel events={SAMPLE_ACTIVITY} slug={assetSlug} />}
+          {activeTab === "Checks" && (
+            <ChecksPanel checks={created ? createdCheckRows(created) : SAMPLE_CHECKS} />
+          )}
+          {activeTab === "Activity" && (
+            <ActivityPanel
+              events={created ? createdActivity(created) : SAMPLE_ACTIVITY}
+              slug={assetSlug}
+              showHeatmap={!firstRun}
+            />
+          )}
         </div>
 
         {/* floating composer (centered over content area, not full viewport) */}
@@ -318,8 +444,30 @@ const TOP_AFFECTED_COLUMNS = [
 const PASS_GREEN = "#4CAF50";
 const FAIL_RED = "#d05252";
 
-function OverviewPanel({ detail }: { detail: AssetDetail }) {
-  const stats: OverviewStat[] = [
+function OverviewPanel({
+  detail,
+  created,
+}: {
+  detail: AssetDetail;
+  created?: CreatedAsset | null;
+}) {
+  const firstRun = !!created;
+  const activity = firstRun
+    ? ([
+        { label: "Last profiled", value: "Just now", tip: "When this table was last scanned to compute column profiles and statistics." },
+        { label: "Checks run", value: "Just now", tip: "The most recent execution of the quality checks attached to this table." },
+        { label: "Last synced", value: "Just now", tip: "When metadata and row counts were last refreshed from the source warehouse." },
+        { label: "Loaded to Reltio", value: "—", tip: "When records from this table were last loaded into Reltio." },
+      ] as const)
+    : OVERVIEW_ACTIVITY;
+  const categories = created ? createdCheckCategories(created) : OVERVIEW_CHECK_CATEGORIES;
+  const firstRunStats: OverviewStat[] = [
+    { label: "Columns", value: String(detail.columns), note: "First run — no prior run to compare" },
+    { label: "Rows", value: detail.rows, note: "First run — no prior run to compare" },
+    { label: "Fill rate", value: detail.fillRate, note: "First run — no prior run to compare" },
+    { label: "Checks passing", value: `${detail.checks}/${detail.checks}`, note: "First run — no prior run to compare" },
+  ];
+  const stats: OverviewStat[] = firstRun ? firstRunStats : [
     { label: "Columns", value: String(detail.columns), note: "No change from last run" },
     { label: "Rows", value: detail.rows, trend: [5320, 5290, 5310, 5240, 5260, 5180, 4897], color: FAIL_RED, note: "Decreased 8% from last run" },
     { label: "Fill rate", value: detail.fillRate, trend: [82, 82.5, 83, 83.2, 83.6, 83.8, 85], color: "#4386fa", note: "Increased 1.2 pts from last run" },
@@ -331,7 +479,7 @@ function OverviewPanel({ detail }: { detail: AssetDetail }) {
       {/* Activity strip — intentionally uncarded */}
       <div className="pl-4">
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
-          {OVERVIEW_ACTIVITY.map((a) => (
+          {activity.map((a) => (
             <div key={a.label}>
               <div className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-500)" }}>
                 <span>{a.label}</span>
@@ -379,7 +527,7 @@ function OverviewPanel({ detail }: { detail: AssetDetail }) {
         <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
           Checks by category
         </h2>
-        <ChecksByCategoryChart rows={OVERVIEW_CHECK_CATEGORIES} />
+        <ChecksByCategoryChart rows={categories} />
         <div className="mt-4 flex items-center gap-5 text-[12px]" style={{ color: "var(--ink-700)" }}>
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm" style={{ background: PASS_GREEN }} aria-hidden="true" />
@@ -397,6 +545,11 @@ function OverviewPanel({ detail }: { detail: AssetDetail }) {
         <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
           Top affected columns
         </h2>
+        {firstRun ? (
+          <p className="mt-3 text-[13px]" style={{ color: "var(--ink-500)" }}>
+            No failing checks in the first run.
+          </p>
+        ) : (
         <table className="mt-4 w-full text-[13px]">
           <thead>
             <tr style={{ color: "var(--ink-500)" }}>
@@ -421,6 +574,7 @@ function OverviewPanel({ detail }: { detail: AssetDetail }) {
             ))}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   );
@@ -522,12 +676,14 @@ function ColumnsToggle({
 
 function ColumnsPanel({
   columns,
+  hasHistory = true,
   subTab,
   onSubTab,
   selectedIndex,
   onSelectIndex,
 }: {
   columns: ColumnRow[];
+  hasHistory?: boolean;
   subTab: "Profiling" | "Sample data";
   onSubTab: (s: "Profiling" | "Sample data") => void;
   selectedIndex: number | null;
@@ -723,6 +879,7 @@ function ColumnsPanel({
 
       <ColumnDetailPanel
         column={selectedColumn}
+        hasHistory={hasHistory}
         index={selectedIndex}
         total={columns.length}
         onPrev={() =>
@@ -745,6 +902,7 @@ function ColumnsPanel({
 
 function ColumnDetailPanel({
   column,
+  hasHistory = true,
   index,
   total,
   onPrev,
@@ -752,6 +910,7 @@ function ColumnDetailPanel({
   onClose,
 }: {
   column: ColumnRow | null;
+  hasHistory?: boolean;
   index: number | null;
   total: number;
   onPrev: () => void;
@@ -808,6 +967,7 @@ function ColumnDetailPanel({
             <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
               {/* Completeness */}
               <MetricTrendSection
+                hasHistory={hasHistory}
                 title="Completeness"
                 subtitle="How full is this column"
                 trendLabel="Fill rate trend"
@@ -818,6 +978,7 @@ function ColumnDetailPanel({
 
               {/* Uniqueness */}
               <MetricTrendSection
+                hasHistory={hasHistory}
                 title="Uniqueness"
                 subtitle="How distinct are the values"
                 trendLabel="Uniqueness trend"
@@ -1214,12 +1375,14 @@ function MetricTrendSection({
   trendLabel,
   values,
   children,
+  hasHistory = true,
 }: {
   title: string;
   subtitle: string;
   trendLabel: string;
   values: number[];
   children: React.ReactNode;
+  hasHistory?: boolean;
 }) {
   const delta = trendDelta(values);
   const dir = trendDirection(values);
@@ -1235,17 +1398,29 @@ function MetricTrendSection({
           <h4 className="text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>{title}</h4>
           <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>{subtitle}</p>
         </div>
-        <span className="inline-flex items-center gap-1 whitespace-nowrap text-[12px]" style={{ color }}>
-          <span aria-hidden="true">{arrow}</span>
-          {flat ? verb : `${verb} ${Math.abs(delta).toFixed(1)} pts`} from last run
-        </span>
+        {hasHistory ? (
+          <span className="inline-flex items-center gap-1 whitespace-nowrap text-[12px]" style={{ color }}>
+            <span aria-hidden="true">{arrow}</span>
+            {flat ? verb : `${verb} ${Math.abs(delta).toFixed(1)} pts`} from last run
+          </span>
+        ) : (
+          <span className="whitespace-nowrap text-[12px]" style={{ color: "var(--ink-500)" }}>
+            First run
+          </span>
+        )}
       </div>
       <div className="mt-4">{children}</div>
       <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--hairline)" }}>
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
           {trendLabel}
         </div>
-        <TrendChart values={values} />
+        {hasHistory ? (
+          <TrendChart values={values} />
+        ) : (
+          <p className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+            No history yet — trends appear after the next run.
+          </p>
+        )}
       </div>
     </section>
   );
@@ -1365,7 +1540,7 @@ type CheckStatus = "Passed" | "Failed" | "Warning";
 type CheckChild = { column: string; lastRun: string; status: CheckStatus; passRate: string };
 type CheckRow = {
   name: string;
-  dimension: "Validity" | "Completeness" | "Uniqueness" | "Accuracy" | "Consistency";
+  dimension: string;
   lastRun: string;
   status: CheckStatus;
   passRate: string;
@@ -1602,7 +1777,7 @@ type ActivityStatus = "Passed" | "Failed" | "Warning";
 type ActivityEvent = {
   id: string;
   check: string;
-  dimension: "Validity" | "Completeness" | "Uniqueness" | "Accuracy" | "Consistency";
+  dimension: string;
   target: string;
   ranAt: string; // ISO
   status: ActivityStatus;
@@ -1813,7 +1988,15 @@ function HeatmapCard({ slug }: { slug: string }) {
   );
 }
 
-function ActivityPanel({ events, slug }: { events: ActivityEvent[]; slug: string }) {
+function ActivityPanel({
+  events,
+  slug,
+  showHeatmap = true,
+}: {
+  events: ActivityEvent[];
+  slug: string;
+  showHeatmap?: boolean;
+}) {
   const sorted = [...events].sort((a, b) => +new Date(b.ranAt) - +new Date(a.ranAt));
 
   // Build a flat row sequence with divider markers when group label changes
@@ -1836,7 +2019,7 @@ function ActivityPanel({ events, slug }: { events: ActivityEvent[]; slug: string
 
   return (
     <div className="space-y-6">
-      <HeatmapCard slug={slug} />
+      {showHeatmap && <HeatmapCard slug={slug} />}
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">

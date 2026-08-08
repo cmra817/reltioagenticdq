@@ -16,6 +16,7 @@ import {
 import { useDomainState } from "./domain-context";
 import { CreateDomainDialog } from "./create-domain-dialog";
 import { AddDatasetModal } from "./add-dataset/AddDatasetModal";
+import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
 
 function NavItem({
@@ -220,6 +221,7 @@ function NewMenu() {
   const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
   const navigate = useNavigate();
   const { runJob } = useNotifications();
+  const { addAssets } = useCreatedAssets();
   const [open, setOpen] = useState(false);
   const [domainOpen, setDomainOpen] = useState(false);
   const [datasetOpen, setDatasetOpen] = useState(false);
@@ -335,8 +337,10 @@ function NewMenu() {
           if (!o) setPendingDomain(null);
         }}
         domainName={pendingDomain ?? selected}
-        onComplete={({ tables, checkCount }) => {
+        onComplete={({ tables, checkCount, assets }) => {
           completeConnection({ domain: pendingDomain ?? selected, tables, checkCount });
+          // Register the new assets so they appear in Explore with their checks + schedule.
+          addAssets(assets);
           // Newly added datasets kick off profiling + DQ checks; notify on completion.
           tables.forEach((table, i) => {
             runJob({ kind: "profiling", table, delayMs: 3500 + i * 1200 });
