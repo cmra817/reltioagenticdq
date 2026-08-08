@@ -15,6 +15,7 @@ export type Notification = {
   id: string;
   kind: JobKind;
   table: string;
+  slug: string;
   title: string;
   body: string;
   at: number;
@@ -29,6 +30,10 @@ type NotificationContextValue = {
   markAllRead: () => void;
   clearAll: () => void;
 };
+
+function tableToSlug(table: string) {
+  return table.toLowerCase().replace(/\s+/g, "-");
+}
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
