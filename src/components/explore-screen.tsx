@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChatComposer } from "./chat-composer";
+import { useCreatedAssets, type CreatedAsset } from "./created-assets-context";
 
 /* ---------- icons ---------- */
 function ChevronDown({ size = 14, className = "" }: { size?: number; className?: string }) {
@@ -462,17 +463,80 @@ function TagChip({ label }: { label: string }) {
   );
 }
 
+/* ---------- derived catalog (static demo data + assets added via the wizard) ---------- */
+type Derived = {
+  sources: string[];
+  trees: Record<string, TreeNode[]>;
+  datasetAssets: Record<string, AssetRow[]>;
+  datasetSource: Record<string, string>;
+  sourceDatasets: Record<string, string[]>;
+  sourceAll: Record<string, AssetRow[]>;
+  allRows: AssetRow[];
+};
+
+function createdToRow(c: CreatedAsset): AssetRow {
+  return {
+    name: c.name,
+    kind: "table",
+    description: c.description,
+    source: c.source,
+    dataset: c.schema,
+    columns: c.columnCount,
+    rows: c.rows,
+    checks: c.checks.length,
+    tags: ["New"],
+    lastAnalyzed: "Just now",
+  };
+}
+
+function buildDerived(created: CreatedAsset[]): Derived {
+  const datasetAssets: Record<string, AssetRow[]> = {};
+  const datasetSource: Record<string, string> = {};
+  for (const [ds, rows] of Object.entries(DATASET_ASSETS)) {
+    datasetAssets[ds] = rows;
+    datasetSource[ds] = BIGQUERY_DATASET_ASSETS[ds] ? "BigQuery" : "Databricks";
+  }
+  const sourceDatasets: Record<string, string[]> = {
+    Databricks: DATABRICKS_TREE.map((n) => n.name),
+    BigQuery: BIGQUERY_TREE.map((n) => n.name),
+  };
+
+  for (const c of created) {
+    const row = createdToRow(c);
+    if (!sourceDatasets[c.source]) sourceDatasets[c.source] = [];
+    if (!sourceDatasets[c.source].includes(c.schema)) sourceDatasets[c.source].push(c.schema);
+    datasetSource[c.schema] = c.source;
+    const existing = datasetAssets[c.schema] ?? [];
+    const idx = existing.findIndex((r) => r.name === row.name && r.source === row.source);
+    datasetAssets[c.schema] =
+      idx >= 0
+        ? existing.map((r, i) => (i === idx ? row : r))
+        : [...existing, row];
+  }
+
+  const sources = Object.keys(sourceDatasets);
+  const trees: Record<string, TreeNode[]> = {};
+  const sourceAll: Record<string, AssetRow[]> = {};
+  for (const src of sources) {
+    trees[src] = sourceDatasets[src].map((n) => ({ name: n, kind: "dataset" as const }));
+    sourceAll[src] = sourceDatasets[src].flatMap((ds) => datasetAssets[ds] ?? []);
+  }
+  const allRows = sources.flatMap((src) => sourceAll[src]);
+
+  return { sources, trees, datasetAssets, datasetSource, sourceDatasets, sourceAll, allRows };
+}
+
 /* ---------- selection helpers ---------- */
 type Selection = Set<string>;
 
-function isSource(name: string) {
-  return name === "Databricks" || name === "BigQuery";
+function isSource(name: string, d: Derived) {
+  return d.sources.includes(name);
 }
-function isDataset(name: string) {
-  return DATASET_ASSETS[name] !== undefined;
+function isDataset(name: string, d: Derived) {
+  return d.datasetAssets[name] !== undefined;
 }
-function parentSourceOfDataset(name: string): string {
-  return BIGQUERY_DATASET_ASSETS[name] ? "BigQuery" : "Databricks";
+function parentSourceOfDataset(name: string, d: Derived): string {
+  return d.datasetSource[name] ?? "Databricks";
 }
 
 /* ---------- tree row (multi-select) ---------- */
