@@ -5,6 +5,7 @@ import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHor
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
+import { useNotifications } from "@/components/notification-context";
 import { ChatComposer } from "@/components/chat-composer";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -129,6 +130,8 @@ function AssetDetailPage() {
   const [columnsSubTab, setColumnsSubTab] = useState<"Profiling" | "Sample data">("Profiling");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selectedColumn = selectedIndex === null ? null : SAMPLE_COLUMNS[selectedIndex] ?? null;
+  const { runJob } = useNotifications();
+
   const rightPanelOpen = activeTab === "Columns" && selectedColumn !== null;
 
   return (
@@ -192,10 +195,14 @@ function AssetDetailPage() {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[160px]">
-                  <DropdownMenuItem onClick={() => toast("Profiling started")}>
+                  <DropdownMenuItem
+                    onClick={() => runJob({ kind: "profiling", table: detail.name })}
+                  >
                     Run profiling
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => toast("DQ checks started")}>
+                  <DropdownMenuItem
+                    onClick={() => runJob({ kind: "checks", table: detail.name })}
+                  >
                     Run DQ checks
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => toast("Loading to Reltio...")}>

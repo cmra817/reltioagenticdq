@@ -1,6 +1,7 @@
 import lockupUrl from "@/assets/reltio-agentflow-lockup.png";
 import { SidebarToggleIcon } from "./brand-icons";
 import { useSidebarState } from "./sidebar-context";
+import { NotificationBell } from "./notification-bell";
 
 const tabs = ["Agents", "Unstructured", "Quality"] as const;
 type Tab = (typeof tabs)[number];

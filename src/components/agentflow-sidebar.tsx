@@ -16,6 +16,7 @@ import {
 import { useDomainState } from "./domain-context";
 import { CreateDomainDialog } from "./create-domain-dialog";
 import { AddDatasetModal } from "./add-dataset/AddDatasetModal";
+import { useNotifications } from "./notification-context";
 
 function NavItem({
   icon,
@@ -218,6 +219,7 @@ function DomainPill() {
 function NewMenu() {
   const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
   const navigate = useNavigate();
+  const { runJob } = useNotifications();
   const [open, setOpen] = useState(false);
   const [domainOpen, setDomainOpen] = useState(false);
   const [datasetOpen, setDatasetOpen] = useState(false);
@@ -335,6 +337,11 @@ function NewMenu() {
         domainName={pendingDomain ?? selected}
         onComplete={({ tables, checkCount }) => {
           completeConnection({ domain: pendingDomain ?? selected, tables, checkCount });
+          // Newly added datasets kick off profiling + DQ checks; notify on completion.
+          tables.forEach((table, i) => {
+            runJob({ kind: "profiling", table, delayMs: 3500 + i * 1200 });
+            runJob({ kind: "checks", table, delayMs: 7000 + i * 1200 });
+          });
           setPendingDomain(null);
         }}
       />
