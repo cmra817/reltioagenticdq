@@ -15,6 +15,7 @@ export type Notification = {
   id: string;
   kind: JobKind;
   table: string;
+  slug: string;
   title: string;
   body: string;
   at: number;
@@ -30,6 +31,10 @@ type NotificationContextValue = {
   clearAll: () => void;
 };
 
+function tableToSlug(table: string) {
+  return table.toLowerCase().replace(/\s+/g, "-");
+}
+
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
 const LABEL: Record<JobKind, string> = {
@@ -44,6 +49,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const runJob = useCallback<NotificationContextValue["runJob"]>(
     ({ kind, table, delayMs }) => {
       const label = LABEL[kind];
+      const slug = tableToSlug(table);
       toast(`${label} started for ${table}`);
       const wait = delayMs ?? (kind === "profiling" ? 4000 : 6500);
       window.setTimeout(() => {
@@ -54,6 +60,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             id,
             kind,
             table,
+            slug,
             title: `${label} completed`,
             body:
               kind === "profiling"
