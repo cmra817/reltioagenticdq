@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NewChatRouteImport } from './routes/new-chat'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DataHealthRouteImport } from './routes/data-health'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
 
+const NewChatRoute = NewChatRouteImport.update({
+  id: '/new-chat',
+  path: '/new-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
   '/explore': typeof ExploreRoute
+  '/new-chat': typeof NewChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
   '/explore': typeof ExploreRoute
+  '/new-chat': typeof NewChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
 export interface FileRoutesById {
@@ -52,25 +60,45 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
   '/explore': typeof ExploreRoute
+  '/new-chat': typeof NewChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/data-health' | '/explore' | '/assets/$assetSlug'
+  fullPaths:
+    | '/'
+    | '/data-health'
+    | '/explore'
+    | '/new-chat'
+    | '/assets/$assetSlug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/data-health' | '/explore' | '/assets/$assetSlug'
-  id: '__root__' | '/' | '/data-health' | '/explore' | '/assets/$assetSlug'
+  to: '/' | '/data-health' | '/explore' | '/new-chat' | '/assets/$assetSlug'
+  id:
+    | '__root__'
+    | '/'
+    | '/data-health'
+    | '/explore'
+    | '/new-chat'
+    | '/assets/$assetSlug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DataHealthRoute: typeof DataHealthRoute
   ExploreRoute: typeof ExploreRoute
+  NewChatRoute: typeof NewChatRoute
   AssetsAssetSlugRoute: typeof AssetsAssetSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/new-chat': {
+      id: '/new-chat'
+      path: '/new-chat'
+      fullPath: '/new-chat'
+      preLoaderRoute: typeof NewChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explore': {
       id: '/explore'
       path: '/explore'
@@ -106,6 +134,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DataHealthRoute: DataHealthRoute,
   ExploreRoute: ExploreRoute,
+  NewChatRoute: NewChatRoute,
   AssetsAssetSlugRoute: AssetsAssetSlugRoute,
 }
 export const routeTree = rootRouteImport
