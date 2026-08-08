@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import type { Check } from "./add-dataset/mock-checks";
 import type { ScheduleConfig } from "./add-dataset/Step3Schedule";
 
@@ -38,8 +46,31 @@ type CreatedAssetsValue = {
 
 const CreatedAssetsContext = createContext<CreatedAssetsValue | null>(null);
 
+const STORAGE_KEY = "agentflow.created-assets.v1";
+
 export function CreatedAssetsProvider({ children }: { children: ReactNode }) {
   const [assets, setAssets] = useState<CreatedAsset[]>([]);
+
+  // Restore after hydration so a page reload keeps assets added through the wizard.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setAssets(parsed as CreatedAsset[]);
+      }
+    } catch {
+      /* ignore unreadable storage */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(assets));
+    } catch {
+      /* ignore quota / privacy-mode failures */
+    }
+  }, [assets]);
 
   const addAssets = useCallback((inputs: CreatedAssetInput[]) => {
     if (inputs.length === 0) return;
