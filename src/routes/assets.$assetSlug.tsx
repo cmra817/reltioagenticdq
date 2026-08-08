@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Check, Info } from "lucide-react";
+import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Check, Info, UploadCloud, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
@@ -467,6 +467,7 @@ function OverviewPanel({
     { label: "Fill rate", value: detail.fillRate, note: "First run — no prior run to compare" },
     { label: "Checks passing", value: `${detail.checks}/${detail.checks}`, note: "First run — no prior run to compare" },
   ];
+  const [reltioState, setReltioState] = useState<"idle" | "loading" | "done">("idle");
   const stats: OverviewStat[] = firstRun ? firstRunStats : [
     { label: "Columns", value: String(detail.columns), note: "No change from last run" },
     { label: "Rows", value: detail.rows, trend: [5320, 5290, 5310, 5240, 5260, 5180, 4897], color: FAIL_RED, note: "Decreased 8% from last run" },
@@ -486,8 +487,40 @@ function OverviewPanel({
                 <InfoTooltip text={a.tip} />
               </div>
               <div className="mt-1 text-[15px] font-medium" style={{ color: "var(--ink-900)" }}>
-                {a.value}
+                {reltioState === "done" && a.label === "Loaded to Reltio" ? "Just now" : a.value}
               </div>
+              {firstRun && a.label === "Loaded to Reltio" && reltioState !== "done" && (
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    disabled={reltioState === "loading"}
+                    onClick={() => {
+                      setReltioState("loading");
+                      toast("Loading to Reltio...");
+                      window.setTimeout(() => {
+                        setReltioState("done");
+                        toast.success("Loaded to Reltio");
+                      }, 2500);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors disabled:opacity-70"
+                    style={{
+                      borderColor: "var(--brand-blue)",
+                      color: "var(--brand-blue)",
+                      background: "rgba(67,134,250,0.08)",
+                    }}
+                  >
+                    {reltioState === "loading" ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <UploadCloud size={13} />
+                    )}
+                    <span>{reltioState === "loading" ? "Loading…" : "Load to Reltio"}</span>
+                  </button>
+                  <div className="mt-1.5 text-[11px] leading-snug" style={{ color: "var(--ink-500)" }}>
+                    Profiling and checks are done — push these records into Reltio.
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
