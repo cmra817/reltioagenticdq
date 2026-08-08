@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
 import { Stepper } from "./Stepper";
 import { Step1SelectData } from "./Step1SelectData";
 import { Step2ApplyChecks } from "./Step2ApplyChecks";
@@ -158,15 +157,6 @@ export function AddDatasetModal({
               }}
             >
               {continueLabel}
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="ml-2 flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-[color:var(--surface-soft)]"
-              style={{ color: "var(--ink-500)" }}
-              aria-label="Close"
-            >
-              <X size={18} />
             </button>
           </div>
         </div>
