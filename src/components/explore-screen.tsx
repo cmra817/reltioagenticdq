@@ -385,16 +385,6 @@ const BIGQUERY_ALL: AssetRow[] = [
   ...FINANCE_CHILDREN,
 ];
 
-const SOURCE_ALL: Record<string, AssetRow[]> = {
-  Databricks: DATABRICKS_ALL,
-  BigQuery: BIGQUERY_ALL,
-};
-
-const SOURCE_DATASETS: Record<string, string[]> = {
-  Databricks: DATABRICKS_TREE.map((n) => n.name),
-  BigQuery: BIGQUERY_TREE.map((n) => n.name),
-};
-
 const TABLE_COLUMNS: Record<string, ColumnRow[]> = {
   Orders: [
     { name: "order_id", description: "Unique identifier for each order", lastAnalyzed: "15h ago" },
@@ -424,6 +414,19 @@ function kindIcon(kind: AssetKind, size = 16) {
 
 
 export function SourceLogo({ source }: { source: string }) {
+  if (source === "Snowflake") {
+    return (
+      <span className="inline-block h-5 w-5">
+        <svg width="20" height="20" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <g stroke="#29B5E8" strokeWidth="3.2" strokeLinecap="round">
+            <line x1="20" y1="6" x2="20" y2="34" />
+            <line x1="8" y1="13" x2="32" y2="27" />
+            <line x1="32" y1="13" x2="8" y2="27" />
+          </g>
+        </svg>
+      </span>
+    );
+  }
   if (source === "BigQuery") {
     return (
       <span className="inline-block h-5 w-5">
@@ -632,8 +635,10 @@ function FilterPanel({
   tags: Set<string>;
   onToggleTag: (label: string) => void;
 }) {
-  const [openSources, setOpenSources] = useState<Record<string, boolean>>({
-    Databricks: true,
+  const [openSources, setOpenSources] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = { Databricks: true };
+    for (const src of derived.sources) if (selected.has(src)) init[src] = true;
+    return init;
   });
   const setOpenFor = (label: string, v: boolean) =>
     setOpenSources((prev) => ({ ...prev, [label]: v }));
@@ -1109,7 +1114,9 @@ function AssetOverview({
 export function ExploreScreen() {
   const { assets: createdAssets } = useCreatedAssets();
   const derived = useMemo(() => buildDerived(createdAssets), [createdAssets]);
-  const [selected, setSelected] = useState<Selection>(() => new Set(["Databricks"]));
+  const [selected, setSelected] = useState<Selection>(
+    () => new Set(["Databricks", ...createdAssets.map((a) => a.source)]),
+  );
   const [assetTypes, setAssetTypes] = useState<Set<string>>(() => new Set());
   const [tags, setTags] = useState<Set<string>>(() => new Set());
 
