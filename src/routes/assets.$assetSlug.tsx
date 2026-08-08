@@ -444,8 +444,30 @@ const TOP_AFFECTED_COLUMNS = [
 const PASS_GREEN = "#4CAF50";
 const FAIL_RED = "#d05252";
 
-function OverviewPanel({ detail }: { detail: AssetDetail }) {
-  const stats: OverviewStat[] = [
+function OverviewPanel({
+  detail,
+  created,
+}: {
+  detail: AssetDetail;
+  created?: CreatedAsset | null;
+}) {
+  const firstRun = !!created;
+  const activity = firstRun
+    ? ([
+        { label: "Last profiled", value: "Just now", tip: "When this table was last scanned to compute column profiles and statistics." },
+        { label: "Checks run", value: "Just now", tip: "The most recent execution of the quality checks attached to this table." },
+        { label: "Last synced", value: "Just now", tip: "When metadata and row counts were last refreshed from the source warehouse." },
+        { label: "Loaded to Reltio", value: "—", tip: "When records from this table were last loaded into Reltio." },
+      ] as const)
+    : OVERVIEW_ACTIVITY;
+  const categories = created ? createdCheckCategories(created) : OVERVIEW_CHECK_CATEGORIES;
+  const firstRunStats: OverviewStat[] = [
+    { label: "Columns", value: String(detail.columns), note: "First run — no prior run to compare" },
+    { label: "Rows", value: detail.rows, note: "First run — no prior run to compare" },
+    { label: "Fill rate", value: detail.fillRate, note: "First run — no prior run to compare" },
+    { label: "Checks passing", value: `${detail.checks}/${detail.checks}`, note: "First run — no prior run to compare" },
+  ];
+  const stats: OverviewStat[] = firstRun ? firstRunStats : [
     { label: "Columns", value: String(detail.columns), note: "No change from last run" },
     { label: "Rows", value: detail.rows, trend: [5320, 5290, 5310, 5240, 5260, 5180, 4897], color: FAIL_RED, note: "Decreased 8% from last run" },
     { label: "Fill rate", value: detail.fillRate, trend: [82, 82.5, 83, 83.2, 83.6, 83.8, 85], color: "#4386fa", note: "Increased 1.2 pts from last run" },
@@ -457,7 +479,7 @@ function OverviewPanel({ detail }: { detail: AssetDetail }) {
       {/* Activity strip — intentionally uncarded */}
       <div className="pl-4">
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
-          {OVERVIEW_ACTIVITY.map((a) => (
+          {activity.map((a) => (
             <div key={a.label}>
               <div className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-500)" }}>
                 <span>{a.label}</span>
@@ -505,7 +527,7 @@ function OverviewPanel({ detail }: { detail: AssetDetail }) {
         <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
           Checks by category
         </h2>
-        <ChecksByCategoryChart rows={OVERVIEW_CHECK_CATEGORIES} />
+        <ChecksByCategoryChart rows={categories} />
         <div className="mt-4 flex items-center gap-5 text-[12px]" style={{ color: "var(--ink-700)" }}>
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm" style={{ background: PASS_GREEN }} aria-hidden="true" />
@@ -523,6 +545,11 @@ function OverviewPanel({ detail }: { detail: AssetDetail }) {
         <h2 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
           Top affected columns
         </h2>
+        {firstRun ? (
+          <p className="mt-3 text-[13px]" style={{ color: "var(--ink-500)" }}>
+            No failing checks in the first run.
+          </p>
+        ) : (
         <table className="mt-4 w-full text-[13px]">
           <thead>
             <tr style={{ color: "var(--ink-500)" }}>
@@ -547,6 +574,7 @@ function OverviewPanel({ detail }: { detail: AssetDetail }) {
             ))}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   );
@@ -648,12 +676,14 @@ function ColumnsToggle({
 
 function ColumnsPanel({
   columns,
+  hasHistory = true,
   subTab,
   onSubTab,
   selectedIndex,
   onSelectIndex,
 }: {
   columns: ColumnRow[];
+  hasHistory?: boolean;
   subTab: "Profiling" | "Sample data";
   onSubTab: (s: "Profiling" | "Sample data") => void;
   selectedIndex: number | null;
@@ -849,6 +879,7 @@ function ColumnsPanel({
 
       <ColumnDetailPanel
         column={selectedColumn}
+        hasHistory={hasHistory}
         index={selectedIndex}
         total={columns.length}
         onPrev={() =>
@@ -871,6 +902,7 @@ function ColumnsPanel({
 
 function ColumnDetailPanel({
   column,
+  hasHistory = true,
   index,
   total,
   onPrev,
@@ -878,6 +910,7 @@ function ColumnDetailPanel({
   onClose,
 }: {
   column: ColumnRow | null;
+  hasHistory?: boolean;
   index: number | null;
   total: number;
   onPrev: () => void;
@@ -934,6 +967,7 @@ function ColumnDetailPanel({
             <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
               {/* Completeness */}
               <MetricTrendSection
+                hasHistory={hasHistory}
                 title="Completeness"
                 subtitle="How full is this column"
                 trendLabel="Fill rate trend"
@@ -944,6 +978,7 @@ function ColumnDetailPanel({
 
               {/* Uniqueness */}
               <MetricTrendSection
+                hasHistory={hasHistory}
                 title="Uniqueness"
                 subtitle="How distinct are the values"
                 trendLabel="Uniqueness trend"
@@ -1340,12 +1375,14 @@ function MetricTrendSection({
   trendLabel,
   values,
   children,
+  hasHistory = true,
 }: {
   title: string;
   subtitle: string;
   trendLabel: string;
   values: number[];
   children: React.ReactNode;
+  hasHistory?: boolean;
 }) {
   const delta = trendDelta(values);
   const dir = trendDirection(values);
@@ -1361,17 +1398,29 @@ function MetricTrendSection({
           <h4 className="text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>{title}</h4>
           <p className="text-[12px]" style={{ color: "var(--brand-blue)" }}>{subtitle}</p>
         </div>
-        <span className="inline-flex items-center gap-1 whitespace-nowrap text-[12px]" style={{ color }}>
-          <span aria-hidden="true">{arrow}</span>
-          {flat ? verb : `${verb} ${Math.abs(delta).toFixed(1)} pts`} from last run
-        </span>
+        {hasHistory ? (
+          <span className="inline-flex items-center gap-1 whitespace-nowrap text-[12px]" style={{ color }}>
+            <span aria-hidden="true">{arrow}</span>
+            {flat ? verb : `${verb} ${Math.abs(delta).toFixed(1)} pts`} from last run
+          </span>
+        ) : (
+          <span className="whitespace-nowrap text-[12px]" style={{ color: "var(--ink-500)" }}>
+            First run
+          </span>
+        )}
       </div>
       <div className="mt-4">{children}</div>
       <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--hairline)" }}>
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
           {trendLabel}
         </div>
-        <TrendChart values={values} />
+        {hasHistory ? (
+          <TrendChart values={values} />
+        ) : (
+          <p className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+            No history yet — trends appear after the next run.
+          </p>
+        )}
       </div>
     </section>
   );
@@ -1491,7 +1540,7 @@ type CheckStatus = "Passed" | "Failed" | "Warning";
 type CheckChild = { column: string; lastRun: string; status: CheckStatus; passRate: string };
 type CheckRow = {
   name: string;
-  dimension: "Validity" | "Completeness" | "Uniqueness" | "Accuracy" | "Consistency";
+  dimension: string;
   lastRun: string;
   status: CheckStatus;
   passRate: string;
@@ -1728,7 +1777,7 @@ type ActivityStatus = "Passed" | "Failed" | "Warning";
 type ActivityEvent = {
   id: string;
   check: string;
-  dimension: "Validity" | "Completeness" | "Uniqueness" | "Accuracy" | "Consistency";
+  dimension: string;
   target: string;
   ranAt: string; // ISO
   status: ActivityStatus;
@@ -1939,7 +1988,15 @@ function HeatmapCard({ slug }: { slug: string }) {
   );
 }
 
-function ActivityPanel({ events, slug }: { events: ActivityEvent[]; slug: string }) {
+function ActivityPanel({
+  events,
+  slug,
+  showHeatmap = true,
+}: {
+  events: ActivityEvent[];
+  slug: string;
+  showHeatmap?: boolean;
+}) {
   const sorted = [...events].sort((a, b) => +new Date(b.ranAt) - +new Date(a.ranAt));
 
   // Build a flat row sequence with divider markers when group label changes
@@ -1962,7 +2019,7 @@ function ActivityPanel({ events, slug }: { events: ActivityEvent[]; slug: string
 
   return (
     <div className="space-y-6">
-      <HeatmapCard slug={slug} />
+      {showHeatmap && <HeatmapCard slug={slug} />}
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
