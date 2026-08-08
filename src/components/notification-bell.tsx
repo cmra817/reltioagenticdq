@@ -114,10 +114,15 @@ export function NotificationBell() {
               {notifications.map((n) => (
                 <li
                   key={n.id}
-                  className="border-b px-3 py-2.5 last:border-b-0"
+                  className="border-b last:border-b-0"
                   style={{ borderColor: "var(--hairline)" }}
                 >
-                  <div className="flex gap-2.5">
+                  <Link
+                    to="/assets/$assetSlug"
+                    params={{ assetSlug: n.slug }}
+                    onClick={() => setOpen(false)}
+                    className="flex gap-2.5 px-3 py-2.5 transition-colors hover:bg-[color:var(--surface-soft)]"
+                  >
                     <KindDot kind={n.kind} />
                     <div className="min-w-0">
                       <div
@@ -133,7 +138,7 @@ export function NotificationBell() {
                         {formatNotificationTime(n.at)}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </li>
               ))}
             </ul>
