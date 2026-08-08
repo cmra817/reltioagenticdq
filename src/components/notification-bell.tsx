@@ -11,15 +11,10 @@ function BellIcon({ size = 20 }: { size?: number }) {
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="currentColor"
       aria-hidden="true"
     >
-      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+      <path d="M12 22c1.66 0 3-1.34 3-3H9c0 1.66 1.34 3 3 3zm7.5-3h-15c-.83 0-1.5-.67-1.5-1.5 0-.42.17-.8.44-1.06C4.14 15.4 6 12.7 6 8c0-3.31 2.69-6 6-6s6 2.69 6 6c0 4.7 1.86 7.4 3.56 8.44.27.26.44.64.44 1.06 0 .83-.67 1.5-1.5 1.5z" />
     </svg>
   );
 }
