@@ -49,6 +49,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const runJob = useCallback<NotificationContextValue["runJob"]>(
     ({ kind, table, delayMs }) => {
       const label = LABEL[kind];
+      const slug = tableToSlug(table);
       toast(`${label} started for ${table}`);
       const wait = delayMs ?? (kind === "profiling" ? 4000 : 6500);
       window.setTimeout(() => {
@@ -59,6 +60,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             id,
             kind,
             table,
+            slug,
             title: `${label} completed`,
             body:
               kind === "profiling"
