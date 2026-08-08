@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   AppsGridIcon,
@@ -14,6 +14,8 @@ import {
   UsersGearIcon,
 } from "./brand-icons";
 import { useDomainState } from "./domain-context";
+import { CreateDomainDialog } from "./create-domain-dialog";
+import { AddDatasetModal } from "./add-dataset/AddDatasetModal";
 
 function NavItem({
   icon,
@@ -24,8 +26,9 @@ function NavItem({
   icon: React.ReactNode;
   label: string;
   active?: boolean;
-  to?: "/" | "/data-health" | "/explore";
+  to?: "/" | "/data-health" | "/explore" | "/new-chat";
 }) {
+
   const className =
     "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[14px] leading-none transition-colors";
   const style: React.CSSProperties = {
