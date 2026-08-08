@@ -3,6 +3,7 @@ import { AgentflowTopbar } from "@/components/agentflow-topbar";
 import { SidebarProvider, useSidebarState } from "@/components/sidebar-context";
 import { DomainProvider } from "@/components/domain-context";
 import { DomainConnectedBanner } from "@/components/domain-connected-banner";
+import { NotificationProvider } from "@/components/notification-context";
 
 function AppShellInner({
   children,
@@ -52,9 +53,11 @@ export function AppShell(props: {
 }) {
   return (
     <SidebarProvider>
-      <DomainProvider>
-        <AppShellInner {...props} />
-      </DomainProvider>
+      <NotificationProvider>
+        <DomainProvider>
+          <AppShellInner {...props} />
+        </DomainProvider>
+      </NotificationProvider>
     </SidebarProvider>
   );
 }
