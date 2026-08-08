@@ -130,6 +130,8 @@ function AssetDetailPage() {
   const [columnsSubTab, setColumnsSubTab] = useState<"Profiling" | "Sample data">("Profiling");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selectedColumn = selectedIndex === null ? null : SAMPLE_COLUMNS[selectedIndex] ?? null;
+  const { runJob } = useNotifications();
+
   const rightPanelOpen = activeTab === "Columns" && selectedColumn !== null;
 
   return (
