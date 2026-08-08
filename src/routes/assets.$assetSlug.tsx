@@ -12,6 +12,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useSidebarState } from "@/components/sidebar-context";
+import { useCreatedAssets, type CreatedAsset } from "@/components/created-assets-context";
+import { frequencyLabel } from "@/components/add-dataset/Step3Schedule";
 
 export const Route = createFileRoute("/assets/$assetSlug")({
   head: ({ params }) => ({
@@ -65,6 +67,87 @@ const ASSET_DETAILS: Record<string, AssetDetail> = {
     ],
   },
 };
+
+/* ---------- newly created assets (from the Add data asset wizard) ---------- */
+
+function createdToDetail(c: CreatedAsset): AssetDetail {
+  return {
+    name: c.name,
+    source: c.source,
+    dataset: c.schema,
+    columns: c.columnCount,
+    rows: c.rows.toLocaleString(),
+    checks: c.checks.length,
+    fillRate: "97%",
+    quality: 96,
+    validity: 98,
+    accuracy: 96,
+    consistency: 97,
+    classification: [],
+  };
+}
+
+function guessDataType(field: string): string {
+  if (/(_at|date|time)$/.test(field)) return "Timestamp";
+  if (/(_id|count|qty|quantity|num)/.test(field)) return "Integer";
+  if (/(amount|total|price|rate|score)/.test(field)) return "Decimal";
+  if (/(is_|has_|flag)/.test(field)) return "Boolean";
+  return "String";
+}
+
+function createdColumns(c: CreatedAsset): ColumnRow[] {
+  const fields: string[] = [];
+  for (const chk of c.checks) if (!fields.includes(chk.field)) fields.push(chk.field);
+  return fields.map((field) => {
+    const seed = hashString(`${c.name}:${field}`);
+    const fill = 92 + (seed % 9);
+    const uniq = 20 + (seed % 79);
+    const dataType = guessDataType(field);
+    return {
+      name: field,
+      dataType,
+      length: dataType === "String" ? 12 + (seed % 40) : 8,
+      min: dataType === "Integer" || dataType === "Decimal" ? "1" : "—",
+      max: dataType === "Integer" || dataType === "Decimal" ? String(1000 + (seed % 9000)) : "—",
+      mean: dataType === "Decimal" ? (100 + (seed % 400)).toFixed(2) : "—",
+      nullCount: Math.round((c.rows || 1000) * (100 - fill) / 100 / 100),
+      distinct: Math.max(2, Math.round(((c.rows || 1000) * uniq) / 100 / 100)),
+      uniqueness: `${uniq}%`,
+      fillRate: `${fill}%`,
+    };
+  });
+}
+
+function createdCheckRows(c: CreatedAsset): CheckRow[] {
+  return c.checks.map((chk) => ({
+    name: chk.rule,
+    dimension: chk.dimension,
+    lastRun: "Just now",
+    status: "Passed" as CheckStatus,
+    passRate: "100/100 (100%)",
+    children: [
+      { column: chk.field, lastRun: "Just now", status: "Passed" as CheckStatus, passRate: "100/100 (100%)" },
+    ],
+  }));
+}
+
+function createdActivity(c: CreatedAsset): ActivityEvent[] {
+  const ranAt = new Date(c.createdAt).toISOString();
+  return c.checks.map((chk, i) => ({
+    id: `c-${i}`,
+    check: chk.rule,
+    dimension: chk.dimension,
+    target: chk.field,
+    ranAt,
+    status: "Passed" as ActivityStatus,
+  }));
+}
+
+function createdCheckCategories(c: CreatedAsset) {
+  const counts = new Map<string, number>();
+  for (const chk of c.checks) counts.set(chk.dimension, (counts.get(chk.dimension) ?? 0) + 1);
+  return Array.from(counts.entries()).map(([label, passing]) => ({ label, passing, failing: 0 }));
+}
 
 const TABS = ["Overview", "Columns", "Checks", "Activity"] as const;
 type TabName = (typeof TABS)[number];
@@ -125,11 +208,21 @@ const PROFILING_COLUMNS = [
 
 function AssetDetailPage() {
   const { assetSlug } = useParams({ from: "/assets/$assetSlug" });
-  const detail = ASSET_DETAILS[assetSlug.toLowerCase()] ?? ASSET_DETAILS.orders;
+  const { bySlug } = useCreatedAssets();
+  const created = bySlug[assetSlug.toLowerCase()] ?? null;
+  const detail = created
+    ? createdToDetail(created)
+    : ASSET_DETAILS[assetSlug.toLowerCase()] ?? ASSET_DETAILS.orders;
+  // A freshly added asset has run exactly once, so there is no history to trend against.
+  const firstRun = created !== null;
+  const columns = React.useMemo(
+    () => (created ? createdColumns(created) : SAMPLE_COLUMNS),
+    [created],
+  );
   const [activeTab, setActiveTab] = useState<TabName>("Overview");
   const [columnsSubTab, setColumnsSubTab] = useState<"Profiling" | "Sample data">("Profiling");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const selectedColumn = selectedIndex === null ? null : SAMPLE_COLUMNS[selectedIndex] ?? null;
+  const selectedColumn = selectedIndex === null ? null : columns[selectedIndex] ?? null;
   const { runJob } = useNotifications();
 
   const rightPanelOpen = activeTab === "Columns" && selectedColumn !== null;
@@ -180,6 +273,28 @@ function AssetDetailPage() {
                     </span>
                     <span style={{ color: "var(--ink-700)" }}>{detail.dataset}</span>
                   </div>
+                  {created && (
+                    <div
+                      className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]"
+                      style={{ color: "var(--ink-500)" }}
+                    >
+                      <span
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+                        style={{ background: "rgba(67,134,250,0.10)", color: "var(--brand-blue)" }}
+                      >
+                        New
+                      </span>
+                      <span>Profiling: {frequencyLabel(created.profilingSchedule)}</span>
+                      <span style={{ color: "var(--ink-300)" }}>·</span>
+                      <span>DQ checks: {frequencyLabel(created.checksSchedule)}</span>
+                      {created.domain && (
+                        <>
+                          <span style={{ color: "var(--ink-300)" }}>·</span>
+                          <span>Domain: {created.domain}</span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -237,12 +352,15 @@ function AssetDetailPage() {
             </div>
           </div>
 
-          {activeTab === "Overview" && <OverviewPanel detail={detail} />}
+          {activeTab === "Overview" && (
+            <OverviewPanel detail={detail} created={created} />
+          )}
 
 
           {activeTab === "Columns" && (
             <ColumnsPanel
-              columns={SAMPLE_COLUMNS}
+              columns={columns}
+              hasHistory={!firstRun}
               subTab={columnsSubTab}
               onSubTab={setColumnsSubTab}
               selectedIndex={selectedIndex}
@@ -250,8 +368,16 @@ function AssetDetailPage() {
             />
           )}
 
-          {activeTab === "Checks" && <ChecksPanel checks={SAMPLE_CHECKS} />}
-          {activeTab === "Activity" && <ActivityPanel events={SAMPLE_ACTIVITY} slug={assetSlug} />}
+          {activeTab === "Checks" && (
+            <ChecksPanel checks={created ? createdCheckRows(created) : SAMPLE_CHECKS} />
+          )}
+          {activeTab === "Activity" && (
+            <ActivityPanel
+              events={created ? createdActivity(created) : SAMPLE_ACTIVITY}
+              slug={assetSlug}
+              showHeatmap={!firstRun}
+            />
+          )}
         </div>
 
         {/* floating composer (centered over content area, not full viewport) */}
