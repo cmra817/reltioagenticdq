@@ -616,6 +616,7 @@ function TreeRow({
 
 /* ---------- left filter panel ---------- */
 function FilterPanel({
+  derived,
   selected,
   onToggle,
   assetTypes,
@@ -623,6 +624,7 @@ function FilterPanel({
   tags,
   onToggleTag,
 }: {
+  derived: Derived;
   selected: Selection;
   onToggle: (n: string) => void;
   assetTypes: Set<string>;
@@ -630,8 +632,11 @@ function FilterPanel({
   tags: Set<string>;
   onToggleTag: (label: string) => void;
 }) {
-  const [databricksOpen, setDatabricksOpen] = useState(true);
-  const [bigqueryOpen, setBigqueryOpen] = useState(false);
+  const [openSources, setOpenSources] = useState<Record<string, boolean>>({
+    Databricks: true,
+  });
+  const setOpenFor = (label: string, v: boolean) =>
+    setOpenSources((prev) => ({ ...prev, [label]: v }));
 
   const renderSourceHeader = (
     label: string,
@@ -693,25 +698,22 @@ function FilterPanel({
           Data Source
         </div>
 
-        {renderSourceHeader("Databricks", DATABRICKS_TREE.length, databricksOpen, setDatabricksOpen)}
-        {databricksOpen && (
-          <div className="mt-1">
-            {DATABRICKS_TREE.map((n) => (
-              <TreeRow key={n.name} node={n} depth={1} selected={selected} onToggle={onToggle} />
-            ))}
-          </div>
-        )}
-
-        <div className="mt-1">
-          {renderSourceHeader("BigQuery", BIGQUERY_TREE.length, bigqueryOpen, setBigqueryOpen)}
-        </div>
-        {bigqueryOpen && (
-          <div className="mt-1">
-            {BIGQUERY_TREE.map((n) => (
-              <TreeRow key={n.name} node={n} depth={1} selected={selected} onToggle={onToggle} />
-            ))}
-          </div>
-        )}
+        {derived.sources.map((src, i) => {
+          const nodes = derived.trees[src] ?? [];
+          const open = openSources[src] ?? false;
+          return (
+            <div key={src} className={i === 0 ? undefined : "mt-1"}>
+              {renderSourceHeader(src, nodes.length, open, (v) => setOpenFor(src, v))}
+              {open && (
+                <div className="mt-1">
+                  {nodes.map((n) => (
+                    <TreeRow key={n.name} node={n} depth={1} selected={selected} onToggle={onToggle} />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <CheckboxFilterGroup
@@ -891,6 +893,7 @@ function resolveView(
   selected: Selection,
   assetTypes: Set<string>,
   tags: Set<string>,
+  d: Derived,
 ): View {
   const hasSecondary = assetTypes.size > 0 || tags.size > 0;
 
@@ -899,18 +902,14 @@ function resolveView(
     return {
       mode: "rows",
       title: "All sources",
-      rows: applySecondaryFilters(
-        dedupeRows([...DATABRICKS_ALL, ...BIGQUERY_ALL]),
-        assetTypes,
-        tags,
-      ),
+      rows: applySecondaryFilters(dedupeRows(d.allRows), assetTypes, tags),
     };
   }
 
   // Single selection of a leaf table/dashboard → column view (skip if secondary filters active)
   if (selected.size === 1 && !hasSecondary) {
     const only = Array.from(selected)[0];
-    if (!isSource(only) && !isDataset(only)) {
+    if (!isSource(only, d) && !isDataset(only, d)) {
       return { mode: "table", title: only, columns: getColumnsFor(only) };
     }
   }
@@ -919,16 +918,15 @@ function resolveView(
   const merged: AssetRow[] = [];
   const titleParts: string[] = [];
   for (const name of selected) {
-    if (isSource(name)) {
-      merged.push(...(SOURCE_ALL[name] ?? []));
+    if (isSource(name, d)) {
+      merged.push(...(d.sourceAll[name] ?? []));
       titleParts.push(name);
-    } else if (isDataset(name)) {
-      merged.push(...(DATASET_ASSETS[name] ?? []));
-      titleParts.push(`${parentSourceOfDataset(name)} / ${name}`);
+    } else if (isDataset(name, d)) {
+      merged.push(...(d.datasetAssets[name] ?? []));
+      titleParts.push(`${parentSourceOfDataset(name, d)} / ${name}`);
     } else {
       // leaf in a multi-select — surface as a row using its known source
-      const allRows = [...DATABRICKS_ALL, ...BIGQUERY_ALL];
-      const found = allRows.find((r) => r.name === name);
+      const found = d.allRows.find((r) => r.name === name);
       if (found) {
         merged.push(found);
         titleParts.push(`${found.source} / ${name}`);
@@ -947,12 +945,14 @@ function AssetOverview({
   selected,
   assetTypes,
   tags,
+  derived,
 }: {
   selected: Selection;
   assetTypes: Set<string>;
   tags: Set<string>;
+  derived: Derived;
 }) {
-  const view = resolveView(selected, assetTypes, tags);
+  const view = resolveView(selected, assetTypes, tags, derived);
 
   return (
     <section
@@ -1107,6 +1107,8 @@ function AssetOverview({
 /* ---------- screen ---------- */
 
 export function ExploreScreen() {
+  const { assets: createdAssets } = useCreatedAssets();
+  const derived = useMemo(() => buildDerived(createdAssets), [createdAssets]);
   const [selected, setSelected] = useState<Selection>(() => new Set(["Databricks"]));
   const [assetTypes, setAssetTypes] = useState<Set<string>>(() => new Set());
   const [tags, setTags] = useState<Set<string>>(() => new Set());
@@ -1116,12 +1118,12 @@ export function ExploreScreen() {
       const next = new Set(prev);
       if (next.has(name)) {
         next.delete(name);
-        if (isSource(name)) {
-          for (const ds of SOURCE_DATASETS[name] ?? []) next.delete(ds);
+        if (isSource(name, derived)) {
+          for (const ds of derived.sourceDatasets[name] ?? []) next.delete(ds);
         }
       } else {
-        if (isSource(name)) {
-          for (const ds of SOURCE_DATASETS[name] ?? []) next.add(ds);
+        if (isSource(name, derived)) {
+          for (const ds of derived.sourceDatasets[name] ?? []) next.add(ds);
         }
         next.add(name);
       }
@@ -1157,6 +1159,7 @@ export function ExploreScreen() {
       <div className="flex-1 overflow-y-auto">
         <div className="flex gap-6 px-8 pt-6 pb-28">
           <FilterPanel
+            derived={derived}
             selected={selected}
             onToggle={toggle}
             assetTypes={assetTypes}
@@ -1166,7 +1169,7 @@ export function ExploreScreen() {
           />
           <div className="flex flex-1 flex-col gap-4">
             <SelectionChips selected={selected} onRemove={removeSel} onClear={clearAll} />
-            <AssetOverview selected={selected} assetTypes={assetTypes} tags={tags} />
+            <AssetOverview selected={selected} assetTypes={assetTypes} tags={tags} derived={derived} />
           </div>
         </div>
       </div>
