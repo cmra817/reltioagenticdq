@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Zap, Plus } from "lucide-react";
 import { WAREHOUSES } from "./mock-warehouses";
 import { generateChecks, type Check } from "./mock-checks";
@@ -9,7 +9,7 @@ type AssetEntry = {
   checks: Check[];
 };
 
-function parseSelected(selected: Set<string>): AssetEntry[] {
+export function parseSelectedAssets(selected: Set<string>): AssetEntry[] {
   const entries: AssetEntry[] = [];
   for (const key of selected) {
     const [connId, schemaName, assetName] = key.split("::");
@@ -26,15 +26,24 @@ function parseSelected(selected: Set<string>): AssetEntry[] {
   return entries;
 }
 
-export function Step2ApplyChecks({ selected }: { selected: Set<string> }) {
-  const assets = useMemo(() => parseSelected(selected), [selected]);
+export function Step2ApplyChecks({
+  selected,
+  checked,
+  onToggleCheck,
+}: {
+  selected: Set<string>;
+  /** checked[assetKey] = Set<checkId> currently enabled */
+  checked: Record<string, Set<string>>;
+  onToggleCheck: (assetKey: string, checkId: string) => void;
+}) {
+  const assets = useMemo(() => parseSelectedAssets(selected), [selected]);
   const [activeKey, setActiveKey] = useState<string>(assets[0]?.key ?? "");
-  // checked[assetKey] = Set<checkId> currently enabled
-  const [checked, setChecked] = useState<Record<string, Set<string>>>(() => {
-    const init: Record<string, Set<string>> = {};
-    for (const a of assets) init[a.key] = new Set(a.checks.map((c) => c.id));
-    return init;
-  });
+
+  useEffect(() => {
+    if (assets.length > 0 && !assets.some((a) => a.key === activeKey)) {
+      setActiveKey(assets[0].key);
+    }
+  }, [assets, activeKey]);
 
   if (assets.length === 0) {
     return (
@@ -55,18 +64,8 @@ export function Step2ApplyChecks({ selected }: { selected: Set<string> }) {
   }
 
   const active = assets.find((a) => a.key === activeKey) ?? assets[0];
-  const activeChecked = checked[active.key] ?? new Set();
+  const activeChecked = checked[active.key] ?? new Set<string>();
 
-  const toggle = (assetKey: string, checkId: string) => {
-    setChecked((prev) => {
-      const next = { ...prev };
-      const set = new Set(next[assetKey] ?? []);
-      if (set.has(checkId)) set.delete(checkId);
-      else set.add(checkId);
-      next[assetKey] = set;
-      return next;
-    });
-  };
 
   return (
     <div className="px-10 py-8">
@@ -170,7 +169,7 @@ export function Step2ApplyChecks({ selected }: { selected: Set<string> }) {
                   <input
                     type="checkbox"
                     checked={isOn}
-                    onChange={() => toggle(active.key, check.id)}
+                    onChange={() => onToggleCheck(active.key, check.id)}
                     className="mt-0.5 h-4 w-4 shrink-0"
                     style={{ accentColor: "var(--brand-blue)" }}
                   />
