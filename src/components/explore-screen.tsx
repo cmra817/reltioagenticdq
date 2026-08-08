@@ -1077,7 +1077,7 @@ function AssetOverview({
                     <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
                       {a.columns !== null ? a.columns.toLocaleString() : <span style={{ color: "var(--ink-300)" }}>—</span>}
                     </td>
-                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
+                    <td className="whitespace-nowrap px-3 py-4 pr-6 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
                       {a.rows !== null ? a.rows.toLocaleString() : <span style={{ color: "var(--ink-300)" }}>—</span>}
                     </td>
                     <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
