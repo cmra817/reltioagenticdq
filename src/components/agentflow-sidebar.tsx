@@ -215,8 +215,135 @@ function DomainPill() {
   );
 }
 
+function NewMenu() {
+  const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [domainOpen, setDomainOpen] = useState(false);
+  const [datasetOpen, setDatasetOpen] = useState(false);
+  const [pendingDomain, setPendingDomain] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const itemClass =
+    "flex w-full items-center gap-2 px-3 py-2 text-left text-[14px] transition-colors hover:bg-[color:var(--surface-soft)]";
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-9 w-full items-center gap-1.5 rounded-full border px-3 text-[14px] font-medium transition-colors"
+        style={{
+          borderColor: "var(--brand-blue)",
+          color: "var(--brand-blue)",
+          background: open ? "rgba(67,134,250,0.14)" : "rgba(67,134,250,0.08)",
+        }}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <PlusIcon size={14} />
+        <span>New</span>
+        <span
+          className="ml-auto transition-transform"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        >
+          <ChevronDownIcon size={12} />
+        </span>
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border bg-white py-1"
+          style={{ borderColor: "var(--hairline)", boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              navigate({ to: "/new-chat" });
+            }}
+            className={itemClass}
+            style={{ color: "var(--ink-900)" }}
+          >
+            <PlusCircleIcon size={14} />
+            <span>New chat</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              setPendingDomain(selected);
+              setDatasetOpen(true);
+            }}
+            className={itemClass}
+            style={{ color: "var(--ink-900)" }}
+          >
+            <PlusIcon size={14} />
+            <span>Add new dataset</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              setDomainOpen(true);
+            }}
+            className={itemClass}
+            style={{ color: "var(--ink-900)" }}
+          >
+            <PlusIcon size={14} />
+            <span>Create new domain</span>
+          </button>
+        </div>
+      )}
+
+      <CreateDomainDialog
+        open={domainOpen}
+        onOpenChange={setDomainOpen}
+        onCreate={(name) => {
+          addDomain(name);
+          selectDomain(name);
+          setPendingDomain(name);
+          setDatasetOpen(true);
+        }}
+      />
+      <AddDatasetModal
+        open={datasetOpen}
+        onOpenChange={(o) => {
+          setDatasetOpen(o);
+          if (!o) setPendingDomain(null);
+        }}
+        domainName={pendingDomain ?? selected}
+        onComplete={({ tables, checkCount }) => {
+          completeConnection({ domain: pendingDomain ?? selected, tables, checkCount });
+          setPendingDomain(null);
+        }}
+      />
+    </div>
+  );
+}
+
 export function AgentflowSidebar({
-  activeNav = "new-chat",
+  activeNav = "data-health",
 }: {
   activeNav?: "new-chat" | "data-health" | "explore";
 }) {
@@ -225,16 +352,21 @@ export function AgentflowSidebar({
       className="flex h-full w-[260px] shrink-0 flex-col"
       style={{ background: "transparent" }}
     >
+      {/* new menu */}
+      <div className="mt-3 px-3">
+        <NewMenu />
+      </div>
+
       {/* primary actions */}
       <nav className="mt-3 px-3">
-        <NavItem icon={<PlusCircleIcon />} label="New chat" to="/" active={activeNav === "new-chat"} />
         <NavItem
           icon={<HealthIcon />}
           label="Data health"
-          to="/data-health"
+          to="/"
           active={activeNav === "data-health"}
         />
       </nav>
+
 
       <SectionDivider />
 
