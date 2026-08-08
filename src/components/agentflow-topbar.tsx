@@ -52,7 +52,11 @@ export function AgentflowTopbar({ active = "Quality" as Tab }: { active?: Tab })
           );
         })}
       </nav>
-
+      {/* Right side */}
+      <div className="ml-auto flex items-center gap-2">
+        <NotificationBell />
+      </div>
     </header>
+
   );
 }
