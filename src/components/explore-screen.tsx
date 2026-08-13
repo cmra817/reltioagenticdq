@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ChatComposer } from "./chat-composer";
 import { useCreatedAssets, type CreatedAsset } from "./created-assets-context";
 
 /* ---------- icons ---------- */
@@ -1178,11 +1177,6 @@ export function ExploreScreen() {
             <SelectionChips selected={selected} onRemove={removeSel} onClear={clearAll} />
             <AssetOverview selected={selected} assetTypes={assetTypes} tags={tags} derived={derived} />
           </div>
-        </div>
-      </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-6 px-8">
-        <div className="pointer-events-auto mx-auto w-full max-w-2xl">
-          <ChatComposer />
         </div>
       </div>
     </div>
