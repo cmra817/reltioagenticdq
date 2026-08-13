@@ -228,7 +228,7 @@ export function DqChecksScreen() {
                       ["name", "Name"],
                       ["dimension", "Dimension"],
                       ["creator", "Creator"],
-                      ["columns", "Columns"],
+                      ["columns", "Columns applied"],
                       ["passRate", "Pass rate"],
                     ] as const
                   ).map(([key, label]) => (
