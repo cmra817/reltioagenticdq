@@ -265,8 +265,21 @@ export function DqChecksScreen() {
                     <td className="px-6 py-4" style={{ color: "var(--ink-900)" }}>
                       {r.columns}
                     </td>
-                    <td className="px-6 py-4" style={{ color: "var(--ink-900)" }}>
-                      {r.passRate}%
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="h-1.5 w-24 overflow-hidden rounded-full"
+                          style={{ background: "var(--surface-soft)" }}
+                        >
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${r.passRate}%`, background: "var(--brand-blue)" }}
+                          />
+                        </div>
+                        <span className="text-[13px] font-medium" style={{ color: "var(--ink-700)" }}>
+                          {r.passRate}%
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <RowActions
