@@ -1,15 +1,12 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   AppsGridIcon,
   BarsIcon,
   ChevronDownIcon,
   CompassIcon,
-  FolderIcon,
   HealthIcon,
-  PlusCircleIcon,
   PlusIcon,
-  SearchIcon,
   UserIcon,
   UsersGearIcon,
 } from "./brand-icons";
@@ -219,7 +216,6 @@ function DomainPill() {
 
 function NewMenu() {
   const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
-  const navigate = useNavigate();
   const { runJob } = useNotifications();
   const { addAssets } = useCreatedAssets();
   const [open, setOpen] = useState(false);
