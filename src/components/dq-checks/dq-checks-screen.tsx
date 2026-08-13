@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Columns3, Copy, LayoutGrid, List, Lock, Pencil, Plus, Search, Layers } from "lucide-react";
+import { Columns3, Copy, LayoutGrid, List, Lock, Pencil, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import {
   DIMENSIONS,
@@ -10,7 +10,7 @@ import {
 import { RuleModal } from "./RuleModal";
 
 type CreatorFilter = "all" | "me" | "team" | "reltio";
-type SortKey = "name" | "dimension" | "creator" | "columns" | "suites" | "passRate";
+type SortKey = "name" | "dimension" | "creator" | "columns" | "passRate";
 
 function CreatorBadge({ rule }: { rule: Rule }) {
   const managed = rule.creator.kind === "reltio";
@@ -88,8 +88,6 @@ export function DqChecksScreen() {
             return creatorLabel(r.creator).toLowerCase();
           case "columns":
             return r.columns;
-          case "suites":
-            return r.suites;
           case "passRate":
             return r.passRate;
         }
@@ -117,7 +115,7 @@ export function DqChecksScreen() {
           DQ checks
         </h1>
         <p className="mt-1 text-[14px]" style={{ color: "var(--ink-500)" }}>
-          Reusable data quality rules applied across columns and suites.
+          Reusable data quality rules applied across columns.
         </p>
 
         {/* toolbar */}
@@ -231,7 +229,6 @@ export function DqChecksScreen() {
                       ["dimension", "Dimension"],
                       ["creator", "Creator"],
                       ["columns", "Columns"],
-                      ["suites", "Suites"],
                       ["passRate", "Pass rate"],
                     ] as const
                   ).map(([key, label]) => (
@@ -267,9 +264,6 @@ export function DqChecksScreen() {
                     </td>
                     <td className="px-6 py-4" style={{ color: "var(--ink-900)" }}>
                       {r.columns}
-                    </td>
-                    <td className="px-6 py-4" style={{ color: "var(--ink-900)" }}>
-                      {r.suites}
                     </td>
                     <td className="px-6 py-4" style={{ color: "var(--ink-900)" }}>
                       {r.passRate}%
@@ -320,9 +314,6 @@ export function DqChecksScreen() {
                   className="mt-3 flex items-center gap-4 text-[12px]"
                   style={{ color: "var(--ink-500)" }}
                 >
-                  <span className="inline-flex items-center gap-1.5">
-                    <Layers size={13} /> {r.suites} suites
-                  </span>
                   <span className="inline-flex items-center gap-1.5">
                     <Columns3 size={13} /> {r.columns} columns
                   </span>

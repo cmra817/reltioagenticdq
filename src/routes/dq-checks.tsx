@@ -9,7 +9,7 @@ export const Route = createFileRoute("/dq-checks")({
       {
         name: "description",
         content:
-          "Browse, filter, and create reusable data quality rules across dimensions, columns, and suites.",
+          "Browse, filter, and create reusable data quality rules across dimensions and columns.",
       },
       { property: "og:title", content: "DQ Checks — AgentFlow Quality" },
       {
