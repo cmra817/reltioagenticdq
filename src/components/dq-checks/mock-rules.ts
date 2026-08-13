@@ -19,7 +19,6 @@ export type Rule = {
   description: string;
   creator: Creator;
   columns: number;
-  suites: number;
   passRate: number;
   expectation: string;
   pattern: string;
@@ -40,7 +39,6 @@ export const MOCK_RULES: Rule[] = [
     description: "Validates email addresses using a standard regex pattern.",
     creator: { kind: "reltio" },
     columns: 12,
-    suites: 3,
     passRate: 94,
     expectation: "expect_column_values_to_match_regex",
     pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
@@ -53,7 +51,6 @@ export const MOCK_RULES: Rule[] = [
     description: "Ensures email fields have less than 10% null values.",
     creator: { kind: "reltio" },
     columns: 12,
-    suites: 3,
     passRate: 97,
     expectation: "expect_column_values_to_not_be_null",
     pattern: "not_null",
@@ -66,7 +63,6 @@ export const MOCK_RULES: Rule[] = [
     description: "Validates that email addresses are unique within scope.",
     creator: { kind: "me" },
     columns: 8,
-    suites: 2,
     passRate: 91,
     expectation: "expect_column_values_to_be_unique",
     pattern: "unique",
@@ -79,7 +75,6 @@ export const MOCK_RULES: Rule[] = [
     description: "Validates US phone numbers including extensions.",
     creator: { kind: "me" },
     columns: 6,
-    suites: 3,
     passRate: 88,
     expectation: "expect_column_values_to_match_regex",
     pattern: "^\\+?1?[-. ]?\\(?\\d{3}\\)?[-. ]?\\d{3}[-. ]?\\d{4}(\\s?x\\d+)?$",
@@ -92,7 +87,6 @@ export const MOCK_RULES: Rule[] = [
     description: "Validates SSNs in ###-##-#### format.",
     creator: { kind: "team", name: "M. Gordon" },
     columns: 4,
-    suites: 1,
     passRate: 99,
     expectation: "expect_column_values_to_match_regex",
     pattern: "^\\d{3}-\\d{2}-\\d{4}$",
@@ -105,7 +99,6 @@ export const MOCK_RULES: Rule[] = [
     description: "Validates credit scores are within 300 to 850.",
     creator: { kind: "reltio" },
     columns: 3,
-    suites: 2,
     passRate: 96,
     expectation: "expect_column_values_to_be_between",
     pattern: "min=300, max=850",
@@ -118,7 +111,6 @@ export const MOCK_RULES: Rule[] = [
     description: "Every order customer_id must exist in the customers dimension.",
     creator: { kind: "team", name: "A. Rivera" },
     columns: 5,
-    suites: 4,
     passRate: 92,
     expectation: "expect_column_values_to_be_in_set",
     pattern: "in_set(customers.customer_id)",
@@ -131,7 +123,6 @@ export const MOCK_RULES: Rule[] = [
     description: "updated_at must never precede created_at on the same record.",
     creator: { kind: "me" },
     columns: 14,
-    suites: 5,
     passRate: 99,
     expectation: "expect_column_pair_values_a_to_be_greater_than_b",
     pattern: "updated_at >= created_at",
@@ -144,7 +135,6 @@ export const MOCK_RULES: Rule[] = [
     description: "Country must be a valid ISO 3166-1 alpha-2 code.",
     creator: { kind: "reltio" },
     columns: 7,
-    suites: 3,
     passRate: 93,
     expectation: "expect_column_values_to_be_in_set",
     pattern: "in_set(ISO_3166_1_ALPHA_2)",
@@ -157,7 +147,6 @@ export const MOCK_RULES: Rule[] = [
     description: "Order totals must be zero or greater to avoid revenue skew.",
     creator: { kind: "team", name: "J. Park" },
     columns: 2,
-    suites: 2,
     passRate: 100,
     expectation: "expect_column_values_to_be_between",
     pattern: "min=0",
