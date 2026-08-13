@@ -1,3 +1,4 @@
+import { DimensionBadge } from "@/components/dq-dimensions";
 import { useEffect, useMemo, useState } from "react";
 import { Zap, Plus } from "lucide-react";
 import { WAREHOUSES } from "./mock-warehouses";
@@ -183,8 +184,8 @@ export function Step2ApplyChecks({
                 <div className="text-[13px]" style={{ color: "var(--ink-700)" }}>
                   {check.description}
                 </div>
-                <div className="text-[13px]" style={{ color: "var(--ink-700)" }}>
-                  {check.dimension}
+                <div>
+                  <DimensionBadge label={check.dimension} size="sm" />
                 </div>
                 <div
                   className="font-mono text-[12px]"
