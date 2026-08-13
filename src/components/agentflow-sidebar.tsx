@@ -25,7 +25,7 @@ function NavItem({
   icon: React.ReactNode;
   label: string;
   active?: boolean;
-  to?: "/" | "/data-health" | "/explore";
+  to?: "/" | "/data-health" | "/explore" | "/dq-checks";
 }) {
 
   const className =
@@ -339,7 +339,7 @@ function NewMenu() {
 export function AgentflowSidebar({
   activeNav = "data-health",
 }: {
-  activeNav?: "data-health" | "explore";
+  activeNav?: "data-health" | "explore" | "dq-checks";
 }) {
   return (
     <aside
@@ -372,7 +372,7 @@ export function AgentflowSidebar({
       {/* secondary nav — scoped to selected domain */}
       <nav className="mt-2 px-3 pl-6">
         <NavItem icon={<CompassIcon />} label="Explore" to="/explore" active={activeNav === "explore"} />
-        <NavItem icon={<BarsIcon />} label="DQ checks" />
+        <NavItem icon={<BarsIcon />} label="DQ checks" to="/dq-checks" active={activeNav === "dq-checks"} />
       </nav>
 
       {/* spacer */}

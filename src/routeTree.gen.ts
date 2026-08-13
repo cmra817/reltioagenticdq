@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as DqChecksRouteImport } from './routes/dq-checks'
 import { Route as DataHealthRouteImport } from './routes/data-health'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
@@ -17,6 +18,11 @@ import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DqChecksRoute = DqChecksRouteImport.update({
+  id: '/dq-checks',
+  path: '/dq-checks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DataHealthRoute = DataHealthRouteImport.update({
@@ -38,12 +44,14 @@ const AssetsAssetSlugRoute = AssetsAssetSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
+  '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
+  '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
@@ -51,20 +59,33 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/data-health': typeof DataHealthRoute
+  '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/data-health' | '/explore' | '/assets/$assetSlug'
+  fullPaths:
+    | '/'
+    | '/data-health'
+    | '/dq-checks'
+    | '/explore'
+    | '/assets/$assetSlug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/data-health' | '/explore' | '/assets/$assetSlug'
-  id: '__root__' | '/' | '/data-health' | '/explore' | '/assets/$assetSlug'
+  to: '/' | '/data-health' | '/dq-checks' | '/explore' | '/assets/$assetSlug'
+  id:
+    | '__root__'
+    | '/'
+    | '/data-health'
+    | '/dq-checks'
+    | '/explore'
+    | '/assets/$assetSlug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DataHealthRoute: typeof DataHealthRoute
+  DqChecksRoute: typeof DqChecksRoute
   ExploreRoute: typeof ExploreRoute
   AssetsAssetSlugRoute: typeof AssetsAssetSlugRoute
 }
@@ -76,6 +97,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dq-checks': {
+      id: '/dq-checks'
+      path: '/dq-checks'
+      fullPath: '/dq-checks'
+      preLoaderRoute: typeof DqChecksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/data-health': {
@@ -105,6 +133,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DataHealthRoute: DataHealthRoute,
+  DqChecksRoute: DqChecksRoute,
   ExploreRoute: ExploreRoute,
   AssetsAssetSlugRoute: AssetsAssetSlugRoute,
 }
