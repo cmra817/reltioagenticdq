@@ -1,12 +1,6 @@
-export const DIMENSIONS = [
-  "Validity",
-  "Completeness",
-  "Accuracy",
-  "Consistency",
-  "Uniqueness",
-  "Referential integrity",
-  "Format and range",
-] as const;
+import { DQ_DIMENSIONS } from "@/components/dq-dimensions";
+
+export const DIMENSIONS = DQ_DIMENSIONS;
 
 export type Dimension = (typeof DIMENSIONS)[number];
 
