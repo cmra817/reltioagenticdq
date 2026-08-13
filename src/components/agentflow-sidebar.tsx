@@ -1,15 +1,12 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   AppsGridIcon,
   BarsIcon,
   ChevronDownIcon,
   CompassIcon,
-  FolderIcon,
   HealthIcon,
-  PlusCircleIcon,
   PlusIcon,
-  SearchIcon,
   UserIcon,
   UsersGearIcon,
 } from "./brand-icons";
@@ -28,7 +25,7 @@ function NavItem({
   icon: React.ReactNode;
   label: string;
   active?: boolean;
-  to?: "/" | "/data-health" | "/explore" | "/new-chat";
+  to?: "/" | "/data-health" | "/explore";
 }) {
 
   const className =
@@ -219,7 +216,6 @@ function DomainPill() {
 
 function NewMenu() {
   const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
-  const navigate = useNavigate();
   const { runJob } = useNotifications();
   const { addAssets } = useCreatedAssets();
   const [open, setOpen] = useState(false);
@@ -277,19 +273,6 @@ function NewMenu() {
           className="absolute left-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border bg-white py-1"
           style={{ borderColor: "var(--hairline)", boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
         >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              navigate({ to: "/new-chat" });
-            }}
-            className={itemClass}
-            style={{ color: "var(--ink-900)" }}
-          >
-            <PlusCircleIcon size={14} />
-            <span>New chat</span>
-          </button>
           <button
             type="button"
             role="menuitem"
@@ -356,7 +339,7 @@ function NewMenu() {
 export function AgentflowSidebar({
   activeNav = "data-health",
 }: {
-  activeNav?: "new-chat" | "data-health" | "explore";
+  activeNav?: "data-health" | "explore";
 }) {
   return (
     <aside
@@ -389,44 +372,10 @@ export function AgentflowSidebar({
       {/* secondary nav — scoped to selected domain */}
       <nav className="mt-2 px-3 pl-6">
         <NavItem icon={<CompassIcon />} label="Explore" to="/explore" active={activeNav === "explore"} />
-        <NavItem icon={<FolderIcon />} label="Projects" />
         <NavItem icon={<BarsIcon />} label="DQ checks" />
       </nav>
 
       <SectionDivider />
-
-      {/* recent chats */}
-      <div className="px-3">
-        <div className="flex items-center justify-between px-3 pb-1">
-          <span
-            className="text-[11px] font-semibold uppercase tracking-[0.08em]"
-            style={{ color: "var(--ink-300)" }}
-          >
-            Recent chats
-          </span>
-          <button
-            type="button"
-            className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-[color:var(--surface-soft)]"
-            style={{ color: "var(--ink-500)" }}
-            aria-label="Search chats"
-          >
-            <SearchIcon size={14} />
-          </button>
-        </div>
-        <ul className="space-y-0.5">
-          {["Resolve organization matches", "Search for individuals in Calif…"].map((t) => (
-            <li key={t}>
-              <button
-                type="button"
-                className="w-full truncate rounded-md px-3 py-1.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
-                style={{ color: "var(--ink-700)" }}
-              >
-                {t}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
 
       {/* spacer */}
       <div className="flex-1" />

@@ -6,12 +6,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { useNotifications } from "@/components/notification-context";
-import { ChatComposer } from "@/components/chat-composer";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useSidebarState } from "@/components/sidebar-context";
 import { useCreatedAssets, type CreatedAsset } from "@/components/created-assets-context";
 import { frequencyLabel } from "@/components/add-dataset/Step3Schedule";
 
@@ -381,30 +379,10 @@ function AssetDetailPage() {
         </div>
 
         {/* floating composer (centered over content area, not full viewport) */}
-        <FloatingComposer rightPanelOpen={rightPanelOpen} />
       </div>
     </AppShell>
   );
 }
-
-function FloatingComposer({ rightPanelOpen }: { rightPanelOpen: boolean }) {
-  const { collapsed } = useSidebarState();
-  const PANEL_WIDTH = 440;
-  return (
-    <div
-      className="pointer-events-none fixed bottom-6 z-30 px-8"
-      style={{
-        left: collapsed ? 0 : 260,
-        right: rightPanelOpen ? PANEL_WIDTH : 0,
-      }}
-    >
-      <div className="pointer-events-auto mx-auto w-full max-w-2xl">
-        <ChatComposer />
-      </div>
-    </div>
-  );
-}
-
 
 // ============================================================
 // Overview tab

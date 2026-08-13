@@ -10,7 +10,7 @@ function AppShellInner({
   activeTab,
 }: {
   children: React.ReactNode;
-  activeNav?: "new-chat" | "data-health" | "explore";
+  activeNav?: "data-health" | "explore";
   activeTab?: "Agents" | "Unstructured" | "Quality";
 }) {
   const { collapsed } = useSidebarState();
@@ -37,7 +37,7 @@ function AppShellInner({
         <AgentflowTopbar active={activeTab ?? "Quality"} />
         <DomainConnectedBanner />
         <div className="flex flex-1 overflow-hidden">
-          {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "new-chat"} />}
+          {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "data-health"} />}
           <main className="flex flex-1 flex-col overflow-hidden">{children}</main>
         </div>
       </div>
@@ -47,7 +47,7 @@ function AppShellInner({
 
 export function AppShell(props: {
   children: React.ReactNode;
-  activeNav?: "new-chat" | "data-health" | "explore";
+  activeNav?: "data-health" | "explore";
   activeTab?: "Agents" | "Unstructured" | "Quality";
 }) {
   return (
