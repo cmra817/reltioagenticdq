@@ -136,7 +136,6 @@ export function RuleModal({
       description: description.trim() || "Custom rule created in the rules library.",
       creator: { kind: "me" },
       columns: source?.columns ?? 1,
-      suites: source?.suites ?? 1,
       passRate: source?.passRate ?? 100,
       expectation,
       pattern,
