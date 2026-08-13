@@ -1,3 +1,4 @@
+import { DimensionBadge } from "@/components/dq-dimensions";
 import { useMemo, useState } from "react";
 import { Columns3, Copy, LayoutGrid, List, Lock, Pencil, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -256,8 +257,8 @@ export function DqChecksScreen() {
                     <td className="px-6 py-4 font-medium" style={{ color: "var(--ink-900)" }}>
                       {r.name}
                     </td>
-                    <td className="px-6 py-4" style={{ color: "var(--ink-700)" }}>
-                      {r.dimension}
+                    <td className="px-6 py-4">
+                      <DimensionBadge label={r.dimension} />
                     </td>
                     <td className="px-6 py-4">
                       <CreatorBadge rule={r} />
@@ -312,12 +313,7 @@ export function DqChecksScreen() {
                   />
                 </div>
                 <div className="mt-2 flex items-center gap-3 text-[12px]" style={{ color: "var(--ink-700)" }}>
-                  <span
-                    className="rounded-md border px-2 py-0.5"
-                    style={{ borderColor: "var(--hairline)" }}
-                  >
-                    {r.dimension}
-                  </span>
+                  <DimensionBadge label={r.dimension} size="sm" />
                   <CreatorBadge rule={r} />
                 </div>
                 <p className="mt-3 text-[13px]" style={{ color: "var(--ink-700)" }}>

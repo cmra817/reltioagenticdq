@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useState } from "react";
+import { DimensionBadge } from "@/components/dq-dimensions";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Check, Info, UploadCloud, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -1652,11 +1653,7 @@ function StatusPill({ status }: { status: CheckStatus }) {
 }
 
 function DimensionPill({ label }: { label: string }) {
-  return (
-    <span className="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-inset ring-slate-200">
-      {label}
-    </span>
-  );
+  return <DimensionBadge label={label} size="sm" />;
 }
 
 function CoverageBadge({ count }: { count: number }) {
