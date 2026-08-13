@@ -375,8 +375,6 @@ export function AgentflowSidebar({
         <NavItem icon={<BarsIcon />} label="DQ checks" />
       </nav>
 
-      <SectionDivider />
-
       {/* spacer */}
       <div className="flex-1" />
 
