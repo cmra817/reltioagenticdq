@@ -10,7 +10,7 @@ function AppShellInner({
   activeTab,
 }: {
   children: React.ReactNode;
-  activeNav?: "data-health" | "explore";
+  activeNav?: "data-health" | "explore" | "dq-checks";
   activeTab?: "Agents" | "Unstructured" | "Quality";
 }) {
   const { collapsed } = useSidebarState();
@@ -47,7 +47,7 @@ function AppShellInner({
 
 export function AppShell(props: {
   children: React.ReactNode;
-  activeNav?: "data-health" | "explore";
+  activeNav?: "data-health" | "explore" | "dq-checks";
   activeTab?: "Agents" | "Unstructured" | "Quality";
 }) {
   return (
