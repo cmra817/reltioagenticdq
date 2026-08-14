@@ -215,16 +215,16 @@ export function DqChecksScreen() {
 
           <button
             type="button"
+            aria-label="Add check"
             onClick={() => setModal({ open: true, mode: "create", source: null })}
-            className="inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-[14px] font-medium"
+            className="inline-flex items-center justify-center rounded-xl border p-2.5"
             style={{
               borderColor: "var(--brand-blue)",
               color: "var(--brand-blue)",
               background: "rgba(67,134,250,0.08)",
             }}
           >
-            <Plus size={15} />
-            + Checks
+            <Plus size={16} />
           </button>
         </div>
 
