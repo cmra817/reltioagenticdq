@@ -1,6 +1,6 @@
 import { DimensionBadge } from "@/components/dq-dimensions";
 import { useMemo, useState } from "react";
-import { Columns3, Copy, LayoutGrid, List, Lock, Pencil, Plus, Search } from "lucide-react";
+import { Columns3, Copy, LayoutGrid, List, Lock, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   DIMENSIONS,
@@ -27,21 +27,23 @@ function RowActions({
   rule,
   onClone,
   onEdit,
+  onDelete,
 }: {
   rule: Rule;
   onClone: (r: Rule) => void;
   onEdit: (r: Rule) => void;
+  onDelete: (r: Rule) => void;
 }) {
   const managed = rule.creator.kind === "reltio";
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="inline-flex items-center gap-1">
       <button
         type="button"
         disabled={managed}
         aria-label={managed ? "Reltio-managed rules can't be edited" : "Edit rule"}
         title={managed ? "Reltio-managed rules can't be edited" : "Edit rule"}
         onClick={() => onEdit(rule)}
-        className="disabled:cursor-not-allowed disabled:opacity-40"
+        className="rounded-md p-1.5 transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40"
         style={{ color: "var(--ink-500)" }}
       >
         <Pencil size={15} />
@@ -52,9 +54,22 @@ function RowActions({
         aria-label="Clone rule"
         title="Clone rule"
         onClick={() => onClone(rule)}
+        className="rounded-md p-1.5 transition-colors hover:bg-black/5"
         style={{ color: "var(--ink-500)" }}
       >
         <Copy size={15} />
+      </button>
+
+      <button
+        type="button"
+        disabled={managed}
+        aria-label={managed ? "Reltio-managed rules can't be deleted" : "Delete rule"}
+        title={managed ? "Reltio-managed rules can't be deleted" : "Delete rule"}
+        onClick={() => onDelete(rule)}
+        className="rounded-md p-1.5 transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40"
+        style={{ color: "var(--ink-500)" }}
+      >
+        <Trash2 size={15} />
       </button>
     </span>
   );
@@ -260,7 +275,7 @@ export function DqChecksScreen() {
                 {visible.map((r) => (
                   <tr
                     key={r.id}
-                    className="border-b transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
+                    className="group border-b transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
                     style={{ borderColor: "var(--hairline)" }}
                   >
                     <td className="px-6 py-4 font-medium" style={{ color: "var(--ink-900)" }}>
@@ -291,12 +306,21 @@ export function DqChecksScreen() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <RowActions
-                        rule={r}
-                        onClone={(rule) => setModal({ open: true, mode: "clone", source: rule })}
-                        onEdit={(rule) => setModal({ open: true, mode: "edit", source: rule })}
-                      />
+                    <td className="group/cell relative px-6 py-4 text-right">
+                      <div
+                        className="absolute inset-0 flex items-center justify-end gap-2 px-6 opacity-0 transition-opacity group-hover:opacity-100"
+                        style={{ background: "var(--surface-soft)" }}
+                      >
+                        <RowActions
+                          rule={r}
+                          onClone={(rule) => setModal({ open: true, mode: "clone", source: rule })}
+                          onEdit={(rule) => setModal({ open: true, mode: "edit", source: rule })}
+                          onDelete={(rule) => {
+                            setRules((prev) => prev.filter((item) => item.id !== rule.id));
+                            toast.success(`Deleted “${rule.name}”`);
+                          }}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -320,7 +344,11 @@ export function DqChecksScreen() {
                   <RowActions
                     rule={r}
                     onClone={(rule) => setModal({ open: true, mode: "clone", source: rule })}
-                        onEdit={(rule) => setModal({ open: true, mode: "edit", source: rule })}
+                    onEdit={(rule) => setModal({ open: true, mode: "edit", source: rule })}
+                    onDelete={(rule) => {
+                      setRules((prev) => prev.filter((item) => item.id !== rule.id));
+                      toast.success(`Deleted “${rule.name}”`);
+                    }}
                   />
                 </div>
                 <div className="mt-2 flex items-center gap-3 text-[12px]" style={{ color: "var(--ink-700)" }}>
