@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GripVertical, MoreVertical } from "lucide-react";
+import { ChevronDown, GripVertical, MoreVertical, Plus } from "lucide-react";
 import { WidgetCard } from "./WidgetCard";
 import {
   type LayoutItem,
+  type Section,
   type Widget,
   type WidgetHeight,
   type WidgetWidth,
   type Zone,
 } from "./widget-model";
+
 
 export const ROW_HEIGHT = 220;
 const GAP = 16;
