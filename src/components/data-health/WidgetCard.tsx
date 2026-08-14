@@ -21,11 +21,13 @@ export function WidgetCard({
   onDrill,
   onRemove,
   footer,
+  className = "",
 }: {
   widget: Widget;
   onDrill?: (segment: string) => void;
   onRemove?: () => void;
   footer?: React.ReactNode;
+  className?: string;
 }) {
   const [menu, setMenu] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -45,7 +47,7 @@ export function WidgetCard({
   return (
     <div
       ref={wrapRef}
-      className="group relative rounded-xl border bg-white p-4"
+      className={`group relative overflow-hidden rounded-xl border bg-white p-4 ${className}`}
       style={{ borderColor: "var(--hairline)" }}
     >
       {onRemove && (
