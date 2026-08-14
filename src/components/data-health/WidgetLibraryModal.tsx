@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Copy, Search } from "lucide-react";
+import { Check, Copy, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WidgetCard } from "./WidgetCard";
 import type { Widget } from "./widget-model";
@@ -116,19 +116,25 @@ export function WidgetLibraryModal({
                     widget={w}
                     footer={
                       <>
-                        <button
-                          type="button"
-                          disabled={isApplied}
-                          onClick={() => onApply(w)}
-                          className="flex-1 rounded-lg border px-3 py-2 text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-50"
-                          style={{
-                            borderColor: "var(--brand-blue)",
-                            color: "var(--brand-blue)",
-                            background: "rgba(67,134,250,0.08)",
-                          }}
-                        >
-                          {isApplied ? "Applied" : "Apply"}
-                        </button>
+                        {isApplied ? (
+                          <div className="flex flex-1 items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-emerald-600">
+                            <Check size={15} strokeWidth={2.5} />
+                            <span>Applied</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onApply(w)}
+                            className="flex-1 rounded-lg border px-3 py-2 text-[13px] font-medium"
+                            style={{
+                              borderColor: "var(--brand-blue)",
+                              color: "var(--brand-blue)",
+                              background: "rgba(67,134,250,0.08)",
+                            }}
+                          >
+                            Apply
+                          </button>
+                        )}
                         <button
                           type="button"
                           aria-label="Clone widget"
