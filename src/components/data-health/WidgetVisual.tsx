@@ -25,7 +25,14 @@ function LineVisual({ values }: { values: number[] }) {
       className="h-full min-h-[84px] w-full"
     >
       <path d={`${path} L${w - pad} ${h - pad} L${pad} ${h - pad} Z`} fill="rgba(20,166,166,0.10)" />
-      <path d={path} fill="none" stroke="#14a6a6" strokeWidth="2" strokeLinejoin="round" />
+      <path
+        d={path}
+        fill="none"
+        stroke="#14a6a6"
+        strokeWidth="2"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }
