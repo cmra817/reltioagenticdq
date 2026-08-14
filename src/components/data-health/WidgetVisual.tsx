@@ -164,9 +164,7 @@ function LineVisual({ values, color = "#14a6a6" }: { values: number[]; color?: s
   );
 }
 
-    </svg>
-  );
-}
+
 
 function BarVisual({
   values,
