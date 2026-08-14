@@ -145,7 +145,7 @@ export function RuleModal({
       name: name.trim(),
       dimension,
       description: description.trim() || "Custom rule created in the rules library.",
-      creator: { kind: "me" },
+      creator: mode === "edit" && source ? source.creator : { kind: "me" },
       columns: source?.columns ?? 1,
       passRate: source?.passRate ?? 100,
       expectation,
