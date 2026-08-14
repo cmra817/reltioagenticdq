@@ -1,10 +1,10 @@
 import { DimensionBadge } from "@/components/dq-dimensions";
-import { useEffect, useMemo, useState } from "react";
-import { Lock, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Lock, Plus, Search, Sparkles } from "lucide-react";
 import { WAREHOUSES } from "./mock-warehouses";
 import { generateChecks, type Check } from "./mock-checks";
 import { RuleModal } from "@/components/dq-checks/RuleModal";
-import { creatorLabel, type Creator, type Rule } from "@/components/dq-checks/mock-rules";
+import { MOCK_RULES, creatorLabel, type Creator, type Rule } from "@/components/dq-checks/mock-rules";
 
 type AssetEntry = {
   key: string;
