@@ -153,7 +153,7 @@ export function Step2ApplyChecks({
             }}
           >
             <Plus size={12} />
-            Add checks
+            + Checks
           </button>
         </div>
 

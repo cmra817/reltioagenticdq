@@ -209,7 +209,7 @@ export function DqChecksScreen() {
             }}
           >
             <Plus size={15} />
-            Rules
+            + Checks
           </button>
         </div>
 
