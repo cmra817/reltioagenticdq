@@ -83,9 +83,12 @@ export function RuleModal({
       setThreshold(5);
       setTab("describe");
     }
-    setSampleMode("column");
+    setSampleMode(HAS_CONNECTED_SOURCES ? "column" : "manual");
+    setColumnQuery("");
+    setSelectedColumn(null);
     setManualStrings("");
   }, [open, mode, source]);
+
 
   useEffect(() => {
     if (!open) return;
