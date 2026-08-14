@@ -246,6 +246,27 @@ export function WidgetVisual({
 }) {
   switch (widget.chartType) {
     case "line":
+      if (widget.metric && widget.value) {
+        return (
+          <div className="flex h-full min-h-[84px] flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <span
+                className="text-[32px] font-semibold leading-none"
+                style={{ color: "var(--ink-900)" }}
+              >
+                {widget.value}
+              </span>
+              <DeltaPill value={widget.metric.delta} direction={widget.metric.direction} />
+            </div>
+            <div className="min-h-0 flex-1">
+              <LineVisual
+                values={widget.data.length ? widget.data : [1, 2, 3]}
+                color={widget.metric.color}
+              />
+            </div>
+          </div>
+        );
+      }
       return <LineVisual values={widget.data.length ? widget.data : [1, 2, 3]} />;
     case "bar":
       return (
@@ -259,5 +280,18 @@ export function WidgetVisual({
       return <NumberVisual value={widget.value} />;
     case "table":
       return <TableVisual rows={widget.rows} />;
+    case "donut":
+      return widget.donut ? (
+        <DonutVisual detail={widget.donut} onSegment={onSegment} />
+      ) : (
+        <NumberVisual value={widget.value} />
+      );
+    case "metric":
+      return widget.metric ? (
+        <MetricVisual values={widget.data} value={widget.value} detail={widget.metric} />
+      ) : (
+        <NumberVisual value={widget.value} />
+      );
   }
+
 }
