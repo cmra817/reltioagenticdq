@@ -369,7 +369,7 @@ export const METRICS_SECTION_ID = "sec-health-metrics";
 
 export function defaultSections(): Section[] {
   return [
-    { id: OVERVIEW_SECTION_ID, title: "" },
+    { id: OVERVIEW_SECTION_ID, title: "Overview" },
     { id: METRICS_SECTION_ID, title: "Data health metrics" },
   ];
 }
