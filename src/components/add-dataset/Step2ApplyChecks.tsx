@@ -70,6 +70,19 @@ export function Step2ApplyChecks({
   const assets = useMemo(() => parseSelectedAssets(selected, customChecks), [selected, customChecks]);
   const [activeKey, setActiveKey] = useState<string>(assets[0]?.key ?? "");
   const [modalOpen, setModalOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
   useEffect(() => {
     if (assets.length > 0 && !assets.some((a) => a.key === activeKey)) {
