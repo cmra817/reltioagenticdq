@@ -215,8 +215,191 @@ export function KpiStrip({
   );
 }
 
-/* ---------- widget canvas ---------- */
-export function WidgetCanvas({
+/* ---------- section chrome ---------- */
+function AddCategoryDivider({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="group/div relative -my-1 flex h-6 items-center">
+      <span
+        className="absolute inset-x-0 top-1/2 h-px opacity-0 transition-opacity group-hover/div:opacity-100"
+        style={{ background: "var(--hairline)" }}
+        aria-hidden="true"
+      />
+      <button
+        type="button"
+        onClick={onAdd}
+        className="relative mx-auto inline-flex items-center gap-1 rounded-full border bg-white px-2.5 py-1 text-[11px] font-medium opacity-0 transition-opacity group-hover/div:opacity-100"
+        style={{ borderColor: "var(--hairline)", color: "var(--brand-blue)" }}
+      >
+        <Plus size={12} />
+        Add category
+      </button>
+    </div>
+  );
+}
+
+function SectionMenu({
+  onRename,
+  onDelete,
+  canDelete,
+}: {
+  onRename: () => void;
+  onDelete: () => void;
+  canDelete: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-label="Category actions"
+        onClick={() => setOpen((v) => !v)}
+        className="rounded-md p-1 hover:bg-black/5"
+        style={{ color: "var(--ink-500)" }}
+      >
+        <MoreVertical size={15} />
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 top-full z-20 mt-1 w-[200px] rounded-lg border bg-white p-1"
+          style={{ borderColor: "var(--hairline)", boxShadow: "0 12px 28px rgba(15,23,42,0.12)" }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              onRename();
+            }}
+            className="w-full rounded-md px-3 py-2 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
+            style={{ color: "var(--ink-900)" }}
+          >
+            Rename category
+          </button>
+          {canDelete && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onDelete();
+              }}
+              className="w-full rounded-md px-3 py-2 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
+              style={{ color: "var(--ink-900)" }}
+            >
+              Delete category
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SectionHeader({
+  section,
+  count,
+  canDelete,
+  onRename,
+  onDelete,
+  onToggle,
+}: {
+  section: Section;
+  count: number;
+  canDelete: boolean;
+  onRename: (title: string) => void;
+  onDelete: () => void;
+  onToggle: () => void;
+}) {
+  const [editing, setEditing] = useState(!section.title);
+  const [draft, setDraft] = useState(section.title);
+
+  useEffect(() => {
+    setDraft(section.title);
+  }, [section.title]);
+
+  function commit() {
+    setEditing(false);
+    const next = draft.trim();
+    if (next !== section.title) onRename(next);
+  }
+
+  if (!section.title && !editing) {
+    return (
+      <div className="group/head mt-6 flex h-6 items-center">
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="text-[12px] opacity-0 transition-opacity group-hover/head:opacity-100"
+          style={{ color: "var(--brand-blue)" }}
+        >
+          Add a category title
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 mb-1 flex items-center gap-2">
+      <button
+        type="button"
+        aria-label={section.collapsed ? "Expand category" : "Collapse category"}
+        onClick={onToggle}
+        className="rounded-md p-1 hover:bg-black/5"
+        style={{ color: "var(--ink-500)" }}
+      >
+        <ChevronDown
+          size={16}
+          style={{
+            transform: section.collapsed ? "rotate(-90deg)" : "none",
+            transition: "transform 120ms",
+          }}
+        />
+      </button>
+      {editing ? (
+        <input
+          autoFocus
+          value={draft}
+          placeholder="Category name"
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
+            if (e.key === "Escape") {
+              setDraft(section.title);
+              setEditing(false);
+            }
+          }}
+          className="rounded-lg border bg-white px-2 py-1 text-[18px] font-semibold outline-none"
+          style={{ borderColor: "var(--brand-blue)", color: "var(--ink-900)", minWidth: 220 }}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="text-[18px] font-semibold"
+          style={{ color: "var(--ink-900)" }}
+        >
+          {section.title}
+        </button>
+      )}
+      <span className="text-[12px]" style={{ color: "var(--ink-300)" }}>
+        {count} {count === 1 ? "widget" : "widgets"}
+      </span>
+      <SectionMenu onRename={() => setEditing(true)} onDelete={onDelete} canDelete={canDelete} />
+    </div>
+  );
+}
+
+/* ---------- one section's grid ---------- */
+function SectionGrid({
+  sectionId,
   items,
   widgets,
   interactive,
@@ -224,11 +407,12 @@ export function WidgetCanvas({
   onDragStart,
   onDragEnd,
   onHoverItem,
-  onHoverZone,
+  onHoverSection,
   onResize,
   onRemove,
   onDrill,
 }: {
+  sectionId: string;
   items: LayoutItem[];
   widgets: Widget[];
   interactive: boolean;
@@ -236,7 +420,7 @@ export function WidgetCanvas({
   onDragStart: (state: NonNullable<DragState>) => void;
   onDragEnd: () => void;
   onHoverItem: (targetId: string) => void;
-  onHoverZone: (zone: Zone) => void;
+  onHoverSection: (sectionId: string) => void;
   onResize: (id: string, w: WidgetWidth, h: WidgetHeight) => void;
   onRemove: (id: string) => void;
   onDrill: (widget: Widget, segment: string) => void;
@@ -256,7 +440,10 @@ export function WidgetCanvas({
       setResizing({ id: item.id, ...next });
 
       function move(ev: PointerEvent) {
-        const spanW = Math.min(colWidth * item.w + GAP * (item.w - 1) + (ev.clientX - startX), colWidth * 3 + GAP * 2);
+        const spanW = Math.min(
+          colWidth * item.w + GAP * (item.w - 1) + (ev.clientX - startX),
+          colWidth * 3 + GAP * 2,
+        );
         const w = Math.min(Math.max(Math.round((spanW + GAP) / (colWidth + GAP)), 1), 3);
         const spanH = ROW_HEIGHT * item.h + GAP * (item.h - 1) + (ev.clientY - startY);
         const h = Math.min(Math.max(Math.round((spanH + GAP) / (ROW_HEIGHT + GAP)), 1), 2);
@@ -278,17 +465,26 @@ export function WidgetCanvas({
   return (
     <div
       ref={ref}
-      className="mt-4 grid gap-4"
+      className="mt-3 grid gap-4"
       style={{
         gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
         gridAutoRows: `${ROW_HEIGHT}px`,
+        minHeight: items.length === 0 ? 96 : undefined,
       }}
       onDragOver={(e) => {
         if (!drag) return;
         e.preventDefault();
-        onHoverZone("canvas");
+        onHoverSection(sectionId);
       }}
     >
+      {items.length === 0 && (
+        <div
+          className="col-span-full flex items-center justify-center rounded-xl border border-dashed text-[12px]"
+          style={{ borderColor: "var(--hairline)", color: "var(--ink-500)", minHeight: 96 }}
+        >
+          Drag a widget here
+        </div>
+      )}
       {items.map((item) => {
         const widget = widgets.find((w) => w.id === item.id);
         if (!widget) return null;
@@ -358,3 +554,82 @@ export function WidgetCanvas({
     </div>
   );
 }
+
+/* ---------- widget canvas ---------- */
+export function WidgetCanvas({
+  items,
+  sections,
+  widgets,
+  interactive,
+  drag,
+  onDragStart,
+  onDragEnd,
+  onHoverItem,
+  onHoverSection,
+  onResize,
+  onRemove,
+  onDrill,
+  onAddSection,
+  onRenameSection,
+  onDeleteSection,
+  onToggleSection,
+}: {
+  items: LayoutItem[];
+  sections: Section[];
+  widgets: Widget[];
+  interactive: boolean;
+  drag: DragState;
+  onDragStart: (state: NonNullable<DragState>) => void;
+  onDragEnd: () => void;
+  onHoverItem: (targetId: string) => void;
+  onHoverSection: (sectionId: string) => void;
+  onResize: (id: string, w: WidgetWidth, h: WidgetHeight) => void;
+  onRemove: (id: string) => void;
+  onDrill: (widget: Widget, segment: string) => void;
+  onAddSection: (index: number) => void;
+  onRenameSection: (id: string, title: string) => void;
+  onDeleteSection: (id: string) => void;
+  onToggleSection: (id: string) => void;
+}) {
+  const firstId = sections[0]?.id;
+  return (
+    <div>
+      {sections.map((section, index) => {
+        const sectionItems = items.filter(
+          (i) => (i.sectionId ?? firstId) === section.id,
+        );
+        return (
+          <div key={section.id}>
+            {index > 0 && interactive && <AddCategoryDivider onAdd={() => onAddSection(index)} />}
+            <SectionHeader
+              section={section}
+              count={sectionItems.length}
+              canDelete={index > 0}
+              onRename={(title) => onRenameSection(section.id, title)}
+              onDelete={() => onDeleteSection(section.id)}
+              onToggle={() => onToggleSection(section.id)}
+            />
+            {!section.collapsed && (
+              <SectionGrid
+                sectionId={section.id}
+                items={sectionItems}
+                widgets={widgets}
+                interactive={interactive}
+                drag={drag}
+                onDragStart={onDragStart}
+                onDragEnd={onDragEnd}
+                onHoverItem={onHoverItem}
+                onHoverSection={onHoverSection}
+                onResize={onResize}
+                onRemove={onRemove}
+                onDrill={onDrill}
+              />
+            )}
+          </div>
+        );
+      })}
+      {interactive && <AddCategoryDivider onAdd={() => onAddSection(sections.length)} />}
+    </div>
+  );
+}
+
