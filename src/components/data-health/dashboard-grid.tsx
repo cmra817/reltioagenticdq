@@ -218,9 +218,23 @@ export function KpiStrip({
 }
 
 /* ---------- section chrome ---------- */
-function AddCategoryDivider({ onAdd }: { onAdd: () => void }) {
+function AddCategoryDivider({
+  onAdd,
+  absoluteTop,
+}: {
+  onAdd: () => void;
+  absoluteTop?: number;
+}) {
+  const positioned = absoluteTop !== undefined;
   return (
-    <div className="group/div relative -my-1 flex h-6 items-center">
+    <div
+      className={
+        positioned
+          ? "group/div absolute inset-x-0 z-10 flex h-6 items-center"
+          : "group/div relative -my-1 flex h-6 items-center"
+      }
+      style={positioned ? { top: absoluteTop - 12 } : undefined}
+    >
       <span
         className="absolute inset-x-0 top-1/2 h-px opacity-0 transition-opacity group-hover/div:opacity-100"
         style={{ background: "var(--hairline)" }}
@@ -238,6 +252,7 @@ function AddCategoryDivider({ onAdd }: { onAdd: () => void }) {
     </div>
   );
 }
+
 
 function SectionMenu({
   onRename,
