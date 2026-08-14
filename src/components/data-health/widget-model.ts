@@ -227,8 +227,34 @@ export function mockDataFor(chartType: ChartType) {
           { label: "crm.contacts", value: "4.2%" },
         ],
       };
+    case "donut":
+      return {
+        data: [],
+        donut: {
+          total: "280",
+          totalLabel: "Total Jobs",
+          segments: [
+            { label: "Passed", value: 87.5, color: "#14a6a6", display: "245 (87.5%)" },
+            { label: "Failed", value: 10, color: "#ef4444", display: "28 (10.0%)" },
+            { label: "Aborted", value: 2.5, color: "#f5b400", display: "7 (2.5%)" },
+          ],
+        },
+      };
+    case "metric":
+      return {
+        data: [80, 84, 82, 86, 88, 85, 89],
+        value: "89%",
+        metric: {
+          delta: "2.3%",
+          direction: "up" as const,
+          passed: "178/200 Passed",
+          ratio: 0.89,
+          color: "#14a6a6",
+        },
+      };
   }
 }
+
 
 /* ---------- dashboard layout model ---------- */
 
