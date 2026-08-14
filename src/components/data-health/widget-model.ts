@@ -353,7 +353,31 @@ export function mockDataFor(chartType: ChartType) {
 export type Zone = "strip" | "canvas";
 export type WidgetWidth = 1 | 2 | 3;
 export type WidgetHeight = 1 | 2;
-export type LayoutItem = { id: string; zone: Zone; w: WidgetWidth; h: WidgetHeight };
+export type LayoutItem = {
+  id: string;
+  zone: Zone;
+  w: WidgetWidth;
+  h: WidgetHeight;
+  /** canvas grouping; undefined falls back to the first section */
+  sectionId?: string;
+};
+
+export type Section = { id: string; title: string; collapsed?: boolean };
+
+export const OVERVIEW_SECTION_ID = "sec-overview";
+export const METRICS_SECTION_ID = "sec-health-metrics";
+
+export function defaultSections(): Section[] {
+  return [
+    { id: OVERVIEW_SECTION_ID, title: "" },
+    { id: METRICS_SECTION_ID, title: "Data health metrics" },
+  ];
+}
+
+export function newSectionId() {
+  return `sec-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 
 /** OOTB metrics modelled as number widgets so they can share the KPI strip. */
 export const OOTB_WIDGETS: Widget[] = [
