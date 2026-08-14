@@ -428,6 +428,7 @@ function SectionGrid({
   onResize,
   onRemove,
   onDrill,
+  onSplit,
 }: {
   sectionId: string;
   items: LayoutItem[];
@@ -441,11 +442,38 @@ function SectionGrid({
   onResize: (id: string, w: WidgetWidth, h: WidgetHeight) => void;
   onRemove: (id: string) => void;
   onDrill: (widget: Widget, segment: string) => void;
+  onSplit: (itemId: string) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const { width, cols } = useContainerCols(ref);
   const [resizing, setResizing] = useState<{ id: string; w: number; h: number } | null>(null);
   const colWidth = cols > 0 ? (width - GAP * (cols - 1)) / cols : 0;
+
+  // Measure where each rendered row starts so an "add category" strip can sit in every row gap.
+  const tileRefs = useRef(new Map<string, HTMLDivElement>());
+  const [rowStarts, setRowStarts] = useState<{ itemId: string; top: number }[]>([]);
+  useEffect(() => {
+    if (!interactive) return;
+    const container = ref.current;
+    if (!container) return;
+    const measure = () => {
+      const base = container.getBoundingClientRect().top;
+      const seen: { itemId: string; top: number }[] = [];
+      for (const item of items) {
+        const el = tileRefs.current.get(item.id);
+        if (!el) continue;
+        const top = Math.round(el.getBoundingClientRect().top - base);
+        if (!seen.some((s) => Math.abs(s.top - top) < 8)) seen.push({ itemId: item.id, top });
+      }
+      seen.sort((a, b) => a.top - b.top);
+      setRowStarts(seen);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [items, interactive, width, cols, resizing]);
+
 
   const startResize = useCallback(
     (e: React.PointerEvent, item: LayoutItem) => {
