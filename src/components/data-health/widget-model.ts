@@ -282,7 +282,7 @@ export function isOotbWidget(id: string) {
 
 function canvasSizeFor(w: Widget): { w: WidgetWidth; h: WidgetHeight } {
   if (w.chartType === "number") return { w: 1, h: 1 };
-  if (w.chartType === "table") return { w: 1, h: 2 };
+  if (w.chartType === "table") return { w: 1, h: 1 };
   return { w: 2, h: 2 };
 }
 
