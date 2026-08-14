@@ -1,9 +1,6 @@
-export type Dimension =
-  | "Completeness"
-  | "Uniqueness"
-  | "Validity"
-  | "Consistency"
-  | "Timeliness";
+import type { DQDimension } from "@/components/dq-dimensions";
+
+export type Dimension = DQDimension;
 
 export type Check = {
   id: string;
@@ -93,9 +90,9 @@ const customersChecks: Omit<Check, "id">[] = [
     field: "segment",
   },
   {
-    rule: "Refreshed in last 24 hours",
-    description: "Customer dimension should be refreshed at least daily",
-    dimension: "Timeliness",
+    rule: "Row count within expected range",
+    description: "Detect sudden drops or spikes in row count vs. recent history",
+    dimension: "Consistency",
     field: "(table)",
   },
 ];
@@ -138,10 +135,10 @@ const ordersChecks: Omit<Check, "id">[] = [
     field: "order_date",
   },
   {
-    rule: "Refreshed in last 6 hours",
-    description: "Daily orders fact should refresh multiple times per day",
-    dimension: "Timeliness",
-    field: "(table)",
+    rule: "Order total within historical range",
+    description: "Detect anomalous order totals compared to recent averages",
+    dimension: "Consistency",
+    field: "order_total",
   },
 ];
 
@@ -170,12 +167,6 @@ function genericChecks(assetName: string): Omit<Check, "id">[] {
     description: "Updated timestamp is required to detect stale records",
     dimension: "Completeness",
     field: "updated_at",
-  },
-  {
-    rule: `Refreshed on schedule`,
-    description: `${assetName} should refresh at least once per day`,
-    dimension: "Timeliness",
-    field: "(table)",
   },
   {
     rule: "Row count within expected range",
