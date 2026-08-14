@@ -257,7 +257,12 @@ export function DqChecksScreen() {
                       ["passRate", "Pass rate"],
                     ] as const
                   ).map(([key, label]) => (
-                    <th key={key} className="px-6 py-3 font-semibold">
+                    <th
+                      key={key}
+                      className={`px-6 py-3 font-semibold ${key === "name" ? "w-[45%]" : ""} ${
+                        key === "passRate" ? "text-right" : ""
+                      }`}
+                    >
                       <button
                         type="button"
                         onClick={() => toggleSort(key)}
@@ -268,18 +273,22 @@ export function DqChecksScreen() {
                       </button>
                     </th>
                   ))}
-                  <th className="px-6 py-3" />
                 </tr>
               </thead>
               <tbody>
                 {visible.map((r) => (
                   <tr
                     key={r.id}
-                    className="group border-b transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
+                    className="group relative border-b transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
                     style={{ borderColor: "var(--hairline)" }}
                   >
-                    <td className="px-6 py-4 font-medium" style={{ color: "var(--ink-900)" }}>
-                      {r.name}
+                    <td className="w-[45%] px-6 py-4" style={{ color: "var(--ink-900)" }}>
+                      <div className="font-medium">{r.name}</div>
+                      {r.description && (
+                        <div className="mt-0.5 line-clamp-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
+                          {r.description}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <DimensionBadge label={r.dimension} />
@@ -290,8 +299,8 @@ export function DqChecksScreen() {
                     <td className="px-6 py-4" style={{ color: "var(--ink-900)" }}>
                       {r.columns}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="relative px-6 py-4">
+                      <div className="flex items-center justify-end gap-3">
                         <div
                           className="h-1.5 w-24 overflow-hidden rounded-full"
                           style={{ background: "var(--surface-soft)" }}
@@ -305,11 +314,9 @@ export function DqChecksScreen() {
                           {r.passRate}%
                         </span>
                       </div>
-                    </td>
-                    <td className="group/cell relative px-6 py-4 text-right">
                       <div
-                        className="absolute inset-0 flex items-center justify-end gap-2 px-6 opacity-0 transition-opacity group-hover:opacity-100"
-                        style={{ background: "var(--surface-soft)" }}
+                        className="pointer-events-none absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-lg border bg-white px-1.5 py-1 opacity-0 shadow-[0_2px_10px_rgba(15,23,42,0.12)] transition-opacity group-hover:pointer-events-auto group-hover:opacity-100"
+                        style={{ borderColor: "var(--hairline)" }}
                       >
                         <RowActions
                           rule={r}
