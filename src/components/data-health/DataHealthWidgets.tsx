@@ -201,11 +201,33 @@ export function DataHealthWidgets() {
   function addSection(index: number) {
     setSections((list) => {
       const next = [...list];
-      next.splice(index, 0, { id: newSectionId(), title: "" });
+      next.splice(index, 0, { id: newSectionId(), title: "New category" });
       return next;
     });
     markCustomized();
   }
+
+  /** Split a category at a widget: that widget and everything after it move to a new category. */
+  function splitSection(sectionId: string, itemId: string) {
+    const id = newSectionId();
+    setSections((list) => {
+      const at = list.findIndex((s) => s.id === sectionId);
+      const next = [...list];
+      next.splice(at < 0 ? next.length : at + 1, 0, { id, title: "New category" });
+      return next;
+    });
+    setLayout((l) => {
+      const inSection = l.filter(
+        (i) => i.zone === "canvas" && (i.sectionId ?? sections[0]?.id) === sectionId,
+      );
+      const cut = inSection.findIndex((i) => i.id === itemId);
+      if (cut < 0) return l;
+      const moving = new Set(inSection.slice(cut).map((i) => i.id));
+      return l.map((i) => (moving.has(i.id) ? { ...i, sectionId: id } : i));
+    });
+    markCustomized();
+  }
+
 
   function renameSection(id: string, title: string) {
     setSections((list) => list.map((s) => (s.id === id ? { ...s, title } : s)));
@@ -385,6 +407,8 @@ export function DataHealthWidgets() {
           onRemove={remove}
           onDrill={drill}
           onAddSection={addSection}
+          onSplitSection={splitSection}
+
           onRenameSection={renameSection}
           onDeleteSection={deleteSection}
           onToggleSection={toggleSection}

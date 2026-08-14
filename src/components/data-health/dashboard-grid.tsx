@@ -218,9 +218,23 @@ export function KpiStrip({
 }
 
 /* ---------- section chrome ---------- */
-function AddCategoryDivider({ onAdd }: { onAdd: () => void }) {
+function AddCategoryDivider({
+  onAdd,
+  absoluteTop,
+}: {
+  onAdd: () => void;
+  absoluteTop?: number;
+}) {
+  const positioned = absoluteTop !== undefined;
   return (
-    <div className="group/div relative -my-1 flex h-6 items-center">
+    <div
+      className={
+        positioned
+          ? "group/div absolute inset-x-0 z-10 flex h-6 items-center"
+          : "group/div relative -my-1 flex h-6 items-center"
+      }
+      style={positioned ? { top: absoluteTop - 12 } : undefined}
+    >
       <span
         className="absolute inset-x-0 top-1/2 h-px opacity-0 transition-opacity group-hover/div:opacity-100"
         style={{ background: "var(--hairline)" }}
@@ -238,6 +252,7 @@ function AddCategoryDivider({ onAdd }: { onAdd: () => void }) {
     </div>
   );
 }
+
 
 function SectionMenu({
   onRename,
@@ -413,6 +428,7 @@ function SectionGrid({
   onResize,
   onRemove,
   onDrill,
+  onSplit,
 }: {
   sectionId: string;
   items: LayoutItem[];
@@ -426,11 +442,38 @@ function SectionGrid({
   onResize: (id: string, w: WidgetWidth, h: WidgetHeight) => void;
   onRemove: (id: string) => void;
   onDrill: (widget: Widget, segment: string) => void;
+  onSplit: (itemId: string) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const { width, cols } = useContainerCols(ref);
   const [resizing, setResizing] = useState<{ id: string; w: number; h: number } | null>(null);
   const colWidth = cols > 0 ? (width - GAP * (cols - 1)) / cols : 0;
+
+  // Measure where each rendered row starts so an "add category" strip can sit in every row gap.
+  const tileRefs = useRef(new Map<string, HTMLDivElement>());
+  const [rowStarts, setRowStarts] = useState<{ itemId: string; top: number }[]>([]);
+  useEffect(() => {
+    if (!interactive) return;
+    const container = ref.current;
+    if (!container) return;
+    const measure = () => {
+      const base = container.getBoundingClientRect().top;
+      const seen: { itemId: string; top: number }[] = [];
+      for (const item of items) {
+        const el = tileRefs.current.get(item.id);
+        if (!el) continue;
+        const top = Math.round(el.getBoundingClientRect().top - base);
+        if (!seen.some((s) => Math.abs(s.top - top) < 8)) seen.push({ itemId: item.id, top });
+      }
+      seen.sort((a, b) => a.top - b.top);
+      setRowStarts(seen);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [items, interactive, width, cols, resizing]);
+
 
   const startResize = useCallback(
     (e: React.PointerEvent, item: LayoutItem) => {
@@ -467,7 +510,7 @@ function SectionGrid({
   return (
     <div
       ref={ref}
-      className="mt-3 grid gap-4"
+      className="relative mt-3 grid gap-4"
       style={{
         gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
         gridAutoRows: `${ROW_HEIGHT}px`,
@@ -487,6 +530,15 @@ function SectionGrid({
           Drag a widget here
         </div>
       )}
+      {interactive &&
+        !drag &&
+        rowStarts.slice(1).map((row) => (
+          <AddCategoryDivider
+            key={`split-${row.itemId}`}
+            absoluteTop={row.top}
+            onAdd={() => onSplit(row.itemId)}
+          />
+        ))}
       {items.map((item) => {
         const widget = widgets.find((w) => w.id === item.id);
         if (!widget) return null;
@@ -495,11 +547,16 @@ function SectionGrid({
         return (
           <div
             key={item.id}
+            ref={(el) => {
+              if (el) tileRefs.current.set(item.id, el);
+              else tileRefs.current.delete(item.id);
+            }}
             draggable={interactive}
             onDragStart={(e) => {
               e.dataTransfer.effectAllowed = "move";
               onDragStart({ id: item.id, zone: "canvas", isNumber: widget.chartType === "number" });
             }}
+
             onDragEnd={onDragEnd}
             onDragOver={(e) => {
               if (!drag) return;
@@ -572,6 +629,7 @@ export function WidgetCanvas({
   onRemove,
   onDrill,
   onAddSection,
+  onSplitSection,
   onRenameSection,
   onDeleteSection,
   onToggleSection,
@@ -589,6 +647,7 @@ export function WidgetCanvas({
   onRemove: (id: string) => void;
   onDrill: (widget: Widget, segment: string) => void;
   onAddSection: (index: number) => void;
+  onSplitSection: (sectionId: string, itemId: string) => void;
   onRenameSection: (id: string, title: string) => void;
   onDeleteSection: (id: string) => void;
   onToggleSection: (id: string) => void;
@@ -625,8 +684,10 @@ export function WidgetCanvas({
                 onResize={onResize}
                 onRemove={onRemove}
                 onDrill={onDrill}
+                onSplit={(itemId) => onSplitSection(section.id, itemId)}
               />
             )}
+
           </div>
         );
       })}
