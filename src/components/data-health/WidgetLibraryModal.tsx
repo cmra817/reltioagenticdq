@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Copy, Search } from "lucide-react";
+import { Check, Copy, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WidgetCard } from "./WidgetCard";
 import type { Widget } from "./widget-model";
