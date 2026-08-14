@@ -87,18 +87,9 @@ export function Step2ApplyChecks({
 
       {/* Card */}
       <div
-        className="relative mt-6 rounded-2xl border bg-white"
+        className="mt-6 rounded-2xl border bg-white"
         style={{ borderColor: "var(--hairline)" }}
       >
-        {/* Lightning accent */}
-        <div
-          className="absolute -top-2 right-6 flex h-7 w-7 items-center justify-center rounded-md"
-          style={{ background: "#FFE36A", color: "#7A5A00" }}
-          aria-hidden="true"
-        >
-          <Zap size={14} fill="currentColor" />
-        </div>
-
         {/* Tabs */}
         <div
           className="flex items-center justify-between border-b px-6"
