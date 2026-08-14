@@ -355,9 +355,14 @@ export function DqChecksScreen() {
                   <DimensionBadge label={r.dimension} size="sm" />
                   <CreatorBadge rule={r} />
                 </div>
-                <p className="mt-3 text-[13px]" style={{ color: "var(--ink-700)" }}>
-                  {r.description}
-                </p>
+                <div className="mt-3 space-y-0.5">
+                  <p className="line-clamp-1 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                    {r.description}
+                  </p>
+                  <p className="line-clamp-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
+                    {r.expectation} &bull; threshold {r.threshold}%
+                  </p>
+                </div>
                 <div
                   className="mt-3 flex items-center gap-4 text-[12px]"
                   style={{ color: "var(--ink-500)" }}
