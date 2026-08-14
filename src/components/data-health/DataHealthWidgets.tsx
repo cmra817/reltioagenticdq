@@ -17,19 +17,23 @@ import { WidgetLibraryModal } from "./WidgetLibraryModal";
 import { CreateWidgetModal } from "./CreateWidgetModal";
 import { KpiStrip, WidgetCanvas, type DragState } from "./dashboard-grid";
 import {
+  ALL_LIBRARY_WIDGETS,
   DEFAULT_APPLIED,
-  MOCK_WIDGETS,
   OOTB_WIDGETS,
   ORG_DEFAULT_APPLIED,
   defaultLayoutFor,
+  defaultSections,
   isOotbWidget,
   layoutItemFor,
+  newSectionId,
   type LayoutItem,
+  type Section,
   type Widget,
   type WidgetHeight,
   type WidgetWidth,
   type Zone,
 } from "./widget-model";
+
 
 type Mode = "mine" | "org";
 
