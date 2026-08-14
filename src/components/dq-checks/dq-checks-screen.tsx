@@ -70,7 +70,7 @@ export function DqChecksScreen() {
     key: "name",
     dir: "asc",
   });
-  const [modal, setModal] = useState<{ open: boolean; mode: "create" | "clone"; source: Rule | null }>({
+  const [modal, setModal] = useState<{ open: boolean; mode: "create" | "clone" | "edit"; source: Rule | null }>({
     open: false,
     mode: "create",
     source: null,
@@ -295,6 +295,7 @@ export function DqChecksScreen() {
                       <RowActions
                         rule={r}
                         onClone={(rule) => setModal({ open: true, mode: "clone", source: rule })}
+                        onEdit={(rule) => setModal({ open: true, mode: "edit", source: rule })}
                       />
                     </td>
                   </tr>
@@ -319,6 +320,7 @@ export function DqChecksScreen() {
                   <RowActions
                     rule={r}
                     onClone={(rule) => setModal({ open: true, mode: "clone", source: rule })}
+                        onEdit={(rule) => setModal({ open: true, mode: "edit", source: rule })}
                   />
                 </div>
                 <div className="mt-2 flex items-center gap-3 text-[12px]" style={{ color: "var(--ink-700)" }}>
@@ -362,7 +364,11 @@ export function DqChecksScreen() {
         source={modal.source}
         onClose={() => setModal({ open: false, mode: "create", source: null })}
         onSave={(rule) => {
-          setRules((prev) => [rule, ...prev]);
+          setRules((prev) =>
+            modal.mode === "edit"
+              ? prev.map((r) => (r.id === rule.id ? rule : r))
+              : [rule, ...prev],
+          );
           setModal({ open: false, mode: "create", source: null });
           toast.success(`Saved “${rule.name}”`);
         }}
