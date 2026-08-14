@@ -117,10 +117,7 @@ export function WidgetLibraryModal({
                     footer={
                       <>
                         {isApplied ? (
-                          <div
-                            className="flex flex-1 items-center gap-1.5 px-3 py-2 text-[13px] font-medium"
-                            style={{ color: "var(--success)" }}
-                          >
+                          <div className="flex flex-1 items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-emerald-600">
                             <Check size={15} strokeWidth={2.5} />
                             <span>Applied</span>
                           </div>
