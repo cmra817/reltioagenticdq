@@ -149,7 +149,7 @@ function LineVisual({ values, color = "#14a6a6" }: { values: number[]; color?: s
       height="100%"
       preserveAspectRatio="none"
       aria-hidden="true"
-      className="h-full w-full"
+      className="block h-full w-full"
     >
       <path d={`${path} L${w - pad} ${h - pad} L${pad} ${h - pad} Z`} fill={`${color}1f`} />
       <path
