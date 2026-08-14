@@ -306,16 +306,21 @@ export function DqChecksScreen() {
                         </span>
                       </div>
                     </td>
-                    <td className="relative px-6 py-4 text-right">
-                      <RowActions
-                        rule={r}
-                        onClone={(rule) => setModal({ open: true, mode: "clone", source: rule })}
-                        onEdit={(rule) => setModal({ open: true, mode: "edit", source: rule })}
-                        onDelete={(rule) => {
-                          setRules((prev) => prev.filter((item) => item.id !== rule.id));
-                          toast.success(`Deleted “${rule.name}”`);
-                        }}
-                      />
+                    <td className="group/cell relative px-6 py-4 text-right">
+                      <div
+                        className="pointer-events-none absolute inset-0 flex items-center justify-end gap-2 px-6 opacity-0 transition-opacity group-hover:opacity-100"
+                        style={{ background: "var(--surface-soft)" }}
+                      >
+                        <RowActions
+                          rule={r}
+                          onClone={(rule) => setModal({ open: true, mode: "clone", source: rule })}
+                          onEdit={(rule) => setModal({ open: true, mode: "edit", source: rule })}
+                          onDelete={(rule) => {
+                            setRules((prev) => prev.filter((item) => item.id !== rule.id));
+                            toast.success(`Deleted “${rule.name}”`);
+                          }}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}
