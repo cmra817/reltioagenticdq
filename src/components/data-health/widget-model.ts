@@ -1,6 +1,18 @@
-export type ChartType = "line" | "bar" | "number" | "table";
+export type ChartType = "line" | "bar" | "number" | "table" | "donut" | "metric";
 
 export type WidgetCreator = { kind: "reltio" } | { kind: "me" } | { kind: "team"; name: string };
+
+export type DonutSegment = { label: string; value: number; color: string; display: string };
+
+export type DonutDetail = { total: string; totalLabel: string; segments: DonutSegment[] };
+
+export type MetricDetail = {
+  delta: string;
+  direction: "up" | "down";
+  passed: string;
+  ratio: number;
+  color: string;
+};
 
 export type Widget = {
   id: string;
@@ -16,7 +28,10 @@ export type Widget = {
   value?: string;
   rows?: { label: string; value: string }[];
   segments?: string[];
+  donut?: DonutDetail;
+  metric?: MetricDetail;
 };
+
 
 export function widgetCreatorLabel(c: WidgetCreator) {
   if (c.kind === "reltio") return "Reltio";
