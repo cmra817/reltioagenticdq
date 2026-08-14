@@ -308,7 +308,7 @@ export function DqChecksScreen() {
                     </td>
                     <td className="group/cell relative px-6 py-4 text-right">
                       <div
-                        className="pointer-events-none absolute inset-0 flex items-center justify-end gap-2 px-6 opacity-0 transition-opacity group-hover:opacity-100"
+                        className="absolute inset-0 flex items-center justify-end gap-2 px-6 opacity-0 transition-opacity group-hover:opacity-100"
                         style={{ background: "var(--surface-soft)" }}
                       >
                         <RowActions
