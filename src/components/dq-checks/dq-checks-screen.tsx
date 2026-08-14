@@ -366,6 +366,7 @@ export function DqChecksScreen() {
                 <div
                   className="mt-3 flex items-center gap-4 text-[12px]"
                   style={{ color: "var(--ink-500)" }}
+                >
                   <span className="inline-flex items-center gap-1.5">
                     <Columns3 size={13} /> {r.columns} columns
                   </span>
