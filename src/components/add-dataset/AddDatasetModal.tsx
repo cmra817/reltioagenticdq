@@ -3,7 +3,6 @@ import { Stepper } from "./Stepper";
 import { Step1SelectData } from "./Step1SelectData";
 import { Step2ApplyChecks } from "./Step2ApplyChecks";
 import { Step3Schedule, DEFAULT_SCHEDULE, type ScheduleConfig } from "./Step3Schedule";
-import { AgentChatPanel } from "./AgentChatPanel";
 import { generateChecks } from "./mock-checks";
 import { WAREHOUSES } from "./mock-warehouses";
 import type { CreatedAssetInput } from "../created-assets-context";
