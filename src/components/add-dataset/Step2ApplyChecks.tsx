@@ -111,6 +111,18 @@ export function Step2ApplyChecks({
   const active = assets.find((a) => a.key === activeKey) ?? assets[0];
   const activeChecked = checked[active.key] ?? new Set<string>();
 
+  const existingIds = new Set(active.checks.map((c) => c.id));
+  const q = query.trim().toLowerCase();
+  const libraryResults = MOCK_RULES.filter(
+    (r) =>
+      !existingIds.has(`lib-${r.id}`) &&
+      (q === "" ||
+        r.name.toLowerCase().includes(q) ||
+        r.dimension.toLowerCase().includes(q) ||
+        r.description.toLowerCase().includes(q)),
+  ).slice(0, 6);
+
+
   return (
     <div className="px-10 py-8">
       {/* Sub-header */}
