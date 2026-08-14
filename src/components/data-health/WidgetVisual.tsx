@@ -16,7 +16,14 @@ function LineVisual({ values }: { values: number[] }) {
     })
     .join(" ");
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height="84" aria-hidden="true">
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      width="100%"
+      height="100%"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      className="h-full min-h-[84px] w-full"
+    >
       <path d={`${path} L${w - pad} ${h - pad} L${pad} ${h - pad} Z`} fill="rgba(20,166,166,0.10)" />
       <path d={path} fill="none" stroke="#14a6a6" strokeWidth="2" strokeLinejoin="round" />
     </svg>
@@ -34,7 +41,7 @@ function BarVisual({
 }) {
   const max = Math.max(...values, 1);
   return (
-    <div className="flex h-[84px] items-end gap-2">
+    <div className="flex h-full min-h-[84px] items-end gap-2">
       {values.map((v, i) => {
         const label = segments?.[i] ?? `Segment ${i + 1}`;
         return (
@@ -67,7 +74,7 @@ function BarVisual({
 
 function NumberVisual({ value }: { value?: string }) {
   return (
-    <div className="flex h-[84px] items-center">
+    <div className="flex h-full min-h-[84px] items-center">
       <span className="text-[34px] font-semibold leading-none" style={{ color: "var(--ink-900)" }}>
         {value ?? "—"}
       </span>
@@ -77,7 +84,7 @@ function NumberVisual({ value }: { value?: string }) {
 
 function TableVisual({ rows }: { rows?: { label: string; value: string }[] }) {
   return (
-    <div className="h-[84px] overflow-hidden">
+    <div className="h-full min-h-[84px] overflow-hidden">
       {(rows ?? []).slice(0, 4).map((r) => (
         <div
           key={r.label}

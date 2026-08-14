@@ -47,7 +47,7 @@ export function WidgetCard({
   return (
     <div
       ref={wrapRef}
-      className={`group relative overflow-hidden rounded-xl border bg-white p-4 ${className}`}
+      className={`group relative flex flex-col overflow-hidden rounded-xl border bg-white p-4 ${className}`}
       style={{ borderColor: "var(--hairline)" }}
     >
       {onRemove && (
@@ -93,23 +93,26 @@ export function WidgetCard({
               }
             : undefined
         }
+        className="flex min-h-0 flex-1 flex-col"
         style={{ cursor: clickable ? "pointer" : "default" }}
       >
-        <WidgetVisual widget={widget} onSegment={clickable ? onDrill : undefined} />
-        {clickable && (
-          <div className="mt-2 text-[11px]" style={{ color: "var(--brand-blue)" }}>
-            Click to view incidents
-          </div>
-        )}
-        <div className="mt-3 text-[14px] font-medium" style={{ color: "var(--ink-900)" }}>
+        <div className="pl-4 pr-6 text-[14px] font-medium" style={{ color: "var(--ink-900)" }}>
           {widget.name}
         </div>
-        <div className="mt-1 flex items-center gap-2">
+        <div className="mt-0.5 flex items-center gap-2 pl-4">
           <CreatorBadge widget={widget} />
           <span className="text-[12px]" style={{ color: "var(--ink-300)" }}>
             · {widget.timeframe}
           </span>
         </div>
+        <div className="mt-3 min-h-0 flex-1">
+          <WidgetVisual widget={widget} onSegment={clickable ? onDrill : undefined} />
+        </div>
+        {clickable && (
+          <div className="mt-2 text-[11px]" style={{ color: "var(--brand-blue)" }}>
+            Click to view incidents
+          </div>
+        )}
       </div>
 
       {footer && <div className="mt-3 flex items-center gap-2">{footer}</div>}
