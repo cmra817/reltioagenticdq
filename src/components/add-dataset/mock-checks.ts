@@ -1,4 +1,5 @@
 import type { DQDimension } from "@/components/dq-dimensions";
+import type { Creator } from "@/components/dq-checks/mock-rules";
 
 export type Dimension = DQDimension;
 
@@ -8,6 +9,8 @@ export type Check = {
   description: string;
   dimension: Dimension;
   field: string;
+  /** Who created or recommended this check. Defaults to Reltio for generated checks. */
+  creator?: Creator;
 };
 
 const customersChecks: Omit<Check, "id">[] = [
