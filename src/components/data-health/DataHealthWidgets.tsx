@@ -117,10 +117,12 @@ export function DataHealthWidgets() {
   function publish() {
     setPublishedOrg(orgApplied);
     setPublishedOrgLayout(orgLayout);
+    setPublishedOrgSections(orgSections);
     setConfirmPublish(false);
     if (!customized) {
       setMyApplied(orgApplied);
       setMyLayout(orgLayout);
+      setMySections(orgSections);
     }
     toast.success("Org default dashboard published");
   }
@@ -128,6 +130,7 @@ export function DataHealthWidgets() {
   function resetToOrgDefault() {
     setMyApplied(publishedOrg);
     setMyLayout(publishedOrgLayout);
+    setMySections(publishedOrgSections);
     setCustomized(false);
     toast.success("Your dashboard was reset to the org default");
   }
@@ -148,7 +151,11 @@ export function DataHealthWidgets() {
       const [moved] = next.splice(from, 1);
       if (!moved) return l;
       const insertAt = next.findIndex((i) => i.id === targetId);
-      next.splice(insertAt < 0 ? next.length : insertAt, 0, { ...moved, zone: target.zone });
+      next.splice(insertAt < 0 ? next.length : insertAt, 0, {
+        ...moved,
+        zone: target.zone,
+        sectionId: target.sectionId ?? sections[0]?.id,
+      });
       return next;
     });
     markCustomized();
@@ -170,10 +177,63 @@ export function DataHealthWidgets() {
     markCustomized();
   }
 
+  function moveToSection(sectionId: string) {
+    if (!drag) return;
+    setLayout((l) => {
+      const item = l.find((i) => i.id === drag.id);
+      if (!item) return l;
+      const currentSection = item.sectionId ?? sections[0]?.id;
+      if (item.zone === "canvas" && currentSection === sectionId) return l;
+      const rest = l.filter((i) => i.id !== drag.id);
+      const moved: LayoutItem = { ...item, zone: "canvas", sectionId };
+      const lastOfSection = rest.reduce(
+        (acc, i, idx) =>
+          i.zone === "canvas" && (i.sectionId ?? sections[0]?.id) === sectionId ? idx : acc,
+        -1,
+      );
+      if (lastOfSection < 0) rest.push(moved);
+      else rest.splice(lastOfSection + 1, 0, moved);
+      return rest;
+    });
+    markCustomized();
+  }
+
+  function addSection(index: number) {
+    setSections((list) => {
+      const next = [...list];
+      next.splice(index, 0, { id: newSectionId(), title: "" });
+      return next;
+    });
+    markCustomized();
+  }
+
+  function renameSection(id: string, title: string) {
+    setSections((list) => list.map((s) => (s.id === id ? { ...s, title } : s)));
+    markCustomized();
+  }
+
+  function deleteSection(id: string) {
+    const fallback = sections.find((s) => s.id !== id)?.id;
+    if (!fallback) return;
+    setSections((list) => list.filter((s) => s.id !== id));
+    setLayout((l) =>
+      l.map((i) => (i.sectionId === id ? { ...i, sectionId: fallback } : i)),
+    );
+    markCustomized();
+  }
+
+  function toggleSection(id: string) {
+    setSections((list) =>
+      list.map((s) => (s.id === id ? { ...s, collapsed: !s.collapsed } : s)),
+    );
+  }
+
   function resize(id: string, w: WidgetWidth, h: WidgetHeight) {
     setLayout((l) => l.map((i) => (i.id === id ? { ...i, w, h } : i)));
     markCustomized();
   }
+
+
 
   const visible = layout.filter((i) => {
     const exists = allWidgets.some((w) => w.id === i.id);
