@@ -77,6 +77,9 @@ export function DataHealthWidgets() {
   const setApplied = mode === "org" ? setOrgApplied : setMyApplied;
   const layout = mode === "org" ? orgLayout : myLayout;
   const setLayout = mode === "org" ? setOrgLayout : setMyLayout;
+  const sections = mode === "org" ? orgSections : mySections;
+  const setSections = mode === "org" ? setOrgSections : setMySections;
+
 
   const allWidgets = [...OOTB_WIDGETS, ...widgets];
 
