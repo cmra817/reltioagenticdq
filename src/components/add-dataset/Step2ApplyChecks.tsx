@@ -42,9 +42,9 @@ function CreatorBadge({ creator }: { creator: Creator }) {
   );
 }
 
-function ruleToCheck(rule: Rule): Check {
+function ruleToCheck(rule: Rule, idPrefix = ""): Check {
   return {
-    id: rule.id,
+    id: `${idPrefix}${rule.id}`,
     rule: rule.name,
     description: rule.description,
     dimension: rule.dimension,
