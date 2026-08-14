@@ -12,21 +12,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { WidgetCard } from "./WidgetCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { WidgetLibraryModal } from "./WidgetLibraryModal";
 import { CreateWidgetModal } from "./CreateWidgetModal";
+import { KpiStrip, WidgetCanvas, type DragState } from "./dashboard-grid";
 import {
   DEFAULT_APPLIED,
   MOCK_WIDGETS,
-  OOTB_METRICS,
+  OOTB_WIDGETS,
   ORG_DEFAULT_APPLIED,
+  defaultLayoutFor,
+  isOotbWidget,
+  layoutItemFor,
+  type LayoutItem,
   type Widget,
+  type WidgetHeight,
+  type WidgetWidth,
+  type Zone,
 } from "./widget-model";
 
 type Mode = "mine" | "org";
 
 export function DataHealthWidgets() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // mock: current user is an admin so the template toggle is visible
   const [isAdmin] = useState(true);
@@ -36,7 +45,19 @@ export function DataHealthWidgets() {
   const [myApplied, setMyApplied] = useState<string[]>(DEFAULT_APPLIED);
   const [orgApplied, setOrgApplied] = useState<string[]>(ORG_DEFAULT_APPLIED);
   const [publishedOrg, setPublishedOrg] = useState<string[]>(ORG_DEFAULT_APPLIED);
+
+  const [myLayout, setMyLayout] = useState<LayoutItem[]>(() =>
+    defaultLayoutFor(DEFAULT_APPLIED, MOCK_WIDGETS),
+  );
+  const [orgLayout, setOrgLayout] = useState<LayoutItem[]>(() =>
+    defaultLayoutFor(ORG_DEFAULT_APPLIED, MOCK_WIDGETS),
+  );
+  const [publishedOrgLayout, setPublishedOrgLayout] = useState<LayoutItem[]>(() =>
+    defaultLayoutFor(ORG_DEFAULT_APPLIED, MOCK_WIDGETS),
+  );
+
   const [customized, setCustomized] = useState(false);
+  const [drag, setDrag] = useState<DragState>(null);
 
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -45,6 +66,10 @@ export function DataHealthWidgets() {
 
   const applied = mode === "org" ? orgApplied : myApplied;
   const setApplied = mode === "org" ? setOrgApplied : setMyApplied;
+  const layout = mode === "org" ? orgLayout : myLayout;
+  const setLayout = mode === "org" ? setOrgLayout : setMyLayout;
+
+  const allWidgets = [...OOTB_WIDGETS, ...widgets];
 
   function markCustomized() {
     if (mode === "mine") setCustomized(true);
@@ -53,12 +78,14 @@ export function DataHealthWidgets() {
   function apply(w: Widget) {
     if (applied.includes(w.id)) return;
     setMyApplied((ids) => (ids.includes(w.id) ? ids : [...ids, w.id]));
+    setMyLayout((l) => (l.some((i) => i.id === w.id) ? l : [...l, layoutItemFor(w)]));
     setCustomized(true);
     toast.success(`"${w.name}" added to your dashboard`);
   }
 
   function remove(id: string) {
     setApplied((ids) => ids.filter((x) => x !== id));
+    setLayout((l) => l.filter((i) => i.id !== id));
     markCustomized();
     toast("Removed from dashboard — still available in the library");
   }
@@ -67,6 +94,7 @@ export function DataHealthWidgets() {
     setWidgets((list) => [w, ...list]);
     if (addToDashboard) {
       setMyApplied((ids) => [...ids, w.id]);
+      setMyLayout((l) => [...l, layoutItemFor(w)]);
       setCustomized(true);
       toast.success(`"${w.name}" saved and added to your dashboard`);
     } else {
@@ -76,13 +104,18 @@ export function DataHealthWidgets() {
 
   function publish() {
     setPublishedOrg(orgApplied);
+    setPublishedOrgLayout(orgLayout);
     setConfirmPublish(false);
-    if (!customized) setMyApplied(orgApplied);
+    if (!customized) {
+      setMyApplied(orgApplied);
+      setMyLayout(orgLayout);
+    }
     toast.success("Org default dashboard published");
   }
 
   function resetToOrgDefault() {
     setMyApplied(publishedOrg);
+    setMyLayout(publishedOrgLayout);
     setCustomized(false);
     toast.success("Your dashboard was reset to the org default");
   }
@@ -91,9 +124,52 @@ export function DataHealthWidgets() {
     navigate({ to: "/incidents", search: { segment, widget: widget.name } });
   }
 
-  const appliedWidgets = applied
-    .map((id) => widgets.find((w) => w.id === id))
-    .filter((w): w is Widget => Boolean(w));
+  /* ---------- layout mutations ---------- */
+  function moveBefore(targetId: string) {
+    if (!drag || drag.id === targetId) return;
+    setLayout((l) => {
+      const from = l.findIndex((i) => i.id === drag.id);
+      const to = l.findIndex((i) => i.id === targetId);
+      if (from < 0 || to < 0) return l;
+      const target = l[to]!;
+      const next = [...l];
+      const [moved] = next.splice(from, 1);
+      if (!moved) return l;
+      const insertAt = next.findIndex((i) => i.id === targetId);
+      next.splice(insertAt < 0 ? next.length : insertAt, 0, { ...moved, zone: target.zone });
+      return next;
+    });
+    markCustomized();
+  }
+
+  function moveToZone(zone: Zone) {
+    if (!drag) return;
+    if (zone === "strip" && !drag.isNumber) return;
+    setLayout((l) => {
+      const item = l.find((i) => i.id === drag.id);
+      if (!item || item.zone === zone) return l;
+      const rest = l.filter((i) => i.id !== drag.id);
+      const moved: LayoutItem =
+        zone === "strip" ? { ...item, zone, w: 1, h: 1 } : { ...item, zone };
+      const lastOfZone = rest.reduce((acc, i, idx) => (i.zone === zone ? idx : acc), -1);
+      rest.splice(lastOfZone + 1, 0, moved);
+      return rest;
+    });
+    markCustomized();
+  }
+
+  function resize(id: string, w: WidgetWidth, h: WidgetHeight) {
+    setLayout((l) => l.map((i) => (i.id === id ? { ...i, w, h } : i)));
+    markCustomized();
+  }
+
+  const visible = layout.filter((i) => {
+    const exists = allWidgets.some((w) => w.id === i.id);
+    return exists && (isOotbWidget(i.id) || applied.includes(i.id));
+  });
+  const stripItems = visible.filter((i) => i.zone === "strip");
+  const canvasItems = visible.filter((i) => i.zone === "canvas");
+  const interactive = !isMobile;
 
   const outlineBtn: React.CSSProperties = {
     borderColor: "var(--brand-blue)",
@@ -196,42 +272,52 @@ export function DataHealthWidgets() {
         </div>
       )}
 
-      {/* OOTB metrics */}
-      <div className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {OOTB_METRICS.map((m) => (
-          <div
-            key={m.label}
-            className="rounded-xl border bg-white px-4 py-3.5"
-            style={{ borderColor: "var(--hairline)" }}
-          >
-            <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-              {m.label}
-            </div>
-            <div className="mt-1 text-[24px] font-semibold leading-none" style={{ color: "var(--ink-900)" }}>
-              {m.value}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* KPI strip — single-number tiles only */}
+      <KpiStrip
+        items={stripItems}
+        widgets={allWidgets}
+        interactive={interactive}
+        drag={drag}
+        onDragStart={setDrag}
+        onDragEnd={() => setDrag(null)}
+        onHoverItem={moveBefore}
+        onHoverZone={moveToZone}
+        onRemove={remove}
+      />
 
-      {/* widget grid */}
-      {appliedWidgets.length === 0 ? (
+      {/* widget canvas — 3-column resizable grid */}
+      {canvasItems.length === 0 ? (
         <div
           className="mt-4 rounded-xl border bg-white px-6 py-12 text-center text-[14px]"
           style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
+          onDragOver={(e) => {
+            if (!drag) return;
+            e.preventDefault();
+            moveToZone("canvas");
+          }}
         >
           No widgets on this dashboard yet — browse the library or create one.
         </div>
       ) : (
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {appliedWidgets.map((w) => (
-            <WidgetCard
-              key={w.id}
-              widget={w}
-              onDrill={(segment) => drill(w, segment)}
-              onRemove={() => remove(w.id)}
-            />
-          ))}
+        <WidgetCanvas
+          items={canvasItems}
+          widgets={allWidgets}
+          interactive={interactive}
+          drag={drag}
+          onDragStart={setDrag}
+          onDragEnd={() => setDrag(null)}
+          onHoverItem={moveBefore}
+          onHoverZone={moveToZone}
+          onResize={resize}
+          onRemove={remove}
+          onDrill={drill}
+        />
+      )}
+
+      {interactive && (
+        <div className="mt-3 text-[12px]" style={{ color: "var(--ink-300)" }}>
+          Drag widgets to rearrange · drag the bottom-right corner to resize (1–3 columns wide) ·
+          the top strip holds single-number tiles
         </div>
       )}
 
@@ -264,7 +350,8 @@ export function DataHealthWidgets() {
               Publish this dashboard as the org default?
             </AlertDialogTitle>
             <AlertDialogDescription style={{ color: "var(--ink-500)" }}>
-              Users who haven't customized their dashboard will see this update automatically.
+              Users who haven't customized their dashboard will see this update automatically —
+              including widget positions and sizes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
