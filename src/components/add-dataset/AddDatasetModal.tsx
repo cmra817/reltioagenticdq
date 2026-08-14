@@ -3,7 +3,6 @@ import { Stepper } from "./Stepper";
 import { Step1SelectData } from "./Step1SelectData";
 import { Step2ApplyChecks } from "./Step2ApplyChecks";
 import { Step3Schedule, DEFAULT_SCHEDULE, type ScheduleConfig } from "./Step3Schedule";
-import { AgentChatPanel } from "./AgentChatPanel";
 import { generateChecks } from "./mock-checks";
 import { WAREHOUSES } from "./mock-warehouses";
 import type { CreatedAssetInput } from "../created-assets-context";
@@ -246,19 +245,6 @@ export function AddDatasetModal({
         )}
       </div>
       </div>
-      <AgentChatPanel
-        step={step}
-        selected={selected}
-        onSetProfilingSchedule={setProfilingSchedule}
-        onSetChecksSchedule={setChecksSchedule}
-        onAddMany={(keys) =>
-          setSelected((s) => {
-            const n = new Set(s);
-            for (const k of keys) n.add(k);
-            return n;
-          })
-        }
-      />
     </div>
   );
 }
