@@ -440,7 +440,13 @@ export function isOotbWidget(id: string) {
 function canvasSizeFor(w: Widget): { w: WidgetWidth; h: WidgetHeight } {
   if (w.chartType === "number") return { w: 1, h: 1 };
   if (w.chartType === "table") return { w: 1, h: 1 };
+  if (w.chartType === "metric") return { w: 1, h: 1 };
+  if (w.chartType === "donut") return { w: 1, h: 2 };
   return { w: 2, h: 2 };
+}
+
+function sectionForWidget(id: string) {
+  return HEALTH_WIDGET_IDS.includes(id) ? METRICS_SECTION_ID : OVERVIEW_SECTION_ID;
 }
 
 /** Default layout: OOTB metrics in the strip, applied widgets on the canvas. */
@@ -449,10 +455,11 @@ export function defaultLayoutFor(appliedIds: string[], widgets: Widget[]): Layou
   const canvas: LayoutItem[] = appliedIds.map((id) => {
     const widget = widgets.find((w) => w.id === id);
     const size = widget ? canvasSizeFor(widget) : { w: 1 as WidgetWidth, h: 1 as WidgetHeight };
-    return { id, zone: "canvas" as Zone, ...size };
+    return { id, zone: "canvas" as Zone, sectionId: sectionForWidget(id), ...size };
   });
   return [...strip, ...canvas];
 }
+
 
 export function layoutItemFor(widget: Widget): LayoutItem {
   return { id: widget.id, zone: "canvas", ...canvasSizeFor(widget) };
