@@ -461,6 +461,12 @@ export function defaultLayoutFor(appliedIds: string[], widgets: Widget[]): Layou
 }
 
 
-export function layoutItemFor(widget: Widget): LayoutItem {
-  return { id: widget.id, zone: "canvas", ...canvasSizeFor(widget) };
+export function layoutItemFor(widget: Widget, sectionId?: string): LayoutItem {
+  return {
+    id: widget.id,
+    zone: "canvas",
+    sectionId: sectionId ?? sectionForWidget(widget.id),
+    ...canvasSizeFor(widget),
+  };
 }
+
