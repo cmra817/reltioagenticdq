@@ -510,7 +510,7 @@ function SectionGrid({
   return (
     <div
       ref={ref}
-      className="mt-3 grid gap-4"
+      className="relative mt-3 grid gap-4"
       style={{
         gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
         gridAutoRows: `${ROW_HEIGHT}px`,
@@ -530,6 +530,15 @@ function SectionGrid({
           Drag a widget here
         </div>
       )}
+      {interactive &&
+        !drag &&
+        rowStarts.slice(1).map((row) => (
+          <AddCategoryDivider
+            key={`split-${row.itemId}`}
+            absoluteTop={row.top}
+            onAdd={() => onSplit(row.itemId)}
+          />
+        ))}
       {items.map((item) => {
         const widget = widgets.find((w) => w.id === item.id);
         if (!widget) return null;
@@ -538,11 +547,16 @@ function SectionGrid({
         return (
           <div
             key={item.id}
+            ref={(el) => {
+              if (el) tileRefs.current.set(item.id, el);
+              else tileRefs.current.delete(item.id);
+            }}
             draggable={interactive}
             onDragStart={(e) => {
               e.dataTransfer.effectAllowed = "move";
               onDragStart({ id: item.id, zone: "canvas", isNumber: widget.chartType === "number" });
             }}
+
             onDragEnd={onDragEnd}
             onDragOver={(e) => {
               if (!drag) return;
