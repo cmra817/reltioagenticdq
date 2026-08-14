@@ -344,7 +344,11 @@ export function DqChecksScreen() {
                   <RowActions
                     rule={r}
                     onClone={(rule) => setModal({ open: true, mode: "clone", source: rule })}
-                        onEdit={(rule) => setModal({ open: true, mode: "edit", source: rule })}
+                    onEdit={(rule) => setModal({ open: true, mode: "edit", source: rule })}
+                    onDelete={(rule) => {
+                      setRules((prev) => prev.filter((item) => item.id !== rule.id));
+                      toast.success(`Deleted “${rule.name}”`);
+                    }}
                   />
                 </div>
                 <div className="mt-2 flex items-center gap-3 text-[12px]" style={{ color: "var(--ink-700)" }}>
