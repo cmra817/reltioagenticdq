@@ -1,10 +1,10 @@
 import { DimensionBadge } from "@/components/dq-dimensions";
 import { useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Lock, Plus } from "lucide-react";
 import { WAREHOUSES } from "./mock-warehouses";
 import { generateChecks, type Check } from "./mock-checks";
 import { RuleModal } from "@/components/dq-checks/RuleModal";
-import type { Rule } from "@/components/dq-checks/mock-rules";
+import { creatorLabel, type Creator, type Rule } from "@/components/dq-checks/mock-rules";
 
 type AssetEntry = {
   key: string;
@@ -32,6 +32,16 @@ export function parseSelectedAssets(
   return entries;
 }
 
+function CreatorBadge({ creator }: { creator: Creator }) {
+  const managed = creator.kind === "reltio";
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
+      {managed && <Lock size={12} style={{ color: "var(--ink-500)" }} />}
+      {creatorLabel(creator)}
+    </span>
+  );
+}
+
 function ruleToCheck(rule: Rule): Check {
   return {
     id: rule.id,
@@ -39,6 +49,7 @@ function ruleToCheck(rule: Rule): Check {
     description: rule.description,
     dimension: rule.dimension,
     field: "(custom)",
+    creator: rule.creator,
   };
 }
 
@@ -86,7 +97,6 @@ export function Step2ApplyChecks({
 
   const active = assets.find((a) => a.key === activeKey) ?? assets[0];
   const activeChecked = checked[active.key] ?? new Set<string>();
-
 
   return (
     <div className="px-10 py-8">
@@ -159,12 +169,12 @@ export function Step2ApplyChecks({
 
         {/* Column headers */}
         <div
-          className="grid grid-cols-[minmax(220px,1.2fr)_minmax(280px,2fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)] gap-4 border-b px-6 py-3 text-[11px] font-medium uppercase tracking-wide"
+          className="grid grid-cols-[minmax(300px,2fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)] gap-4 border-b px-6 py-3 text-[11px] font-medium uppercase tracking-wide"
           style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
         >
-          <div>Rule</div>
-          <div>Description</div>
-          <div>DQ dimension</div>
+          <div>Name</div>
+          <div>Dimension</div>
+          <div>Creator</div>
           <div>Field applied</div>
         </div>
 
@@ -172,10 +182,11 @@ export function Step2ApplyChecks({
         <div>
           {active.checks.map((check) => {
             const isOn = activeChecked.has(check.id);
+            const creator = check.creator ?? { kind: "reltio" } as Creator;
             return (
               <label
                 key={check.id}
-                className="grid cursor-pointer grid-cols-[minmax(220px,1.2fr)_minmax(280px,2fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)] items-start gap-4 border-b px-6 py-4 transition-colors hover:bg-[color:var(--surface-soft)]"
+                className="grid cursor-pointer grid-cols-[minmax(300px,2fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)] items-start gap-4 border-b px-6 py-4 transition-colors hover:bg-[color:var(--surface-soft)]"
                 style={{ borderColor: "var(--hairline)" }}
               >
                 <div className="flex items-start gap-3">
@@ -186,18 +197,28 @@ export function Step2ApplyChecks({
                     className="mt-0.5 h-4 w-4 shrink-0"
                     style={{ accentColor: "var(--brand-blue)" }}
                   />
-                  <span
-                    className="text-[13px] font-medium"
-                    style={{ color: isOn ? "var(--ink-900)" : "var(--ink-500)" }}
-                  >
-                    {check.rule}
-                  </span>
-                </div>
-                <div className="text-[13px]" style={{ color: "var(--ink-700)" }}>
-                  {check.description}
+                  <div className="min-w-0">
+                    <div
+                      className="truncate text-[13px] font-medium"
+                      style={{ color: isOn ? "var(--ink-900)" : "var(--ink-500)" }}
+                    >
+                      {check.rule}
+                    </div>
+                    {check.description && (
+                      <div
+                        className="mt-0.5 line-clamp-1 text-[12px]"
+                        style={{ color: "var(--ink-500)" }}
+                      >
+                        {check.description}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <DimensionBadge label={check.dimension} size="sm" />
+                </div>
+                <div>
+                  <CreatorBadge creator={creator} />
                 </div>
                 <div
                   className="font-mono text-[12px]"
