@@ -1,6 +1,6 @@
 import { DimensionBadge } from "@/components/dq-dimensions";
 import { useEffect, useMemo, useState } from "react";
-import { Zap, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { WAREHOUSES } from "./mock-warehouses";
 import { generateChecks, type Check } from "./mock-checks";
 
