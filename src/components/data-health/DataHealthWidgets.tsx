@@ -17,19 +17,23 @@ import { WidgetLibraryModal } from "./WidgetLibraryModal";
 import { CreateWidgetModal } from "./CreateWidgetModal";
 import { KpiStrip, WidgetCanvas, type DragState } from "./dashboard-grid";
 import {
+  ALL_LIBRARY_WIDGETS,
   DEFAULT_APPLIED,
-  MOCK_WIDGETS,
   OOTB_WIDGETS,
   ORG_DEFAULT_APPLIED,
   defaultLayoutFor,
+  defaultSections,
   isOotbWidget,
   layoutItemFor,
+  newSectionId,
   type LayoutItem,
+  type Section,
   type Widget,
   type WidgetHeight,
   type WidgetWidth,
   type Zone,
 } from "./widget-model";
+
 
 type Mode = "mine" | "org";
 
@@ -41,20 +45,25 @@ export function DataHealthWidgets() {
   const [isAdmin] = useState(true);
   const [mode, setMode] = useState<Mode>("mine");
 
-  const [widgets, setWidgets] = useState<Widget[]>(MOCK_WIDGETS);
+  const [widgets, setWidgets] = useState<Widget[]>(ALL_LIBRARY_WIDGETS);
   const [myApplied, setMyApplied] = useState<string[]>(DEFAULT_APPLIED);
   const [orgApplied, setOrgApplied] = useState<string[]>(ORG_DEFAULT_APPLIED);
   const [publishedOrg, setPublishedOrg] = useState<string[]>(ORG_DEFAULT_APPLIED);
 
   const [myLayout, setMyLayout] = useState<LayoutItem[]>(() =>
-    defaultLayoutFor(DEFAULT_APPLIED, MOCK_WIDGETS),
+    defaultLayoutFor(DEFAULT_APPLIED, ALL_LIBRARY_WIDGETS),
   );
   const [orgLayout, setOrgLayout] = useState<LayoutItem[]>(() =>
-    defaultLayoutFor(ORG_DEFAULT_APPLIED, MOCK_WIDGETS),
+    defaultLayoutFor(ORG_DEFAULT_APPLIED, ALL_LIBRARY_WIDGETS),
   );
   const [publishedOrgLayout, setPublishedOrgLayout] = useState<LayoutItem[]>(() =>
-    defaultLayoutFor(ORG_DEFAULT_APPLIED, MOCK_WIDGETS),
+    defaultLayoutFor(ORG_DEFAULT_APPLIED, ALL_LIBRARY_WIDGETS),
   );
+
+  const [mySections, setMySections] = useState<Section[]>(defaultSections);
+  const [orgSections, setOrgSections] = useState<Section[]>(defaultSections);
+  const [publishedOrgSections, setPublishedOrgSections] = useState<Section[]>(defaultSections);
+
 
   const [customized, setCustomized] = useState(false);
   const [drag, setDrag] = useState<DragState>(null);
@@ -68,6 +77,9 @@ export function DataHealthWidgets() {
   const setApplied = mode === "org" ? setOrgApplied : setMyApplied;
   const layout = mode === "org" ? orgLayout : myLayout;
   const setLayout = mode === "org" ? setOrgLayout : setMyLayout;
+  const sections = mode === "org" ? orgSections : mySections;
+  const setSections = mode === "org" ? setOrgSections : setMySections;
+
 
   const allWidgets = [...OOTB_WIDGETS, ...widgets];
 
@@ -105,10 +117,12 @@ export function DataHealthWidgets() {
   function publish() {
     setPublishedOrg(orgApplied);
     setPublishedOrgLayout(orgLayout);
+    setPublishedOrgSections(orgSections);
     setConfirmPublish(false);
     if (!customized) {
       setMyApplied(orgApplied);
       setMyLayout(orgLayout);
+      setMySections(orgSections);
     }
     toast.success("Org default dashboard published");
   }
@@ -116,6 +130,7 @@ export function DataHealthWidgets() {
   function resetToOrgDefault() {
     setMyApplied(publishedOrg);
     setMyLayout(publishedOrgLayout);
+    setMySections(publishedOrgSections);
     setCustomized(false);
     toast.success("Your dashboard was reset to the org default");
   }
@@ -136,7 +151,11 @@ export function DataHealthWidgets() {
       const [moved] = next.splice(from, 1);
       if (!moved) return l;
       const insertAt = next.findIndex((i) => i.id === targetId);
-      next.splice(insertAt < 0 ? next.length : insertAt, 0, { ...moved, zone: target.zone });
+      next.splice(insertAt < 0 ? next.length : insertAt, 0, {
+        ...moved,
+        zone: target.zone,
+        sectionId: target.sectionId ?? sections[0]?.id,
+      });
       return next;
     });
     markCustomized();
@@ -158,10 +177,63 @@ export function DataHealthWidgets() {
     markCustomized();
   }
 
+  function moveToSection(sectionId: string) {
+    if (!drag) return;
+    setLayout((l) => {
+      const item = l.find((i) => i.id === drag.id);
+      if (!item) return l;
+      const currentSection = item.sectionId ?? sections[0]?.id;
+      if (item.zone === "canvas" && currentSection === sectionId) return l;
+      const rest = l.filter((i) => i.id !== drag.id);
+      const moved: LayoutItem = { ...item, zone: "canvas", sectionId };
+      const lastOfSection = rest.reduce(
+        (acc, i, idx) =>
+          i.zone === "canvas" && (i.sectionId ?? sections[0]?.id) === sectionId ? idx : acc,
+        -1,
+      );
+      if (lastOfSection < 0) rest.push(moved);
+      else rest.splice(lastOfSection + 1, 0, moved);
+      return rest;
+    });
+    markCustomized();
+  }
+
+  function addSection(index: number) {
+    setSections((list) => {
+      const next = [...list];
+      next.splice(index, 0, { id: newSectionId(), title: "" });
+      return next;
+    });
+    markCustomized();
+  }
+
+  function renameSection(id: string, title: string) {
+    setSections((list) => list.map((s) => (s.id === id ? { ...s, title } : s)));
+    markCustomized();
+  }
+
+  function deleteSection(id: string) {
+    const fallback = sections.find((s) => s.id !== id)?.id;
+    if (!fallback) return;
+    setSections((list) => list.filter((s) => s.id !== id));
+    setLayout((l) =>
+      l.map((i) => (i.sectionId === id ? { ...i, sectionId: fallback } : i)),
+    );
+    markCustomized();
+  }
+
+  function toggleSection(id: string) {
+    setSections((list) =>
+      list.map((s) => (s.id === id ? { ...s, collapsed: !s.collapsed } : s)),
+    );
+  }
+
   function resize(id: string, w: WidgetWidth, h: WidgetHeight) {
     setLayout((l) => l.map((i) => (i.id === id ? { ...i, w, h } : i)));
     markCustomized();
   }
+
+
 
   const visible = layout.filter((i) => {
     const exists = allWidgets.some((w) => w.id === i.id);
@@ -301,18 +373,24 @@ export function DataHealthWidgets() {
       ) : (
         <WidgetCanvas
           items={canvasItems}
+          sections={sections}
           widgets={allWidgets}
           interactive={interactive}
           drag={drag}
           onDragStart={setDrag}
           onDragEnd={() => setDrag(null)}
           onHoverItem={moveBefore}
-          onHoverZone={moveToZone}
+          onHoverSection={moveToSection}
           onResize={resize}
           onRemove={remove}
           onDrill={drill}
+          onAddSection={addSection}
+          onRenameSection={renameSection}
+          onDeleteSection={deleteSection}
+          onToggleSection={toggleSection}
         />
       )}
+
 
       {interactive && (
         <div className="mt-3 text-[12px]" style={{ color: "var(--ink-300)" }}>

@@ -1,6 +1,18 @@
-export type ChartType = "line" | "bar" | "number" | "table";
+export type ChartType = "line" | "bar" | "number" | "table" | "donut" | "metric";
 
 export type WidgetCreator = { kind: "reltio" } | { kind: "me" } | { kind: "team"; name: string };
+
+export type DonutSegment = { label: string; value: number; color: string; display: string };
+
+export type DonutDetail = { total: string; totalLabel: string; segments: DonutSegment[] };
+
+export type MetricDetail = {
+  delta: string;
+  direction: "up" | "down";
+  passed: string;
+  ratio: number;
+  color: string;
+};
 
 export type Widget = {
   id: string;
@@ -16,7 +28,10 @@ export type Widget = {
   value?: string;
   rows?: { label: string; value: string }[];
   segments?: string[];
+  donut?: DonutDetail;
+  metric?: MetricDetail;
 };
+
 
 export function widgetCreatorLabel(c: WidgetCreator) {
   if (c.kind === "reltio") return "Reltio";
@@ -135,8 +150,100 @@ export const MOCK_WIDGETS: Widget[] = [
   },
 ];
 
-export const DEFAULT_APPLIED = ["w1", "w3", "w4", "w7"];
-export const ORG_DEFAULT_APPLIED = ["w1", "w2", "w6"];
+/* ---------- data health metrics, modelled as widgets ---------- */
+
+type DimensionSeed = {
+  id: string;
+  name: string;
+  value: string;
+  delta: string;
+  direction: "up" | "down";
+  passed: string;
+  ratio: number;
+  color: string;
+  trend: number[];
+};
+
+const DIMENSION_SEEDS: DimensionSeed[] = [
+  { id: "dim-completeness", name: "Completeness", value: "89%", delta: "2.3%", direction: "up", passed: "178/200 Passed", ratio: 0.89, color: "#14a6a6", trend: [80, 84, 82, 86, 88, 85, 89] },
+  { id: "dim-uniqueness", name: "Uniqueness", value: "82%", delta: "2.3%", direction: "up", passed: "164/200 Passed", ratio: 0.82, color: "#14a6a6", trend: [78, 80, 79, 84, 81, 83, 82] },
+  { id: "dim-validity", name: "Validity", value: "72%", delta: "0.3%", direction: "up", passed: "144/200 Passed", ratio: 0.72, color: "#f5b400", trend: [70, 73, 71, 74, 72, 75, 72] },
+  { id: "dim-accuracy", name: "Accuracy", value: "96%", delta: "3.7%", direction: "up", passed: "192/200 Passed", ratio: 0.96, color: "#14a6a6", trend: [90, 92, 94, 93, 95, 96, 96] },
+  { id: "dim-consistency", name: "Consistency", value: "48%", delta: "3.2%", direction: "down", passed: "96/200 Passed", ratio: 0.48, color: "#ef4444", trend: [55, 52, 50, 48, 49, 47, 48] },
+  { id: "dim-timeliness", name: "Timeliness", value: "64%", delta: "0.7%", direction: "up", passed: "128/200 Passed", ratio: 0.64, color: "#f59e0b", trend: [60, 62, 61, 63, 64, 65, 64] },
+];
+
+export const HEALTH_WIDGETS: Widget[] = [
+  {
+    id: "h-quality-score",
+    name: "Overall Data Quality Score",
+    chartType: "line",
+    creator: { kind: "reltio" },
+    measure: "quality score %",
+    scope: "All domains",
+    timeframe: "Last month",
+    drillable: true,
+    data: [85, 87, 86, 84, 83, 82, 84, 86, 87],
+    segments: ["P1", "P2", "P3", "P4", "P5", "P6"],
+    value: "87.5%",
+    metric: {
+      delta: "2.3%",
+      direction: "up",
+      passed: "",
+      ratio: 0.875,
+      color: "#14a6a6",
+    },
+  },
+  {
+    id: "h-job-summary",
+    name: "Job Summary",
+    chartType: "donut",
+    creator: { kind: "reltio" },
+    measure: "job outcomes",
+    scope: "All sources",
+    timeframe: "Last month",
+    drillable: true,
+    data: [],
+    segments: ["Passed", "Failed", "Aborted"],
+    donut: {
+      total: "280",
+      totalLabel: "Total Jobs",
+      segments: [
+        { label: "Passed", value: 87.5, color: "#14a6a6", display: "245 (87.5%)" },
+        { label: "Failed", value: 10, color: "#ef4444", display: "28 (10.0%)" },
+        { label: "Aborted", value: 2.5, color: "#f5b400", display: "7 (2.5%)" },
+      ],
+    },
+  },
+  ...DIMENSION_SEEDS.map<Widget>((d) => ({
+    id: d.id,
+    name: d.name,
+    chartType: "metric",
+    creator: { kind: "reltio" },
+    measure: `${d.name.toLowerCase()} %`,
+    scope: "All domains",
+    timeframe: "Last month",
+    drillable: true,
+    data: d.trend,
+    value: d.value,
+    segments: [d.name],
+    metric: {
+      delta: d.delta,
+      direction: d.direction,
+      passed: d.passed,
+      ratio: d.ratio,
+      color: d.color,
+    },
+  })),
+];
+
+export const HEALTH_WIDGET_IDS = HEALTH_WIDGETS.map((w) => w.id);
+
+export const ALL_LIBRARY_WIDGETS: Widget[] = [...HEALTH_WIDGETS, ...MOCK_WIDGETS];
+
+export const DEFAULT_APPLIED = ["w1", "w3", "w4", "w7", ...HEALTH_WIDGET_IDS];
+export const ORG_DEFAULT_APPLIED = ["w1", "w2", "w6", ...HEALTH_WIDGET_IDS];
+
 
 export type Incident = {
   id: string;
@@ -212,15 +319,65 @@ export function mockDataFor(chartType: ChartType) {
           { label: "crm.contacts", value: "4.2%" },
         ],
       };
+    case "donut":
+      return {
+        data: [],
+        donut: {
+          total: "280",
+          totalLabel: "Total Jobs",
+          segments: [
+            { label: "Passed", value: 87.5, color: "#14a6a6", display: "245 (87.5%)" },
+            { label: "Failed", value: 10, color: "#ef4444", display: "28 (10.0%)" },
+            { label: "Aborted", value: 2.5, color: "#f5b400", display: "7 (2.5%)" },
+          ],
+        },
+      };
+    case "metric":
+      return {
+        data: [80, 84, 82, 86, 88, 85, 89],
+        value: "89%",
+        metric: {
+          delta: "2.3%",
+          direction: "up" as const,
+          passed: "178/200 Passed",
+          ratio: 0.89,
+          color: "#14a6a6",
+        },
+      };
   }
 }
+
 
 /* ---------- dashboard layout model ---------- */
 
 export type Zone = "strip" | "canvas";
 export type WidgetWidth = 1 | 2 | 3;
 export type WidgetHeight = 1 | 2;
-export type LayoutItem = { id: string; zone: Zone; w: WidgetWidth; h: WidgetHeight };
+export type LayoutItem = {
+  id: string;
+  zone: Zone;
+  w: WidgetWidth;
+  h: WidgetHeight;
+  /** canvas grouping; undefined falls back to the first section */
+  sectionId?: string;
+};
+
+export type Section = { id: string; title: string; collapsed?: boolean };
+
+export const OVERVIEW_SECTION_ID = "sec-overview";
+export const METRICS_SECTION_ID = "sec-health-metrics";
+
+export function defaultSections(): Section[] {
+  return [
+    { id: OVERVIEW_SECTION_ID, title: "Overview" },
+    { id: METRICS_SECTION_ID, title: "Data health metrics" },
+  ];
+}
+
+export function newSectionId() {
+  return `sec-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 
 /** OOTB metrics modelled as number widgets so they can share the KPI strip. */
 export const OOTB_WIDGETS: Widget[] = [
@@ -283,7 +440,13 @@ export function isOotbWidget(id: string) {
 function canvasSizeFor(w: Widget): { w: WidgetWidth; h: WidgetHeight } {
   if (w.chartType === "number") return { w: 1, h: 1 };
   if (w.chartType === "table") return { w: 1, h: 1 };
+  if (w.chartType === "metric") return { w: 1, h: 1 };
+  if (w.chartType === "donut") return { w: 1, h: 2 };
   return { w: 2, h: 2 };
+}
+
+function sectionForWidget(id: string) {
+  return HEALTH_WIDGET_IDS.includes(id) ? METRICS_SECTION_ID : OVERVIEW_SECTION_ID;
 }
 
 /** Default layout: OOTB metrics in the strip, applied widgets on the canvas. */
@@ -292,11 +455,18 @@ export function defaultLayoutFor(appliedIds: string[], widgets: Widget[]): Layou
   const canvas: LayoutItem[] = appliedIds.map((id) => {
     const widget = widgets.find((w) => w.id === id);
     const size = widget ? canvasSizeFor(widget) : { w: 1 as WidgetWidth, h: 1 as WidgetHeight };
-    return { id, zone: "canvas" as Zone, ...size };
+    return { id, zone: "canvas" as Zone, sectionId: sectionForWidget(id), ...size };
   });
   return [...strip, ...canvas];
 }
 
-export function layoutItemFor(widget: Widget): LayoutItem {
-  return { id: widget.id, zone: "canvas", ...canvasSizeFor(widget) };
+
+export function layoutItemFor(widget: Widget, sectionId?: string): LayoutItem {
+  return {
+    id: widget.id,
+    zone: "canvas",
+    sectionId: sectionId ?? sectionForWidget(widget.id),
+    ...canvasSizeFor(widget),
+  };
 }
+

@@ -1,6 +1,133 @@
-import type { Widget } from "./widget-model";
+import type { DonutDetail, MetricDetail, Widget } from "./widget-model";
 
-function LineVisual({ values }: { values: number[] }) {
+function DeltaPill({ value, direction = "up" }: { value: string; direction?: "up" | "down" }) {
+  const positive = direction === "up";
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px] font-medium"
+      style={{
+        background: positive ? "rgba(34,197,94,0.10)" : "rgba(239,68,68,0.10)",
+        color: positive ? "#16a34a" : "#dc2626",
+      }}
+    >
+      <span aria-hidden="true">{positive ? "↑" : "↓"}</span>
+      {value} from last
+    </span>
+  );
+}
+
+function MetricVisual({
+  values,
+  value,
+  detail,
+}: {
+  values: number[];
+  value?: string;
+  detail: MetricDetail;
+}) {
+  return (
+    <div className="flex h-full min-h-[84px] flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[28px] font-semibold leading-none" style={{ color: "var(--ink-900)" }}>
+          {value ?? "—"}
+        </span>
+        <DeltaPill value={detail.delta} direction={detail.direction} />
+      </div>
+      <div
+        className="h-1.5 w-full overflow-hidden rounded-full"
+        style={{ background: "var(--surface-soft)" }}
+      >
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${detail.ratio * 100}%`, background: detail.color }}
+        />
+      </div>
+      {detail.passed && (
+        <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+          {detail.passed}
+        </div>
+      )}
+      <div className="min-h-0 flex-1">
+        <LineVisual values={values.length ? values : [1, 2, 3]} color={detail.color} />
+      </div>
+    </div>
+  );
+}
+
+function DonutVisual({
+  detail,
+  onSegment,
+}: {
+  detail: DonutDetail;
+  onSegment?: (segment: string) => void;
+}) {
+  const radius = 70;
+  const stroke = 22;
+  const C = 2 * Math.PI * radius;
+  let offset = 0;
+  return (
+    <div className="flex h-full min-h-[84px] flex-wrap items-center gap-4">
+      <svg viewBox="0 0 180 180" width="140" height="140" aria-hidden="true">
+        <g transform="translate(90 90) rotate(-90)">
+          <circle r={radius} fill="none" stroke="var(--surface-soft)" strokeWidth={stroke} />
+          {detail.segments.map((s) => {
+            const len = (s.value / 100) * C;
+            const dasharray = `${len} ${C - len}`;
+            const dashoffset = -offset;
+            offset += len;
+            return (
+              <circle
+                key={s.label}
+                r={radius}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={stroke}
+                strokeDasharray={dasharray}
+                strokeDashoffset={dashoffset}
+                strokeLinecap="butt"
+              />
+            );
+          })}
+        </g>
+        <text x="90" y="86" textAnchor="middle" fontSize="28" fontWeight="700" fill="var(--ink-900)">
+          {detail.total}
+        </text>
+        <text x="90" y="106" textAnchor="middle" fontSize="12" fill="var(--ink-500)">
+          {detail.totalLabel}
+        </text>
+      </svg>
+      <ul className="space-y-2 text-[13px]">
+        {detail.segments.map((s) => (
+          <li key={s.label}>
+            <button
+              type="button"
+              tabIndex={onSegment ? 0 : -1}
+              onClick={
+                onSegment
+                  ? (e) => {
+                      e.stopPropagation();
+                      onSegment(s.label);
+                    }
+                  : undefined
+              }
+              className="flex items-center gap-2 rounded-md px-1 py-0.5 transition-colors hover:bg-[color:var(--surface-soft)]"
+              style={{ cursor: onSegment ? "pointer" : "default" }}
+            >
+              <span className="h-2.5 w-2.5 rounded-sm" style={{ background: s.color }} aria-hidden="true" />
+              <span style={{ color: "var(--ink-700)" }}>{s.label}:</span>
+              <span className="font-semibold" style={{ color: "var(--ink-900)" }}>
+                {s.display}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+
+function LineVisual({ values, color = "#14a6a6" }: { values: number[]; color?: string }) {
   const w = 280;
   const h = 84;
   const pad = 6;
@@ -24,11 +151,11 @@ function LineVisual({ values }: { values: number[] }) {
       aria-hidden="true"
       className="h-full min-h-[84px] w-full"
     >
-      <path d={`${path} L${w - pad} ${h - pad} L${pad} ${h - pad} Z`} fill="rgba(20,166,166,0.10)" />
+      <path d={`${path} L${w - pad} ${h - pad} L${pad} ${h - pad} Z`} fill={`${color}1f`} />
       <path
         d={path}
         fill="none"
-        stroke="#14a6a6"
+        stroke={color}
         strokeWidth="2"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
@@ -36,6 +163,8 @@ function LineVisual({ values }: { values: number[] }) {
     </svg>
   );
 }
+
+
 
 function BarVisual({
   values,
@@ -117,6 +246,27 @@ export function WidgetVisual({
 }) {
   switch (widget.chartType) {
     case "line":
+      if (widget.metric && widget.value) {
+        return (
+          <div className="flex h-full min-h-[84px] flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <span
+                className="text-[32px] font-semibold leading-none"
+                style={{ color: "var(--ink-900)" }}
+              >
+                {widget.value}
+              </span>
+              <DeltaPill value={widget.metric.delta} direction={widget.metric.direction} />
+            </div>
+            <div className="min-h-0 flex-1">
+              <LineVisual
+                values={widget.data.length ? widget.data : [1, 2, 3]}
+                color={widget.metric.color}
+              />
+            </div>
+          </div>
+        );
+      }
       return <LineVisual values={widget.data.length ? widget.data : [1, 2, 3]} />;
     case "bar":
       return (
@@ -130,5 +280,18 @@ export function WidgetVisual({
       return <NumberVisual value={widget.value} />;
     case "table":
       return <TableVisual rows={widget.rows} />;
+    case "donut":
+      return widget.donut ? (
+        <DonutVisual detail={widget.donut} onSegment={onSegment} />
+      ) : (
+        <NumberVisual value={widget.value} />
+      );
+    case "metric":
+      return widget.metric ? (
+        <MetricVisual values={widget.data} value={widget.value} detail={widget.metric} />
+      ) : (
+        <NumberVisual value={widget.value} />
+      );
   }
+
 }

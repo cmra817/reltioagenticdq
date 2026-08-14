@@ -31,7 +31,13 @@ export function WidgetCard({
 }) {
   const [menu, setMenu] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const drillable = widget.drillable && (widget.chartType === "bar" || widget.chartType === "line");
+  const drillable =
+    widget.drillable &&
+    (widget.chartType === "bar" ||
+      widget.chartType === "line" ||
+      widget.chartType === "donut" ||
+      widget.chartType === "metric");
+
 
   useEffect(() => {
     if (!menu) return;
