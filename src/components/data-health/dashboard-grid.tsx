@@ -629,6 +629,7 @@ export function WidgetCanvas({
   onRemove,
   onDrill,
   onAddSection,
+  onSplitSection,
   onRenameSection,
   onDeleteSection,
   onToggleSection,
@@ -646,6 +647,7 @@ export function WidgetCanvas({
   onRemove: (id: string) => void;
   onDrill: (widget: Widget, segment: string) => void;
   onAddSection: (index: number) => void;
+  onSplitSection: (sectionId: string, itemId: string) => void;
   onRenameSection: (id: string, title: string) => void;
   onDeleteSection: (id: string) => void;
   onToggleSection: (id: string) => void;
@@ -682,8 +684,10 @@ export function WidgetCanvas({
                 onResize={onResize}
                 onRemove={onRemove}
                 onDrill={onDrill}
+                onSplit={(itemId) => onSplitSection(section.id, itemId)}
               />
             )}
+
           </div>
         );
       })}
