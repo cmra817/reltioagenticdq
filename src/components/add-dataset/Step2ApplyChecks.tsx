@@ -145,15 +145,15 @@ export function Step2ApplyChecks({
           </div>
           <button
             type="button"
-            aria-label="Add check"
             onClick={() => setModalOpen(true)}
-            className="my-2 inline-flex items-center justify-center rounded-full p-1.5 transition-colors"
+            className="my-2 flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors"
             style={{
               background: "rgba(67,134,250,0.10)",
               color: "var(--brand-blue)",
             }}
           >
-            <Plus size={14} />
+            <Plus size={12} />
+            Checks
           </button>
         </div>
 
