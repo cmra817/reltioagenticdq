@@ -45,20 +45,25 @@ export function DataHealthWidgets() {
   const [isAdmin] = useState(true);
   const [mode, setMode] = useState<Mode>("mine");
 
-  const [widgets, setWidgets] = useState<Widget[]>(MOCK_WIDGETS);
+  const [widgets, setWidgets] = useState<Widget[]>(ALL_LIBRARY_WIDGETS);
   const [myApplied, setMyApplied] = useState<string[]>(DEFAULT_APPLIED);
   const [orgApplied, setOrgApplied] = useState<string[]>(ORG_DEFAULT_APPLIED);
   const [publishedOrg, setPublishedOrg] = useState<string[]>(ORG_DEFAULT_APPLIED);
 
   const [myLayout, setMyLayout] = useState<LayoutItem[]>(() =>
-    defaultLayoutFor(DEFAULT_APPLIED, MOCK_WIDGETS),
+    defaultLayoutFor(DEFAULT_APPLIED, ALL_LIBRARY_WIDGETS),
   );
   const [orgLayout, setOrgLayout] = useState<LayoutItem[]>(() =>
-    defaultLayoutFor(ORG_DEFAULT_APPLIED, MOCK_WIDGETS),
+    defaultLayoutFor(ORG_DEFAULT_APPLIED, ALL_LIBRARY_WIDGETS),
   );
   const [publishedOrgLayout, setPublishedOrgLayout] = useState<LayoutItem[]>(() =>
-    defaultLayoutFor(ORG_DEFAULT_APPLIED, MOCK_WIDGETS),
+    defaultLayoutFor(ORG_DEFAULT_APPLIED, ALL_LIBRARY_WIDGETS),
   );
+
+  const [mySections, setMySections] = useState<Section[]>(defaultSections);
+  const [orgSections, setOrgSections] = useState<Section[]>(defaultSections);
+  const [publishedOrgSections, setPublishedOrgSections] = useState<Section[]>(defaultSections);
+
 
   const [customized, setCustomized] = useState(false);
   const [drag, setDrag] = useState<DragState>(null);
