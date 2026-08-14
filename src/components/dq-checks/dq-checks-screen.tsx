@@ -275,7 +275,7 @@ export function DqChecksScreen() {
                 {visible.map((r) => (
                   <tr
                     key={r.id}
-                    className="border-b transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
+                    className="group border-b transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
                     style={{ borderColor: "var(--hairline)" }}
                   >
                     <td className="px-6 py-4 font-medium" style={{ color: "var(--ink-900)" }}>
@@ -306,11 +306,15 @@ export function DqChecksScreen() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="relative px-6 py-4 text-right">
                       <RowActions
                         rule={r}
                         onClone={(rule) => setModal({ open: true, mode: "clone", source: rule })}
                         onEdit={(rule) => setModal({ open: true, mode: "edit", source: rule })}
+                        onDelete={(rule) => {
+                          setRules((prev) => prev.filter((item) => item.id !== rule.id));
+                          toast.success(`Deleted “${rule.name}”`);
+                        }}
                       />
                     </td>
                   </tr>
