@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { ChevronDownIcon } from "./brand-icons";
+import { DataHealthWidgets } from "./data-health/DataHealthWidgets";
+
 
 /* ---------- small UI atoms ---------- */
 function Select({ label }: { label: string }) {
@@ -308,6 +310,14 @@ export function DataHealthDashboard() {
             <Select label="Last month" />
           </div>
         </div>
+
+        <DataHealthWidgets />
+
+        <h3 className="mt-8 mb-4 text-[18px] font-semibold" style={{ color: "var(--ink-900)" }}>
+          Data health metrics
+        </h3>
+
+
 
         {/* top row: score + job summary */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">

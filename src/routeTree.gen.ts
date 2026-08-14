@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DqChecksRouteImport } from './routes/dq-checks'
 import { Route as DataHealthRouteImport } from './routes/data-health'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
 
+const IncidentsRoute = IncidentsRouteImport.update({
+  id: '/incidents',
+  path: '/incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/data-health': typeof DataHealthRoute
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
+  '/incidents': typeof IncidentsRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/data-health': typeof DataHealthRoute
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
+  '/incidents': typeof IncidentsRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
 export interface FileRoutesById {
@@ -61,6 +69,7 @@ export interface FileRoutesById {
   '/data-health': typeof DataHealthRoute
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
+  '/incidents': typeof IncidentsRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
 }
 export interface FileRouteTypes {
@@ -70,15 +79,23 @@ export interface FileRouteTypes {
     | '/data-health'
     | '/dq-checks'
     | '/explore'
+    | '/incidents'
     | '/assets/$assetSlug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/data-health' | '/dq-checks' | '/explore' | '/assets/$assetSlug'
+  to:
+    | '/'
+    | '/data-health'
+    | '/dq-checks'
+    | '/explore'
+    | '/incidents'
+    | '/assets/$assetSlug'
   id:
     | '__root__'
     | '/'
     | '/data-health'
     | '/dq-checks'
     | '/explore'
+    | '/incidents'
     | '/assets/$assetSlug'
   fileRoutesById: FileRoutesById
 }
@@ -87,11 +104,19 @@ export interface RootRouteChildren {
   DataHealthRoute: typeof DataHealthRoute
   DqChecksRoute: typeof DqChecksRoute
   ExploreRoute: typeof ExploreRoute
+  IncidentsRoute: typeof IncidentsRoute
   AssetsAssetSlugRoute: typeof AssetsAssetSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/incidents': {
+      id: '/incidents'
+      path: '/incidents'
+      fullPath: '/incidents'
+      preLoaderRoute: typeof IncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explore': {
       id: '/explore'
       path: '/explore'
@@ -135,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   DataHealthRoute: DataHealthRoute,
   DqChecksRoute: DqChecksRoute,
   ExploreRoute: ExploreRoute,
+  IncidentsRoute: IncidentsRoute,
   AssetsAssetSlugRoute: AssetsAssetSlugRoute,
 }
 export const routeTree = rootRouteImport
