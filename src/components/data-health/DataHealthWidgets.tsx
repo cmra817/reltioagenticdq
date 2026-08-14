@@ -407,6 +407,8 @@ export function DataHealthWidgets() {
           onRemove={remove}
           onDrill={drill}
           onAddSection={addSection}
+          onSplitSection={splitSection}
+
           onRenameSection={renameSection}
           onDeleteSection={deleteSection}
           onToggleSection={toggleSection}
