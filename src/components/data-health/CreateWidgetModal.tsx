@@ -195,7 +195,7 @@ export function CreateWidgetModal({
                 Preview
               </div>
               {preview && (
-                <div className="mt-2 max-w-[340px]">
+              <div className="mt-2 max-w-[340px]">
                   <div
                     className="rounded-xl border bg-white p-4"
                     style={{ borderColor: "var(--hairline)" }}
@@ -203,9 +203,6 @@ export function CreateWidgetModal({
                     <WidgetVisual widget={preview} />
                     <div className="mt-3 text-[14px] font-medium" style={{ color: "var(--ink-900)" }}>
                       {preview.name}
-                    </div>
-                    <div className="mt-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
-                      You · {preview.timeframe}
                     </div>
                   </div>
                 </div>
