@@ -3,7 +3,7 @@ import { Stepper } from "./Stepper";
 import { Step1SelectData } from "./Step1SelectData";
 import { Step2ApplyChecks } from "./Step2ApplyChecks";
 import { Step3Schedule, DEFAULT_SCHEDULE, type ScheduleConfig } from "./Step3Schedule";
-import { generateChecks } from "./mock-checks";
+import { generateChecks, type Check } from "./mock-checks";
 import { WAREHOUSES } from "./mock-warehouses";
 import type { CreatedAssetInput } from "../created-assets-context";
 
@@ -38,6 +38,8 @@ export function AddDatasetModal({
   const [checksSchedule, setChecksSchedule] = useState<ScheduleConfig>(DEFAULT_SCHEDULE);
   // checked[selectionKey] = Set<checkId> the user kept enabled in step 2
   const [checked, setChecked] = useState<Record<string, Set<string>>>({});
+  // Custom checks created via the DQ rule modal, keyed by selectionKey.
+  const [customChecks, setCustomChecks] = useState<Record<string, Check[]>>({});
 
   // Keep the check map in sync with the table selection: new tables default to all checks on.
   useEffect(() => {
@@ -65,6 +67,15 @@ export function AddDatasetModal({
       return { ...prev, [assetKey]: set };
     });
 
+  const addCustomCheck = (assetKey: string, check: Check) => {
+    setCustomChecks((prev) => ({ ...prev, [assetKey]: [...(prev[assetKey] ?? []), check] }));
+    setChecked((prev) => {
+      const set = new Set(prev[assetKey] ?? []);
+      set.add(check.id);
+      return { ...prev, [assetKey]: set };
+    });
+  };
+
   // Reset when closed
   useEffect(() => {
     if (!open) {
@@ -73,6 +84,7 @@ export function AddDatasetModal({
       setProfilingSchedule(DEFAULT_SCHEDULE);
       setChecksSchedule(DEFAULT_SCHEDULE);
       setChecked({});
+      setCustomChecks({});
     }
   }, [open]);
 
@@ -115,7 +127,7 @@ export function AddDatasetModal({
         const [connId, schemaName, assetName] = key.split("::");
         const name = assetName ?? tableNameFromKey(key);
         const keptIds = checked[key];
-        const allChecks = generateChecks(name);
+        const allChecks = [...generateChecks(name), ...(customChecks[key] ?? [])];
         const keptChecks = keptIds ? allChecks.filter((c) => keptIds.has(c.id)) : allChecks;
         tables.push(name);
         checkCount += keptChecks.length;
@@ -232,7 +244,13 @@ export function AddDatasetModal({
           />
         )}
         {step === 1 && (
-          <Step2ApplyChecks selected={selected} checked={checked} onToggleCheck={toggleCheck} />
+          <Step2ApplyChecks
+            selected={selected}
+            checked={checked}
+            customChecks={customChecks}
+            onToggleCheck={toggleCheck}
+            onAddCheck={addCustomCheck}
+          />
         )}
         {step === 2 && (
           <Step3Schedule
