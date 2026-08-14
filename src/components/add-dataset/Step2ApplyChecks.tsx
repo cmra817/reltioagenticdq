@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { WAREHOUSES } from "./mock-warehouses";
 import { generateChecks, type Check } from "./mock-checks";
+import { RuleModal } from "@/components/dq-checks/RuleModal";
+import type { Rule } from "@/components/dq-checks/mock-rules";
 
 type AssetEntry = {
   key: string;
@@ -10,7 +12,10 @@ type AssetEntry = {
   checks: Check[];
 };
 
-export function parseSelectedAssets(selected: Set<string>): AssetEntry[] {
+export function parseSelectedAssets(
+  selected: Set<string>,
+  customChecks: Record<string, Check[]>,
+): AssetEntry[] {
   const entries: AssetEntry[] = [];
   for (const key of selected) {
     const [connId, schemaName, assetName] = key.split("::");
@@ -21,24 +26,39 @@ export function parseSelectedAssets(selected: Set<string>): AssetEntry[] {
     entries.push({
       key,
       name: asset.name,
-      checks: generateChecks(asset.name),
+      checks: [...generateChecks(asset.name), ...(customChecks[key] ?? [])],
     });
   }
   return entries;
 }
 
+function ruleToCheck(rule: Rule): Check {
+  return {
+    id: rule.id,
+    rule: rule.name,
+    description: rule.description,
+    dimension: rule.dimension,
+    field: "(custom)",
+  };
+}
+
 export function Step2ApplyChecks({
   selected,
   checked,
+  customChecks,
   onToggleCheck,
+  onAddCheck,
 }: {
   selected: Set<string>;
   /** checked[assetKey] = Set<checkId> currently enabled */
   checked: Record<string, Set<string>>;
+  customChecks: Record<string, Check[]>;
   onToggleCheck: (assetKey: string, checkId: string) => void;
+  onAddCheck: (assetKey: string, check: Check) => void;
 }) {
-  const assets = useMemo(() => parseSelectedAssets(selected), [selected]);
+  const assets = useMemo(() => parseSelectedAssets(selected, customChecks), [selected, customChecks]);
   const [activeKey, setActiveKey] = useState<string>(assets[0]?.key ?? "");
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     if (assets.length > 0 && !assets.some((a) => a.key === activeKey)) {
@@ -125,6 +145,7 @@ export function Step2ApplyChecks({
           </div>
           <button
             type="button"
+            onClick={() => setModalOpen(true)}
             className="my-2 flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors"
             style={{
               background: "rgba(67,134,250,0.10)",
@@ -189,6 +210,17 @@ export function Step2ApplyChecks({
           })}
         </div>
       </div>
+
+      <RuleModal
+        open={modalOpen}
+        mode="create"
+        source={null}
+        onClose={() => setModalOpen(false)}
+        onSave={(rule) => {
+          onAddCheck(active.key, ruleToCheck(rule));
+          setModalOpen(false);
+        }}
+      />
     </div>
   );
 }
