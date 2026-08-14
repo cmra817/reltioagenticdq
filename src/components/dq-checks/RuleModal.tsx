@@ -295,39 +295,128 @@ export function RuleModal({
             />
 
             <div className="mt-3">
-              <Label>Test against sample</Label>
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  value={sampleMode}
-                  onChange={(e) => {
-                    setSampleMode(e.target.value as "column" | "manual");
-                    setTestResult(null);
-                  }}
-                  className="flex-1 rounded-lg border bg-white px-3 py-2 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
-                  style={fieldStyle}
-                >
-                  <option value="column">Sample from selected column (50 recent values)</option>
-                  <option value="manual">Type test strings manually</option>
-                </select>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <div className="text-[12px] font-medium" style={{ color: "var(--ink-500)" }}>
+                  Test this pattern
+                </div>
                 <button
                   type="button"
-                  onClick={runTest}
-                  className="rounded-lg border bg-white px-4 py-2 text-[13px] font-medium"
-                  style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+                  disabled={sampleMode === "manual" && !HAS_CONNECTED_SOURCES}
+                  onClick={() => {
+                    setSampleMode(sampleMode === "manual" ? "column" : "manual");
+                    setTestResult(null);
+                  }}
+                  className="text-[12px] underline disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ color: "var(--ink-500)" }}
                 >
-                  Test
+                  {sampleMode === "manual"
+                    ? "Search a real column instead"
+                    : "Enter test strings manually instead"}
                 </button>
               </div>
 
-              {sampleMode === "manual" && (
-                <textarea
-                  value={manualStrings}
-                  onChange={(e) => setManualStrings(e.target.value)}
-                  rows={3}
-                  placeholder={"One value per line"}
-                  className="mt-2 w-full resize-y rounded-lg border bg-white px-3 py-2 font-mono text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
-                  style={fieldStyle}
-                />
+              {sampleMode === "manual" && !HAS_CONNECTED_SOURCES && (
+                <div className="mb-2 text-[12px]" style={{ color: "var(--ink-500)" }}>
+                  Connect a source to test against real data.
+                </div>
+              )}
+
+              {sampleMode === "column" ? (
+                selectedColumn ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div
+                      className="inline-flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-[13px]"
+                      style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+                    >
+                      <span className="font-mono">
+                        {selectedColumn.source} › {selectedColumn.table} › {selectedColumn.column}
+                      </span>
+                      <span style={{ color: "var(--ink-500)" }}>sampling 50 recent values</span>
+                      <button
+                        type="button"
+                        aria-label="Clear selected column"
+                        onClick={() => {
+                          setSelectedColumn(null);
+                          setColumnQuery("");
+                          setTestResult(null);
+                        }}
+                        style={{ color: "var(--ink-500)" }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={runTest}
+                      className="rounded-lg border bg-white px-4 py-2 text-[13px] font-medium"
+                      style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+                    >
+                      Run test
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Search
+                      size={14}
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                      style={{ color: "var(--ink-500)" }}
+                    />
+                    <input
+                      value={columnQuery}
+                      onChange={(e) => setColumnQuery(e.target.value)}
+                      placeholder="Search any connected column, e.g. 'email'"
+                      className="w-full rounded-lg border bg-white pl-9 pr-3 py-2 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
+                      style={fieldStyle}
+                    />
+                    {columnResults.length > 0 && (
+                      <ul
+                        className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border bg-white py-1"
+                        style={{ borderColor: "var(--hairline)", boxShadow: "0 12px 28px rgba(15,23,42,0.14)" }}
+                      >
+                        {columnResults.map((c) => (
+                          <li key={c.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedColumn(c);
+                                setTestResult(null);
+                              }}
+                              className="flex w-full items-center gap-1 px-3 py-2 text-left font-mono text-[13px] hover:bg-[color:var(--surface-soft)]"
+                              style={{ color: "var(--ink-700)" }}
+                            >
+                              <span>{c.source}</span>
+                              <span style={{ color: "var(--ink-500)" }}>›</span>
+                              <span>{c.table}</span>
+                              <span style={{ color: "var(--ink-500)" }}>›</span>
+                              <span style={{ color: "var(--ink-900)" }}>{c.column}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )
+              ) : (
+                <div>
+                  <textarea
+                    value={manualStrings}
+                    onChange={(e) => setManualStrings(e.target.value)}
+                    rows={3}
+                    placeholder="Enter one test string per line"
+                    className="w-full resize-y rounded-lg border bg-white px-3 py-2 font-mono text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
+                    style={fieldStyle}
+                  />
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={runTest}
+                      className="rounded-lg border bg-white px-4 py-2 text-[13px] font-medium"
+                      style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+                    >
+                      Test
+                    </button>
+                  </div>
+                </div>
               )}
 
               {testResult && (
@@ -351,6 +440,7 @@ export function RuleModal({
                 </div>
               )}
             </div>
+
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-[14px]" style={{ color: "var(--ink-900)" }}>
