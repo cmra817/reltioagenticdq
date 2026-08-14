@@ -1,6 +1,6 @@
 import { DimensionBadge } from "@/components/dq-dimensions";
 import { useMemo, useState } from "react";
-import { Columns3, Copy, LayoutGrid, List, Lock, Pencil, Plus, Search } from "lucide-react";
+import { Columns3, Copy, LayoutGrid, List, Lock, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   DIMENSIONS,
@@ -27,21 +27,23 @@ function RowActions({
   rule,
   onClone,
   onEdit,
+  onDelete,
 }: {
   rule: Rule;
   onClone: (r: Rule) => void;
   onEdit: (r: Rule) => void;
+  onDelete: (r: Rule) => void;
 }) {
   const managed = rule.creator.kind === "reltio";
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="absolute inset-0 flex items-center justify-end gap-2 px-6 opacity-0 transition-opacity group-hover:opacity-100" style={{ background: "var(--surface-soft)" }}>
       <button
         type="button"
         disabled={managed}
         aria-label={managed ? "Reltio-managed rules can't be edited" : "Edit rule"}
         title={managed ? "Reltio-managed rules can't be edited" : "Edit rule"}
         onClick={() => onEdit(rule)}
-        className="disabled:cursor-not-allowed disabled:opacity-40"
+        className="rounded-md p-1.5 transition-colors hover:bg-white/60 disabled:cursor-not-allowed disabled:opacity-40"
         style={{ color: "var(--ink-500)" }}
       >
         <Pencil size={15} />
@@ -52,9 +54,22 @@ function RowActions({
         aria-label="Clone rule"
         title="Clone rule"
         onClick={() => onClone(rule)}
+        className="rounded-md p-1.5 transition-colors hover:bg-white/60"
         style={{ color: "var(--ink-500)" }}
       >
         <Copy size={15} />
+      </button>
+
+      <button
+        type="button"
+        disabled={managed}
+        aria-label={managed ? "Reltio-managed rules can't be deleted" : "Delete rule"}
+        title={managed ? "Reltio-managed rules can't be deleted" : "Delete rule"}
+        onClick={() => onDelete(rule)}
+        className="rounded-md p-1.5 transition-colors hover:bg-white/60 disabled:cursor-not-allowed disabled:opacity-40"
+        style={{ color: "var(--ink-500)" }}
+      >
+        <Trash2 size={15} />
       </button>
     </span>
   );
