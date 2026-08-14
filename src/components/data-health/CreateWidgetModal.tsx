@@ -77,7 +77,7 @@ export function CreateWidgetModal({
         scope: interpretation.scope,
         timeframe: interpretation.timeframe,
         drillable: chartType === "bar" || chartType === "line",
-        data: [],
+        data: [] as number[],
         ...mockDataFor(chartType),
       }
     : null;
