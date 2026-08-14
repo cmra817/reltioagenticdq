@@ -214,3 +214,89 @@ export function mockDataFor(chartType: ChartType) {
       };
   }
 }
+
+/* ---------- dashboard layout model ---------- */
+
+export type Zone = "strip" | "canvas";
+export type WidgetWidth = 1 | 2 | 3;
+export type WidgetHeight = 1 | 2;
+export type LayoutItem = { id: string; zone: Zone; w: WidgetWidth; h: WidgetHeight };
+
+/** OOTB metrics modelled as number widgets so they can share the KPI strip. */
+export const OOTB_WIDGETS: Widget[] = [
+  {
+    id: "m-checks-passing",
+    name: "Checks passing",
+    chartType: "number",
+    creator: { kind: "reltio" },
+    measure: "checks passing %",
+    scope: "All domains",
+    timeframe: "last run",
+    drillable: false,
+    data: [91.2, 92.4, 93.1, 92.8, 93.6, 94.2],
+    value: "94.2%",
+  },
+  {
+    id: "m-open-incidents",
+    name: "Open incidents",
+    chartType: "number",
+    creator: { kind: "reltio" },
+    measure: "open incidents",
+    scope: "All domains",
+    timeframe: "now",
+    drillable: false,
+    data: [22, 21, 19, 20, 18, 17],
+    value: "17",
+  },
+  {
+    id: "m-fill-rate",
+    name: "Fill rate",
+    chartType: "number",
+    creator: { kind: "reltio" },
+    measure: "fill rate %",
+    scope: "All sources",
+    timeframe: "last run",
+    drillable: false,
+    data: [86.1, 86.9, 87.4, 87.2, 88.1, 88.6],
+    value: "88.6%",
+  },
+  {
+    id: "m-tables-profiled",
+    name: "Tables profiled",
+    chartType: "number",
+    creator: { kind: "reltio" },
+    measure: "tables profiled",
+    scope: "All sources",
+    timeframe: "30 days",
+    drillable: false,
+    data: [340, 361, 378, 392, 404, 412],
+    value: "412",
+  },
+];
+
+export const OOTB_WIDGET_IDS = OOTB_WIDGETS.map((w) => w.id);
+
+export function isOotbWidget(id: string) {
+  return OOTB_WIDGET_IDS.includes(id);
+}
+
+function canvasSizeFor(w: Widget): { w: WidgetWidth; h: WidgetHeight } {
+  if (w.chartType === "number") return { w: 1, h: 1 };
+  if (w.chartType === "table") return { w: 1, h: 2 };
+  return { w: 2, h: 2 };
+}
+
+/** Default layout: OOTB metrics in the strip, applied widgets on the canvas. */
+export function defaultLayoutFor(appliedIds: string[], widgets: Widget[]): LayoutItem[] {
+  const strip: LayoutItem[] = OOTB_WIDGET_IDS.map((id) => ({ id, zone: "strip", w: 1, h: 1 }));
+  const canvas: LayoutItem[] = appliedIds.map((id) => {
+    const widget = widgets.find((w) => w.id === id);
+    const size = widget ? canvasSizeFor(widget) : { w: 1 as WidgetWidth, h: 1 as WidgetHeight };
+    return { id, zone: "canvas" as Zone, ...size };
+  });
+  return [...strip, ...canvas];
+}
+
+export function layoutItemFor(widget: Widget): LayoutItem {
+  return { id: widget.id, zone: "canvas", ...canvasSizeFor(widget) };
+}
