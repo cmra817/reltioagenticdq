@@ -150,8 +150,100 @@ export const MOCK_WIDGETS: Widget[] = [
   },
 ];
 
-export const DEFAULT_APPLIED = ["w1", "w3", "w4", "w7"];
-export const ORG_DEFAULT_APPLIED = ["w1", "w2", "w6"];
+/* ---------- data health metrics, modelled as widgets ---------- */
+
+type DimensionSeed = {
+  id: string;
+  name: string;
+  value: string;
+  delta: string;
+  direction: "up" | "down";
+  passed: string;
+  ratio: number;
+  color: string;
+  trend: number[];
+};
+
+const DIMENSION_SEEDS: DimensionSeed[] = [
+  { id: "dim-completeness", name: "Completeness", value: "89%", delta: "2.3%", direction: "up", passed: "178/200 Passed", ratio: 0.89, color: "#14a6a6", trend: [80, 84, 82, 86, 88, 85, 89] },
+  { id: "dim-uniqueness", name: "Uniqueness", value: "82%", delta: "2.3%", direction: "up", passed: "164/200 Passed", ratio: 0.82, color: "#14a6a6", trend: [78, 80, 79, 84, 81, 83, 82] },
+  { id: "dim-validity", name: "Validity", value: "72%", delta: "0.3%", direction: "up", passed: "144/200 Passed", ratio: 0.72, color: "#f5b400", trend: [70, 73, 71, 74, 72, 75, 72] },
+  { id: "dim-accuracy", name: "Accuracy", value: "96%", delta: "3.7%", direction: "up", passed: "192/200 Passed", ratio: 0.96, color: "#14a6a6", trend: [90, 92, 94, 93, 95, 96, 96] },
+  { id: "dim-consistency", name: "Consistency", value: "48%", delta: "3.2%", direction: "down", passed: "96/200 Passed", ratio: 0.48, color: "#ef4444", trend: [55, 52, 50, 48, 49, 47, 48] },
+  { id: "dim-timeliness", name: "Timeliness", value: "64%", delta: "0.7%", direction: "up", passed: "128/200 Passed", ratio: 0.64, color: "#f59e0b", trend: [60, 62, 61, 63, 64, 65, 64] },
+];
+
+export const HEALTH_WIDGETS: Widget[] = [
+  {
+    id: "h-quality-score",
+    name: "Overall Data Quality Score",
+    chartType: "line",
+    creator: { kind: "reltio" },
+    measure: "quality score %",
+    scope: "All domains",
+    timeframe: "Last month",
+    drillable: true,
+    data: [85, 87, 86, 84, 83, 82, 84, 86, 87],
+    segments: ["P1", "P2", "P3", "P4", "P5", "P6"],
+    value: "87.5%",
+    metric: {
+      delta: "2.3%",
+      direction: "up",
+      passed: "",
+      ratio: 0.875,
+      color: "#14a6a6",
+    },
+  },
+  {
+    id: "h-job-summary",
+    name: "Job Summary",
+    chartType: "donut",
+    creator: { kind: "reltio" },
+    measure: "job outcomes",
+    scope: "All sources",
+    timeframe: "Last month",
+    drillable: true,
+    data: [],
+    segments: ["Passed", "Failed", "Aborted"],
+    donut: {
+      total: "280",
+      totalLabel: "Total Jobs",
+      segments: [
+        { label: "Passed", value: 87.5, color: "#14a6a6", display: "245 (87.5%)" },
+        { label: "Failed", value: 10, color: "#ef4444", display: "28 (10.0%)" },
+        { label: "Aborted", value: 2.5, color: "#f5b400", display: "7 (2.5%)" },
+      ],
+    },
+  },
+  ...DIMENSION_SEEDS.map<Widget>((d) => ({
+    id: d.id,
+    name: d.name,
+    chartType: "metric",
+    creator: { kind: "reltio" },
+    measure: `${d.name.toLowerCase()} %`,
+    scope: "All domains",
+    timeframe: "Last month",
+    drillable: true,
+    data: d.trend,
+    value: d.value,
+    segments: [d.name],
+    metric: {
+      delta: d.delta,
+      direction: d.direction,
+      passed: d.passed,
+      ratio: d.ratio,
+      color: d.color,
+    },
+  })),
+];
+
+export const HEALTH_WIDGET_IDS = HEALTH_WIDGETS.map((w) => w.id);
+
+export const ALL_LIBRARY_WIDGETS: Widget[] = [...HEALTH_WIDGETS, ...MOCK_WIDGETS];
+
+export const DEFAULT_APPLIED = ["w1", "w3", "w4", "w7", ...HEALTH_WIDGET_IDS];
+export const ORG_DEFAULT_APPLIED = ["w1", "w2", "w6", ...HEALTH_WIDGET_IDS];
+
 
 export type Incident = {
   id: string;
