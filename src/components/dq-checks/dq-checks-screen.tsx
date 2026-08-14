@@ -23,7 +23,15 @@ function CreatorBadge({ rule }: { rule: Rule }) {
   );
 }
 
-function RowActions({ rule, onClone }: { rule: Rule; onClone: (r: Rule) => void }) {
+function RowActions({
+  rule,
+  onClone,
+  onEdit,
+}: {
+  rule: Rule;
+  onClone: (r: Rule) => void;
+  onEdit: (r: Rule) => void;
+}) {
   const managed = rule.creator.kind === "reltio";
   return (
     <span className="inline-flex items-center gap-2">
@@ -32,12 +40,13 @@ function RowActions({ rule, onClone }: { rule: Rule; onClone: (r: Rule) => void 
         disabled={managed}
         aria-label={managed ? "Reltio-managed rules can't be edited" : "Edit rule"}
         title={managed ? "Reltio-managed rules can't be edited" : "Edit rule"}
-        onClick={() => toast("Editing is available for your own rules")}
+        onClick={() => onEdit(rule)}
         className="disabled:cursor-not-allowed disabled:opacity-40"
         style={{ color: "var(--ink-500)" }}
       >
         <Pencil size={15} />
       </button>
+
       <button
         type="button"
         aria-label="Clone rule"
