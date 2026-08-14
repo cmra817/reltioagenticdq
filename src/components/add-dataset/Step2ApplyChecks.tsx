@@ -1,10 +1,11 @@
 import { DimensionBadge } from "@/components/dq-dimensions";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Lock, Plus, Search, Sparkles } from "lucide-react";
+import { Lock, Plus, Search, Sparkles, X } from "lucide-react";
 import { WAREHOUSES } from "./mock-warehouses";
 import { generateChecks, type Check } from "./mock-checks";
 import { RuleModal } from "@/components/dq-checks/RuleModal";
 import { MOCK_RULES, creatorLabel, type Creator, type Rule } from "@/components/dq-checks/mock-rules";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type AssetEntry = {
   key: string;
@@ -61,7 +62,7 @@ export function Step2ApplyChecks({
   onAddCheck,
 }: {
   selected: Set<string>;
-  /** checked[assetKey] = Set<checkId> currently enabled */
+  /** checked[assetKey] = Set<checkId> currently kept */
   checked: Record<string, Set<string>>;
   customChecks: Record<string, Check[]>;
   onToggleCheck: (assetKey: string, checkId: string) => void;
@@ -122,230 +123,246 @@ export function Step2ApplyChecks({
         r.description.toLowerCase().includes(q)),
   ).slice(0, 6);
 
+  const visibleChecks = active.checks.filter((c) => activeChecked.has(c.id));
 
   return (
-    <div className="px-10 py-8">
-      {/* Sub-header */}
-      <div
-        className="flex items-center gap-4 border-b pb-4"
-        style={{ borderColor: "var(--hairline)" }}
-      >
-        <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
-          Apply data quality checks
-        </div>
-        <div className="h-5 w-px" style={{ background: "var(--hairline)" }} aria-hidden="true" />
-        <span className="text-[12px] font-medium" style={{ color: "var(--ink-700)" }}>
-          {assets.length} {assets.length === 1 ? "table" : "tables"} ·{" "}
-          {Object.values(checked).reduce((sum, s) => sum + s.size, 0)} checks
-        </span>
-      </div>
-
-      {/* Recommended-checks note */}
-      <div
-        className="mt-5 flex items-start gap-2.5 rounded-xl border px-4 py-3"
-        style={{ borderColor: "var(--hairline)", background: "rgba(67,134,250,0.06)" }}
-      >
-        <Sparkles size={15} className="mt-0.5 shrink-0" style={{ color: "var(--brand-blue)" }} />
-        <div className="text-[13px]" style={{ color: "var(--ink-700)" }}>
-          These are checks recommended for the {assets.length === 1 ? "table" : "tables"} you
-          selected, based on their columns and profiles. Uncheck anything you don't need, or search
-          your checks library to add more.
-        </div>
-      </div>
-
-      {/* Card */}
-      <div
-        className="mt-6 rounded-2xl border bg-white"
-        style={{ borderColor: "var(--hairline)" }}
-      >
-        {/* Tabs */}
+    <TooltipProvider delayDuration={200}>
+      <div className="px-10 py-8">
+        {/* Sub-header */}
         <div
-          className="flex items-center justify-between border-b px-6"
+          className="flex items-center gap-4 border-b pb-4"
           style={{ borderColor: "var(--hairline)" }}
         >
-          <div className="flex items-center gap-1 overflow-x-auto">
-            {assets.map((a) => {
-              const isActive = a.key === active.key;
-              const count = (checked[a.key] ?? new Set()).size;
-              return (
-                <button
-                  key={a.key}
-                  type="button"
-                  onClick={() => setActiveKey(a.key)}
-                  className="relative whitespace-nowrap px-3 py-3 text-[13px] font-medium transition-colors"
-                  style={{
-                    color: isActive ? "var(--ink-900)" : "var(--ink-500)",
-                  }}
-                >
-                  <span className="font-mono">{a.name}</span>{" "}
-                  <span style={{ color: isActive ? "var(--ink-500)" : "var(--ink-300)" }}>
-                    ({count})
-                  </span>
-                  {isActive && (
-                    <span
-                      className="absolute inset-x-2 -bottom-px h-0.5"
-                      style={{ background: "var(--brand-blue)" }}
-                    />
-                  )}
-                </button>
-              );
-            })}
+          <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
+            Apply data quality checks
           </div>
-          <div className="my-2 flex shrink-0 items-center gap-2">
-            {/* Library search */}
-            <div className="relative" ref={searchRef}>
-              <Search
-                size={13}
-                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--ink-500)" }}
-              />
-              <input
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setSearchOpen(true);
-                }}
-                onFocus={() => setSearchOpen(true)}
-                placeholder="Search checks library…"
-                className="w-[220px] rounded-full border bg-white py-1.5 pl-7 pr-3 text-[12px] outline-none focus:border-[color:var(--brand-blue)]"
-                style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
-              />
-              {searchOpen && (
-                <div
-                  className="absolute right-0 top-[calc(100%+6px)] z-30 w-[380px] overflow-hidden rounded-xl border bg-white shadow-lg"
-                  style={{ borderColor: "var(--hairline)" }}
-                >
-                  {libraryResults.length === 0 ? (
-                    <div className="px-4 py-3 text-[12px]" style={{ color: "var(--ink-500)" }}>
-                      No other checks found in your library.
-                    </div>
-                  ) : (
-                    libraryResults.map((rule) => (
-                      <button
-                        key={rule.id}
-                        type="button"
-                        onClick={() => {
-                          onAddCheck(active.key, ruleToCheck(rule, "lib-"));
-                          setQuery("");
-                          setSearchOpen(false);
-                        }}
-                        className="flex w-full items-start gap-3 border-b px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
-                        style={{ borderColor: "var(--hairline)" }}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div
-                            className="truncate text-[13px] font-medium"
-                            style={{ color: "var(--ink-900)" }}
-                          >
-                            {rule.name}
-                          </div>
-                          <div
-                            className="mt-0.5 line-clamp-1 text-[12px]"
-                            style={{ color: "var(--ink-500)" }}
-                          >
-                            {rule.description}
-                          </div>
-                          <div className="mt-1.5">
-                            <DimensionBadge label={rule.dimension} size="sm" />
-                          </div>
-                        </div>
-                        <Plus size={14} className="mt-1 shrink-0" style={{ color: "var(--brand-blue)" }} />
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => setModalOpen(true)}
-              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors"
-              style={{
-                background: "rgba(67,134,250,0.10)",
-                color: "var(--brand-blue)",
-              }}
-            >
-              <Plus size={12} />
-              Checks
-            </button>
-          </div>
+          <div className="h-5 w-px" style={{ background: "var(--hairline)" }} aria-hidden="true" />
+          <span className="text-[12px] font-medium" style={{ color: "var(--ink-700)" }}>
+            {assets.length} {assets.length === 1 ? "table" : "tables"} ·{" "}
+            {Object.values(checked).reduce((sum, s) => sum + s.size, 0)} checks
+          </span>
         </div>
 
-        {/* Column headers */}
+        {/* Recommended-checks note */}
         <div
-          className="grid grid-cols-[minmax(300px,2fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)] gap-4 border-b px-6 py-3 text-[11px] font-medium uppercase tracking-wide"
-          style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
+          className="mt-5 flex items-start gap-2.5 rounded-xl border px-4 py-3"
+          style={{ borderColor: "var(--hairline)", background: "rgba(67,134,250,0.06)" }}
         >
-          <div>Name</div>
-          <div>Dimension</div>
-          <div>Creator</div>
-          <div>Field applied</div>
+          <Sparkles size={15} className="mt-0.5 shrink-0" style={{ color: "var(--brand-blue)" }} />
+          <div className="text-[13px]" style={{ color: "var(--ink-700)" }}>
+            These are checks recommended for the {assets.length === 1 ? "table" : "tables"} you
+            selected, based on their columns and profiles. Remove any you don't need, or search your
+            checks library to add more.
+          </div>
         </div>
 
-        {/* Rows */}
-        <div>
-          {active.checks.map((check) => {
-            const isOn = activeChecked.has(check.id);
-            const creator = check.creator ?? { kind: "reltio" } as Creator;
-            return (
-              <label
-                key={check.id}
-                className="grid cursor-pointer grid-cols-[minmax(300px,2fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)_minmax(140px,0.8fr)] items-start gap-4 border-b px-6 py-4 transition-colors hover:bg-[color:var(--surface-soft)]"
-                style={{ borderColor: "var(--hairline)" }}
-              >
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={isOn}
-                    onChange={() => onToggleCheck(active.key, check.id)}
-                    className="mt-0.5 h-4 w-4 shrink-0"
-                    style={{ accentColor: "var(--brand-blue)" }}
-                  />
-                  <div className="min-w-0">
-                    <div
-                      className="truncate text-[13px] font-medium"
-                      style={{ color: isOn ? "var(--ink-900)" : "var(--ink-500)" }}
-                    >
-                      {check.rule}
-                    </div>
-                    {check.description && (
-                      <div
-                        className="mt-0.5 line-clamp-1 text-[12px]"
-                        style={{ color: "var(--ink-500)" }}
-                      >
-                        {check.description}
+        {/* Card */}
+        <div
+          className="mt-6 rounded-2xl border bg-white"
+          style={{ borderColor: "var(--hairline)" }}
+        >
+          {/* Tabs */}
+          <div
+            className="flex items-center justify-between border-b px-6"
+            style={{ borderColor: "var(--hairline)" }}
+          >
+            <div className="flex items-center gap-1 overflow-x-auto">
+              {assets.map((a) => {
+                const isActive = a.key === active.key;
+                const count = (checked[a.key] ?? new Set()).size;
+                return (
+                  <button
+                    key={a.key}
+                    type="button"
+                    onClick={() => setActiveKey(a.key)}
+                    className="relative whitespace-nowrap px-3 py-3 text-[13px] font-medium transition-colors"
+                    style={{
+                      color: isActive ? "var(--ink-900)" : "var(--ink-500)",
+                    }}
+                  >
+                    <span className="font-mono">{a.name}</span>{" "}
+                    <span style={{ color: isActive ? "var(--ink-500)" : "var(--ink-300)" }}>
+                      ({count})
+                    </span>
+                    {isActive && (
+                      <span
+                        className="absolute inset-x-2 -bottom-px h-0.5"
+                        style={{ background: "var(--brand-blue)" }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="my-2 flex shrink-0 items-center gap-2">
+              {/* Library search */}
+              <div className="relative" ref={searchRef}>
+                <Search
+                  size={13}
+                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--ink-500)" }}
+                />
+                <input
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setSearchOpen(true);
+                  }}
+                  onFocus={() => setSearchOpen(true)}
+                  placeholder="Search checks library…"
+                  className="w-[220px] rounded-full border bg-white py-1.5 pl-7 pr-3 text-[12px] outline-none focus:border-[color:var(--brand-blue)]"
+                  style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+                />
+                {searchOpen && (
+                  <div
+                    className="absolute right-0 top-[calc(100%+6px)] z-30 w-[380px] overflow-hidden rounded-xl border bg-white shadow-lg"
+                    style={{ borderColor: "var(--hairline)" }}
+                  >
+                    {libraryResults.length === 0 ? (
+                      <div className="px-4 py-3 text-[12px]" style={{ color: "var(--ink-500)" }}>
+                        No other checks found in your library.
                       </div>
+                    ) : (
+                      libraryResults.map((rule) => (
+                        <button
+                          key={rule.id}
+                          type="button"
+                          onClick={() => {
+                            onAddCheck(active.key, ruleToCheck(rule, "lib-"));
+                            setQuery("");
+                            setSearchOpen(false);
+                          }}
+                          className="flex w-full items-start gap-3 border-b px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
+                          style={{ borderColor: "var(--hairline)" }}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div
+                              className="truncate text-[13px] font-medium"
+                              style={{ color: "var(--ink-900)" }}
+                            >
+                              {rule.name}
+                            </div>
+                            <div
+                              className="mt-0.5 line-clamp-1 text-[12px]"
+                              style={{ color: "var(--ink-500)" }}
+                            >
+                              {rule.description}
+                            </div>
+                            <div className="mt-1.5">
+                              <DimensionBadge label={rule.dimension} size="sm" />
+                            </div>
+                          </div>
+                          <Plus size={14} className="mt-1 shrink-0" style={{ color: "var(--brand-blue)" }} />
+                        </button>
+                      ))
                     )}
                   </div>
-                </div>
-                <div>
-                  <DimensionBadge label={check.dimension} size="sm" />
-                </div>
-                <div>
-                  <CreatorBadge creator={creator} />
-                </div>
-                <div
-                  className="font-mono text-[12px]"
-                  style={{ color: "var(--ink-700)" }}
-                >
-                  {check.field}
-                </div>
-              </label>
-            );
-          })}
-        </div>
-      </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalOpen(true)}
+                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors"
+                style={{
+                  background: "rgba(67,134,250,0.10)",
+                  color: "var(--brand-blue)",
+                }}
+              >
+                <Plus size={12} />
+                Checks
+              </button>
+            </div>
+          </div>
 
-      <RuleModal
-        open={modalOpen}
-        mode="create"
-        source={null}
-        onClose={() => setModalOpen(false)}
-        onSave={(rule) => {
-          onAddCheck(active.key, ruleToCheck(rule));
-          setModalOpen(false);
-        }}
-      />
-    </div>
+          {/* Column headers */}
+          <div
+            className="grid grid-cols-[minmax(260px,2fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_48px] gap-4 border-b px-6 py-3 text-[11px] font-medium uppercase tracking-wide"
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
+          >
+            <div>Name</div>
+            <div>Dimension</div>
+            <div>Creator</div>
+            <div>Field applied</div>
+            <div className="sr-only">Remove</div>
+          </div>
+
+          {/* Rows */}
+          <div>
+            {visibleChecks.length === 0 ? (
+              <div className="px-6 py-10 text-center text-[13px]" style={{ color: "var(--ink-500)" }}>
+                No checks selected for {active.name}. Search your library or add a new check.
+              </div>
+            ) : (
+              visibleChecks.map((check) => {
+                const creator = check.creator ?? { kind: "reltio" } as Creator;
+                return (
+                  <div
+                    key={check.id}
+                    className="grid grid-cols-[minmax(260px,2fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_48px] items-center gap-4 border-b px-6 py-4 transition-colors hover:bg-[color:var(--surface-soft)]"
+                    style={{ borderColor: "var(--hairline)" }}
+                  >
+                    <div className="min-w-0">
+                      <div
+                        className="truncate text-[13px] font-medium"
+                        style={{ color: "var(--ink-900)" }}
+                      >
+                        {check.rule}
+                      </div>
+                      {check.description && (
+                        <div
+                          className="mt-0.5 line-clamp-1 text-[12px]"
+                          style={{ color: "var(--ink-500)" }}
+                        >
+                          {check.description}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <DimensionBadge label={check.dimension} size="sm" />
+                    </div>
+                    <div>
+                      <CreatorBadge creator={creator} />
+                    </div>
+                    <div
+                      className="font-mono text-[12px]"
+                      style={{ color: "var(--ink-700)" }}
+                    >
+                      {check.field}
+                    </div>
+                    <div className="flex justify-end">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => onToggleCheck(active.key, check.id)}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-[color:var(--surface-soft)]"
+                            style={{ color: "var(--ink-500)" }}
+                            aria-label="Remove check"
+                          >
+                            <X size={14} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">remove</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <RuleModal
+          open={modalOpen}
+          mode="create"
+          source={null}
+          onClose={() => setModalOpen(false)}
+          onSave={(rule) => {
+            onAddCheck(active.key, ruleToCheck(rule));
+            setModalOpen(false);
+          }}
+        />
+      </div>
+    </TooltipProvider>
   );
 }
