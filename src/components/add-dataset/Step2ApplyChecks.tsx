@@ -191,18 +191,84 @@ export function Step2ApplyChecks({
               );
             })}
           </div>
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            className="my-2 flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors"
-            style={{
-              background: "rgba(67,134,250,0.10)",
-              color: "var(--brand-blue)",
-            }}
-          >
-            <Plus size={12} />
-            Checks
-          </button>
+          <div className="my-2 flex shrink-0 items-center gap-2">
+            {/* Library search */}
+            <div className="relative" ref={searchRef}>
+              <Search
+                size={13}
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--ink-500)" }}
+              />
+              <input
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSearchOpen(true);
+                }}
+                onFocus={() => setSearchOpen(true)}
+                placeholder="Search checks library…"
+                className="w-[220px] rounded-full border bg-white py-1.5 pl-7 pr-3 text-[12px] outline-none focus:border-[color:var(--brand-blue)]"
+                style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+              />
+              {searchOpen && (
+                <div
+                  className="absolute right-0 top-[calc(100%+6px)] z-30 w-[380px] overflow-hidden rounded-xl border bg-white shadow-lg"
+                  style={{ borderColor: "var(--hairline)" }}
+                >
+                  {libraryResults.length === 0 ? (
+                    <div className="px-4 py-3 text-[12px]" style={{ color: "var(--ink-500)" }}>
+                      No other checks found in your library.
+                    </div>
+                  ) : (
+                    libraryResults.map((rule) => (
+                      <button
+                        key={rule.id}
+                        type="button"
+                        onClick={() => {
+                          onAddCheck(active.key, ruleToCheck(rule, "lib-"));
+                          setQuery("");
+                          setSearchOpen(false);
+                        }}
+                        className="flex w-full items-start gap-3 border-b px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
+                        style={{ borderColor: "var(--hairline)" }}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div
+                            className="truncate text-[13px] font-medium"
+                            style={{ color: "var(--ink-900)" }}
+                          >
+                            {rule.name}
+                          </div>
+                          <div
+                            className="mt-0.5 line-clamp-1 text-[12px]"
+                            style={{ color: "var(--ink-500)" }}
+                          >
+                            {rule.description}
+                          </div>
+                          <div className="mt-1.5">
+                            <DimensionBadge label={rule.dimension} size="sm" />
+                          </div>
+                        </div>
+                        <Plus size={14} className="mt-1 shrink-0" style={{ color: "var(--brand-blue)" }} />
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors"
+              style={{
+                background: "rgba(67,134,250,0.10)",
+                color: "var(--brand-blue)",
+              }}
+            >
+              <Plus size={12} />
+              Checks
+            </button>
+          </div>
         </div>
 
         {/* Column headers */}
