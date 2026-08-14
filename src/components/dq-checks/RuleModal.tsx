@@ -50,10 +50,16 @@ export function RuleModal({
   const [description, setDescription] = useState("");
   const [pattern, setPattern] = useState("");
   const [expectation, setExpectation] = useState("expect_column_values_to_match_regex");
-  const [sampleMode, setSampleMode] = useState<"column" | "manual">("column");
+  const [sampleMode, setSampleMode] = useState<"column" | "manual">(
+    HAS_CONNECTED_SOURCES ? "column" : "manual",
+  );
+  const [columnQuery, setColumnQuery] = useState("");
+  const [selectedColumn, setSelectedColumn] = useState<ConnectedColumn | null>(null);
   const [manualStrings, setManualStrings] = useState("");
   const [threshold, setThreshold] = useState(5);
   const [testResult, setTestResult] = useState<null | { passed: number; failed: number; lines: { value: string; ok: boolean }[] }>(null);
+  const columnResults = useMemo(() => searchColumns(columnQuery), [columnQuery]);
+
 
   useEffect(() => {
     if (!open) return;
