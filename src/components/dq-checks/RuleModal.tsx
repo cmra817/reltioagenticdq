@@ -116,13 +116,8 @@ export function RuleModal({
     const values =
       sampleMode === "manual"
         ? manualStrings.split("\n").map((v) => v.trim()).filter(Boolean)
-        : [
-            "molly.gordon@reltio.com",
-            "a.rivera@example.co",
-            "not-an-email",
-            "jpark@corp.io",
-            "missing@tld",
-          ];
+        : (selectedColumn?.samples ?? CONNECTED_COLUMNS[0].samples);
+
     let re: RegExp | null = null;
     try {
       re = new RegExp(pattern);
