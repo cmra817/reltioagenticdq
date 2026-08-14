@@ -373,18 +373,24 @@ export function DataHealthWidgets() {
       ) : (
         <WidgetCanvas
           items={canvasItems}
+          sections={sections}
           widgets={allWidgets}
           interactive={interactive}
           drag={drag}
           onDragStart={setDrag}
           onDragEnd={() => setDrag(null)}
           onHoverItem={moveBefore}
-          onHoverZone={moveToZone}
+          onHoverSection={moveToSection}
           onResize={resize}
           onRemove={remove}
           onDrill={drill}
+          onAddSection={addSection}
+          onRenameSection={renameSection}
+          onDeleteSection={deleteSection}
+          onToggleSection={toggleSection}
         />
       )}
+
 
       {interactive && (
         <div className="mt-3 text-[12px]" style={{ color: "var(--ink-300)" }}>
