@@ -92,20 +92,9 @@ export function WidgetCard({
         <div className="pl-4 pr-6 text-[14px] font-medium" style={{ color: "var(--ink-900)" }}>
           {widget.name}
         </div>
-        <div className="mt-0.5 flex items-center gap-2 pl-4">
-          <CreatorBadge widget={widget} />
-          <span className="text-[12px]" style={{ color: "var(--ink-300)" }}>
-            · {widget.timeframe}
-          </span>
-        </div>
         <div className="mt-3 min-h-0 flex-1">
           <WidgetVisual widget={widget} onSegment={clickable ? onDrill : undefined} />
         </div>
-        {clickable && (
-          <div className="mt-2 text-[11px]" style={{ color: "var(--brand-blue)" }}>
-            Click to view incidents
-          </div>
-        )}
       </div>
 
       {footer && <div className="mt-3 flex items-center gap-2">{footer}</div>}
