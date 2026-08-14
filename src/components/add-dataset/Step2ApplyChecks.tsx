@@ -1,10 +1,10 @@
 import { DimensionBadge } from "@/components/dq-dimensions";
-import { useEffect, useMemo, useState } from "react";
-import { Lock, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Lock, Plus, Search, Sparkles } from "lucide-react";
 import { WAREHOUSES } from "./mock-warehouses";
 import { generateChecks, type Check } from "./mock-checks";
 import { RuleModal } from "@/components/dq-checks/RuleModal";
-import { creatorLabel, type Creator, type Rule } from "@/components/dq-checks/mock-rules";
+import { MOCK_RULES, creatorLabel, type Creator, type Rule } from "@/components/dq-checks/mock-rules";
 
 type AssetEntry = {
   key: string;
@@ -42,9 +42,9 @@ function CreatorBadge({ creator }: { creator: Creator }) {
   );
 }
 
-function ruleToCheck(rule: Rule): Check {
+function ruleToCheck(rule: Rule, idPrefix = ""): Check {
   return {
-    id: rule.id,
+    id: `${idPrefix}${rule.id}`,
     rule: rule.name,
     description: rule.description,
     dimension: rule.dimension,
@@ -70,6 +70,19 @@ export function Step2ApplyChecks({
   const assets = useMemo(() => parseSelectedAssets(selected, customChecks), [selected, customChecks]);
   const [activeKey, setActiveKey] = useState<string>(assets[0]?.key ?? "");
   const [modalOpen, setModalOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
   useEffect(() => {
     if (assets.length > 0 && !assets.some((a) => a.key === activeKey)) {
@@ -98,6 +111,18 @@ export function Step2ApplyChecks({
   const active = assets.find((a) => a.key === activeKey) ?? assets[0];
   const activeChecked = checked[active.key] ?? new Set<string>();
 
+  const existingIds = new Set(active.checks.map((c) => c.id));
+  const q = query.trim().toLowerCase();
+  const libraryResults = MOCK_RULES.filter(
+    (r) =>
+      !existingIds.has(`lib-${r.id}`) &&
+      (q === "" ||
+        r.name.toLowerCase().includes(q) ||
+        r.dimension.toLowerCase().includes(q) ||
+        r.description.toLowerCase().includes(q)),
+  ).slice(0, 6);
+
+
   return (
     <div className="px-10 py-8">
       {/* Sub-header */}
@@ -113,6 +138,19 @@ export function Step2ApplyChecks({
           {assets.length} {assets.length === 1 ? "table" : "tables"} ·{" "}
           {Object.values(checked).reduce((sum, s) => sum + s.size, 0)} checks
         </span>
+      </div>
+
+      {/* Recommended-checks note */}
+      <div
+        className="mt-5 flex items-start gap-2.5 rounded-xl border px-4 py-3"
+        style={{ borderColor: "var(--hairline)", background: "rgba(67,134,250,0.06)" }}
+      >
+        <Sparkles size={15} className="mt-0.5 shrink-0" style={{ color: "var(--brand-blue)" }} />
+        <div className="text-[13px]" style={{ color: "var(--ink-700)" }}>
+          These are checks recommended for the {assets.length === 1 ? "table" : "tables"} you
+          selected, based on their columns and profiles. Uncheck anything you don't need, or search
+          your checks library to add more.
+        </div>
       </div>
 
       {/* Card */}
@@ -153,18 +191,84 @@ export function Step2ApplyChecks({
               );
             })}
           </div>
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            className="my-2 flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors"
-            style={{
-              background: "rgba(67,134,250,0.10)",
-              color: "var(--brand-blue)",
-            }}
-          >
-            <Plus size={12} />
-            Checks
-          </button>
+          <div className="my-2 flex shrink-0 items-center gap-2">
+            {/* Library search */}
+            <div className="relative" ref={searchRef}>
+              <Search
+                size={13}
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--ink-500)" }}
+              />
+              <input
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSearchOpen(true);
+                }}
+                onFocus={() => setSearchOpen(true)}
+                placeholder="Search checks library…"
+                className="w-[220px] rounded-full border bg-white py-1.5 pl-7 pr-3 text-[12px] outline-none focus:border-[color:var(--brand-blue)]"
+                style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+              />
+              {searchOpen && (
+                <div
+                  className="absolute right-0 top-[calc(100%+6px)] z-30 w-[380px] overflow-hidden rounded-xl border bg-white shadow-lg"
+                  style={{ borderColor: "var(--hairline)" }}
+                >
+                  {libraryResults.length === 0 ? (
+                    <div className="px-4 py-3 text-[12px]" style={{ color: "var(--ink-500)" }}>
+                      No other checks found in your library.
+                    </div>
+                  ) : (
+                    libraryResults.map((rule) => (
+                      <button
+                        key={rule.id}
+                        type="button"
+                        onClick={() => {
+                          onAddCheck(active.key, ruleToCheck(rule, "lib-"));
+                          setQuery("");
+                          setSearchOpen(false);
+                        }}
+                        className="flex w-full items-start gap-3 border-b px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
+                        style={{ borderColor: "var(--hairline)" }}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div
+                            className="truncate text-[13px] font-medium"
+                            style={{ color: "var(--ink-900)" }}
+                          >
+                            {rule.name}
+                          </div>
+                          <div
+                            className="mt-0.5 line-clamp-1 text-[12px]"
+                            style={{ color: "var(--ink-500)" }}
+                          >
+                            {rule.description}
+                          </div>
+                          <div className="mt-1.5">
+                            <DimensionBadge label={rule.dimension} size="sm" />
+                          </div>
+                        </div>
+                        <Plus size={14} className="mt-1 shrink-0" style={{ color: "var(--brand-blue)" }} />
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors"
+              style={{
+                background: "rgba(67,134,250,0.10)",
+                color: "var(--brand-blue)",
+              }}
+            >
+              <Plus size={12} />
+              Checks
+            </button>
+          </div>
         </div>
 
         {/* Column headers */}
