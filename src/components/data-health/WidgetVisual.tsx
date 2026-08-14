@@ -127,7 +127,7 @@ function DonutVisual({
 }
 
 
-function LineVisual({ values }: { values: number[] }) {
+function LineVisual({ values, color = "#14a6a6" }: { values: number[]; color?: string }) {
   const w = 280;
   const h = 84;
   const pad = 6;
@@ -151,15 +151,19 @@ function LineVisual({ values }: { values: number[] }) {
       aria-hidden="true"
       className="h-full min-h-[84px] w-full"
     >
-      <path d={`${path} L${w - pad} ${h - pad} L${pad} ${h - pad} Z`} fill="rgba(20,166,166,0.10)" />
+      <path d={`${path} L${w - pad} ${h - pad} L${pad} ${h - pad} Z`} fill={`${color}1f`} />
       <path
         d={path}
         fill="none"
-        stroke="#14a6a6"
+        stroke={color}
         strokeWidth="2"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
       />
+    </svg>
+  );
+}
+
     </svg>
   );
 }
