@@ -22,7 +22,7 @@ function useContainerCols(ref: React.RefObject<HTMLDivElement | null>, maxCols =
     if (!el) return;
     const ro = new ResizeObserver(() => {
       const width = el.clientWidth;
-      const cols = width < 640 ? 1 : width < 1024 ? 2 : maxCols;
+      const cols = width < 560 ? 1 : width < 900 ? 2 : maxCols;
       setSize({ width, cols });
     });
     ro.observe(el);
