@@ -248,7 +248,7 @@ function NewMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-9 w-full items-center gap-1.5 rounded-full border px-3 text-[14px] font-medium transition-colors"
+        className="inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-[14px] font-medium transition-colors"
         style={{
           borderColor: "var(--brand-blue)",
           color: "var(--brand-blue)",
@@ -260,7 +260,7 @@ function NewMenu() {
         <PlusIcon size={14} />
         <span>New</span>
         <span
-          className="ml-auto transition-transform"
+          className="transition-transform"
           style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
         >
           <ChevronDownIcon size={12} />
