@@ -1,20 +1,7 @@
-import { Lock, MoreVertical } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { WidgetVisual } from "./WidgetVisual";
-import { widgetCreatorLabel, type Widget } from "./widget-model";
-
-export function CreatorBadge({ widget }: { widget: Widget }) {
-  const managed = widget.creator.kind === "reltio";
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 text-[12px]"
-      style={{ color: "var(--ink-500)" }}
-    >
-      {managed && <Lock size={11} />}
-      {widgetCreatorLabel(widget.creator)}
-    </span>
-  );
-}
+import type { Widget } from "./widget-model";
 
 export function WidgetCard({
   widget,
