@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, Copy, Sparkles } from "lucide-react";
+import { Check, Copy, Search, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
+import {
+  CONNECTED_COLUMNS,
+  HAS_CONNECTED_SOURCES,
+  searchColumns,
+  type ConnectedColumn,
+} from "./mock-columns";
 import {
   DIMENSIONS,
   suggestFromDescription,
   type Dimension,
   type Rule,
 } from "./mock-rules";
+
 
 type Mode = "create" | "clone" | "edit";
 
