@@ -356,7 +356,7 @@ function AssetDetailPage() {
                     <ChevronDown size={14} />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[160px]">
+                <DropdownMenuContent align="end" className="min-w-[190px]">
                   <DropdownMenuItem
                     onClick={() => runJob({ kind: "profiling", table: detail.name })}
                   >
@@ -369,6 +369,21 @@ function AssetDetailPage() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => toast("Loading to Reltio...")}>
                     Load to Reltio
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setChecksModalOpen(true)}>
+                    Edit DQ checks
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSchedulesModalOpen(true)}>
+                    Edit schedules
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setRemoveModalOpen(true)}
+                    className="focus:text-[#dc2626]"
+                    style={{ color: "#dc2626" }}
+                  >
+                    Remove from monitoring
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
