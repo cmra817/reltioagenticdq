@@ -239,7 +239,7 @@ function AssetDetailPage() {
 
   // Editable monitoring config. Created assets persist through the store; static
   // sample assets keep their edits in local state for the prototype.
-  const [localChecks, setLocalChecks] = useState<Check[] | null>(null);
+  const [localChecks, setLocalChecks] = useState<DQCheck[] | null>(null);
   const [localSchedules, setLocalSchedules] = useState<{
     profiling: ScheduleConfig;
     checks: ScheduleConfig;
