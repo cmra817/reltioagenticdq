@@ -460,7 +460,7 @@ function baselineBand(values: number[]): { low: number; high: number } {
   const mean = base.reduce((a, b) => a + b, 0) / base.length;
   const variance = base.reduce((a, b) => a + (b - mean) ** 2, 0) / base.length;
   const sd = Math.sqrt(variance);
-  const half = Math.max(sd * 3, Math.abs(mean) * 0.004);
+  const half = Math.max(sd * 3.5, Math.abs(mean) * 0.004);
   return { low: mean - half, high: mean + half };
 }
 
