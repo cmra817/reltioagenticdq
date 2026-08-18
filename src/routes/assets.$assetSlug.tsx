@@ -227,7 +227,7 @@ function AssetDetailPage() {
   const anomalyMetrics = React.useMemo(
     () =>
       buildOverviewStats(detail, firstRun)
-        .filter((s) => s.anomalous)
+        .filter((s) => "anomalous" in s && s.anomalous)
         .map((s) => s.label),
     [detail, firstRun],
   );
