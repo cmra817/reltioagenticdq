@@ -430,7 +430,7 @@ function isStale(cell: TimestampCell): boolean {
   return cell.hoursAgo > cell.typicalHours * 2.5;
 }
 
-/* ---------- metric card model: drift metrics vs discrete-event metrics ---------- */
+/* ---------- metric card model: drift / event / rollup metrics ---------- */
 
 type DriftStat = {
   kind: "drift";
@@ -452,7 +452,15 @@ type EventStat = {
   linkLabel?: string;
 };
 
-type OverviewStat = DriftStat | EventStat;
+type RollupStat = {
+  kind: "rollup";
+  label: string;
+  value: string;
+  trend: number[];
+  note: string;
+};
+
+type OverviewStat = DriftStat | EventStat | RollupStat;
 
 function baselineBand(values: number[]): { low: number; high: number } {
   const hist = values.slice(0, -1);
