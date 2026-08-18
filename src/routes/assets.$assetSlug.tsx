@@ -260,12 +260,15 @@ function AssetDetailPage() {
                   <SourceLogo source={detail.source} />
                 </span>
                 <div>
-                  <h1
-                    className="text-[22px] font-semibold leading-tight"
-                    style={{ color: "var(--brand-blue)" }}
-                  >
-                    {detail.name}
-                  </h1>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h1
+                      className="text-[22px] font-semibold leading-tight"
+                      style={{ color: "var(--brand-blue)" }}
+                    >
+                      {detail.name}
+                    </h1>
+                    <AnomalyBadge metrics={anomalyMetrics} />
+                  </div>
                   <div
                     className="mt-1 flex items-center gap-1.5 text-[12px]"
                     style={{ color: "var(--ink-500)" }}
