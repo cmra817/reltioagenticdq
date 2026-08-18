@@ -1149,24 +1149,6 @@ function ColumnsPanel({
                     const isFirst = i === 0;
                     const isLast = i === profilingCols.length - 1;
                     const pad = isFirst || isLast ? "px-5" : "px-3";
-                    if (c.key === "tag") {
-                      return (
-                        <td key={c.key} className={`${pad} py-4`}>
-                          {row.tag && (
-                            <span
-                              className="inline-flex items-center rounded-md border px-2.5 py-1 text-[12px] font-medium"
-                              style={{
-                                borderColor: "var(--hairline)",
-                                color: "var(--ink-700)",
-                                background: "white",
-                              }}
-                            >
-                              {row.tag}
-                            </span>
-                          )}
-                        </td>
-                      );
-                    }
                     const raw = row[c.key as keyof ColumnRow];
                     const value =
                       c.key === "distinct" && typeof raw === "number"
@@ -1287,25 +1269,17 @@ function ColumnDetailPanel({
         }`}
         style={{ borderColor: "var(--hairline)" }}
       >
-        {column && (
-          <>
-            {/* Header */}
-            <div className="flex items-start justify-between gap-3 border-b px-6 py-5" style={{ borderColor: "var(--hairline)" }}>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[12px] font-mono" style={{ color: "var(--ink-300)" }}>123</span>
-                  <h3 className="text-[18px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                    {column.name}
-                  </h3>
-                  {column.tag && (
-                    <span
-                      className="inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium"
-                      style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                    >
-                      {column.tag}
-                    </span>
-                  )}
-                </div>
+            {column && (
+              <>
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3 border-b px-6 py-5" style={{ borderColor: "var(--hairline)" }}>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[12px] font-mono" style={{ color: "var(--ink-300)" }}>123</span>
+                      <h3 className="text-[18px] font-semibold" style={{ color: "var(--ink-900)" }}>
+                        {column.name}
+                      </h3>
+                    </div>
                 <div className="mt-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
                   Finance Sales Data &gt; Orders &gt; {column.name}
                 </div>
