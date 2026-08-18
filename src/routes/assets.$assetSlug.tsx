@@ -1033,6 +1033,11 @@ function ColumnsToggle({
   );
 }
 
+/** Memo-free wrapper so table cells and the detail panel agree on anomalies. */
+function anomalyFlagsFor(name: string) {
+  return columnAnomalyFlags(name);
+}
+
 function ColumnsPanel({
   columns,
   hasHistory = true,
