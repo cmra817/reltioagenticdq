@@ -495,14 +495,13 @@ function buildOverviewStats(detail: AssetDetail, firstRun: boolean): OverviewSta
       { kind: "event", label: "Columns", value: String(detail.columns), note: "First run — no prior run to compare", anomalous: false },
       { kind: "drift", label: "Rows", value: detail.rows, trend: [], note: "First run — no prior run to compare", anomalous: false },
       { kind: "drift", label: "Fill rate", value: detail.fillRate, trend: [], note: "First run — no prior run to compare", anomalous: false },
-      { kind: "drift", label: "Checks passing", value: `${detail.checks}/${detail.checks}`, trend: [], note: "First run — no prior run to compare", anomalous: false },
+      { kind: "rollup", label: "Checks passing", value: `${detail.checks}/${detail.checks}`, trend: [], note: "First run — no prior run to compare" },
     ];
   }
   const rowsValue = ROWS_TREND[ROWS_TREND.length - 1];
   const zeroRows = rowsValue === 0;
   const rowsAnomalous = zeroRows || outsideBand(ROWS_TREND);
   const fillAnomalous = outsideBand(FILL_TREND);
-  const checksAnomalous = outsideBand(CHECKS_TREND);
   return [
     {
       kind: "event",
@@ -530,12 +529,11 @@ function buildOverviewStats(detail: AssetDetail, firstRun: boolean): OverviewSta
       neutral: true,
     },
     {
-      kind: "drift",
+      kind: "rollup",
       label: "Checks passing",
       value: `19/${detail.checks}`,
       trend: CHECKS_TREND,
-      note: checksAnomalous ? "Decreased 1 — outside normal range" : "Decreased 1 from last run",
-      anomalous: checksAnomalous,
+      note: "Decreased 1 from last run",
     },
   ];
 }
