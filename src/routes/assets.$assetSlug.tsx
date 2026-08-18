@@ -224,6 +224,33 @@ function AssetDetailPage() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selectedColumn = selectedIndex === null ? null : columns[selectedIndex] ?? null;
   const { runJob } = useNotifications();
+  const { updateAsset, removeAsset } = useCreatedAssets();
+  const navigate = useNavigate();
+
+  // Editable monitoring config. Created assets persist through the store; static
+  // sample assets keep their edits in local state for the prototype.
+  const [localChecks, setLocalChecks] = useState<Check[] | null>(null);
+  const [localSchedules, setLocalSchedules] = useState<{
+    profiling: ScheduleConfig;
+    checks: ScheduleConfig;
+  } | null>(null);
+  const [checksModalOpen, setChecksModalOpen] = useState(false);
+  const [schedulesModalOpen, setSchedulesModalOpen] = useState(false);
+  const [removeModalOpen, setRemoveModalOpen] = useState(false);
+
+  const configuredChecks = React.useMemo(
+    () => localChecks ?? created?.checks ?? generateChecks(detail.name),
+    [localChecks, created, detail.name],
+  );
+  const schedules = React.useMemo(
+    () =>
+      localSchedules ?? {
+        profiling: created?.profilingSchedule ?? DEFAULT_SCHEDULE,
+        checks: created?.checksSchedule ?? DEFAULT_SCHEDULE,
+      },
+    [localSchedules, created],
+  );
+
   const anomalyMetrics = React.useMemo(
     () =>
       buildOverviewStats(detail, firstRun)
