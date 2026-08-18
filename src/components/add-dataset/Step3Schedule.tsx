@@ -88,7 +88,7 @@ export function Step3Schedule({
   );
 }
 
-function ScheduleCard({
+export function ScheduleCard({
   icon,
   title,
   description,
