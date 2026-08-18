@@ -42,6 +42,8 @@ type CreatedAssetsValue = {
   assets: CreatedAsset[];
   bySlug: Record<string, CreatedAsset>;
   addAssets: (inputs: CreatedAssetInput[]) => void;
+  updateAsset: (slug: string, patch: Partial<CreatedAsset>) => void;
+  removeAsset: (slug: string) => void;
 };
 
 const CreatedAssetsContext = createContext<CreatedAssetsValue | null>(null);
