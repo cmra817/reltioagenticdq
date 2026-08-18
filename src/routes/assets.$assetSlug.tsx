@@ -3,7 +3,7 @@ import { useState } from "react";
 import { DimensionBadge } from "@/components/dq-dimensions";
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Check, Info, UploadCloud, Loader2, TriangleAlert, ClockAlert, ArrowRight } from "lucide-react";
-import { ColumnProfilePanel } from "@/components/column-profile-panel";
+import { ColumnProfilePanel, WarnIcon, columnAnomalyFlags } from "@/components/column-profile-panel";
 import { SchemaDiffModal, type SchemaChange } from "@/components/asset-schema-diff";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -212,7 +212,7 @@ const PROFILING_COLUMNS = [
   { key: "nullCount", label: "Null count" },
   { key: "distinct", label: "Distinct count" },
   { key: "uniqueness", label: "Uniqueness" },
-  { key: "fillRate", label: "Fill rate" },
+  { key: "fillRate", label: "Completeness" },
 ] as const;
 
 function AssetDetailPage() {
@@ -1033,6 +1033,11 @@ function ColumnsToggle({
   );
 }
 
+/** Memo-free wrapper so table cells and the detail panel agree on anomalies. */
+function anomalyFlagsFor(name: string) {
+  return columnAnomalyFlags(name);
+}
+
 function ColumnsPanel({
   columns,
   hasHistory = true,
@@ -1067,7 +1072,11 @@ function ColumnsPanel({
     });
 
   const sampleOptions = SAMPLE_ATTRIBUTES.map((k) => ({ key: k, label: k }));
-  const profilingCols = PROFILING_COLUMNS.filter((c) => visibleProfiling.has(c.key));
+  // "Name" is the row identifier — it is always visible and never toggleable.
+  const profilingToggleOptions = PROFILING_COLUMNS.filter((c) => c.key !== "name");
+  const profilingCols = PROFILING_COLUMNS.filter(
+    (c) => c.key === "name" || visibleProfiling.has(c.key),
+  );
   const sampleCols = SAMPLE_ATTRIBUTES.filter((k) => visibleSample.has(k));
 
   return (
@@ -1099,7 +1108,7 @@ function ColumnsPanel({
 
         {subTab === "Profiling" ? (
           <ColumnsToggle
-            options={PROFILING_COLUMNS}
+            options={profilingToggleOptions}
             visible={visibleProfiling}
             onToggle={toggleSetItem(setVisibleProfiling)}
           />
@@ -1126,7 +1135,14 @@ function ColumnsPanel({
                 {profilingCols.map((c, i) => (
                   <th
                     key={c.key}
-                    className={`${i === 0 || i === profilingCols.length - 1 ? "px-5" : "px-3"} py-3 font-semibold`}
+                    className={`${i === 0 || i === profilingCols.length - 1 ? "px-5" : "px-3"} py-3 font-semibold ${
+                      c.key === "name" ? "sticky left-0 z-20 bg-white" : ""
+                    }`}
+                    style={
+                      c.key === "name"
+                        ? { boxShadow: "1px 0 0 var(--hairline)" }
+                        : undefined
+                    }
                   >
                     {c.label}
                   </th>
@@ -1140,28 +1156,52 @@ function ColumnsPanel({
                 <tr
                   key={row.name}
                   onClick={() => onSelectIndex(idx)}
-                  className="cursor-pointer border-t transition-colors hover:bg-[color:var(--surface-soft)]"
+                  className="group cursor-pointer border-t transition-colors hover:bg-[color:var(--surface-soft)]"
                   style={{
                     borderColor: "var(--hairline)",
                     background: isSelected ? "var(--surface-soft)" : undefined,
                   }}
                 >
                   {profilingCols.map((c, i) => {
-                    const isFirst = i === 0;
+                    const isName = c.key === "name";
                     const isLast = i === profilingCols.length - 1;
-                    const pad = isFirst || isLast ? "px-5" : "px-3";
+                    const pad = isName || isLast ? "px-5" : "px-3";
                     const raw = row[c.key as keyof ColumnRow];
                     const value =
                       c.key === "distinct" && typeof raw === "number"
                         ? raw.toLocaleString()
                         : raw ?? "";
+                    const flags = anomalyFlagsFor(row.name);
+                    const anomalous =
+                      (c.key === "fillRate" && flags.fillRate) ||
+                      (c.key === "uniqueness" && flags.uniqueness);
                     return (
                       <td
                         key={c.key}
-                        className={`${pad} py-4 ${isFirst ? "font-semibold" : ""}`}
-                        style={{ color: isFirst ? "var(--ink-900)" : "var(--ink-700)" }}
+                        className={`${pad} py-4 ${isName ? "sticky left-0 z-10 font-semibold" : ""} ${
+                          isName
+                            ? isSelected
+                              ? "bg-[color:var(--surface-soft)]"
+                              : "bg-white group-hover:bg-[color:var(--surface-soft)]"
+                            : ""
+                        }`}
+                        style={{
+                          color: anomalous
+                            ? "#dc2626"
+                            : isName
+                              ? "var(--ink-900)"
+                              : "var(--ink-700)",
+                          ...(isName ? { boxShadow: "1px 0 0 var(--hairline)" } : null),
+                        }}
                       >
-                        {value as string | number}
+                        {anomalous ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            <WarnIcon />
+                            <span>{value as string | number}</span>
+                          </span>
+                        ) : (
+                          (value as string | number)
+                        )}
                       </td>
                     );
                   })}
