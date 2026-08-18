@@ -616,38 +616,6 @@ function BandSparkline({
   );
 }
 
-function Sparkline({
-  values,
-  width = 96,
-  height = 28,
-}: {
-  values: number[];
-  width?: number;
-  height?: number;
-}) {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  const pad = 3;
-  const y = (v: number) => pad + (height - pad * 2) * (1 - (v - min) / range);
-  const stepX = (width - pad * 2) / Math.max(values.length - 1, 1);
-  const path = values
-    .map((v, i) => `${i === 0 ? "M" : "L"}${(pad + i * stepX).toFixed(1)},${y(v).toFixed(1)}`)
-    .join(" ");
-  return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
-      <path
-        d={path}
-        fill="none"
-        stroke={TREND_NEUTRAL}
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 function AnomalyBadge({ metrics }: { metrics: string[] }) {
   if (metrics.length === 0) return null;
   return (
