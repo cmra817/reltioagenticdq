@@ -42,6 +42,8 @@ type CreatedAssetsValue = {
   assets: CreatedAsset[];
   bySlug: Record<string, CreatedAsset>;
   addAssets: (inputs: CreatedAssetInput[]) => void;
+  updateAsset: (slug: string, patch: Partial<CreatedAsset>) => void;
+  removeAsset: (slug: string) => void;
 };
 
 const CreatedAssetsContext = createContext<CreatedAssetsValue | null>(null);
@@ -93,6 +95,14 @@ export function CreatedAssetsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateAsset = useCallback((slug: string, patch: Partial<CreatedAsset>) => {
+    setAssets((prev) => prev.map((a) => (a.slug === slug ? { ...a, ...patch } : a)));
+  }, []);
+
+  const removeAsset = useCallback((slug: string) => {
+    setAssets((prev) => prev.filter((a) => a.slug !== slug));
+  }, []);
+
   const bySlug = useMemo(() => {
     const map: Record<string, CreatedAsset> = {};
     for (const a of assets) map[a.slug] = a;
@@ -100,14 +110,24 @@ export function CreatedAssetsProvider({ children }: { children: ReactNode }) {
   }, [assets]);
 
   return (
-    <CreatedAssetsContext.Provider value={{ assets, bySlug, addAssets }}>
+    <CreatedAssetsContext.Provider
+      value={{ assets, bySlug, addAssets, updateAsset, removeAsset }}
+    >
       {children}
     </CreatedAssetsContext.Provider>
   );
 }
 
-export function useCreatedAssets() {
+export function useCreatedAssets(): CreatedAssetsValue {
   const ctx = useContext(CreatedAssetsContext);
   // Tolerate usage outside the provider (e.g. isolated previews) with an empty store.
-  return ctx ?? { assets: [], bySlug: {}, addAssets: () => {} };
+  return (
+    ctx ?? {
+      assets: [],
+      bySlug: {} as Record<string, CreatedAsset>,
+      addAssets: () => {},
+      updateAsset: () => {},
+      removeAsset: () => {},
+    }
+  );
 }

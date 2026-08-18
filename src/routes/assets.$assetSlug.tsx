@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useState } from "react";
 import { DimensionBadge } from "@/components/dq-dimensions";
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Check, Info, UploadCloud, Loader2, TriangleAlert, ClockAlert, ArrowRight } from "lucide-react";
 import { SchemaDiffModal, type SchemaChange } from "@/components/asset-schema-diff";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -11,9 +11,19 @@ import { useNotifications } from "@/components/notification-context";
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useCreatedAssets, type CreatedAsset } from "@/components/created-assets-context";
-import { frequencyLabel } from "@/components/add-dataset/Step3Schedule";
+import {
+  DEFAULT_SCHEDULE,
+  frequencyLabel,
+  type ScheduleConfig,
+} from "@/components/add-dataset/Step3Schedule";
+import { generateChecks, type Check as DQCheck } from "@/components/add-dataset/mock-checks";
+import {
+  EditChecksModal,
+  EditSchedulesModal,
+  RemoveFromMonitoringModal,
+} from "@/components/asset-actions-modals";
 
 export const Route = createFileRoute("/assets/$assetSlug")({
   head: ({ params }) => ({
@@ -224,6 +234,33 @@ function AssetDetailPage() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selectedColumn = selectedIndex === null ? null : columns[selectedIndex] ?? null;
   const { runJob } = useNotifications();
+  const { updateAsset, removeAsset } = useCreatedAssets();
+  const navigate = useNavigate();
+
+  // Editable monitoring config. Created assets persist through the store; static
+  // sample assets keep their edits in local state for the prototype.
+  const [localChecks, setLocalChecks] = useState<DQCheck[] | null>(null);
+  const [localSchedules, setLocalSchedules] = useState<{
+    profiling: ScheduleConfig;
+    checks: ScheduleConfig;
+  } | null>(null);
+  const [checksModalOpen, setChecksModalOpen] = useState(false);
+  const [schedulesModalOpen, setSchedulesModalOpen] = useState(false);
+  const [removeModalOpen, setRemoveModalOpen] = useState(false);
+
+  const configuredChecks = React.useMemo(
+    () => localChecks ?? created?.checks ?? generateChecks(detail.name),
+    [localChecks, created, detail.name],
+  );
+  const schedules = React.useMemo(
+    () =>
+      localSchedules ?? {
+        profiling: created?.profilingSchedule ?? DEFAULT_SCHEDULE,
+        checks: created?.checksSchedule ?? DEFAULT_SCHEDULE,
+      },
+    [localSchedules, created],
+  );
+
   const anomalyMetrics = React.useMemo(
     () =>
       buildOverviewStats(detail, firstRun)
@@ -319,7 +356,7 @@ function AssetDetailPage() {
                     <ChevronDown size={14} />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[160px]">
+                <DropdownMenuContent align="end" className="min-w-[190px]">
                   <DropdownMenuItem
                     onClick={() => runJob({ kind: "profiling", table: detail.name })}
                   >
@@ -332,6 +369,21 @@ function AssetDetailPage() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => toast("Loading to Reltio...")}>
                     Load to Reltio
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setChecksModalOpen(true)}>
+                    Edit DQ checks
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSchedulesModalOpen(true)}>
+                    Edit schedules
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setRemoveModalOpen(true)}
+                    className="focus:text-[#dc2626]"
+                    style={{ color: "#dc2626" }}
+                  >
+                    Remove from monitoring
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -392,6 +444,52 @@ function AssetDetailPage() {
 
         {/* floating composer (centered over content area, not full viewport) */}
       </div>
+
+      <EditChecksModal
+        open={checksModalOpen}
+        tableName={detail.name}
+        checks={configuredChecks}
+        onClose={() => setChecksModalOpen(false)}
+        onSave={(next) => {
+          if (created) updateAsset(created.slug, { checks: next });
+          else setLocalChecks(next);
+          setChecksModalOpen(false);
+          toast.success(`Saved ${next.length} ${next.length === 1 ? "check" : "checks"} on ${detail.name}`);
+        }}
+      />
+
+      <EditSchedulesModal
+        open={schedulesModalOpen}
+        tableName={detail.name}
+        checkCount={configuredChecks.length}
+        profiling={schedules.profiling}
+        checks={schedules.checks}
+        onClose={() => setSchedulesModalOpen(false)}
+        onSave={(next) => {
+          if (created)
+            updateAsset(created.slug, {
+              profilingSchedule: next.profiling,
+              checksSchedule: next.checks,
+            });
+          else setLocalSchedules(next);
+          setSchedulesModalOpen(false);
+          toast.success(
+            `Schedules updated — profiling ${frequencyLabel(next.profiling).toLowerCase()}, checks ${frequencyLabel(next.checks).toLowerCase()}`,
+          );
+        }}
+      />
+
+      <RemoveFromMonitoringModal
+        open={removeModalOpen}
+        tableName={detail.name}
+        onClose={() => setRemoveModalOpen(false)}
+        onConfirm={() => {
+          if (created) removeAsset(created.slug);
+          setRemoveModalOpen(false);
+          toast.success(`${detail.name} removed from monitoring`);
+          navigate({ to: "/explore" });
+        }}
+      />
     </AppShell>
   );
 }
