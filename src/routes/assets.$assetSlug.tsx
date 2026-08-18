@@ -825,7 +825,7 @@ function OverviewPanel({
 function ChecksByCategoryChart({
   rows,
 }: {
-  rows: { label: string; passing: number; failing: number }[];
+  rows: { label: string; passing: number; failing: number; failingSince?: string }[];
 }) {
   const max = Math.max(4, ...rows.map((r) => r.passing + r.failing));
   const ticks = Array.from({ length: max * 2 + 1 }, (_, i) => i / 2);
@@ -833,7 +833,7 @@ function ChecksByCategoryChart({
     <div className="mt-5">
       <div className="space-y-2">
         {rows.map((r) => (
-          <div key={r.label} className="grid grid-cols-[140px_1fr] items-center gap-3">
+          <div key={r.label} className="grid grid-cols-[140px_1fr_72px] items-center gap-3">
             <span className="truncate text-right text-[12px]" style={{ color: "var(--ink-500)" }}>
               {r.label}
             </span>
@@ -843,16 +843,24 @@ function ChecksByCategoryChart({
                 <div style={{ width: `${(r.failing / max) * 100}%`, background: FAIL_RED }} />
               </div>
             </div>
+            <span className="flex justify-start">
+              {r.failing > 0 && (
+                <StatusTag tone={r.failingSince === "new" || !r.failingSince ? "danger" : "neutral"}>
+                  {r.failingSince ?? "new"}
+                </StatusTag>
+              )}
+            </span>
           </div>
         ))}
       </div>
-      <div className="mt-1 grid grid-cols-[140px_1fr] gap-3">
+      <div className="mt-1 grid grid-cols-[140px_1fr_72px] gap-3">
         <span />
         <div className="flex justify-between text-[11px]" style={{ color: "var(--ink-500)" }}>
           {ticks.map((t) => (
             <span key={t}>{t % 1 === 0 ? t.toFixed(1) : t.toFixed(1)}</span>
           ))}
         </div>
+
       </div>
     </div>
   );
