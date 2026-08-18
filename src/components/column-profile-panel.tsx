@@ -94,7 +94,7 @@ function deltaText(values: number[]): string {
 
 /* ---------------- small shared pieces ---------------- */
 
-function WarnIcon({ className = "" }: { className?: string }) {
+export function WarnIcon({ className = "" }: { className?: string }) {
   return <TriangleAlert size={14} color={DANGER} className={className} aria-hidden="true" />;
 }
 
@@ -421,6 +421,19 @@ function FreqTable({ firstColLabel, rows }: { firstColLabel: string; rows: FreqR
       })}
     </div>
   );
+}
+
+/**
+ * Same deterministic anomaly seeds used by the panel cards, exposed so the
+ * profiling table can flag the identical metrics inline.
+ */
+export function columnAnomalyFlags(name: string, table = "Orders") {
+  const seed = `${table}:${name}`;
+  return {
+    uniqueness: rand(seed, 21) > 0.45,
+    fillRate: rand(seed, 22) > 0.82,
+    distribution: rand(seed, 23) > 0.5,
+  };
 }
 
 /* ---------------- panel ---------------- */
