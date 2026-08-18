@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useState } from "react";
 import { DimensionBadge } from "@/components/dq-dimensions";
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { Columns3, X, ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Check, Info, UploadCloud, Loader2, TriangleAlert, ClockAlert, ArrowRight } from "lucide-react";
 import { SchemaDiffModal, type SchemaChange } from "@/components/asset-schema-diff";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
