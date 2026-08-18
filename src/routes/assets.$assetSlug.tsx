@@ -227,7 +227,7 @@ function AssetDetailPage() {
   const anomalyMetrics = React.useMemo(
     () =>
       buildOverviewStats(detail, firstRun)
-        .filter((s) => s.anomalous)
+        .filter((s) => "anomalous" in s && s.anomalous)
         .map((s) => s.label),
     [detail, firstRun],
   );
@@ -430,7 +430,7 @@ function isStale(cell: TimestampCell): boolean {
   return cell.hoursAgo > cell.typicalHours * 2.5;
 }
 
-/* ---------- metric card model: drift metrics vs discrete-event metrics ---------- */
+/* ---------- metric card model: drift / event / rollup metrics ---------- */
 
 type DriftStat = {
   kind: "drift";
@@ -452,7 +452,15 @@ type EventStat = {
   linkLabel?: string;
 };
 
-type OverviewStat = DriftStat | EventStat;
+type RollupStat = {
+  kind: "rollup";
+  label: string;
+  value: string;
+  trend: number[];
+  note: string;
+};
+
+type OverviewStat = DriftStat | EventStat | RollupStat;
 
 function baselineBand(values: number[]): { low: number; high: number } {
   const hist = values.slice(0, -1);
@@ -487,14 +495,13 @@ function buildOverviewStats(detail: AssetDetail, firstRun: boolean): OverviewSta
       { kind: "event", label: "Columns", value: String(detail.columns), note: "First run — no prior run to compare", anomalous: false },
       { kind: "drift", label: "Rows", value: detail.rows, trend: [], note: "First run — no prior run to compare", anomalous: false },
       { kind: "drift", label: "Fill rate", value: detail.fillRate, trend: [], note: "First run — no prior run to compare", anomalous: false },
-      { kind: "drift", label: "Checks passing", value: `${detail.checks}/${detail.checks}`, trend: [], note: "First run — no prior run to compare", anomalous: false },
+      { kind: "rollup", label: "Checks passing", value: `${detail.checks}/${detail.checks}`, trend: [], note: "First run — no prior run to compare" },
     ];
   }
   const rowsValue = ROWS_TREND[ROWS_TREND.length - 1];
   const zeroRows = rowsValue === 0;
   const rowsAnomalous = zeroRows || outsideBand(ROWS_TREND);
   const fillAnomalous = outsideBand(FILL_TREND);
-  const checksAnomalous = outsideBand(CHECKS_TREND);
   return [
     {
       kind: "event",
@@ -522,12 +529,11 @@ function buildOverviewStats(detail: AssetDetail, firstRun: boolean): OverviewSta
       neutral: true,
     },
     {
-      kind: "drift",
+      kind: "rollup",
       label: "Checks passing",
       value: `19/${detail.checks}`,
       trend: CHECKS_TREND,
-      note: checksAnomalous ? "Decreased 1 — outside normal range" : "Decreased 1 from last run",
-      anomalous: checksAnomalous,
+      note: "Decreased 1 from last run",
     },
   ];
 }
@@ -714,7 +720,7 @@ function OverviewPanel({
             style={{ borderColor: "var(--hairline)" }}
           >
             <div className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-500)" }}>
-              {s.anomalous && (
+              {s.kind !== "rollup" && s.anomalous && (
                 <TriangleAlert size={13} style={{ color: DANGER }} aria-label="Anomaly detected" />
               )}
               <span>{s.label}</span>
@@ -728,6 +734,9 @@ function OverviewPanel({
             <div className="mt-3 h-[28px]">
               {s.kind === "drift" && s.trend.length > 1 && (
                 <BandSparkline values={s.trend} anomalous={s.anomalous} neutral={s.neutral} />
+              )}
+              {s.kind === "rollup" && s.trend.length > 1 && (
+                <Sparkline values={s.trend} color={TREND_NEUTRAL} width={96} height={28} />
               )}
             </div>
             {s.kind === "event" && s.anomalous && s.linkLabel ? (
@@ -743,7 +752,10 @@ function OverviewPanel({
             ) : (
               <div
                 className="mt-2 text-[12px] leading-snug"
-                style={{ color: s.anomalous ? DANGER : "var(--ink-500)" }}
+                style={{
+                  color:
+                    s.kind !== "rollup" && s.anomalous ? DANGER : "var(--ink-500)",
+                }}
               >
                 {s.note}
               </div>
