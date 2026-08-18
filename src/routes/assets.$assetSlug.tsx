@@ -720,7 +720,7 @@ function OverviewPanel({
             style={{ borderColor: "var(--hairline)" }}
           >
             <div className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-500)" }}>
-              {s.anomalous && (
+              {s.kind !== "rollup" && s.anomalous && (
                 <TriangleAlert size={13} style={{ color: DANGER }} aria-label="Anomaly detected" />
               )}
               <span>{s.label}</span>
@@ -734,6 +734,9 @@ function OverviewPanel({
             <div className="mt-3 h-[28px]">
               {s.kind === "drift" && s.trend.length > 1 && (
                 <BandSparkline values={s.trend} anomalous={s.anomalous} neutral={s.neutral} />
+              )}
+              {s.kind === "rollup" && s.trend.length > 1 && (
+                <Sparkline values={s.trend} color={TREND_NEUTRAL} width={96} height={28} />
               )}
             </div>
             {s.kind === "event" && s.anomalous && s.linkLabel ? (
@@ -749,7 +752,10 @@ function OverviewPanel({
             ) : (
               <div
                 className="mt-2 text-[12px] leading-snug"
-                style={{ color: s.anomalous ? DANGER : "var(--ink-500)" }}
+                style={{
+                  color:
+                    s.kind !== "rollup" && s.anomalous ? DANGER : "var(--ink-500)",
+                }}
               >
                 {s.note}
               </div>
