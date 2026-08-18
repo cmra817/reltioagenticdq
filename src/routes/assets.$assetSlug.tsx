@@ -13,7 +13,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useCreatedAssets, type CreatedAsset } from "@/components/created-assets-context";
-import { frequencyLabel } from "@/components/add-dataset/Step3Schedule";
+import {
+  DEFAULT_SCHEDULE,
+  frequencyLabel,
+  type ScheduleConfig,
+} from "@/components/add-dataset/Step3Schedule";
+import { generateChecks, type Check } from "@/components/add-dataset/mock-checks";
+import {
+  EditChecksModal,
+  EditSchedulesModal,
+  RemoveFromMonitoringModal,
+} from "@/components/asset-actions-modals";
 
 export const Route = createFileRoute("/assets/$assetSlug")({
   head: ({ params }) => ({
