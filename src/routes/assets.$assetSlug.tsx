@@ -173,16 +173,15 @@ type ColumnRow = {
   distinct: number;
   uniqueness: string;
   fillRate: string;
-  tag?: string;
 };
 
 const SAMPLE_COLUMNS: ColumnRow[] = [
-  { name: "Order_ID", dataType: "Integer", length: 8, min: "1", max: "1234", mean: "1234", nullCount: 0, distinct: 1234, uniqueness: "98%", fillRate: "98%", tag: "PII Data" },
+  { name: "Order_ID", dataType: "Integer", length: 8, min: "1", max: "1234", mean: "1234", nullCount: 0, distinct: 1234, uniqueness: "98%", fillRate: "98%" },
   { name: "Customer_ID", dataType: "Integer", length: 8, min: "1", max: "1234", mean: "1234", nullCount: 0, distinct: 1234, uniqueness: "98%", fillRate: "98%" },
   { name: "Order_Date", dataType: "Date", length: 10, min: "2023-01-01", max: "2024-12-31", mean: "—", nullCount: 0, distinct: 720, uniqueness: "62%", fillRate: "100%" },
   { name: "Total_Amount", dataType: "Decimal", length: 10, min: "0.99", max: "9999.00", mean: "245.50", nullCount: 0, distinct: 1180, uniqueness: "97%", fillRate: "100%" },
   { name: "Status", dataType: "String", length: 12, min: "—", max: "—", mean: "—", nullCount: 0, distinct: 5, uniqueness: "1%", fillRate: "100%" },
-  { name: "Shipping_Address", dataType: "String", length: 120, min: "—", max: "—", mean: "—", nullCount: 12, distinct: 1100, uniqueness: "92%", fillRate: "99%", tag: "PII Data" },
+  { name: "Shipping_Address", dataType: "String", length: 120, min: "—", max: "—", mean: "—", nullCount: 12, distinct: 1100, uniqueness: "92%", fillRate: "99%" },
   { name: "Payment_Method", dataType: "String", length: 24, min: "—", max: "—", mean: "—", nullCount: 0, distinct: 6, uniqueness: "1%", fillRate: "100%" },
   { name: "Discount_Code", dataType: "String", length: 16, min: "—", max: "—", mean: "—", nullCount: 482, distinct: 28, uniqueness: "3%", fillRate: "60%" },
 ];
@@ -213,7 +212,6 @@ const PROFILING_COLUMNS = [
   { key: "distinct", label: "Distinct count" },
   { key: "uniqueness", label: "Uniqueness" },
   { key: "fillRate", label: "Fill rate" },
-  { key: "tag", label: "Tags" },
 ] as const;
 
 function AssetDetailPage() {
@@ -1151,24 +1149,6 @@ function ColumnsPanel({
                     const isFirst = i === 0;
                     const isLast = i === profilingCols.length - 1;
                     const pad = isFirst || isLast ? "px-5" : "px-3";
-                    if (c.key === "tag") {
-                      return (
-                        <td key={c.key} className={`${pad} py-4`}>
-                          {row.tag && (
-                            <span
-                              className="inline-flex items-center rounded-md border px-2.5 py-1 text-[12px] font-medium"
-                              style={{
-                                borderColor: "var(--hairline)",
-                                color: "var(--ink-700)",
-                                background: "white",
-                              }}
-                            >
-                              {row.tag}
-                            </span>
-                          )}
-                        </td>
-                      );
-                    }
                     const raw = row[c.key as keyof ColumnRow];
                     const value =
                       c.key === "distinct" && typeof raw === "number"
@@ -1289,25 +1269,17 @@ function ColumnDetailPanel({
         }`}
         style={{ borderColor: "var(--hairline)" }}
       >
-        {column && (
-          <>
-            {/* Header */}
-            <div className="flex items-start justify-between gap-3 border-b px-6 py-5" style={{ borderColor: "var(--hairline)" }}>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[12px] font-mono" style={{ color: "var(--ink-300)" }}>123</span>
-                  <h3 className="text-[18px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                    {column.name}
-                  </h3>
-                  {column.tag && (
-                    <span
-                      className="inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium"
-                      style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                    >
-                      {column.tag}
-                    </span>
-                  )}
-                </div>
+            {column && (
+              <>
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3 border-b px-6 py-5" style={{ borderColor: "var(--hairline)" }}>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[12px] font-mono" style={{ color: "var(--ink-300)" }}>123</span>
+                      <h3 className="text-[18px] font-semibold" style={{ color: "var(--ink-900)" }}>
+                        {column.name}
+                      </h3>
+                    </div>
                 <div className="mt-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
                   Finance Sales Data &gt; Orders &gt; {column.name}
                 </div>
