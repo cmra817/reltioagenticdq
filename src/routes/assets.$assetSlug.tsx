@@ -18,7 +18,7 @@ import {
   frequencyLabel,
   type ScheduleConfig,
 } from "@/components/add-dataset/Step3Schedule";
-import { generateChecks, type Check } from "@/components/add-dataset/mock-checks";
+import { generateChecks, type Check as DQCheck } from "@/components/add-dataset/mock-checks";
 import {
   EditChecksModal,
   EditSchedulesModal,
