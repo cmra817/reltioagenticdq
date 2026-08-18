@@ -389,39 +389,229 @@ function AssetDetailPage() {
 // Overview tab
 // ============================================================
 
-const OVERVIEW_ACTIVITY = [
-  { label: "Last profiled", value: "6 hrs ago", tip: "When this table was last scanned to compute column profiles and statistics." },
-  { label: "Checks run", value: "6 hrs ago", tip: "The most recent execution of the quality checks attached to this table." },
-  { label: "Last synced", value: "2 hrs ago", tip: "When metadata and row counts were last refreshed from the source warehouse." },
-  { label: "Loaded to Reltio", value: "3 days ago", tip: "When records from this table were last loaded into Reltio." },
-] as const;
+const SYNC_TYPICAL_HOURS = 4;
 
-type OverviewStat = {
+type TimestampCell = {
   label: string;
   value: string;
-  trend?: number[];
-  color?: string;
-  note: string;
+  hoursAgo: number | null;
+  typicalHours: number;
+  priority: "primary" | "secondary";
+  tip: string;
 };
+
+const OVERVIEW_ACTIVITY: TimestampCell[] = [
+  { label: "Last profiled", value: "6 hrs ago", hoursAgo: 6, typicalHours: 24, priority: "secondary", tip: "When this table was last scanned to compute column profiles and statistics." },
+  { label: "Checks run", value: "6 hrs ago", hoursAgo: 6, typicalHours: 24, priority: "secondary", tip: "The most recent execution of the quality checks attached to this table." },
+  { label: "Last synced", value: "14 hrs ago", hoursAgo: 14, typicalHours: SYNC_TYPICAL_HOURS, priority: "primary", tip: "When metadata and row counts were last refreshed from the source warehouse. Connector health — not a quality signal." },
+  { label: "Loaded to Reltio", value: "3 days ago", hoursAgo: null, typicalHours: 0, priority: "secondary", tip: "When records from this table were last loaded into Reltio." },
+];
+
+const FIRST_RUN_ACTIVITY: TimestampCell[] = [
+  { label: "Last profiled", value: "Just now", hoursAgo: 0, typicalHours: 24, priority: "secondary", tip: "When this table was last scanned to compute column profiles and statistics." },
+  { label: "Checks run", value: "Just now", hoursAgo: 0, typicalHours: 24, priority: "secondary", tip: "The most recent execution of the quality checks attached to this table." },
+  { label: "Last synced", value: "Just now", hoursAgo: 0, typicalHours: SYNC_TYPICAL_HOURS, priority: "primary", tip: "When metadata and row counts were last refreshed from the source warehouse. Connector health — not a quality signal." },
+  { label: "Loaded to Reltio", value: "—", hoursAgo: null, typicalHours: 0, priority: "secondary", tip: "When records from this table were last loaded into Reltio." },
+];
+
+function isStale(cell: TimestampCell): boolean {
+  if (cell.hoursAgo === null || !cell.typicalHours) return false;
+  return cell.hoursAgo > cell.typicalHours * 2.5;
+}
+
+/* ---------- metric card model: drift metrics vs discrete-event metrics ---------- */
+
+type DriftStat = {
+  kind: "drift";
+  label: string;
+  value: string;
+  trend: number[];
+  note: string;
+  anomalous: boolean;
+  /** true when direction is meaningless (e.g. fill rate up is fine) */
+  neutral?: boolean;
+};
+
+type EventStat = {
+  kind: "event";
+  label: string;
+  value: string;
+  note: string;
+  anomalous: boolean;
+  linkLabel?: string;
+};
+
+type OverviewStat = DriftStat | EventStat;
+
+function baselineBand(values: number[]): { low: number; high: number } {
+  const hist = values.slice(0, -1);
+  const base = hist.length ? hist : values;
+  const mean = base.reduce((a, b) => a + b, 0) / base.length;
+  const variance = base.reduce((a, b) => a + (b - mean) ** 2, 0) / base.length;
+  const sd = Math.sqrt(variance);
+  const half = Math.max(sd * 3, Math.abs(mean) * 0.004);
+  return { low: mean - half, high: mean + half };
+}
+
+function outsideBand(values: number[]): boolean {
+  const band = baselineBand(values);
+  const last = values[values.length - 1];
+  return last < band.low || last > band.high;
+}
+
+const ROWS_TREND = [5320, 5290, 5310, 5240, 5260, 5180, 4897];
+const FILL_TREND = [82, 82.5, 83, 83.2, 83.6, 83.8, 85];
+const CHECKS_TREND = [21, 21, 20, 20, 20, 20, 19];
+const COLUMNS_ADDED = 2;
+
+const SCHEMA_CHANGES: SchemaChange[] = [
+  { column: "loyalty_tier", type: "added", before: "—", after: "String(16)" },
+  { column: "promo_code", type: "added", before: "—", after: "String(16)" },
+  { column: "order_total", type: "type-changed", before: "Decimal(10,2)", after: "String(20)" },
+];
+
+function buildOverviewStats(detail: AssetDetail, firstRun: boolean): OverviewStat[] {
+  if (firstRun) {
+    return [
+      { kind: "event", label: "Columns", value: String(detail.columns), note: "First run — no prior run to compare", anomalous: false },
+      { kind: "drift", label: "Rows", value: detail.rows, trend: [], note: "First run — no prior run to compare", anomalous: false },
+      { kind: "drift", label: "Fill rate", value: detail.fillRate, trend: [], note: "First run — no prior run to compare", anomalous: false },
+      { kind: "drift", label: "Checks passing", value: `${detail.checks}/${detail.checks}`, trend: [], note: "First run — no prior run to compare", anomalous: false },
+    ];
+  }
+  const rowsValue = ROWS_TREND[ROWS_TREND.length - 1];
+  const zeroRows = rowsValue === 0;
+  const rowsAnomalous = zeroRows || outsideBand(ROWS_TREND);
+  const fillAnomalous = outsideBand(FILL_TREND);
+  const checksAnomalous = outsideBand(CHECKS_TREND);
+  return [
+    {
+      kind: "event",
+      label: "Columns",
+      value: String(detail.columns),
+      note: COLUMNS_ADDED ? `+${COLUMNS_ADDED} columns since last run` : "No change from last run",
+      anomalous: COLUMNS_ADDED > 0,
+      linkLabel: COLUMNS_ADDED ? `+${COLUMNS_ADDED} columns since last run` : undefined,
+    },
+    {
+      kind: "drift",
+      label: "Rows",
+      value: detail.rows,
+      trend: ROWS_TREND,
+      note: zeroRows ? "No rows loaded" : "Decreased 8% — outside normal range",
+      anomalous: rowsAnomalous,
+    },
+    {
+      kind: "drift",
+      label: "Fill rate",
+      value: detail.fillRate,
+      trend: FILL_TREND,
+      note: fillAnomalous ? "Increased 1.2 pts — outside normal range" : "Increased 1.2 pts — within range",
+      anomalous: fillAnomalous,
+      neutral: true,
+    },
+    {
+      kind: "drift",
+      label: "Checks passing",
+      value: `19/${detail.checks}`,
+      trend: CHECKS_TREND,
+      note: checksAnomalous ? "Decreased 1 — outside normal range" : "Decreased 1 from last run",
+      anomalous: checksAnomalous,
+    },
+  ];
+}
 
 const OVERVIEW_CHECK_CATEGORIES = [
   { label: "Validity", passing: 3, failing: 0 },
   { label: "Completeness", passing: 4, failing: 0 },
-  { label: "Accuracy", passing: 3, failing: 1 },
+  { label: "Accuracy", passing: 3, failing: 1, failingSince: "new" as const },
   { label: "Consistency", passing: 3, failing: 0 },
   { label: "Uniqueness", passing: 2, failing: 0 },
-  { label: "Referential integrity", passing: 2, failing: 1 },
+  { label: "Referential integrity", passing: 2, failing: 1, failingSince: "4 days" },
   { label: "Format and range", passing: 2, failing: 0 },
 ];
 
 const TOP_AFFECTED_COLUMNS = [
-  { column: "customer_id", check: "Referential integrity", example: "CUST-88213 (no match)" },
-  { column: "order_total", check: "Accuracy", example: "-42.00" },
-  { column: "order_date", check: "Format and range", example: "13/45/2026" },
+  { column: "customer_id", check: "Referential integrity", example: "CUST-88213 (no match)", status: "recurring" as const },
+  { column: "order_total", check: "Accuracy", example: "-42.00", status: "new" as const },
+  { column: "order_date", check: "Format and range", example: "13/45/2026", status: "new" as const },
 ];
 
 const PASS_GREEN = "#4CAF50";
 const FAIL_RED = "#d05252";
+const DANGER = "#b42318";
+const WARN_AMBER = "#b45309";
+const TREND_OK = "#4CAF50";
+const TREND_NEUTRAL = "#4386fa";
+
+function StatusTag({ tone, children }: { tone: "danger" | "neutral"; children: React.ReactNode }) {
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+      style={
+        tone === "danger"
+          ? { background: "rgba(208,82,82,0.12)", color: DANGER }
+          : { background: "var(--surface-soft)", color: "var(--ink-500)" }
+      }
+    >
+      {children}
+    </span>
+  );
+}
+
+function BandSparkline({
+  values,
+  anomalous,
+  neutral,
+  width = 96,
+  height = 28,
+}: {
+  values: number[];
+  anomalous: boolean;
+  neutral?: boolean;
+  width?: number;
+  height?: number;
+}) {
+  const band = baselineBand(values);
+  const min = Math.min(...values, band.low);
+  const max = Math.max(...values, band.high);
+  const range = max - min || 1;
+  const pad = 3;
+  const y = (v: number) => pad + (height - pad * 2) * (1 - (v - min) / range);
+  const stepX = (width - pad * 2) / Math.max(values.length - 1, 1);
+  const path = values
+    .map((v, i) => `${i === 0 ? "M" : "L"}${(pad + i * stepX).toFixed(1)},${y(v).toFixed(1)}`)
+    .join(" ");
+  const color = anomalous ? DANGER : neutral ? TREND_NEUTRAL : TREND_OK;
+  const bandTop = y(band.high);
+  const bandBottom = y(band.low);
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
+      <rect
+        x={0}
+        y={bandTop}
+        width={width}
+        height={Math.max(bandBottom - bandTop, 2)}
+        fill="rgba(76,175,80,0.12)"
+      />
+      <path d={path} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function AnomalyBadge({ metrics }: { metrics: string[] }) {
+  if (metrics.length === 0) return null;
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium"
+      style={{ background: "rgba(208,82,82,0.12)", color: DANGER }}
+    >
+      <TriangleAlert size={13} aria-hidden="true" />
+      {metrics.length} active {metrics.length === 1 ? "anomaly" : "anomalies"}
+      <span style={{ color: FAIL_RED }}>· {metrics.join(", ")}</span>
+    </span>
+  );
+}
 
 function OverviewPanel({
   detail,
@@ -431,42 +621,38 @@ function OverviewPanel({
   created?: CreatedAsset | null;
 }) {
   const firstRun = !!created;
-  const activity = firstRun
-    ? ([
-        { label: "Last profiled", value: "Just now", tip: "When this table was last scanned to compute column profiles and statistics." },
-        { label: "Checks run", value: "Just now", tip: "The most recent execution of the quality checks attached to this table." },
-        { label: "Last synced", value: "Just now", tip: "When metadata and row counts were last refreshed from the source warehouse." },
-        { label: "Loaded to Reltio", value: "—", tip: "When records from this table were last loaded into Reltio." },
-      ] as const)
-    : OVERVIEW_ACTIVITY;
+  const activity = firstRun ? FIRST_RUN_ACTIVITY : OVERVIEW_ACTIVITY;
   const categories = created ? createdCheckCategories(created) : OVERVIEW_CHECK_CATEGORIES;
-  const firstRunStats: OverviewStat[] = [
-    { label: "Columns", value: String(detail.columns), note: "First run — no prior run to compare" },
-    { label: "Rows", value: detail.rows, note: "First run — no prior run to compare" },
-    { label: "Fill rate", value: detail.fillRate, note: "First run — no prior run to compare" },
-    { label: "Checks passing", value: `${detail.checks}/${detail.checks}`, note: "First run — no prior run to compare" },
-  ];
+  const stats = React.useMemo(() => buildOverviewStats(detail, firstRun), [detail, firstRun]);
   const [reltioState, setReltioState] = useState<"idle" | "loading" | "done">("idle");
-  const stats: OverviewStat[] = firstRun ? firstRunStats : [
-    { label: "Columns", value: String(detail.columns), note: "No change from last run" },
-    { label: "Rows", value: detail.rows, trend: [5320, 5290, 5310, 5240, 5260, 5180, 4897], color: FAIL_RED, note: "Decreased 8% from last run" },
-    { label: "Fill rate", value: detail.fillRate, trend: [82, 82.5, 83, 83.2, 83.6, 83.8, 85], color: "#4386fa", note: "Increased 1.2 pts from last run" },
-    { label: "Checks passing", value: `19/${detail.checks}`, trend: [21, 21, 20, 20, 20, 20, 19], color: FAIL_RED, note: "Decreased 1 from last run" },
-  ];
+  const [diffOpen, setDiffOpen] = useState(false);
 
   return (
     <div className="flex flex-col gap-6">
       {/* Activity strip — intentionally uncarded */}
       <div className="pl-4">
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-4">
-          {activity.map((a) => (
+          {activity.map((a) => {
+            const stale = isStale(a);
+            const staleColor = stale
+              ? a.priority === "primary"
+                ? WARN_AMBER
+                : "var(--ink-500)"
+              : "var(--ink-900)";
+            return (
             <div key={a.label}>
               <div className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-500)" }}>
                 <span>{a.label}</span>
                 <InfoTooltip text={a.tip} />
               </div>
-              <div className="mt-1 text-[15px] font-medium" style={{ color: "var(--ink-900)" }}>
-                {reltioState === "done" && a.label === "Loaded to Reltio" ? "Just now" : a.value}
+              <div
+                className="mt-1 flex items-center gap-1.5 text-[15px] font-medium"
+                style={{ color: staleColor }}
+              >
+                {stale && a.priority === "primary" && <ClockAlert size={14} aria-hidden="true" />}
+                <span>
+                  {reltioState === "done" && a.label === "Loaded to Reltio" ? "Just now" : a.value}
+                </span>
               </div>
               {firstRun && a.label === "Loaded to Reltio" && reltioState !== "done" && (
                 <div className="mt-2">
@@ -501,13 +687,14 @@ function OverviewPanel({
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       <div className="h-px w-full" style={{ background: "var(--hairline)" }} />
 
-      {/* Stat cards with sparklines */}
+      {/* Stat cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map((s) => (
           <div
@@ -515,8 +702,11 @@ function OverviewPanel({
             className="flex flex-col rounded-2xl border bg-white p-4"
             style={{ borderColor: "var(--hairline)" }}
           >
-            <div className="text-[13px]" style={{ color: "var(--ink-500)" }}>
-              {s.label}
+            <div className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-500)" }}>
+              {s.anomalous && (
+                <TriangleAlert size={13} style={{ color: DANGER }} aria-label="Anomaly detected" />
+              )}
+              <span>{s.label}</span>
             </div>
             <div
               className="mt-2 text-[26px] font-semibold leading-none"
@@ -524,15 +714,39 @@ function OverviewPanel({
             >
               {s.value}
             </div>
-            <div className="mt-3 h-[24px]">
-              {s.trend && <Sparkline values={s.trend} color={s.color} width={96} height={24} />}
+            <div className="mt-3 h-[28px]">
+              {s.kind === "drift" && s.trend.length > 1 && (
+                <BandSparkline values={s.trend} anomalous={s.anomalous} neutral={s.neutral} />
+              )}
             </div>
-            <div className="mt-2 text-[12px] leading-snug" style={{ color: "var(--ink-500)" }}>
-              {s.note}
-            </div>
+            {s.kind === "event" && s.anomalous && s.linkLabel ? (
+              <button
+                type="button"
+                onClick={() => setDiffOpen(true)}
+                className="mt-2 inline-flex items-center gap-1 self-start text-left text-[12px] font-medium underline leading-snug"
+                style={{ color: DANGER }}
+              >
+                {s.linkLabel}
+                <ArrowRight size={12} />
+              </button>
+            ) : (
+              <div
+                className="mt-2 text-[12px] leading-snug"
+                style={{ color: s.anomalous ? DANGER : "var(--ink-500)" }}
+              >
+                {s.note}
+              </div>
+            )}
           </div>
         ))}
       </div>
+
+      <SchemaDiffModal
+        open={diffOpen}
+        onOpenChange={setDiffOpen}
+        table={detail.name}
+        changes={SCHEMA_CHANGES}
+      />
 
       {/* Checks by category */}
       <div className="rounded-2xl border bg-white p-6" style={{ borderColor: "var(--hairline)" }}>
@@ -568,6 +782,7 @@ function OverviewPanel({
               <th className="pb-2 text-left font-medium">Column</th>
               <th className="pb-2 text-left font-medium">Check failed</th>
               <th className="pb-2 text-left font-medium">Example failed value</th>
+              <th className="pb-2 text-right font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -582,6 +797,9 @@ function OverviewPanel({
                 <td className="py-2.5 font-mono text-[12px]" style={{ color: "var(--ink-700)" }}>
                   {r.example}
                 </td>
+                <td className="py-2.5 text-right">
+                  <StatusTag tone={r.status === "new" ? "danger" : "neutral"}>{r.status}</StatusTag>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -591,6 +809,7 @@ function OverviewPanel({
     </div>
   );
 }
+
 
 function ChecksByCategoryChart({
   rows,
