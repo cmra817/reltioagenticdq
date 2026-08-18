@@ -444,6 +444,52 @@ function AssetDetailPage() {
 
         {/* floating composer (centered over content area, not full viewport) */}
       </div>
+
+      <EditChecksModal
+        open={checksModalOpen}
+        tableName={detail.name}
+        checks={configuredChecks}
+        onClose={() => setChecksModalOpen(false)}
+        onSave={(next) => {
+          if (created) updateAsset(created.slug, { checks: next });
+          else setLocalChecks(next);
+          setChecksModalOpen(false);
+          toast.success(`Saved ${next.length} ${next.length === 1 ? "check" : "checks"} on ${detail.name}`);
+        }}
+      />
+
+      <EditSchedulesModal
+        open={schedulesModalOpen}
+        tableName={detail.name}
+        checkCount={configuredChecks.length}
+        profiling={schedules.profiling}
+        checks={schedules.checks}
+        onClose={() => setSchedulesModalOpen(false)}
+        onSave={(next) => {
+          if (created)
+            updateAsset(created.slug, {
+              profilingSchedule: next.profiling,
+              checksSchedule: next.checks,
+            });
+          else setLocalSchedules(next);
+          setSchedulesModalOpen(false);
+          toast.success(
+            `Schedules updated — profiling ${frequencyLabel(next.profiling).toLowerCase()}, checks ${frequencyLabel(next.checks).toLowerCase()}`,
+          );
+        }}
+      />
+
+      <RemoveFromMonitoringModal
+        open={removeModalOpen}
+        tableName={detail.name}
+        onClose={() => setRemoveModalOpen(false)}
+        onConfirm={() => {
+          if (created) removeAsset(created.slug);
+          setRemoveModalOpen(false);
+          toast.success(`${detail.name} removed from monitoring`);
+          navigate({ to: "/explore" });
+        }}
+      />
     </AppShell>
   );
 }
