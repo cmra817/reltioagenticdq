@@ -183,7 +183,7 @@ export function ChatWindow({
         <ConversationScrollButton />
       </Conversation>
 
-      <div className={compact ? "border-t p-3" : "border-t px-6 py-4"} style={{ borderColor: "var(--hairline)" }}>
+      <div className={compact ? "p-3" : "px-6 py-4"}>
         <div className={compact ? "" : "mx-auto w-full max-w-3xl"}>
           <PromptInput
             onSubmit={(_message, event) => {
