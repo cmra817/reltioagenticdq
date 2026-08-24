@@ -19,10 +19,18 @@ export function AgentflowTopbar() {
         <SidebarToggleIcon size={20} />
       </button>
 
-      {/* Product name */}
-      <span className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
-        Data Quality
-      </span>
+      {/* Reltio | Data Quality */}
+      <div className="flex items-center gap-3">
+        <img
+          src={reltioWordmark}
+          alt="Reltio"
+          style={{ height: 18, width: "auto", display: "block" }}
+        />
+        <span style={{ color: "var(--hairline)" }}>|</span>
+        <span className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
+          Data Quality
+        </span>
+      </div>
 
       {/* Right side */}
       <div className="ml-auto flex items-center gap-2">
