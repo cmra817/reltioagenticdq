@@ -9,14 +9,20 @@ export function WizardChatPanel({
   context,
   suggestions,
 }: {
-  context: "checks" | "schedule";
+  context: "select" | "checks" | "schedule";
   suggestions?: string[];
 }) {
   const chatId = useMemo(() => `wizard-${context}-${newChatId()}`, [context]);
   const [messages, setMessages] = useState<UIMessage[]>([]);
 
   const defaults =
-    context === "checks"
+    context === "select"
+      ? [
+          "Which tables should I monitor first?",
+          "Find customer tables in Snowflake",
+          "What does this table contain?",
+        ]
+      : context === "checks"
       ? [
           "Which checks matter most for this table?",
           "Add a validity check on email columns",
@@ -27,6 +33,7 @@ export function WizardChatPanel({
           "What cadence do you recommend for this table?",
           "Weekly profiling, daily checks",
         ];
+
 
   return (
     <aside
