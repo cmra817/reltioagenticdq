@@ -8,7 +8,7 @@ import {
   HealthIcon,
   PlusIcon,
   UserIcon,
-  UsersGearIcon,
+  
 } from "./brand-icons";
 import { useDomainState } from "./domain-context";
 import { CreateDomainDialog } from "./create-domain-dialog";
