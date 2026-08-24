@@ -264,11 +264,11 @@ export function AddDatasetModal({
             />
           )}
         </div>
-        {step === 0 && <WizardChatPanel context="select" />}
-        {step === 1 && <WizardChatPanel context="checks" />}
-        {step === 2 && <WizardChatPanel context="schedule" />}
       </div>
       </div>
+      {step === 0 && <WizardChatPanel context="select" />}
+      {step === 1 && <WizardChatPanel context="checks" />}
+      {step === 2 && <WizardChatPanel context="schedule" />}
     </div>
   );
 }
