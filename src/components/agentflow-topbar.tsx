@@ -27,29 +27,6 @@ export function AgentflowTopbar({ active = "Quality" as Tab }: { active?: Tab })
         Data Quality
       </span>
 
-      {/* Tab pill */}
-      <nav
-        className="ml-2 flex items-center gap-1 rounded-full border p-1"
-        style={{ borderColor: "var(--hairline)", background: "white" }}
-        aria-label="Sections"
-      >
-        {tabs.map((t) => {
-          const isActive = t === active;
-          return (
-            <button
-              key={t}
-              type="button"
-              className="rounded-full px-4 py-1.5 text-[14px] font-medium transition-colors"
-              style={{
-                color: isActive ? "var(--brand-blue)" : "var(--ink-700)",
-                background: isActive ? "rgba(67,134,250,0.08)" : "transparent",
-              }}
-            >
-              {t}
-            </button>
-          );
-        })}
-      </nav>
       {/* Right side */}
       <div className="ml-auto flex items-center gap-2">
         <NotificationBell />
