@@ -40,24 +40,6 @@ export function WizardChatPanel({
       className="flex h-full w-[380px] shrink-0 flex-col border-l bg-white"
       style={{ borderColor: "var(--hairline)" }}
     >
-      <div
-        className="flex items-center gap-2.5 border-b px-4 py-3"
-        style={{ borderColor: "var(--hairline)" }}
-      >
-        <img src={agentflowLogo} alt="" className="h-5 w-auto object-contain" />
-        <div className="leading-tight">
-          <div className="text-[13px] font-semibold" style={{ color: "var(--ink-900)" }}>
-            AgentFlow assistant
-          </div>
-          <div className="text-[11px]" style={{ color: "var(--ink-500)" }}>
-            {context === "select"
-              ? "Find the right tables"
-              : context === "checks"
-              ? "Ask about quality checks"
-              : "Describe your cadence"}
-          </div>
-        </div>
-      </div>
       <div className="min-h-0 flex-1">
         <ChatWindow
           compact
