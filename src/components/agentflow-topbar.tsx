@@ -22,12 +22,10 @@ export function AgentflowTopbar({ active = "Quality" as Tab }: { active?: Tab })
         <SidebarToggleIcon size={20} />
       </button>
 
-      {/* Logo lockup */}
-      <img
-        src={lockupUrl}
-        alt="Reltio AgentFlow"
-        style={{ height: 26, width: "auto", display: "block" }}
-      />
+      {/* Product name */}
+      <span className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
+        Data Quality
+      </span>
 
       {/* Tab pill */}
       <nav
