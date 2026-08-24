@@ -9,14 +9,20 @@ export function WizardChatPanel({
   context,
   suggestions,
 }: {
-  context: "checks" | "schedule";
+  context: "select" | "checks" | "schedule";
   suggestions?: string[];
 }) {
   const chatId = useMemo(() => `wizard-${context}-${newChatId()}`, [context]);
   const [messages, setMessages] = useState<UIMessage[]>([]);
 
   const defaults =
-    context === "checks"
+    context === "select"
+      ? [
+          "Which tables should I monitor first?",
+          "Find customer tables in Snowflake",
+          "What does this table contain?",
+        ]
+      : context === "checks"
       ? [
           "Which checks matter most for this table?",
           "Add a validity check on email columns",
@@ -27,6 +33,7 @@ export function WizardChatPanel({
           "What cadence do you recommend for this table?",
           "Weekly profiling, daily checks",
         ];
+
 
   return (
     <aside
@@ -43,7 +50,11 @@ export function WizardChatPanel({
             AgentFlow assistant
           </div>
           <div className="text-[11px]" style={{ color: "var(--ink-500)" }}>
-            {context === "checks" ? "Ask about quality checks" : "Describe your cadence"}
+            {context === "select"
+              ? "Find the right tables"
+              : context === "checks"
+              ? "Ask about quality checks"
+              : "Describe your cadence"}
           </div>
         </div>
       </div>
@@ -54,9 +65,17 @@ export function WizardChatPanel({
           initialMessages={messages}
           onMessagesChange={setMessages}
           suggestions={suggestions ?? defaults}
-          emptyTitle={context === "checks" ? "Tune your checks" : "Describe your schedule"}
+          emptyTitle={
+            context === "select"
+              ? "Find your data"
+              : context === "checks"
+              ? "Tune your checks"
+              : "Describe your schedule"
+          }
           emptySubtitle={
-            context === "checks"
+            context === "select"
+              ? "Ask AgentFlow which tables are worth monitoring."
+              : context === "checks"
               ? "Ask what to add or remove for the tables you selected."
               : "Tell AgentFlow the cadence in plain language."
           }
