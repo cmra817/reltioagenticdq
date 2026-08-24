@@ -37,7 +37,7 @@ export function WizardChatPanel({
         className="flex items-center gap-2.5 border-b px-4 py-3"
         style={{ borderColor: "var(--hairline)" }}
       >
-        <img src={agentflowLogo} alt="" className="h-7 w-7 rounded-lg" />
+        <img src={agentflowLogo} alt="" className="h-5 w-auto object-contain" />
         <div className="leading-tight">
           <div className="text-[13px] font-semibold" style={{ color: "var(--ink-900)" }}>
             AgentFlow assistant

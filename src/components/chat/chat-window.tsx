@@ -103,7 +103,7 @@ export function ChatWindow({
         >
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-10 text-center">
-              <img src={agentflowLogo} alt="" className="h-10 w-10 rounded-xl" />
+              <img src={agentflowLogo} alt="AgentFlow" className="h-7 w-auto object-contain" />
               <div
                 className={`mt-3 font-semibold ${compact ? "text-[15px]" : "text-[20px]"}`}
                 style={{ color: "var(--ink-900)" }}
