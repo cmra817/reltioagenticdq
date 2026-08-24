@@ -1,4 +1,5 @@
 
+import reltioWordmark from "@/assets/reltio-wordmark.png";
 import { SidebarToggleIcon } from "./brand-icons";
 import { useSidebarState } from "./sidebar-context";
 import { NotificationBell } from "./notification-bell";
