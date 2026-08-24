@@ -5,13 +5,13 @@ import { DqChecksScreen } from "@/components/dq-checks/dq-checks-screen";
 export const Route = createFileRoute("/dq-checks")({
   head: () => ({
     meta: [
-      { title: "DQ Checks — AgentFlow Quality" },
+      { title: "DQ Checks — Data Quality" },
       {
         name: "description",
         content:
           "Browse, filter, and create reusable data quality rules across dimensions and columns.",
       },
-      { property: "og:title", content: "DQ Checks — AgentFlow Quality" },
+      { property: "og:title", content: "DQ Checks — Data Quality" },
       {
         property: "og:description",
         content: "Reusable data quality rules library with dimensions, creators, and pass rates.",

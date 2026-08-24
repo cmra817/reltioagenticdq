@@ -56,10 +56,10 @@ export function WizardChatPanel({
           }
           emptySubtitle={
             context === "select"
-              ? "Ask AgentFlow which tables are worth monitoring."
+              ? "Ask which tables are worth monitoring."
               : context === "checks"
               ? "Ask what to add or remove for the tables you selected."
-              : "Tell AgentFlow the cadence in plain language."
+              : "Tell the assistant the cadence in plain language."
           }
         />
       </div>

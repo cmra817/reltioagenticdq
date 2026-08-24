@@ -1,4 +1,4 @@
-// Inline SVG brand & UI icons for the AgentFlow Quality screen.
+// Inline SVG brand & UI icons for the Data Quality screen.
 // Kept in one file so colors and sizes stay consistent with the design tokens.
 
 import reltioWordmarkUrl from "@/assets/reltio-wordmark.png";

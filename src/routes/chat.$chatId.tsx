@@ -12,16 +12,16 @@ export const Route = createFileRoute("/chat/$chatId")({
   }),
   head: () => ({
     meta: [
-      { title: "AgentFlow Chat — AgentFlow Quality" },
+      { title: "Chat — Data Quality" },
       {
         name: "description",
         content:
-          "Chat with the AgentFlow assistant about profiling results, anomalies, data quality checks, and run schedules.",
+          "Chat with the assistant about profiling results, anomalies, data quality checks, and run schedules.",
       },
-      { property: "og:title", content: "AgentFlow Chat — AgentFlow Quality" },
+      { property: "og:title", content: "Chat — Data Quality" },
       {
         property: "og:description",
-        content: "Ask the AgentFlow assistant about profiling, anomalies, DQ checks, and schedules.",
+        content: "Ask the assistant about profiling, anomalies, DQ checks, and schedules.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
