@@ -431,7 +431,7 @@ export function AgentflowSidebar({
 
       {/* footer block */}
       <div className="border-t px-3 py-3" style={{ borderColor: "var(--hairline)" }}>
-        <NavItem icon={<UsersGearIcon />} label="Agent Studio" />
+        
         <NavItem icon={<UserIcon />} label="Admin" />
         <NavItem icon={<AppsGridIcon />} label="Applications" />
 
