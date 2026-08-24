@@ -3,15 +3,19 @@ import { AgentflowTopbar } from "@/components/agentflow-topbar";
 import { SidebarProvider, useSidebarState } from "@/components/sidebar-context";
 import { DomainProvider } from "@/components/domain-context";
 import { DomainConnectedBanner } from "@/components/domain-connected-banner";
+import { ChatProvider } from "@/components/chat/chat-context";
+import { DockComposer } from "@/components/chat/dock-composer";
 
 function AppShellInner({
   children,
   activeNav,
   activeTab,
+  hideDock,
 }: {
   children: React.ReactNode;
   activeNav?: "data-health" | "explore" | "dq-checks";
   activeTab?: "Agents" | "Unstructured" | "Quality";
+  hideDock?: boolean;
 }) {
   const { collapsed } = useSidebarState();
   return (
@@ -38,7 +42,10 @@ function AppShellInner({
         <DomainConnectedBanner />
         <div className="flex flex-1 overflow-hidden">
           {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "data-health"} />}
-          <main className="flex flex-1 flex-col overflow-hidden">{children}</main>
+          <main className="relative flex flex-1 flex-col overflow-hidden">
+            {children}
+            {!hideDock && <DockComposer />}
+          </main>
         </div>
       </div>
     </div>
@@ -49,11 +56,14 @@ export function AppShell(props: {
   children: React.ReactNode;
   activeNav?: "data-health" | "explore" | "dq-checks";
   activeTab?: "Agents" | "Unstructured" | "Quality";
+  hideDock?: boolean;
 }) {
   return (
     <SidebarProvider>
       <DomainProvider>
-        <AppShellInner {...props} />
+        <ChatProvider>
+          <AppShellInner {...props} />
+        </ChatProvider>
       </DomainProvider>
     </SidebarProvider>
   );

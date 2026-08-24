@@ -3,6 +3,7 @@ import { Stepper } from "./Stepper";
 import { Step1SelectData } from "./Step1SelectData";
 import { Step2ApplyChecks } from "./Step2ApplyChecks";
 import { Step3Schedule, DEFAULT_SCHEDULE, type ScheduleConfig } from "./Step3Schedule";
+import { WizardChatPanel } from "@/components/chat/wizard-chat-panel";
 import { generateChecks, type Check } from "./mock-checks";
 import { WAREHOUSES } from "./mock-warehouses";
 import type { CreatedAssetInput } from "../created-assets-context";
@@ -235,32 +236,36 @@ export function AddDatasetModal({
       </header>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto">
-        {step === 0 && (
-          <Step1SelectData
-            selected={selected}
-            onToggle={toggle}
-            onClear={() => setSelected(new Set())}
-          />
-        )}
-        {step === 1 && (
-          <Step2ApplyChecks
-            selected={selected}
-            checked={checked}
-            customChecks={customChecks}
-            onToggleCheck={toggleCheck}
-            onAddCheck={addCustomCheck}
-          />
-        )}
-        {step === 2 && (
-          <Step3Schedule
-            checkCount={totalChecks}
-            profiling={profilingSchedule}
-            checks={checksSchedule}
-            onChangeProfiling={setProfilingSchedule}
-            onChangeChecks={setChecksSchedule}
-          />
-        )}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+          {step === 0 && (
+            <Step1SelectData
+              selected={selected}
+              onToggle={toggle}
+              onClear={() => setSelected(new Set())}
+            />
+          )}
+          {step === 1 && (
+            <Step2ApplyChecks
+              selected={selected}
+              checked={checked}
+              customChecks={customChecks}
+              onToggleCheck={toggleCheck}
+              onAddCheck={addCustomCheck}
+            />
+          )}
+          {step === 2 && (
+            <Step3Schedule
+              checkCount={totalChecks}
+              profiling={profilingSchedule}
+              checks={checksSchedule}
+              onChangeProfiling={setProfilingSchedule}
+              onChangeChecks={setChecksSchedule}
+            />
+          )}
+        </div>
+        {step === 1 && <WizardChatPanel context="checks" />}
+        {step === 2 && <WizardChatPanel context="schedule" />}
       </div>
       </div>
     </div>
