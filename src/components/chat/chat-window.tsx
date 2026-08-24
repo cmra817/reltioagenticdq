@@ -2,7 +2,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import agentflowLogo from "@/assets/agentflow-logo.png";
+
 import {
   Conversation,
   ConversationContent,
