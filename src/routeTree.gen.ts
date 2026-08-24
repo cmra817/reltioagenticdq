@@ -14,7 +14,9 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DqChecksRouteImport } from './routes/dq-checks'
 import { Route as DataHealthRouteImport } from './routes/data-health'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const IncidentsRoute = IncidentsRouteImport.update({
   id: '/incidents',
@@ -41,9 +43,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChatChatIdRoute = ChatChatIdRouteImport.update({
+  id: '/chat/$chatId',
+  path: '/chat/$chatId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssetsAssetSlugRoute = AssetsAssetSlugRouteImport.update({
   id: '/assets/$assetSlug',
   path: '/assets/$assetSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -53,7 +65,9 @@ export interface FileRoutesByFullPath {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -61,7 +75,9 @@ export interface FileRoutesByTo {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -70,7 +86,9 @@ export interface FileRoutesById {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -80,7 +98,9 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/api/chat'
     | '/assets/$assetSlug'
+    | '/chat/$chatId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -88,7 +108,9 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/api/chat'
     | '/assets/$assetSlug'
+    | '/chat/$chatId'
   id:
     | '__root__'
     | '/'
@@ -96,7 +118,9 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/api/chat'
     | '/assets/$assetSlug'
+    | '/chat/$chatId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -105,7 +129,9 @@ export interface RootRouteChildren {
   DqChecksRoute: typeof DqChecksRoute
   ExploreRoute: typeof ExploreRoute
   IncidentsRoute: typeof IncidentsRoute
+  ApiChatRoute: typeof ApiChatRoute
   AssetsAssetSlugRoute: typeof AssetsAssetSlugRoute
+  ChatChatIdRoute: typeof ChatChatIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -145,11 +171,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chat/$chatId': {
+      id: '/chat/$chatId'
+      path: '/chat/$chatId'
+      fullPath: '/chat/$chatId'
+      preLoaderRoute: typeof ChatChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/assets/$assetSlug': {
       id: '/assets/$assetSlug'
       path: '/assets/$assetSlug'
       fullPath: '/assets/$assetSlug'
       preLoaderRoute: typeof AssetsAssetSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -161,7 +201,9 @@ const rootRouteChildren: RootRouteChildren = {
   DqChecksRoute: DqChecksRoute,
   ExploreRoute: ExploreRoute,
   IncidentsRoute: IncidentsRoute,
+  ApiChatRoute: ApiChatRoute,
   AssetsAssetSlugRoute: AssetsAssetSlugRoute,
+  ChatChatIdRoute: ChatChatIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

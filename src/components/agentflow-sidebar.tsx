@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   AppsGridIcon,
@@ -15,6 +15,8 @@ import { CreateDomainDialog } from "./create-domain-dialog";
 import { AddDatasetModal } from "./add-dataset/AddDatasetModal";
 import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
+import { newChatId, useChatThreads } from "./chat/chat-context";
+import { MessageSquarePlus } from "lucide-react";
 
 function NavItem({
   icon,
@@ -214,10 +216,42 @@ function DomainPill() {
   );
 }
 
+function RecentChats() {
+  const { threads } = useChatThreads();
+  if (threads.length === 0) return null;
+  return (
+    <div className="mt-3 px-3">
+      <div
+        className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide"
+        style={{ color: "var(--ink-300)" }}
+      >
+        Recent chats
+      </div>
+      <ul className="max-h-48 overflow-y-auto">
+        {threads.slice(0, 8).map((t) => (
+          <li key={t.id}>
+            <Link
+              to="/chat/$chatId"
+              params={{ chatId: t.id }}
+              className="block truncate rounded-lg px-3 py-1.5 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
+              style={{ color: "var(--ink-700)" }}
+              title={t.title}
+            >
+              {t.title}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function NewMenu() {
   const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
   const { runJob } = useNotifications();
   const { addAssets } = useCreatedAssets();
+  const { createThread } = useChatThreads();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [domainOpen, setDomainOpen] = useState(false);
   const [datasetOpen, setDatasetOpen] = useState(false);
@@ -273,6 +307,21 @@ function NewMenu() {
           className="absolute left-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border bg-white py-1"
           style={{ borderColor: "var(--hairline)", boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
         >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              const id = newChatId();
+              createThread({ id });
+              void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: {} });
+            }}
+            className={itemClass}
+            style={{ color: "var(--ink-900)" }}
+          >
+            <MessageSquarePlus size={14} />
+            <span>New chat</span>
+          </button>
           <button
             type="button"
             role="menuitem"
@@ -374,6 +423,8 @@ export function AgentflowSidebar({
         <NavItem icon={<CompassIcon />} label="Explore" to="/explore" active={activeNav === "explore"} />
         <NavItem icon={<BarsIcon />} label="DQ checks" to="/dq-checks" active={activeNav === "dq-checks"} />
       </nav>
+
+      <RecentChats />
 
       {/* spacer */}
       <div className="flex-1" />
