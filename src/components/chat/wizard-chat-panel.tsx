@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { UIMessage } from "ai";
-import agentflowLogo from "@/assets/agentflow-logo.png";
+
 import { ChatWindow } from "./chat-window";
 import { newChatId } from "./chat-context";
 
