@@ -1,4 +1,4 @@
-import lockupUrl from "@/assets/reltio-agentflow-lockup.png";
+
 import { SidebarToggleIcon } from "./brand-icons";
 import { useSidebarState } from "./sidebar-context";
 import { NotificationBell } from "./notification-bell";
