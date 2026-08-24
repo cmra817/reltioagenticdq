@@ -38,7 +38,7 @@ export function DockComposer() {
               start();
             }
           }}
-          placeholder="Ask AgentFlow about this data…"
+          placeholder="Ask about your data…"
           className="max-h-32 flex-1 resize-none bg-transparent py-2 text-[14px] outline-none"
           style={{ color: "var(--ink-900)" }}
         />

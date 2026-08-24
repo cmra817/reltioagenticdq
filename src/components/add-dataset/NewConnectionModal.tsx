@@ -198,7 +198,7 @@ function PickView({
         style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)" }}
       >
         <p className="text-[13px]" style={{ color: "var(--ink-500)" }}>
-          Choose a platform to connect to AgentFlow.
+          Choose a platform to connect.
         </p>
 
         <div className="relative mt-3">
@@ -393,12 +393,12 @@ function ConfigureView({
                   className="inline-flex items-center gap-1.5 font-medium"
                   style={{ color: "#1f8a55" }}
                 >
-                  <Check size={14} /> Credentials verified — AgentFlow can reach{" "}
+                  <Check size={14} /> Credentials verified — we can reach{" "}
                   {platform.name}.
                 </span>
               ) : (
                 <>
-                  Verify credentials before saving to confirm AgentFlow can reach{" "}
+                  Verify credentials before saving to confirm we can reach{" "}
                   {platform.name}.
                 </>
               )}

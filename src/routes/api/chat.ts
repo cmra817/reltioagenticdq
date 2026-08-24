@@ -7,7 +7,7 @@ import {
   withLovableAiGatewayRunIdHeader,
 } from "@/lib/ai-gateway.server";
 
-const SYSTEM_PROMPT = `You are AgentFlow Quality's data quality assistant for an enterprise data observability product by Reltio.
+const SYSTEM_PROMPT = `You are the data quality assistant for an enterprise data observability product by Reltio.
 
 You help data engineers and stewards with:
 - Profiling tables and interpreting column profiles (completeness, uniqueness, distribution, patterns).

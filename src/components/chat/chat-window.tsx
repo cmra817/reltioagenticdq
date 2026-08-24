@@ -194,7 +194,7 @@ export function ChatWindow({
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask AgentFlow about your data quality…"
+              placeholder="Ask about your data…"
             />
             <PromptInputFooter className="justify-end">
               <PromptInputSubmit status={status} disabled={!input.trim() && !busy} onStop={stop} />

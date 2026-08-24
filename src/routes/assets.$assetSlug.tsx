@@ -29,7 +29,7 @@ import {
 export const Route = createFileRoute("/assets/$assetSlug")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.assetSlug} — AgentFlow Quality` },
+      { title: `${params.assetSlug} — Data Quality` },
       {
         name: "description",
         content: `Overview, quality score, and classification breakdown for ${params.assetSlug}.`,

@@ -12,13 +12,13 @@ export const Route = createFileRoute("/incidents")({
   }),
   head: () => ({
     meta: [
-      { title: "Incident Manager — AgentFlow Quality" },
+      { title: "Incident Manager — Data Quality" },
       {
         name: "description",
         content:
           "Review data quality incidents by dimension, table, and severity from your Data Health widgets.",
       },
-      { property: "og:title", content: "Incident Manager — AgentFlow Quality" },
+      { property: "og:title", content: "Incident Manager — Data Quality" },
       { property: "og:description", content: "Data quality incidents filtered by dashboard segment." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

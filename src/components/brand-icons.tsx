@@ -1,4 +1,4 @@
-// Inline SVG brand & UI icons for the AgentFlow Quality screen.
+// Inline SVG brand & UI icons for the Data Quality screen.
 // Kept in one file so colors and sizes stay consistent with the design tokens.
 
 import reltioWordmarkUrl from "@/assets/reltio-wordmark.png";
@@ -14,18 +14,7 @@ export function ReltioWordmark({ className }: { className?: string }) {
   );
 }
 
-import agentflowLogoUrl from "@/assets/agentflow-logo.png";
 
-export function AgentFlowLogo({ className }: { className?: string }) {
-  return (
-    <img
-      src={agentflowLogoUrl}
-      alt="AgentFlow"
-      className={className}
-      style={{ height: 24, width: "auto", display: "block" }}
-    />
-  );
-}
 
 /* ---------- warehouse logos ---------- */
 export function DatabricksIcon() {
