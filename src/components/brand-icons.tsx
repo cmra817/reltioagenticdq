@@ -14,18 +14,7 @@ export function ReltioWordmark({ className }: { className?: string }) {
   );
 }
 
-import agentflowLogoUrl from "@/assets/agentflow-logo.png";
 
-export function AgentFlowLogo({ className }: { className?: string }) {
-  return (
-    <img
-      src={agentflowLogoUrl}
-      alt="AgentFlow"
-      className={className}
-      style={{ height: 24, width: "auto", display: "block" }}
-    />
-  );
-}
 
 /* ---------- warehouse logos ---------- */
 export function DatabricksIcon() {

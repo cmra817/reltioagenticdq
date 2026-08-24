@@ -198,7 +198,7 @@ function PickView({
         style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)" }}
       >
         <p className="text-[13px]" style={{ color: "var(--ink-500)" }}>
-          Choose a platform to connect..
+          Choose a platform to connect.
         </p>
 
         <div className="relative mt-3">
