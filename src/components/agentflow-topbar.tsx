@@ -3,10 +3,7 @@ import { SidebarToggleIcon } from "./brand-icons";
 import { useSidebarState } from "./sidebar-context";
 import { NotificationBell } from "./notification-bell";
 
-const tabs = ["Agents", "Unstructured", "Quality"] as const;
-type Tab = (typeof tabs)[number];
-
-export function AgentflowTopbar({ active = "Quality" as Tab }: { active?: Tab }) {
+export function AgentflowTopbar() {
   const { toggle, collapsed } = useSidebarState();
   return (
     <header className="flex h-12 shrink-0 items-center gap-4 px-4">
