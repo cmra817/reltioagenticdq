@@ -54,7 +54,7 @@ export function ChatWindow({
   if (seedRef.current.id !== chatId) seedRef.current = { id: chatId, messages: initialMessages };
   const hadHistory = seedRef.current.messages.length > 0;
 
-  const { messages, sendMessage, status, stop } = useChat({
+  const { messages, sendMessage, setMessages, status, stop } = useChat({
     id: chatId,
     messages: seedRef.current.messages,
     transport,
