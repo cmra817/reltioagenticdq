@@ -22,6 +22,8 @@ export function ChatWindow({
   initialMessages,
   onMessagesChange,
   suggestions = [],
+  followUps = [],
+  onIntercept,
   emptyTitle = "How can I help with your data?",
   emptySubtitle = "Ask about profiling results, anomalies, DQ checks, or schedules.",
   compact = false,
@@ -31,6 +33,10 @@ export function ChatWindow({
   initialMessages: UIMessage[];
   onMessagesChange?: (messages: UIMessage[]) => void;
   suggestions?: string[];
+  /** Chips shown under the transcript, e.g. the next step of a scripted demo. */
+  followUps?: string[];
+  /** Return an assistant reply to answer locally instead of calling the model. */
+  onIntercept?: (text: string) => string | null | undefined;
   emptyTitle?: string;
   emptySubtitle?: string;
   compact?: boolean;
