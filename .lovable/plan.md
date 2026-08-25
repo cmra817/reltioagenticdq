@@ -4,7 +4,7 @@ Make the wizard's right-panel chat on step 1 play a fixed, click-through convers
 
 ## The conversation
 
-Panel opens in its normal empty state with one suggested prompt chip:
+Panel opens in its normal empty state with several suggested prompt chips — "Show me tables by freshness", "Find tables containing specific data types", "Recommend tables based on my business needs", "Filter tables by schema or naming pattern". The script only kicks in when the user picks "Show me tables by freshness" (the other chips go to the live assistant):
 
 - **Show me tables by freshness** (click)
 - Assistant replies: "Based on frequency of use, here are your top 2 tables:" followed by
