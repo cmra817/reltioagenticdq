@@ -266,7 +266,18 @@ export function AddDatasetModal({
         </div>
       </div>
       </div>
-      {step === 0 && <WizardChatPanel context="select" />}
+      {step === 0 && (
+        <WizardChatPanel
+          context="select"
+          onSelectAssets={(keys) =>
+            setSelected((prev) => {
+              const next = new Set(prev);
+              for (const k of keys) next.add(k);
+              return next;
+            })
+          }
+        />
+      )}
       {step === 1 && <WizardChatPanel context="checks" />}
       {step === 2 && <WizardChatPanel context="schedule" />}
     </div>
