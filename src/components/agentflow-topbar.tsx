@@ -25,8 +25,9 @@ export function AgentflowTopbar() {
         <img
           src={reltioWordmark}
           alt="Reltio"
-          style={{ height: 28, width: "auto", display: "block" }}
+          className="block h-[22px] w-auto shrink-0 object-contain"
         />
+
         <span style={{ color: "var(--hairline)" }}>|</span>
         <span className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
           Data Quality
