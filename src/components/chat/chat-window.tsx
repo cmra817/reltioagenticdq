@@ -191,6 +191,23 @@ export function ChatWindow({
             );
           })}
 
+          {messages.length > 0 && followUps.length > 0 && !busy && (
+            <div className="flex flex-wrap justify-end gap-2 px-1 pb-1">
+              {followUps.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => submit(s)}
+                  className="rounded-full border px-3 py-1.5 text-left text-[12px] transition-colors hover:bg-[color:var(--surface-soft)]"
+                  style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+
           {status === "submitted" && (
             <div className="px-1 py-2">
               <Shimmer className="text-[13px]">Thinking…</Shimmer>
