@@ -22,6 +22,8 @@ export function ChatWindow({
   initialMessages,
   onMessagesChange,
   suggestions = [],
+  followUps = [],
+  onIntercept,
   emptyTitle = "How can I help with your data?",
   emptySubtitle = "Ask about profiling results, anomalies, DQ checks, or schedules.",
   compact = false,
@@ -31,6 +33,10 @@ export function ChatWindow({
   initialMessages: UIMessage[];
   onMessagesChange?: (messages: UIMessage[]) => void;
   suggestions?: string[];
+  /** Chips shown under the transcript, e.g. the next step of a scripted demo. */
+  followUps?: string[];
+  /** Return an assistant reply to answer locally instead of calling the model. */
+  onIntercept?: (text: string) => string | null | undefined;
   emptyTitle?: string;
   emptySubtitle?: string;
   compact?: boolean;
@@ -48,7 +54,7 @@ export function ChatWindow({
   if (seedRef.current.id !== chatId) seedRef.current = { id: chatId, messages: initialMessages };
   const hadHistory = seedRef.current.messages.length > 0;
 
-  const { messages, sendMessage, status, stop } = useChat({
+  const { messages, sendMessage, setMessages, status, stop } = useChat({
     id: chatId,
     messages: seedRef.current.messages,
     transport,
@@ -92,6 +98,18 @@ export function ChatWindow({
     const value = text.trim();
     if (!value || busy) return;
     setInput("");
+
+    const scripted = onIntercept?.(value);
+    if (scripted) {
+      const stamp = Date.now();
+      setMessages((prev) => [
+        ...prev,
+        { id: `u-${stamp}`, role: "user", parts: [{ type: "text", text: value }] },
+        { id: `a-${stamp}`, role: "assistant", parts: [{ type: "text", text: scripted }] },
+      ]);
+      return;
+    }
+
     void sendMessage({ text: value });
   }
 
@@ -172,6 +190,23 @@ export function ChatWindow({
               </Message>
             );
           })}
+
+          {messages.length > 0 && followUps.length > 0 && !busy && (
+            <div className="flex flex-wrap justify-end gap-2 px-1 pb-1">
+              {followUps.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => submit(s)}
+                  className="rounded-full border px-3 py-1.5 text-left text-[12px] transition-colors hover:bg-[color:var(--surface-soft)]"
+                  style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
 
           {status === "submitted" && (
             <div className="px-1 py-2">
