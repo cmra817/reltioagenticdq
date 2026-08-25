@@ -98,6 +98,18 @@ export function ChatWindow({
     const value = text.trim();
     if (!value || busy) return;
     setInput("");
+
+    const scripted = onIntercept?.(value);
+    if (scripted) {
+      const stamp = Date.now();
+      setMessages((prev) => [
+        ...prev,
+        { id: `u-${stamp}`, role: "user", parts: [{ type: "text", text: value }] },
+        { id: `a-${stamp}`, role: "assistant", parts: [{ type: "text", text: scripted }] },
+      ]);
+      return;
+    }
+
     void sendMessage({ text: value });
   }
 
