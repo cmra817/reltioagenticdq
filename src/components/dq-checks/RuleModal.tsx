@@ -149,22 +149,43 @@ export function RuleModal({
         ? manualStrings.split("\n").map((v) => v.trim()).filter(Boolean)
         : (selectedColumn?.samples ?? CONNECTED_COLUMNS[0].samples);
 
-    let re: RegExp | null = null;
-    try {
-      re = new RegExp(pattern);
-    } catch {
-      re = null;
+    let evaluate: (value: string, i: number) => boolean;
+
+    if (expectation === "expect_column_values_to_not_be_null") {
+      evaluate = (value) => value.trim().length > 0 && !/^(null|n\/a|-)$/i.test(value.trim());
+    } else if (expectation === "expect_column_values_to_be_unique") {
+      const seen = new Set<string>();
+      evaluate = (value) => {
+        const key = value.trim().toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      };
+    } else if (expectation === "expect_column_values_to_be_between") {
+      const min = Number(pattern.match(/min=(-?\d+(?:\.\d+)?)/)?.[1] ?? Number.NEGATIVE_INFINITY);
+      const max = Number(pattern.match(/max=(-?\d+(?:\.\d+)?)/)?.[1] ?? Number.POSITIVE_INFINITY);
+      evaluate = (value) => {
+        const n = Number(value.replace(/[^0-9.-]/g, ""));
+        return Number.isFinite(n) && n >= min && n <= max;
+      };
+    } else {
+      let re: RegExp | null = null;
+      try {
+        re = new RegExp(pattern);
+      } catch {
+        re = null;
+      }
+      evaluate = (value, i) => (re ? re.test(value) : i % 5 !== 2);
     }
-    const lines = values.map((value, i) => ({
-      value,
-      ok: re ? re.test(value) : i % 5 !== 2,
-    }));
+
+    const lines = values.map((value, i) => ({ value, ok: evaluate(value, i) }));
     setTestResult({
       passed: lines.filter((l) => l.ok).length,
       failed: lines.filter((l) => !l.ok).length,
       lines,
     });
   }
+
 
   function save() {
     if (!name.trim()) {
