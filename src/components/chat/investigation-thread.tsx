@@ -127,7 +127,11 @@ export function InvestigationThread({
   persistRef.current = saveMessages;
   useEffect(() => {
     if (!threadId) return;
-    persistRef.current(threadId, [...scriptedTranscript(question, turn), ...messages]);
+    persistRef.current(
+      threadId,
+      [...scriptedTranscript(question, turn), ...messages],
+      "investigation",
+    );
   }, [threadId, question, turn, messages]);
 
   function submit(text: string) {

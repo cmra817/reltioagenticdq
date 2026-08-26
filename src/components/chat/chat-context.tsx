@@ -49,7 +49,7 @@ type ChatContextValue = {
   threads: ChatThread[];
   getThread: (id: string) => ChatThread | undefined;
   createThread: (opts?: { id?: string; title?: string; kind?: ChatThread["kind"] }) => ChatThread;
-  saveMessages: (id: string, messages: UIMessage[]) => void;
+  saveMessages: (id: string, messages: UIMessage[], kind?: ChatThread["kind"]) => void;
   renameThread: (id: string, title: string) => void;
   deleteThread: (id: string) => void;
 };
@@ -83,7 +83,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   );
 
   const saveMessages = useCallback(
-    (id: string, messages: UIMessage[]) => {
+    (id: string, messages: UIMessage[], kind?: ChatThread["kind"]) => {
       update((prev) => {
         const existing = prev.find((t) => t.id === id);
         const firstUser = messages.find((m) => m.role === "user");
@@ -101,7 +101,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           title,
           updatedAt: Date.now(),
           messages,
-          kind: existing?.kind ?? "chat",
+          kind: existing?.kind ?? kind ?? "chat",
         };
         return [thread, ...prev.filter((t) => t.id !== id)];
       });
