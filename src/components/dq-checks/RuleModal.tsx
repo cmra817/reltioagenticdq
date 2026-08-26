@@ -101,16 +101,47 @@ export function RuleModal({
 
   const summary = useMemo(() => {
     const p = pattern.trim() || "the generated pattern";
-    return `Flags ${dimension.toLowerCase()} issues by checking values against ${p}, and fails the rule when more than ${threshold}% of values don't match.`;
-  }, [dimension, pattern, threshold]);
+    const fail = `Fails the rule when more than ${threshold}% of values don't comply.`;
+    if (expectation === "expect_column_values_to_not_be_null")
+      return `Flags rows where the column is null or empty. ${fail}`;
+    if (expectation === "expect_column_values_to_be_unique")
+      return `Flags duplicate values so the column stays unique. ${fail}`;
+    if (expectation === "expect_column_values_to_be_in_set")
+      return `Flags values that are not present in ${p}. ${fail}`;
+    if (expectation === "expect_column_values_to_be_between")
+      return `Flags values outside ${p}. ${fail}`;
+    if (expectation === "expect_column_pair_values_a_to_be_greater_than_b")
+      return `Flags rows where ${p} does not hold. ${fail}`;
+    return `Flags ${dimension.toLowerCase()} issues by checking values against ${p}. ${fail}`;
+  }, [dimension, expectation, pattern, threshold]);
+
 
   function generatePattern() {
+    if (!description.trim()) {
+      toast.error("Describe the rule first");
+      return;
+    }
     const s = suggestFromDescription(description);
     setPattern(s.pattern);
     setExpectation(s.expectation);
+    setThreshold(s.threshold);
     if (dimensionSuggested) setDimension(s.dimension);
-    toast.success("Pattern generated from description");
+    if (!name.trim()) setName(s.name);
+    if (s.column) {
+      const match = searchColumns(s.column)[0];
+      if (match) {
+        setSampleMode("column");
+        setSelectedColumn(match);
+        setColumnQuery(s.column);
+      }
+    }
+    toast.success(
+      s.column
+        ? `Generated a ${s.dimension.toLowerCase()} rule for ${s.column}`
+        : `Generated a ${s.dimension.toLowerCase()} rule`,
+    );
   }
+
 
   function runTest() {
     const values =
@@ -118,22 +149,43 @@ export function RuleModal({
         ? manualStrings.split("\n").map((v) => v.trim()).filter(Boolean)
         : (selectedColumn?.samples ?? CONNECTED_COLUMNS[0].samples);
 
-    let re: RegExp | null = null;
-    try {
-      re = new RegExp(pattern);
-    } catch {
-      re = null;
+    let evaluate: (value: string, i: number) => boolean;
+
+    if (expectation === "expect_column_values_to_not_be_null") {
+      evaluate = (value) => value.trim().length > 0 && !/^(null|n\/a|-)$/i.test(value.trim());
+    } else if (expectation === "expect_column_values_to_be_unique") {
+      const seen = new Set<string>();
+      evaluate = (value) => {
+        const key = value.trim().toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      };
+    } else if (expectation === "expect_column_values_to_be_between") {
+      const min = Number(pattern.match(/min=(-?\d+(?:\.\d+)?)/)?.[1] ?? Number.NEGATIVE_INFINITY);
+      const max = Number(pattern.match(/max=(-?\d+(?:\.\d+)?)/)?.[1] ?? Number.POSITIVE_INFINITY);
+      evaluate = (value) => {
+        const n = Number(value.replace(/[^0-9.-]/g, ""));
+        return Number.isFinite(n) && n >= min && n <= max;
+      };
+    } else {
+      let re: RegExp | null = null;
+      try {
+        re = new RegExp(pattern);
+      } catch {
+        re = null;
+      }
+      evaluate = (value, i) => (re ? re.test(value) : i % 5 !== 2);
     }
-    const lines = values.map((value, i) => ({
-      value,
-      ok: re ? re.test(value) : i % 5 !== 2,
-    }));
+
+    const lines = values.map((value, i) => ({ value, ok: evaluate(value, i) }));
     setTestResult({
       passed: lines.filter((l) => l.ok).length,
       failed: lines.filter((l) => !l.ok).length,
       lines,
     });
   }
+
 
   function save() {
     if (!name.trim()) {
