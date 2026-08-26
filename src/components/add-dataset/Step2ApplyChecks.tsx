@@ -222,6 +222,8 @@ export function Step2ApplyChecks({
   const [modalOpen, setModalOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [thresholds, setThresholds] = useState<Record<string, number>>({});
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
