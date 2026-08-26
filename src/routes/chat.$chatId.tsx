@@ -60,7 +60,7 @@ function ChatBody() {
   }, [q, chatId, navigate]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="relative flex h-full min-h-0 flex-col pb-[164px]">
       <ChatWindow
         key={chatId}
         chatId={chatId}
@@ -72,6 +72,7 @@ function ChatBody() {
           "Explain the fill-rate drop on customers.email",
           "Recommend DQ checks for a new orders table",
         ]}
+        renderPrompt={(controls) => <ChatPromptBox {...controls} />}
       />
     </div>
   );
