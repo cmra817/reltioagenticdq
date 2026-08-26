@@ -218,7 +218,11 @@ function DomainPill() {
 
 function RecentChats() {
   const { threads } = useChatThreads();
-  if (threads.length === 0) return null;
+  // Threads come from localStorage, so only render after hydration to avoid SSR mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted || threads.length === 0) return null;
+
   return (
     <div className="mt-3 px-3">
       <div
