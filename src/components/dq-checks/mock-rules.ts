@@ -185,24 +185,33 @@ const KNOWN_COLUMNS = [
 function extractColumn(text: string): string | undefined {
   const lower = text.toLowerCase();
 
-  // Explicit: `column_name column`, "column X", quoted or backticked names.
+  // Explicit quoted or backticked names are unambiguous.
   const quoted = text.match(/[`"']([A-Za-z_][A-Za-z0-9_]*)[`"']/);
   if (quoted) return quoted[1].toLowerCase();
 
-  const labeled = lower.match(/(?:column|field|attribute)\s+([a-z_][a-z0-9_]*)/);
-  if (labeled) return labeled[1];
+  // Resolve known business-column phrases before generic "column X" parsing.
+  // This prevents "phone number column is not null" from treating "is" as
+  // the column name and canonicalizes the phrase to phone_number.
+  const normalized = lower.replace(/[^a-z0-9]+/g, "_");
+  const knownHit = KNOWN_COLUMNS.find((candidate) => {
+    const phrase = candidate.replaceAll("_", " ");
+    return lower.includes(phrase) || normalized.includes(candidate);
+  });
+  if (knownHit) return knownHit;
 
   const trailing = lower.match(/([a-z_][a-z0-9_]*)\s+(?:column|field|attribute)/);
   if (trailing) return trailing[1];
+
+  const labeled = lower.match(/(?:column|field|attribute)\s+(?:named\s+|called\s+)?([a-z_][a-z0-9_]*)/);
+  if (labeled && !["is", "should", "must", "cannot", "can", "not"].includes(labeled[1])) {
+    return labeled[1];
+  }
 
   // Snake_case token anywhere is almost certainly a column.
   const snake = lower.match(/\b([a-z]+(?:_[a-z0-9]+)+)\b/);
   if (snake) return snake[1];
 
-  // Known column words, including two-word forms ("phone number").
-  const normalized = lower.replace(/[^a-z0-9]+/g, "_");
-  const hit = KNOWN_COLUMNS.find((c) => normalized.includes(c));
-  return hit;
+  return undefined;
 }
 
 function titleize(column?: string) {
