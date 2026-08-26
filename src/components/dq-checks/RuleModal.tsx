@@ -101,8 +101,20 @@ export function RuleModal({
 
   const summary = useMemo(() => {
     const p = pattern.trim() || "the generated pattern";
-    return `Flags ${dimension.toLowerCase()} issues by checking values against ${p}, and fails the rule when more than ${threshold}% of values don't match.`;
-  }, [dimension, pattern, threshold]);
+    const fail = `Fails the rule when more than ${threshold}% of values don't comply.`;
+    if (expectation === "expect_column_values_to_not_be_null")
+      return `Flags rows where the column is null or empty. ${fail}`;
+    if (expectation === "expect_column_values_to_be_unique")
+      return `Flags duplicate values so the column stays unique. ${fail}`;
+    if (expectation === "expect_column_values_to_be_in_set")
+      return `Flags values that are not present in ${p}. ${fail}`;
+    if (expectation === "expect_column_values_to_be_between")
+      return `Flags values outside ${p}. ${fail}`;
+    if (expectation === "expect_column_pair_values_a_to_be_greater_than_b")
+      return `Flags rows where ${p} does not hold. ${fail}`;
+    return `Flags ${dimension.toLowerCase()} issues by checking values against ${p}. ${fail}`;
+  }, [dimension, expectation, pattern, threshold]);
+
 
   function generatePattern() {
     if (!description.trim()) {
