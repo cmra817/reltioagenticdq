@@ -11,7 +11,66 @@ export type Check = {
   field: string;
   /** Who created or recommended this check. Defaults to Reltio for generated checks. */
   creator?: Creator;
+  /** GX expectation function name, e.g. expect_column_values_to_not_be_null. */
+  expectation?: string;
+  /** Pattern / expression the expectation evaluates. */
+  pattern?: string;
+  /** Authored failure threshold, in percent. */
+  threshold?: number;
 };
+
+export type CheckLogic = { expectation: string; pattern: string; threshold: number };
+
+/**
+ * Resolves the expectation / pattern / threshold for a check. Explicit values on the
+ * check win; otherwise they're inferred from the rule name and dimension so every
+ * check — including Reltio-managed ones — can render a full detail panel.
+ */
+export function checkLogic(check: Check): CheckLogic {
+  if (check.expectation && check.pattern) {
+    return {
+      expectation: check.expectation,
+      pattern: check.pattern,
+      threshold: check.threshold ?? 0,
+    };
+  }
+  const name = check.rule.toLowerCase();
+  let expectation = "expect_column_values_to_match_regex";
+  let pattern = check.pattern ?? "not_null";
+  let threshold = check.threshold ?? 0;
+
+  if (name.includes("not null") || name.includes("is required")) {
+    expectation = "expect_column_values_to_not_be_null";
+    pattern = "not_null";
+    threshold = check.threshold ?? 0;
+  } else if (name.includes("unique")) {
+    expectation = "expect_column_values_to_be_unique";
+    pattern = "unique";
+    threshold = check.threshold ?? 0;
+  } else if (name.includes("allowed values") || name.includes("iso list") || name.includes("in set")) {
+    expectation = "expect_column_values_to_be_in_set";
+    pattern = `in_set(${check.field})`;
+    threshold = check.threshold ?? 1;
+  } else if (name.includes("range") || name.includes("non-negative") || name.includes("between")) {
+    expectation = "expect_column_values_to_be_between";
+    pattern = name.includes("non-negative") ? "min=0" : "min=p05, max=p95";
+    threshold = check.threshold ?? 2;
+  } else if (name.includes("format") || name.includes("matches")) {
+    expectation = "expect_column_values_to_match_regex";
+    pattern = check.pattern ?? `regex(${check.field})`;
+    threshold = check.threshold ?? 5;
+  } else if (name.includes(">=") || name.includes("in the past")) {
+    expectation = "expect_column_pair_values_a_to_be_greater_than_b";
+    pattern = check.pattern ?? name;
+    threshold = check.threshold ?? 0;
+  } else {
+    expectation = check.expectation ?? "expect_column_values_to_not_be_null";
+    pattern = check.pattern ?? "not_null";
+  }
+
+  return { expectation, pattern, threshold };
+}
+
 
 const RELTIO: Creator = { kind: "reltio" };
 

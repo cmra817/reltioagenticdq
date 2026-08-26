@@ -1,10 +1,11 @@
 import { DimensionBadge } from "@/components/dq-dimensions";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Lock, Plus, Search, Sparkles, X } from "lucide-react";
+import { Check as CheckIcon, ChevronDown, ChevronRight, Copy, Lock, Plus, Search, Sparkles, X } from "lucide-react";
+import { toast } from "sonner";
 import { WAREHOUSES } from "./mock-warehouses";
-import { generateChecks, type Check } from "./mock-checks";
+import { checkLogic, generateChecks, type Check } from "./mock-checks";
 import { RuleModal } from "@/components/dq-checks/RuleModal";
-import { MOCK_RULES, creatorLabel, type Creator, type Rule } from "@/components/dq-checks/mock-rules";
+import { MOCK_RULES, type Rule } from "@/components/dq-checks/mock-rules";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type AssetEntry = {
@@ -33,16 +34,6 @@ export function parseSelectedAssets(
   return entries;
 }
 
-function CreatorBadge({ creator }: { creator: Creator }) {
-  const managed = creator.kind === "reltio";
-  return (
-    <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
-      {managed && <Lock size={12} style={{ color: "var(--ink-500)" }} />}
-      {creatorLabel(creator)}
-    </span>
-  );
-}
-
 function ruleToCheck(rule: Rule, idPrefix = ""): Check {
   return {
     id: `${idPrefix}${rule.id}`,
@@ -51,8 +42,166 @@ function ruleToCheck(rule: Rule, idPrefix = ""): Check {
     dimension: rule.dimension,
     field: "(custom)",
     creator: rule.creator,
+    expectation: rule.expectation,
+    pattern: rule.pattern,
+    threshold: rule.threshold,
   };
 }
+
+function summaryFor(dimension: string, pattern: string, threshold: number) {
+  return `Flags ${dimension.toLowerCase()} issues by checking values against ${pattern}, and fails the rule when more than ${threshold}% of values don't match.`;
+}
+
+function CheckRow({
+  check,
+  expanded,
+  threshold,
+  onToggleExpand,
+  onThresholdChange,
+  onRemove,
+}: {
+  check: Check;
+  expanded: boolean;
+  threshold: number;
+  onToggleExpand: () => void;
+  onThresholdChange: (value: number) => void;
+  onRemove: () => void;
+}) {
+  const logic = checkLogic(check);
+  const managed = (check.creator ?? { kind: "reltio" }).kind === "reltio";
+
+  return (
+    <div className="group border-b" style={{ borderColor: "var(--hairline)" }}>
+      <div className="flex items-center gap-3 px-6 py-3.5 transition-colors hover:bg-[color:var(--surface-soft)]">
+        <button
+          type="button"
+          onClick={onToggleExpand}
+          aria-expanded={expanded}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        >
+          <span className="shrink-0" style={{ color: "var(--ink-500)" }}>
+            {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+          </span>
+          <span
+            className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold"
+            style={{ color: "var(--ink-900)" }}
+          >
+            {managed && <Lock size={11} style={{ color: "var(--ink-500)" }} />}
+            {check.rule}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-[12px]" style={{ color: "var(--ink-500)" }}>
+            {check.description}
+          </span>
+          <span className="shrink-0">
+            <DimensionBadge label={check.dimension} size="sm" />
+          </span>
+          <span className="shrink-0 font-mono text-[12px]" style={{ color: "var(--ink-700)" }}>
+            {check.field}
+          </span>
+        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={onRemove}
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity hover:bg-white group-hover:opacity-100 focus-visible:opacity-100"
+              style={{ color: "var(--ink-500)" }}
+              aria-label="Remove check"
+            >
+              <X size={14} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">remove</TooltipContent>
+        </Tooltip>
+      </div>
+
+      {expanded && (
+        <div className="px-6 pb-5 pl-[54px]">
+          <div
+            className="rounded-xl border p-3"
+            style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)" }}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="truncate text-[12px]" style={{ color: "var(--ink-500)" }}>
+                Expectation: <span className="font-mono">{logic.expectation}</span>
+              </div>
+              <button
+                type="button"
+                aria-label="Copy expectation"
+                onClick={() => {
+                  navigator.clipboard?.writeText(`${logic.expectation}(${logic.pattern})`);
+                  toast.success("Copied expectation");
+                }}
+                style={{ color: "var(--ink-500)" }}
+              >
+                <Copy size={14} />
+              </button>
+            </div>
+            <div
+              className="mt-2 w-full rounded-lg border bg-white px-3 py-2 font-mono text-[13px]"
+              style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+            >
+              {logic.pattern}
+            </div>
+          </div>
+
+          <div
+            className="mt-4 flex flex-wrap items-center gap-2 text-[14px]"
+            style={{ color: "var(--ink-900)" }}
+          >
+            <span>Fail rule if more than</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={threshold}
+              onChange={(e) => onThresholdChange(Number(e.target.value))}
+              className="w-16 rounded-lg border bg-white px-2 py-1.5 text-[14px] outline-none focus:border-[color:var(--brand-blue)]"
+              style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+            />
+            <span>% of values don't match</span>
+          </div>
+
+          <div
+            className="mt-4 flex items-start gap-2 rounded-xl border p-3 text-[13px]"
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+          >
+            <CheckIcon size={14} className="mt-0.5 shrink-0" style={{ color: "var(--brand-blue)" }} />
+            <div>
+              <div className="font-medium" style={{ color: "var(--ink-900)" }}>
+                What this rule does
+              </div>
+              <div className="mt-0.5">{summaryFor(check.dimension, logic.pattern, threshold)}</div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={onRemove}
+              className="text-[13px] font-medium"
+              style={{ color: "#dc2626" }}
+            >
+              Remove
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                toast.success("Threshold saved for this table");
+                onToggleExpand();
+              }}
+              className="rounded-lg px-4 py-2 text-[13px] font-medium text-white"
+              style={{ background: "var(--ink-900)" }}
+            >
+              Save changes
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export function Step2ApplyChecks({
   selected,
@@ -73,6 +222,8 @@ export function Step2ApplyChecks({
   const [modalOpen, setModalOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [thresholds, setThresholds] = useState<Record<string, number>>({});
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -274,18 +425,6 @@ export function Step2ApplyChecks({
             </div>
           </div>
 
-          {/* Column headers */}
-          <div
-            className="grid grid-cols-[minmax(260px,2fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_48px] gap-4 border-b px-6 py-3 text-[11px] font-medium uppercase tracking-wide"
-            style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
-          >
-            <div>Name</div>
-            <div>Dimension</div>
-            <div>Creator</div>
-            <div>Field applied</div>
-            <div className="sr-only">Remove</div>
-          </div>
-
           {/* Rows */}
           <div>
             {visibleChecks.length === 0 ? (
@@ -294,62 +433,26 @@ export function Step2ApplyChecks({
               </div>
             ) : (
               visibleChecks.map((check) => {
-                const creator = check.creator ?? { kind: "reltio" } as Creator;
+                const rowKey = `${active.key}::${check.id}`;
                 return (
-                  <div
+                  <CheckRow
                     key={check.id}
-                    className="grid grid-cols-[minmax(260px,2fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_48px] items-center gap-4 border-b px-6 py-4 transition-colors hover:bg-[color:var(--surface-soft)]"
-                    style={{ borderColor: "var(--hairline)" }}
-                  >
-                    <div className="min-w-0">
-                      <div
-                        className="truncate text-[13px] font-medium"
-                        style={{ color: "var(--ink-900)" }}
-                      >
-                        {check.rule}
-                      </div>
-                      {check.description && (
-                        <div
-                          className="mt-0.5 line-clamp-1 text-[12px]"
-                          style={{ color: "var(--ink-500)" }}
-                        >
-                          {check.description}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <DimensionBadge label={check.dimension} size="sm" />
-                    </div>
-                    <div>
-                      <CreatorBadge creator={creator} />
-                    </div>
-                    <div
-                      className="font-mono text-[12px]"
-                      style={{ color: "var(--ink-700)" }}
-                    >
-                      {check.field}
-                    </div>
-                    <div className="flex justify-end">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            onClick={() => onToggleCheck(active.key, check.id)}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-[color:var(--surface-soft)]"
-                            style={{ color: "var(--ink-500)" }}
-                            aria-label="Remove check"
-                          >
-                            <X size={14} />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">remove</TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </div>
+                    check={check}
+                    expanded={expandedKey === rowKey}
+                    threshold={thresholds[rowKey] ?? checkLogic(check).threshold}
+                    onToggleExpand={() =>
+                      setExpandedKey((prev) => (prev === rowKey ? null : rowKey))
+                    }
+                    onThresholdChange={(value) =>
+                      setThresholds((prev) => ({ ...prev, [rowKey]: value }))
+                    }
+                    onRemove={() => onToggleCheck(active.key, check.id)}
+                  />
                 );
               })
             )}
           </div>
+
         </div>
 
         <RuleModal
