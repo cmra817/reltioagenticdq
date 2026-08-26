@@ -12,6 +12,12 @@ export function DockComposer() {
   function start() {
     const text = value.trim();
     if (!text) return;
+    // Consistency questions open the scripted investigation thread.
+    if (/consisten/i.test(text)) {
+      setValue("");
+      void navigate({ to: "/investigate/consistency", search: { q: text } });
+      return;
+    }
     const id = newChatId();
     createThread({ id });
     setValue("");
