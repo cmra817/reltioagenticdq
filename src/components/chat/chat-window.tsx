@@ -131,7 +131,11 @@ export function ChatWindow({
     <div className="flex h-full min-h-0 flex-col">
       <Conversation className="min-h-0 flex-1">
         <ConversationContent
-          className={compact ? "mx-auto w-full max-w-full px-4 py-4" : "mx-auto w-full max-w-3xl px-6 py-6"}
+          className={
+            compact
+              ? "mx-auto w-full max-w-full px-4 py-4"
+              : `mx-auto w-full max-w-3xl px-6 py-6 ${messages.length > 0 ? "min-h-full justify-end" : ""}`
+          }
         >
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-10 text-center">
