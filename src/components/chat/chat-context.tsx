@@ -6,6 +6,8 @@ export type ChatThread = {
   title: string;
   updatedAt: number;
   messages: UIMessage[];
+  /** Scripted surfaces (e.g. the consistency investigation) reopen on their own route. */
+  kind?: "chat" | "investigation";
 };
 
 const STORAGE_KEY = "agentflow.chat.threads.v1";
@@ -46,7 +48,7 @@ export function titleFromText(text: string) {
 type ChatContextValue = {
   threads: ChatThread[];
   getThread: (id: string) => ChatThread | undefined;
-  createThread: (opts?: { id?: string; title?: string }) => ChatThread;
+  createThread: (opts?: { id?: string; title?: string; kind?: ChatThread["kind"] }) => ChatThread;
   saveMessages: (id: string, messages: UIMessage[]) => void;
   renameThread: (id: string, title: string) => void;
   deleteThread: (id: string) => void;
@@ -66,12 +68,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createThread = useCallback(
-    (opts?: { id?: string; title?: string }) => {
+    (opts?: { id?: string; title?: string; kind?: ChatThread["kind"] }) => {
       const thread: ChatThread = {
         id: opts?.id ?? newChatId(),
         title: opts?.title ?? "New chat",
         updatedAt: Date.now(),
         messages: [],
+        kind: opts?.kind ?? "chat",
       };
       update((prev) => [thread, ...prev.filter((t) => t.id !== thread.id)]);
       return thread;
@@ -98,6 +101,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           title,
           updatedAt: Date.now(),
           messages,
+          kind: existing?.kind ?? "chat",
         };
         return [thread, ...prev.filter((t) => t.id !== id)];
       });
