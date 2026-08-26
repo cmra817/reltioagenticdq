@@ -93,21 +93,29 @@ export function InvestigationThread({
   question: string;
   threadId?: string;
 }) {
-  const [turn, setTurn] = useState(1);
+  const { saveMessages, getThread } = useChatThreads();
+  // Hydrate once from the saved thread so reopening restores the script turn and follow-ups.
+  const saved = useRef(threadId ? getThread(threadId) : undefined).current;
+  const savedMessages = saved?.messages ?? [];
+  const scriptedIds = new Set(["inv-u1", "inv-a1", "inv-u2", "inv-a2"]);
+
+  const [turn, setTurn] = useState(() =>
+    savedMessages.some((m) => m.id === "inv-a2") ? 2 : 1,
+  );
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement | null>(null);
-  const { saveMessages } = useChatThreads();
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
 
   const { messages, sendMessage, status, stop } = useChat({
     id: threadId ?? "investigation-consistency",
-    messages: [],
+    messages: savedMessages.filter((m) => !scriptedIds.has(m.id)),
     transport,
     onError: (error) => {
       toast.error(error.message || "The assistant could not respond. Please try again.");
     },
   });
   const busy = status === "submitted" || status === "streaming";
+
 
   useEffect(() => {
     if (turn > 1 || messages.length > 0)
@@ -119,7 +127,11 @@ export function InvestigationThread({
   persistRef.current = saveMessages;
   useEffect(() => {
     if (!threadId) return;
-    persistRef.current(threadId, [...scriptedTranscript(question, turn), ...messages]);
+    persistRef.current(
+      threadId,
+      [...scriptedTranscript(question, turn), ...messages],
+      "investigation",
+    );
   }, [threadId, question, turn, messages]);
 
   function submit(text: string) {
