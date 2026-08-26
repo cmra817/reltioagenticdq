@@ -1,5 +1,5 @@
-import { useChat, type ChatStatus } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, type UIMessage, type ChatStatus } from "ai";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { toast } from "sonner";
 
