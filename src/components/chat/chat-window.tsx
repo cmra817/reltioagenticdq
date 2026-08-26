@@ -28,6 +28,7 @@ export function ChatWindow({
   emptySubtitle = "Ask about profiling results, anomalies, DQ checks, or schedules.",
   compact = false,
   autoSendText,
+  renderPrompt,
 }: {
   chatId: string;
   initialMessages: UIMessage[];
@@ -41,6 +42,16 @@ export function ChatWindow({
   emptySubtitle?: string;
   compact?: boolean;
   autoSendText?: string;
+  /** Optional custom prompt renderer; receives the same controls used by the default composer. */
+  renderPrompt?: (controls: {
+    input: string;
+    setInput: (value: string) => void;
+    submit: (text: string) => void;
+    status: ChatStatus;
+    busy: boolean;
+    stop: () => void;
+    textareaRef: RefObject<HTMLTextAreaElement | null>;
+  }) => ReactNode;
 }) {
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
   const [input, setInput] = useState("");
