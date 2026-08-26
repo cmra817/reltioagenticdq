@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { WAREHOUSES } from "./mock-warehouses";
 import { checkLogic, generateChecks, type Check } from "./mock-checks";
 import { RuleModal } from "@/components/dq-checks/RuleModal";
-import { MOCK_RULES, creatorLabel, type Creator, type Rule } from "@/components/dq-checks/mock-rules";
+import { MOCK_RULES, type Rule } from "@/components/dq-checks/mock-rules";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type AssetEntry = {
