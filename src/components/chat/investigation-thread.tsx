@@ -1,8 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, type UIMessage } from "ai";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
-import { Message, MessageContent } from "@/components/ai-elements/message";
+import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import { Shimmer } from "@/components/ai-elements/shimmer";
+import { ChatPromptBox } from "@/components/chat/chat-prompt-box";
+import { useChatThreads } from "@/components/chat/chat-context";
 import {
   Conversation,
   ConversationContent,
@@ -15,6 +21,27 @@ import {
 } from "@/components/chat/chat-chart-card";
 
 const ADVANCE_CHIP = "What's going on with dim_customer?";
+
+const TURN_1_REPLY =
+  "Consistency dropped from 51.2% to 48% over the last month — the sharpest decline of any dimension. dim_customer accounts for ~62% of consistency check failures over the last 30 days.";
+
+const TURN_2_REPLY =
+  "On dim_customer, one rule drives almost all of it. The drop lines up with a schema sync on Aug 14 — customer_region started allowing a new value (\"APAC-2\") that isn't in the reference list the Country Code ISO List rule checks against. That rule accounts for roughly 9 of every 10 consistency failures on this table since the 14th.";
+
+/** Plain-text mirror of the scripted turns so the thread reopens from Recent chats. */
+function scriptedTranscript(question: string, turn: number): UIMessage[] {
+  const messages: UIMessage[] = [
+    { id: "inv-u1", role: "user", parts: [{ type: "text", text: question }] },
+    { id: "inv-a1", role: "assistant", parts: [{ type: "text", text: TURN_1_REPLY }] },
+  ];
+  if (turn >= 2) {
+    messages.push(
+      { id: "inv-u2", role: "user", parts: [{ type: "text", text: ADVANCE_CHIP }] },
+      { id: "inv-a2", role: "assistant", parts: [{ type: "text", text: TURN_2_REPLY }] },
+    );
+  }
+  return messages;
+}
 
 function UserBubble({ text }: { text: string }) {
   return (
@@ -59,13 +86,48 @@ function Chip({
 }
 
 /** Scripted "explore → investigate" thread for a consistency drop question. */
-export function InvestigationThread({ question }: { question: string }) {
+export function InvestigationThread({
+  question,
+  threadId,
+}: {
+  question: string;
+  threadId?: string;
+}) {
   const [turn, setTurn] = useState(1);
+  const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement | null>(null);
+  const { saveMessages } = useChatThreads();
+  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+
+  const { messages, sendMessage, status, stop } = useChat({
+    id: threadId ?? "investigation-consistency",
+    messages: [],
+    transport,
+    onError: (error) => {
+      toast.error(error.message || "The assistant could not respond. Please try again.");
+    },
+  });
+  const busy = status === "submitted" || status === "streaming";
 
   useEffect(() => {
-    if (turn > 1) endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [turn]);
+    if (turn > 1 || messages.length > 0)
+      endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [turn, messages.length]);
+
+  // Keep the saved thread in sync so it reopens from Recent chats.
+  const persistRef = useRef(saveMessages);
+  persistRef.current = saveMessages;
+  useEffect(() => {
+    if (!threadId) return;
+    persistRef.current(threadId, [...scriptedTranscript(question, turn), ...messages]);
+  }, [threadId, question, turn, messages]);
+
+  function submit(text: string) {
+    const value = text.trim();
+    if (!value || busy) return;
+    setInput("");
+    void sendMessage({ text: value });
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -162,10 +224,42 @@ export function InvestigationThread({ question }: { question: string }) {
               </div>
             </>
           )}
+          {messages.map((message) => {
+            const text = message.parts
+              .map((p) => (p.type === "text" ? p.text : ""))
+              .join("")
+              .trim();
+            if (!text) return null;
+            return message.role === "user" ? (
+              <UserBubble key={message.id} text={text} />
+            ) : (
+              <AgentBubble key={message.id}>
+                <MessageResponse className="text-[14px]">{text}</MessageResponse>
+              </AgentBubble>
+            );
+          })}
+
+          {status === "submitted" && (
+            <div className="px-1 py-2">
+              <Shimmer className="text-[13px]">Thinking…</Shimmer>
+            </div>
+          )}
+
           <div ref={endRef} />
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
+
+      <div className="shrink-0">
+        <ChatPromptBox
+          input={input}
+          setInput={setInput}
+          submit={submit}
+          status={status}
+          busy={busy}
+          stop={stop}
+        />
+      </div>
     </div>
   );
 }
