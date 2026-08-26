@@ -1,6 +1,6 @@
 import { ArrowUp } from "lucide-react";
 import { useRef, type FormEvent, type RefObject, type KeyboardEvent } from "react";
-import type { ChatStatus } from "@ai-sdk/react";
+import type { ChatStatus } from "ai";
 
 interface ChatPromptBoxProps {
   input: string;
