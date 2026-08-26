@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowUp } from "lucide-react";
-import { newChatId, useChatThreads } from "./chat-context";
+import { newChatId, titleFromText, useChatThreads } from "./chat-context";
 
 /** Docked prompt box shown at the bottom of every main page. */
 export function DockComposer() {
