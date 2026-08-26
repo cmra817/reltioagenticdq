@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ChatWindow } from "@/components/chat/chat-window";
+import { ChatPromptBox } from "@/components/chat/chat-prompt-box";
 import { useChatThreads } from "@/components/chat/chat-context";
 
 type ChatSearch = { q?: string };
