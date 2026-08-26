@@ -1,6 +1,6 @@
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { DefaultChatTransport, type UIMessage, type ChatStatus } from "ai";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { toast } from "sonner";
 
 import {
@@ -28,6 +28,8 @@ export function ChatWindow({
   emptySubtitle = "Ask about profiling results, anomalies, DQ checks, or schedules.",
   compact = false,
   autoSendText,
+  renderPrompt,
+  hidePrompt,
 }: {
   chatId: string;
   initialMessages: UIMessage[];
@@ -41,6 +43,18 @@ export function ChatWindow({
   emptySubtitle?: string;
   compact?: boolean;
   autoSendText?: string;
+  /** Optional custom prompt renderer; receives the same controls used by the default composer. */
+  renderPrompt?: (controls: {
+    input: string;
+    setInput: (value: string) => void;
+    submit: (text: string) => void;
+    status: ChatStatus;
+    busy: boolean;
+    stop: () => void;
+    textareaRef: RefObject<HTMLTextAreaElement | null>;
+  }) => ReactNode;
+  /** When true, the default prompt footer is not rendered (use with renderPrompt or an external composer). */
+  hidePrompt?: boolean;
 }) {
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
   const [input, setInput] = useState("");
@@ -217,26 +231,32 @@ export function ChatWindow({
         <ConversationScrollButton />
       </Conversation>
 
-      <div className={compact ? "p-3" : "px-6 py-4"}>
-        <div className={compact ? "" : "mx-auto w-full max-w-3xl"}>
-          <PromptInput
-            onSubmit={(_message, event) => {
-              event.preventDefault();
-              submit(input);
-            }}
-          >
-            <PromptInputTextarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about your data…"
-            />
-            <PromptInputFooter className="justify-end">
-              <PromptInputSubmit status={status} disabled={!input.trim() && !busy} onStop={stop} />
-            </PromptInputFooter>
-          </PromptInput>
+      {renderPrompt && (
+        <div className="shrink-0">{renderPrompt({ input, setInput, submit, status, busy, stop, textareaRef })}</div>
+      )}
+
+      {!hidePrompt && !renderPrompt && (
+        <div className={compact ? "p-3" : "px-6 py-4"}>
+          <div className={compact ? "" : "mx-auto w-full max-w-3xl"}>
+            <PromptInput
+              onSubmit={(_message, event) => {
+                event.preventDefault();
+                submit(input);
+              }}
+            >
+              <PromptInputTextarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about your data…"
+              />
+              <PromptInputFooter className="justify-end">
+                <PromptInputSubmit status={status} disabled={!input.trim() && !busy} onStop={stop} />
+              </PromptInputFooter>
+            </PromptInput>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

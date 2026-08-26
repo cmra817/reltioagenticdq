@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AppShell } from "@/components/app-shell";
 import { ChatWindow } from "@/components/chat/chat-window";
+import { ChatPromptBox } from "@/components/chat/chat-prompt-box";
 import { useChatThreads } from "@/components/chat/chat-context";
 
 type ChatSearch = { q?: string };
@@ -59,7 +60,7 @@ function ChatBody() {
   }, [q, chatId, navigate]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="relative flex h-full min-h-0 flex-col pb-[164px]">
       <ChatWindow
         key={chatId}
         chatId={chatId}
@@ -71,6 +72,7 @@ function ChatBody() {
           "Explain the fill-rate drop on customers.email",
           "Recommend DQ checks for a new orders table",
         ]}
+        renderPrompt={(controls) => <ChatPromptBox {...controls} />}
       />
     </div>
   );
