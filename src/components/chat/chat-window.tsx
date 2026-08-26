@@ -29,6 +29,7 @@ export function ChatWindow({
   compact = false,
   autoSendText,
   renderPrompt,
+  hidePrompt,
 }: {
   chatId: string;
   initialMessages: UIMessage[];
@@ -52,6 +53,8 @@ export function ChatWindow({
     stop: () => void;
     textareaRef: RefObject<HTMLTextAreaElement | null>;
   }) => ReactNode;
+  /** When true, the default prompt footer is not rendered (use with renderPrompt or an external composer). */
+  hidePrompt?: boolean;
 }) {
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
   const [input, setInput] = useState("");
