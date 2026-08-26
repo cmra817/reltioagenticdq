@@ -148,53 +148,228 @@ export const MOCK_RULES: Rule[] = [
   },
 ];
 
-const SUGGESTION_MAP: { keywords: string[]; dimension: Dimension; expectation: string; pattern: string }[] = [
-  {
-    keywords: ["email"],
-    dimension: "Validity",
-    expectation: "expect_column_values_to_match_regex",
-    pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
-  },
-  {
-    keywords: ["phone"],
-    dimension: "Validity",
-    expectation: "expect_column_values_to_match_regex",
-    pattern: "^\\+?1?[-. ]?\\(?\\d{3}\\)?[-. ]?\\d{3}[-. ]?\\d{4}$",
-  },
-  {
-    keywords: ["null", "missing", "required", "complete"],
-    dimension: "Completeness",
-    expectation: "expect_column_values_to_not_be_null",
-    pattern: "not_null",
-  },
-  {
-    keywords: ["unique", "duplicate", "dedupe"],
-    dimension: "Uniqueness",
-    expectation: "expect_column_values_to_be_unique",
-    pattern: "unique",
-  },
-  {
-    keywords: ["between", "range", "min", "max", "greater", "less"],
-    dimension: "Format and range",
-    expectation: "expect_column_values_to_be_between",
-    pattern: "min=0, max=100",
-  },
-  {
-    keywords: ["exists", "reference", "foreign", "lookup"],
-    dimension: "Referential integrity",
-    expectation: "expect_column_values_to_be_in_set",
-    pattern: "in_set(reference_table.key)",
-  },
+export type Suggestion = {
+  dimension: Dimension;
+  expectation: string;
+  pattern: string;
+  threshold: number;
+  name: string;
+  column?: string;
+};
+
+const KNOWN_COLUMNS = [
+  "phone_number",
+  "phone",
+  "email",
+  "email_address",
+  "ssn",
+  "customer_id",
+  "order_id",
+  "user_id",
+  "created_at",
+  "updated_at",
+  "country",
+  "country_code",
+  "zip",
+  "postal_code",
+  "credit_score",
+  "order_total",
+  "amount",
+  "state",
+  "city",
+  "first_name",
+  "last_name",
 ];
 
-export function suggestFromDescription(text: string) {
+/** Best-effort column extraction from a natural-language rule description. */
+function extractColumn(text: string): string | undefined {
   const lower = text.toLowerCase();
-  const hit = SUGGESTION_MAP.find((s) => s.keywords.some((k) => lower.includes(k)));
-  return (
-    hit ?? {
-      dimension: "Validity" as Dimension,
-      expectation: "expect_column_values_to_match_regex",
-      pattern: "^.+$",
-    }
-  );
+
+  // Explicit: `column_name column`, "column X", quoted or backticked names.
+  const quoted = text.match(/[`"']([A-Za-z_][A-Za-z0-9_]*)[`"']/);
+  if (quoted) return quoted[1].toLowerCase();
+
+  const labeled = lower.match(/(?:column|field|attribute)\s+([a-z_][a-z0-9_]*)/);
+  if (labeled) return labeled[1];
+
+  const trailing = lower.match(/([a-z_][a-z0-9_]*)\s+(?:column|field|attribute)/);
+  if (trailing) return trailing[1];
+
+  // Snake_case token anywhere is almost certainly a column.
+  const snake = lower.match(/\b([a-z]+(?:_[a-z0-9]+)+)\b/);
+  if (snake) return snake[1];
+
+  // Known column words, including two-word forms ("phone number").
+  const normalized = lower.replace(/[^a-z0-9]+/g, "_");
+  const hit = KNOWN_COLUMNS.find((c) => normalized.includes(c));
+  return hit;
 }
+
+function titleize(column?: string) {
+  if (!column) return "";
+  return column
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+/**
+ * Intent-first suggestion: the *constraint* (not null, unique, range…) wins over
+ * the column's data type, so "make sure phone_number is not null" becomes a
+ * completeness rule instead of a phone regex.
+ */
+export function suggestFromDescription(text: string): Suggestion {
+  const lower = ` ${text.toLowerCase()} `;
+  const column = extractColumn(text);
+  const label = titleize(column);
+  const subject = label || "Column";
+  const has = (...words: string[]) => words.some((w) => lower.includes(w));
+
+  // 1) Completeness — highest priority intent.
+  if (
+    has("not null", "non-null", "not be null", "isn't null", "is not empty", "no nulls", "never null", "required", "must be present", "must have", "missing", "complete")
+  ) {
+    return {
+      dimension: "Completeness",
+      expectation: "expect_column_values_to_not_be_null",
+      pattern: "not_null",
+      threshold: 0,
+      name: `${subject} Completeness Check`,
+      column,
+    };
+  }
+
+  // 2) Uniqueness.
+  if (has("unique", "no duplicate", "duplicates", "dedupe", "distinct", "primary key")) {
+    return {
+      dimension: "Uniqueness",
+      expectation: "expect_column_values_to_be_unique",
+      pattern: "unique",
+      threshold: 0,
+      name: `${subject} Uniqueness Check`,
+      column,
+    };
+  }
+
+  // 3) Referential integrity.
+  if (has("must exist", "exists in", "reference", "referential", "foreign key", "lookup", "in the set", "one of")) {
+    return {
+      dimension: "Referential integrity",
+      expectation: "expect_column_values_to_be_in_set",
+      pattern: `in_set(reference_table.${column ?? "key"})`,
+      threshold: 0,
+      name: `${subject} Referential Check`,
+      column,
+    };
+  }
+
+  // 4) Range / numeric bounds — pull explicit numbers when present.
+  if (has("between", "range", "greater", "less", "at least", "at most", "minimum", "maximum", " min ", " max ", "non-negative", "not negative", "positive")) {
+    const nums = (text.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+    const pattern =
+      nums.length >= 2
+        ? `min=${Math.min(...nums)}, max=${Math.max(...nums)}`
+        : nums.length === 1
+        ? has("less", "at most", "maximum", " max ")
+          ? `max=${nums[0]}`
+          : `min=${nums[0]}`
+        : "min=0";
+    return {
+      dimension: "Format and range",
+      expectation: "expect_column_values_to_be_between",
+      pattern,
+      threshold: 1,
+      name: `${subject} Range Check`,
+      column,
+    };
+  }
+
+  // 5) Consistency between two columns.
+  if (has("after", "before", "greater than created", "consistent", "match the", "same as")) {
+    return {
+      dimension: "Consistency",
+      expectation: "expect_column_pair_values_a_to_be_greater_than_b",
+      pattern: "updated_at >= created_at",
+      threshold: 1,
+      name: `${subject} Consistency Check`,
+      column,
+    };
+  }
+
+  // 6) Format/validity — pick the pattern from the column's data type.
+  const formats: { keywords: string[]; pattern: string; dimension: Dimension; label: string }[] = [
+    {
+      keywords: ["email"],
+      pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+      dimension: "Validity",
+      label: "Email Format",
+    },
+    {
+      keywords: ["phone"],
+      pattern: "^\\+?1?[-. ]?\\(?\\d{3}\\)?[-. ]?\\d{3}[-. ]?\\d{4}$",
+      dimension: "Validity",
+      label: "Phone Format",
+    },
+    {
+      keywords: ["ssn", "social security"],
+      pattern: "^\\d{3}-\\d{2}-\\d{4}$",
+      dimension: "Format and range",
+      label: "SSN Format",
+    },
+    {
+      keywords: ["zip", "postal"],
+      pattern: "^\\d{5}(-\\d{4})?$",
+      dimension: "Format and range",
+      label: "Postal Code Format",
+    },
+    {
+      keywords: ["url", "website", "link"],
+      pattern: "^https?://[^\\s]+$",
+      dimension: "Validity",
+      label: "URL Format",
+    },
+    {
+      keywords: ["uuid", "guid"],
+      pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      dimension: "Validity",
+      label: "UUID Format",
+    },
+    {
+      keywords: ["date", "timestamp"],
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+      dimension: "Format and range",
+      label: "Date Format",
+    },
+    {
+      keywords: ["country"],
+      pattern: "in_set(ISO_3166_1_ALPHA_2)",
+      dimension: "Validity",
+      label: "Country Code",
+    },
+  ];
+
+  const fmt = formats.find((f) => f.keywords.some((k) => lower.includes(k)));
+  if (fmt) {
+    return {
+      dimension: fmt.dimension,
+      expectation:
+        fmt.pattern.startsWith("in_set")
+          ? "expect_column_values_to_be_in_set"
+          : "expect_column_values_to_match_regex",
+      pattern: fmt.pattern,
+      threshold: 5,
+      name: `${fmt.label} Validation`,
+      column,
+    };
+  }
+
+  return {
+    dimension: "Validity",
+    expectation: "expect_column_values_to_match_regex",
+    pattern: "^.+$",
+    threshold: 5,
+    name: subject === "Column" ? "Custom Validity Rule" : `${subject} Validity Check`,
+    column,
+  };
+}
+
