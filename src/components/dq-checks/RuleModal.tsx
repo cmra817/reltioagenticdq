@@ -105,12 +105,31 @@ export function RuleModal({
   }, [dimension, pattern, threshold]);
 
   function generatePattern() {
+    if (!description.trim()) {
+      toast.error("Describe the rule first");
+      return;
+    }
     const s = suggestFromDescription(description);
     setPattern(s.pattern);
     setExpectation(s.expectation);
+    setThreshold(s.threshold);
     if (dimensionSuggested) setDimension(s.dimension);
-    toast.success("Pattern generated from description");
+    if (!name.trim()) setName(s.name);
+    if (s.column) {
+      const match = searchColumns(s.column)[0];
+      if (match) {
+        setSampleMode("column");
+        setSelectedColumn(match);
+        setColumnQuery(s.column);
+      }
+    }
+    toast.success(
+      s.column
+        ? `Generated a ${s.dimension.toLowerCase()} rule for ${s.column}`
+        : `Generated a ${s.dimension.toLowerCase()} rule`,
+    );
   }
+
 
   function runTest() {
     const values =
