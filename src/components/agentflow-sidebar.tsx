@@ -228,19 +228,36 @@ function RecentChats() {
         Recent chats
       </div>
       <ul className="max-h-48 overflow-y-auto">
-        {threads.slice(0, 8).map((t) => (
-          <li key={t.id}>
-            <Link
-              to="/chat/$chatId"
-              params={{ chatId: t.id }}
-              className="block truncate rounded-lg px-3 py-1.5 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
-              style={{ color: "var(--ink-700)" }}
-              title={t.title}
-            >
-              {t.title}
-            </Link>
-          </li>
-        ))}
+        {threads.slice(0, 8).map((t) => {
+          const className =
+            "block truncate rounded-lg px-3 py-1.5 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]";
+          const style = { color: "var(--ink-700)" };
+          return (
+            <li key={t.id}>
+              {t.kind === "investigation" ? (
+                <Link
+                  to="/investigate/consistency"
+                  search={{ q: t.title, thread: t.id }}
+                  className={className}
+                  style={style}
+                  title={t.title}
+                >
+                  {t.title}
+                </Link>
+              ) : (
+                <Link
+                  to="/chat/$chatId"
+                  params={{ chatId: t.id }}
+                  className={className}
+                  style={style}
+                  title={t.title}
+                >
+                  {t.title}
+                </Link>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
