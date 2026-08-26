@@ -278,7 +278,20 @@ export function AddDatasetModal({
           }
         />
       )}
-      {step === 1 && <WizardChatPanel context="checks" />}
+      {step === 1 && (
+        <WizardChatPanel
+          context="checks"
+          assetSummary={Array.from(selected).map((key) => {
+            const name = tableNameFromKey(key);
+            return {
+              key,
+              name,
+              count: checked[key]?.size ?? generateChecks(name).length,
+            };
+          })}
+          onAddCheck={addCustomCheck}
+        />
+      )}
       {step === 2 && <WizardChatPanel context="schedule" />}
     </div>
   );
