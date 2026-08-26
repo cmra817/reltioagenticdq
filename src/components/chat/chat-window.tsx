@@ -231,29 +231,29 @@ export function ChatWindow({
         <ConversationScrollButton />
       </Conversation>
 
-      {!hidePrompt && (
+      {renderPrompt && (
+        <div className="shrink-0">{renderPrompt({ input, setInput, submit, status, busy, stop, textareaRef })}</div>
+      )}
+
+      {!hidePrompt && !renderPrompt && (
         <div className={compact ? "p-3" : "px-6 py-4"}>
           <div className={compact ? "" : "mx-auto w-full max-w-3xl"}>
-            {renderPrompt ? (
-              renderPrompt({ input, setInput, submit, status, busy, stop, textareaRef })
-            ) : (
-              <PromptInput
-                onSubmit={(_message, event) => {
-                  event.preventDefault();
-                  submit(input);
-                }}
-              >
-                <PromptInputTextarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about your data…"
-                />
-                <PromptInputFooter className="justify-end">
-                  <PromptInputSubmit status={status} disabled={!input.trim() && !busy} onStop={stop} />
-                </PromptInputFooter>
-              </PromptInput>
-            )}
+            <PromptInput
+              onSubmit={(_message, event) => {
+                event.preventDefault();
+                submit(input);
+              }}
+            >
+              <PromptInputTextarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about your data…"
+              />
+              <PromptInputFooter className="justify-end">
+                <PromptInputSubmit status={status} disabled={!input.trim() && !busy} onStop={stop} />
+              </PromptInputFooter>
+            </PromptInput>
           </div>
         </div>
       )}
