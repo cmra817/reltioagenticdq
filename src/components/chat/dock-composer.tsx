@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowUp } from "lucide-react";
-import { newChatId, useChatThreads } from "./chat-context";
+import { newChatId, titleFromText, useChatThreads } from "./chat-context";
 
 /** Docked prompt box shown at the bottom of every main page. */
 export function DockComposer() {
@@ -12,10 +12,15 @@ export function DockComposer() {
   function start() {
     const text = value.trim();
     if (!text) return;
-    // Consistency questions open the scripted investigation thread.
+    // Consistency questions open the scripted investigation thread — saved like any chat.
     if (/consisten/i.test(text)) {
+      const investigationId = newChatId();
+      createThread({ id: investigationId, title: titleFromText(text), kind: "investigation" });
       setValue("");
-      void navigate({ to: "/investigate/consistency", search: { q: text } });
+      void navigate({
+        to: "/investigate/consistency",
+        search: { q: text, thread: investigationId },
+      });
       return;
     }
     const id = newChatId();

@@ -60,7 +60,7 @@ function ChatBody() {
   }, [q, chatId, navigate]);
 
   return (
-    <div className="relative flex h-full min-h-0 flex-col pb-[164px]">
+    <div className="flex h-full min-h-0 flex-col">
       <ChatWindow
         key={chatId}
         chatId={chatId}

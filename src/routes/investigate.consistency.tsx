@@ -3,11 +3,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { InvestigationThread } from "@/components/chat/investigation-thread";
 
-type InvestigateSearch = { q?: string };
+type InvestigateSearch = { q?: string; thread?: string };
 
 export const Route = createFileRoute("/investigate/consistency")({
   validateSearch: (search: Record<string, unknown>): InvestigateSearch => ({
     q: typeof search.q === "string" ? search.q : undefined,
+    thread: typeof search.thread === "string" ? search.thread : undefined,
   }),
   head: () => ({
     meta: [
@@ -31,10 +32,13 @@ export const Route = createFileRoute("/investigate/consistency")({
 });
 
 function InvestigatePage() {
-  const { q } = Route.useSearch();
+  const { q, thread } = Route.useSearch();
   return (
     <AppShell activeNav="data-health" hideDock>
-      <InvestigationThread question={q?.trim() || "Why did consistency drop this month?"} />
+      <InvestigationThread
+        question={q?.trim() || "Why did consistency drop this month?"}
+        threadId={thread}
+      />
     </AppShell>
   );
 }
