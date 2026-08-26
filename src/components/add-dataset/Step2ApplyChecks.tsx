@@ -423,18 +423,6 @@ export function Step2ApplyChecks({
             </div>
           </div>
 
-          {/* Column headers */}
-          <div
-            className="grid grid-cols-[minmax(260px,2fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_48px] gap-4 border-b px-6 py-3 text-[11px] font-medium uppercase tracking-wide"
-            style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
-          >
-            <div>Name</div>
-            <div>Dimension</div>
-            <div>Creator</div>
-            <div>Field applied</div>
-            <div className="sr-only">Remove</div>
-          </div>
-
           {/* Rows */}
           <div>
             {visibleChecks.length === 0 ? (
@@ -443,62 +431,26 @@ export function Step2ApplyChecks({
               </div>
             ) : (
               visibleChecks.map((check) => {
-                const creator = check.creator ?? { kind: "reltio" } as Creator;
+                const rowKey = `${active.key}::${check.id}`;
                 return (
-                  <div
+                  <CheckRow
                     key={check.id}
-                    className="grid grid-cols-[minmax(260px,2fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_48px] items-center gap-4 border-b px-6 py-4 transition-colors hover:bg-[color:var(--surface-soft)]"
-                    style={{ borderColor: "var(--hairline)" }}
-                  >
-                    <div className="min-w-0">
-                      <div
-                        className="truncate text-[13px] font-medium"
-                        style={{ color: "var(--ink-900)" }}
-                      >
-                        {check.rule}
-                      </div>
-                      {check.description && (
-                        <div
-                          className="mt-0.5 line-clamp-1 text-[12px]"
-                          style={{ color: "var(--ink-500)" }}
-                        >
-                          {check.description}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <DimensionBadge label={check.dimension} size="sm" />
-                    </div>
-                    <div>
-                      <CreatorBadge creator={creator} />
-                    </div>
-                    <div
-                      className="font-mono text-[12px]"
-                      style={{ color: "var(--ink-700)" }}
-                    >
-                      {check.field}
-                    </div>
-                    <div className="flex justify-end">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            onClick={() => onToggleCheck(active.key, check.id)}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-[color:var(--surface-soft)]"
-                            style={{ color: "var(--ink-500)" }}
-                            aria-label="Remove check"
-                          >
-                            <X size={14} />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">remove</TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </div>
+                    check={check}
+                    expanded={expandedKey === rowKey}
+                    threshold={thresholds[rowKey] ?? checkLogic(check).threshold}
+                    onToggleExpand={() =>
+                      setExpandedKey((prev) => (prev === rowKey ? null : rowKey))
+                    }
+                    onThresholdChange={(value) =>
+                      setThresholds((prev) => ({ ...prev, [rowKey]: value }))
+                    }
+                    onRemove={() => onToggleCheck(active.key, check.id)}
+                  />
                 );
               })
             )}
           </div>
+
         </div>
 
         <RuleModal
