@@ -264,27 +264,58 @@ export const MOCK_INCIDENTS: Incident[] = [
 ];
 
 /** Mock keyword-based interpretation of a natural-language widget description. */
-export function interpretDescription(text: string): {
+export type Interpretation = {
   measure: string;
   scope: string;
   timeframe: string;
   chartType: ChartType;
-} {
+  /** warehouse the request is scoped to, when named */
+  source?: string;
+  /** what the non-time axis breaks down by */
+  breakdown: "time" | "table" | "domain" | "dimension" | "warehouse";
+  /** percentage measures render 0-100, counts render raw */
+  unit: "percent" | "count";
+};
+
+const WAREHOUSES = ["snowflake", "databricks", "bigquery", "redshift"] as const;
+
+const TABLES_BY_SOURCE: Record<string, string[]> = {
+  Databricks: ["dim_customer", "fact_orders", "dim_product", "fact_shipments", "dim_geo"],
+  Snowflake: ["customer_master", "orders", "invoices", "contacts", "accounts"],
+  BigQuery: ["events_daily", "sessions", "ad_spend", "conversions"],
+  Redshift: ["billing_events", "usage_daily", "subscriptions"],
+  default: ["analytics.customer_master", "sales.orders", "finance.invoices", "crm.contacts"],
+};
+
+const DOMAINS = ["Customer", "Finance", "Sales", "Marketing", "Product"];
+const DIMENSIONS = ["Completeness", "Uniqueness", "Validity", "Accuracy", "Consistency", "Timeliness"];
+
+export function interpretDescription(text: string): Interpretation {
   const t = text.toLowerCase();
 
   let measure = "checks passing %";
+  let unit: Interpretation["unit"] = "percent";
   if (t.includes("complete")) measure = "completeness %";
   else if (t.includes("unique") || t.includes("duplicate")) measure = "uniqueness %";
-  else if (t.includes("incident")) measure = "open incidents";
-  else if (t.includes("fail")) measure = "failed checks";
-  else if (t.includes("fresh") || t.includes("sla")) measure = "freshness SLA breaches";
-  else if (t.includes("row")) measure = "rows profiled";
+  else if (t.includes("valid")) measure = "validity %";
+  else if (t.includes("accur")) measure = "accuracy %";
+  else if (t.includes("consisten")) measure = "consistency %";
+  else if (t.includes("incident")) { measure = "open incidents"; unit = "count"; }
+  else if (t.includes("fail")) { measure = "failed checks"; unit = "count"; }
+  else if (t.includes("fresh") || t.includes("sla")) { measure = "freshness SLA breaches"; unit = "count"; }
+  else if (t.includes("row")) { measure = "rows profiled"; unit = "count"; }
+
+  // warehouse / source
+  let source: string | undefined;
+  for (const w of WAREHOUSES) {
+    if (t.includes(w)) source = w === "bigquery" ? "BigQuery" : w[0].toUpperCase() + w.slice(1);
+  }
 
   let scope = "All domains";
   for (const d of ["customer", "finance", "sales", "marketing", "product", "supply chain"]) {
     if (t.includes(d)) scope = `${d.replace(/\b\w/g, (c) => c.toUpperCase())} domain`;
   }
-  if (t.includes("source") || t.includes("warehouse")) scope = "By warehouse";
+  if (source) scope = t.includes("table") ? `${source} tables` : source;
 
   let timeframe = "30 days";
   const m = t.match(/(\d+)\s*(day|week|month)/);
@@ -292,14 +323,104 @@ export function interpretDescription(text: string): {
   else if (t.includes("today")) timeframe = "today";
   else if (t.includes("quarter")) timeframe = "90 days";
 
-  let chartType: ChartType = "line";
-  if (t.includes("trend") || t.includes("over time")) chartType = "line";
-  else if (t.includes("by ") || t.includes("compare") || t.includes("breakdown")) chartType = "bar";
-  else if (t.includes("top ") || t.includes("list") || t.includes("table")) chartType = "table";
-  else if (timeframe === "today" || t.includes("count") || t.includes("total")) chartType = "number";
+  const wantsTrend = t.includes("trend") || t.includes("over time") || t.includes("history");
+  const wantsBreakdown =
+    t.includes("per ") || t.includes("by ") || t.includes("breakdown") || t.includes("compare") || t.includes("each");
 
-  return { measure, scope, timeframe, chartType };
+  let chartType: ChartType = "line";
+  if (wantsTrend && !wantsBreakdown) chartType = "line";
+  else if (wantsBreakdown) chartType = "bar";
+  else if (t.includes("top ") || t.includes("list") || t.includes("ranking")) chartType = "table";
+  else if (timeframe === "today" || t.includes("count") || t.includes("total")) chartType = "number";
+  else if (wantsTrend) chartType = "line";
+
+  // what the categorical axis represents, if the chart is categorical
+  let breakdown: Interpretation["breakdown"] = "time";
+  if (t.includes("dimension")) breakdown = "dimension";
+  else if (t.includes("domain")) breakdown = "domain";
+  else if (t.includes("source") || t.includes("warehouse") || t.includes("connection")) breakdown = "warehouse";
+  else if (t.includes("table") || source) breakdown = "table";
+
+  return { measure, scope, timeframe, chartType, source, breakdown, unit };
 }
+
+function pseudoRandom(seed: string) {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967295;
+  };
+}
+
+function categoriesFor(i: Interpretation): string[] {
+  if (i.breakdown === "dimension") return DIMENSIONS;
+  if (i.breakdown === "domain") return DOMAINS;
+  if (i.breakdown === "warehouse") return ["Snowflake", "Databricks", "BigQuery", "Redshift"];
+  return TABLES_BY_SOURCE[i.source ?? "default"] ?? TABLES_BY_SOURCE.default;
+}
+
+function timeBuckets(timeframe: string): string[] {
+  if (timeframe === "today") return ["9a", "11a", "1p", "3p", "5p"];
+  if (timeframe.startsWith("7")) return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  if (timeframe.startsWith("90")) return ["M1", "M2", "M3"];
+  return ["W1", "W2", "W3", "W4", "W5", "W6"];
+}
+
+/** Builds chart data that actually matches the interpreted request. */
+export function dataForInterpretation(i: Interpretation, chartType: ChartType) {
+  const rand = pseudoRandom(`${i.measure}|${i.scope}|${i.breakdown}`);
+  const percent = i.unit === "percent";
+
+  if (chartType === "line") {
+    const segments = timeBuckets(i.timeframe);
+    const base = percent ? 82 + rand() * 8 : 12 + rand() * 14;
+    const data = segments.map((_, idx) =>
+      percent
+        ? Math.round(Math.min(99, base + idx * 0.9 + (rand() - 0.5) * 3) * 10) / 10
+        : Math.max(1, Math.round(base + (rand() - 0.45) * 8)),
+    );
+    return { data, segments };
+  }
+
+  if (chartType === "bar") {
+    const segments = categoriesFor(i);
+    const data = segments.map(() =>
+      percent ? Math.round((72 + rand() * 26) * 10) / 10 : Math.max(1, Math.round(4 + rand() * 30)),
+    );
+    return { data, segments };
+  }
+
+  if (chartType === "table") {
+    const cats = categoriesFor(i);
+    return {
+      data: [],
+      rows: cats.slice(0, 5).map((label) => ({
+        label,
+        value: percent
+          ? `${(72 + rand() * 26).toFixed(1)}%`
+          : `${Math.max(1, Math.round(2 + rand() * 28))}`,
+      })),
+    };
+  }
+
+  if (chartType === "number") {
+    const trend = timeBuckets(i.timeframe).map(() =>
+      percent ? Math.round((80 + rand() * 15) * 10) / 10 : Math.round(10 + rand() * 30),
+    );
+    return {
+      data: trend,
+      value: percent ? `${trend[trend.length - 1]}%` : `${trend[trend.length - 1]}`,
+    };
+  }
+
+  return mockDataFor(chartType);
+}
+
 
 export function mockDataFor(chartType: ChartType) {
   switch (chartType) {
