@@ -3,9 +3,10 @@ import { Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WidgetVisual } from "./WidgetVisual";
 import {
+  dataForInterpretation,
   interpretDescription,
-  mockDataFor,
   type ChartType,
+  type Interpretation,
   type Widget,
 } from "./widget-model";
 
@@ -31,12 +32,7 @@ export function CreateWidgetModal({
   const [description, setDescription] = useState("");
   const [name, setName] = useState("");
   const [chartType, setChartType] = useState<ChartType>("line");
-  const [interpretation, setInterpretation] = useState<{
-    measure: string;
-    scope: string;
-    timeframe: string;
-    chartType: ChartType;
-  } | null>(null);
+  const [interpretation, setInterpretation] = useState<Interpretation | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -49,6 +45,8 @@ export function CreateWidgetModal({
         scope: source.scope,
         timeframe: source.timeframe,
         chartType: source.chartType,
+        breakdown: source.chartType === "line" ? "time" : "table",
+        unit: source.measure.includes("%") ? "percent" : "count",
       });
     } else {
       setDescription("");
@@ -77,7 +75,7 @@ export function CreateWidgetModal({
         scope: interpretation.scope,
         timeframe: interpretation.timeframe,
         drillable: chartType === "bar" || chartType === "line",
-        ...mockDataFor(chartType),
+        ...dataForInterpretation(interpretation, chartType),
 
       }
     : null;
