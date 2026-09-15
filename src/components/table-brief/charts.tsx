@@ -87,6 +87,8 @@ export function LineChart({
   height = 120,
   showLegend = true,
   yLabels,
+  threshold,
+  thresholdLabel,
 }: {
   series: Series[];
   markerIndex?: number;
@@ -94,13 +96,18 @@ export function LineChart({
   height?: number;
   showLegend?: boolean;
   yLabels?: string[];
+  /** Absolute value to draw a dashed horizontal reference line at. */
+  threshold?: number;
+  thresholdLabel?: string;
 }) {
+
   const width = 320;
   const pad = 6;
-  const all = series.flatMap((s) => s.values);
+  const all = series.flatMap((s) => s.values).concat(threshold != null ? [threshold] : []);
   const min = Math.min(...all);
   const max = Math.max(...all);
   const span = max - min || 1;
+
   const len = Math.max(...series.map((s) => s.values.length));
   const xFor = (i: number) => pad + (i * (width - pad * 2)) / Math.max(len - 1, 1);
   const yFor = (v: number) => pad + (height - pad * 2) * (1 - (v - min) / span);
@@ -126,6 +133,18 @@ export function LineChart({
             strokeDasharray="3 3"
           />
         )}
+        {threshold != null && (
+          <line
+            x1={0}
+            x2={width}
+            y1={yFor(threshold)}
+            y2={yFor(threshold)}
+            stroke="var(--ink-300)"
+            strokeWidth={1}
+            strokeDasharray="4 3"
+          />
+        )}
+
         {series.map((s) => (
           <path
             key={s.label}
@@ -152,15 +171,25 @@ export function LineChart({
           );
         })}
       </svg>
-      {markerLabel && (
+      {(markerLabel || thresholdLabel) && (
         <div
-          className="mt-1 text-[11px]"
+          className="mt-1 flex flex-wrap items-center gap-3 text-[11px]"
           style={{ color: "var(--ink-300)" }}
           aria-hidden="true"
         >
-          ↑ {markerLabel}
+          {markerLabel && <span>↑ {markerLabel}</span>}
+          {thresholdLabel && (
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="inline-block h-0 w-4"
+                style={{ borderTop: "1px dashed var(--ink-300)" }}
+              />
+              {thresholdLabel}
+            </span>
+          )}
         </div>
       )}
+
       {showLegend && (
         <div className="mt-2 flex flex-wrap items-center gap-3">
           {series.map((s, i) => (
@@ -178,6 +207,63 @@ export function LineChart({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+export type StackSegment = { label: string; value: number; color: string; tag?: string };
+
+/** Single horizontal stacked bar with a labelled legend below. */
+export function StackedBar({
+  segments,
+  total,
+  height = 12,
+}: {
+  segments: StackSegment[];
+  total?: number;
+  height?: number;
+}) {
+  const sum = (total ?? segments.reduce((a, s) => a + s.value, 0)) || 1;
+  return (
+    <div className="w-full">
+      <div
+        className="flex w-full overflow-hidden rounded-full"
+        style={{ height, background: "var(--surface-soft)" }}
+      >
+        {segments.map((s) => (
+          <div
+            key={s.label}
+            style={{ width: `${(s.value / sum) * 100}%`, background: s.color }}
+            title={`${s.label}: ${s.value}`}
+          />
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+        {segments.map((s) => (
+          <span
+            key={s.label}
+            className="inline-flex items-center gap-1.5 text-[11.5px]"
+            style={{ color: "var(--ink-500)" }}
+          >
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ background: s.color }}
+            />
+            <span className="font-mono" style={{ color: "var(--ink-900)" }}>
+              {s.value.toLocaleString()}
+            </span>
+            {s.label}
+            {s.tag && (
+              <span
+                className="rounded px-1 py-0.5 text-[10px]"
+                style={{ background: "var(--surface-soft)", color: "var(--ink-500)" }}
+              >
+                {s.tag}
+              </span>
+            )}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

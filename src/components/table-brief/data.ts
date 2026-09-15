@@ -32,8 +32,46 @@ export const SIBLING_SERIES = {
   ],
 };
 
+/** Distinct-ID series per sibling table, aligned to SIBLING_SERIES. */
+export const SIBLING_DISTINCT = {
+  customer_data: DISTINCT_SERIES,
+  contact_master: [
+    2902, 2904, 2903, 2905, 2906, 2903, 2900, 2898, 2897, 2895, 2896, 2893,
+    2891, 2892, 2890, 2889, 2891, 2894,
+  ],
+  account_roll: [
+    1832, 1833, 1834, 1834, 1836, 1835, 1836, 1837, 1835, 1836, 1837, 1836,
+    1835, 1837, 1836, 1835, 1837, 1836,
+  ],
+};
+
+/** Count of rows carrying a duplicate customer_id, per point. */
+export const DUPE_COUNT_SERIES = [
+  36, 37, 38, 39, 40, 96, 178, 268, 362, 470, 566, 668, 762, 868, 954, 1040,
+  1128, 1204,
+];
+
+export const DUPE_ALERT_THRESHOLD = 1000;
+
+export const DUPE_BREAKDOWN = [
+  { label: "SFDC re-inserts", value: 900, color: "var(--brand-blue)", tag: "new" },
+  { label: "Test records", value: 300, color: "var(--ink-300)", tag: "months old" },
+  { label: "ID collisions", value: 4, color: "var(--brand-blue-bright)" },
+];
+
+export const SIBLING_CARDS: {
+  name: keyof typeof SIBLING_SERIES;
+  read: string;
+  tag?: string;
+}[] = [
+  { name: "customer_data", read: "rows +6% · distinct flat", tag: "this table" },
+  { name: "contact_master", read: "rows +5.5% · distinct −0.4%", tag: "no uniqueness check" },
+  { name: "account_roll", read: "rows +4% · distinct flat", tag: "no uniqueness check" },
+];
+
 /** Index in the 18-point series where Aug 19 sits. */
 export const AUG19 = 4;
+
 
 export type MetricTile = {
   id: "rows" | "distinct" | "checks" | "dupe";
