@@ -1,19 +1,16 @@
 import * as React from "react";
-import { X, Flag, TriangleAlert, Table2, ListChecks, Activity, Rows3, Grid3x3 } from "lucide-react";
-import { BandSparkline, LineChart } from "./charts";
+import { X, Clock3, Info, TriangleAlert, Table2, ListChecks, Activity, Rows3, Grid3x3 } from "lucide-react";
+import { BandSparkline } from "./charts";
 import {
   ACTIVITY_ROWS,
-  AUG19,
   CHECK_ROWS,
+  CHECKS_SERIES,
   COLUMNS_ROWS,
-  DISTINCT_SERIES,
   DUPE_ROWS,
   EVIDENCE_ITEMS,
-  METRIC_TILES,
   ROWS_SERIES,
   SAMPLE_COLUMNS,
   SAMPLE_ROWS,
-  SIBLING_SERIES,
   type EvidenceId,
 } from "./data";
 
@@ -42,89 +39,113 @@ function SectionTitle({ children, right }: { children: React.ReactNode; right?: 
   );
 }
 
-function MetricTileCard({
-  tile,
+type OverviewActivityItem = {
+  label: string;
+  value: string;
+  stale?: boolean;
+};
+
+const OVERVIEW_ACTIVITY: OverviewActivityItem[] = [
+  { label: "Last profiled", value: "6 hrs ago" },
+  { label: "Checks run", value: "6 hrs ago" },
+  { label: "Last synced", value: "14 hrs ago", stale: true },
+  { label: "Loaded to Reltio", value: "3 days ago" },
+];
+
+type OverviewCard = {
+  id: string;
+  label: string;
+  value: string;
+  detail: string;
+  warning?: boolean;
+  values?: number[];
+  band?: [number, number];
+  evidence: EvidenceId;
+};
+
+const OVERVIEW_CARDS: OverviewCard[] = [
+  {
+    id: "columns",
+    label: "Columns",
+    value: "47",
+    detail: "+2 columns since last run",
+    warning: true,
+    evidence: "profiling",
+  },
+  {
+    id: "rows",
+    label: "Rows",
+    value: "4,897",
+    detail: "+6% · outside normal range",
+    warning: true,
+    values: ROWS_SERIES,
+    band: [0.05, 0.45],
+    evidence: "profiling",
+  },
+  {
+    id: "fill",
+    label: "Fill rate",
+    value: "85%",
+    detail: "+1.2 pts · within range",
+    values: [82.8, 83.2, 83.6, 83.9, 84.1, 84.4, 85],
+    band: [0.05, 0.9],
+    evidence: "profiling",
+  },
+  {
+    id: "checks",
+    label: "Checks passing",
+    value: "20/21",
+    detail: "Decreased 1 from last run",
+    values: CHECKS_SERIES,
+    evidence: "checks",
+  },
+];
+
+function OverviewStatusCard({
+  card,
   onOpen,
 }: {
-  tile: (typeof METRIC_TILES)[number];
+  card: OverviewCard;
   onOpen: (id: EvidenceId) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={() => onOpen(tile.evidence)}
-      className="flex flex-col gap-1.5 rounded-xl p-3 text-left transition-shadow hover:shadow-sm"
-      style={{
-        border: tile.breaching ? "1px solid rgba(255,54,33,0.35)" : "1px solid var(--hairline)",
-        background: "#fff",
-      }}
-    >
-      <div className="flex items-center justify-between gap-1">
-        <span className="truncate text-[11px]" style={{ color: "var(--ink-300)" }}>
-          {tile.label}
-        </span>
-        {tile.breaching && (
-          <span
-            className="inline-flex items-center gap-1 rounded px-1 py-0.5 text-[9.5px] font-semibold uppercase"
-            style={{ background: "rgba(255,54,33,0.10)", color: "var(--brand-red)" }}
-          >
-            <Flag size={9} /> band
-          </span>
-        )}
-      </div>
-      <span
-        className="font-mono text-[20px] font-semibold leading-none"
-        style={{ color: tile.breaching ? "var(--brand-red)" : "var(--ink-900)" }}
-      >
-        {tile.value}
-      </span>
-      <BandSparkline values={tile.values} band={tile.band} breaching={tile.breaching} height={28} />
-      <span
-        className="text-[11px] leading-tight"
-        style={{ color: tile.breaching ? "var(--brand-red)" : "var(--ink-500)" }}
-      >
-        {tile.delta}
-      </span>
-    </button>
-  );
-}
-
-function AnomalyCard({
-  caption,
-  meta,
-  title,
-  chart,
-  onClick,
-}: {
-  caption: string;
-  meta: string;
-  title: string;
-  chart: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full rounded-xl p-3 text-left transition-shadow hover:shadow-sm"
+      onClick={() => onOpen(card.evidence)}
+      className="flex min-h-[132px] flex-col rounded-xl p-3 text-left transition-shadow hover:shadow-sm"
       style={{
         border: "1px solid var(--hairline)",
-        borderLeft: "3px solid var(--brand-blue-bright)",
         background: "#fff",
       }}
     >
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[12px]" style={{ color: "var(--ink-900)" }}>
-          {title}
-        </span>
-        <span className="text-[11px]" style={{ color: "var(--ink-300)" }}>
-          {meta}
+      <div className="flex items-center gap-1.5">
+        {card.warning && <TriangleAlert size={12} color="var(--brand-red)" />}
+        <span className="text-[11.5px]" style={{ color: "var(--ink-500)" }}>
+          {card.label}
         </span>
       </div>
-      <div className="mt-2">{chart}</div>
-      <p className="mt-2 text-[11.5px] leading-snug" style={{ color: "var(--ink-500)" }}>
-        {caption}
-      </p>
+      <span
+        className="mt-2 font-mono text-[23px] font-semibold leading-none"
+        style={{ color: "var(--brand-blue)" }}
+      >
+        {card.value}
+      </span>
+      {card.values && (
+        <div className="mt-2 h-7">
+          <BandSparkline
+            values={card.values}
+            band={card.band}
+            breaching={card.warning}
+            height={28}
+          />
+        </div>
+      )}
+      <span
+        className="mt-auto pt-2 text-[10.5px] leading-snug"
+        style={{ color: card.warning ? "var(--brand-red)" : "var(--ink-500)" }}
+      >
+        {card.detail}
+      </span>
     </button>
   );
 }
@@ -358,28 +379,6 @@ function ChecksView() {
   );
 }
 
-function OverviewTrend() {
-  return (
-    <div
-      className="rounded-xl p-3"
-      style={{ border: "1px solid var(--hairline)", background: "#fff" }}
-    >
-      <LineChart
-        height={110}
-        markerIndex={AUG19}
-        markerLabel="Aug 19"
-        series={[
-          { label: "rows +6%", values: ROWS_SERIES, color: "var(--brand-red)" },
-          { label: "distinct flat", values: DISTINCT_SERIES, color: "var(--brand-blue)" },
-        ]}
-      />
-      <p className="mt-2 text-[11.5px] leading-snug" style={{ color: "var(--ink-500)" }}>
-        The two lines tracked each other until Aug 19 and haven't since.
-      </p>
-    </div>
-  );
-}
-
 function ActivityView() {
   return (
     <EvidenceTableShell>
@@ -401,7 +400,6 @@ export function EvidencePanel({
   openView,
   onOpen,
   onClose,
-  onAsk,
   onScope,
   dupeFilter,
   onClearDupeFilter,
@@ -442,71 +440,31 @@ export function EvidencePanel({
 
       <div className="flex flex-col gap-2">
         <SectionTitle>Overview</SectionTitle>
-        <div className="grid grid-cols-2 gap-2">
-          {METRIC_TILES.map((t) => (
-            <MetricTileCard key={t.id} tile={t} onOpen={onOpen} />
+        <div
+          className="grid grid-cols-4 divide-x rounded-xl px-1 py-2.5"
+          style={{ border: "1px solid var(--hairline)", background: "#fff" }}
+        >
+          {OVERVIEW_ACTIVITY.map((item) => (
+            <div key={item.label} className="min-w-0 px-1.5">
+              <div className="flex items-center gap-1 whitespace-nowrap text-[8.5px]" style={{ color: "var(--ink-300)" }}>
+                <span>{item.label}</span>
+                <Info size={9} className="shrink-0" />
+              </div>
+              <div
+                className="mt-1 flex items-center gap-1 whitespace-nowrap text-[10.5px] font-semibold"
+                style={{ color: item.stale ? "#b45309" : "var(--ink-900)" }}
+              >
+                {item.stale && <Clock3 size={10} className="shrink-0" />}
+                {item.value}
+              </div>
+            </div>
           ))}
         </div>
-        <OverviewTrend />
-      </div>
-
-
-      <div className="flex flex-col gap-2">
-        <SectionTitle
-          right={
-            <span
-              className="rounded-full px-1.5 py-0.5 text-[10.5px] font-semibold"
-              style={{ background: "rgba(41,181,232,0.14)", color: "#0e7490" }}
-            >
-              2
-            </span>
-          }
-        >
-          Anomalies
-        </SectionTitle>
-        <AnomalyCard
-          title="rows vs distinct"
-          meta="21 days"
-          onClick={() => onAsk("How bad is this on a join?")}
-          caption="Row count climbing, distinct customers flat. Diverging since Aug 19."
-          chart={
-            <LineChart
-              height={56}
-              showLegend={false}
-              markerIndex={AUG19}
-              series={[
-                { label: "rows", values: ROWS_SERIES, color: "var(--brand-blue-bright)" },
-                { label: "distinct", values: DISTINCT_SERIES, color: "var(--ink-300)" },
-              ]}
-            />
-          }
-        />
-        <AnomalyCard
-          title="connector-wide"
-          meta="Aug 19"
-          onClick={() => onAsk("Check the sibling tables")}
-          caption="Three SFDC-fed tables take the same turn on the same day. Only this one had a check."
-          chart={
-            <LineChart
-              height={56}
-              showLegend={false}
-              markerIndex={AUG19}
-              series={[
-                { label: "customer_data", values: SIBLING_SERIES.customer_data, color: "var(--brand-blue-bright)" },
-                { label: "contact_master", values: SIBLING_SERIES.contact_master, color: "var(--brand-blue-bright)", opacity: 0.6 },
-                { label: "account_roll", values: SIBLING_SERIES.account_roll, color: "var(--brand-blue-bright)", opacity: 0.35 },
-              ]}
-            />
-          }
-        />
-        <button
-          type="button"
-          onClick={() => onAsk("Why did the check only fire now?")}
-          className="w-full rounded-lg py-1.5 text-[12px]"
-          style={{ color: "var(--brand-blue)" }}
-        >
-          Ask about these
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          {OVERVIEW_CARDS.map((card) => (
+            <OverviewStatusCard key={card.id} card={card} onOpen={onOpen} />
+          ))}
+        </div>
       </div>
 
       {/* Evidence launcher or the open view */}
