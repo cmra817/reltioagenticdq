@@ -516,10 +516,9 @@ export function EvidencePanel({
           {openView === "duplicates" && (
             <DuplicateRowsView filter={dupeFilter} onClearFilter={onClearDupeFilter} onScope={onScope} />
           )}
-          {openView === "columns" && <ColumnsView onScope={onScope} />}
+          {openView === "sample" && <SampleDataView />}
+          {openView === "profiling" && <ProfilingView onScope={onScope} />}
           {openView === "checks" && <ChecksView />}
-          {openView === "trend" && <TrendView />}
-          {openView === "schema" && <SchemaView />}
           {openView === "activity" && <ActivityView />}
         </div>
       ) : (
