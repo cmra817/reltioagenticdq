@@ -35,58 +35,78 @@ function Badge({ kind }: { kind: "check" | "anomaly" }) {
   );
 }
 
-function Finding({
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div
+      className="flex-1 rounded-lg px-2.5 py-2"
+      style={{ border: "1px solid var(--hairline)", background: "var(--surface-soft)" }}
+    >
+      <div className="font-mono text-[17px] font-semibold" style={{ color: "var(--ink-900)" }}>
+        {value}
+      </div>
+      <div className="text-[11px]" style={{ color: "var(--ink-500)" }}>
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function FindingCard({
   label,
-  summary,
+  title,
   kind,
+  chart,
+  detail,
+  actions,
   open,
   onToggle,
-  children,
 }: {
   label: string;
-  summary: string;
+  title: string;
   kind: "check" | "anomaly";
+  chart: React.ReactNode;
+  detail: React.ReactNode;
+  actions: React.ReactNode;
   open: boolean;
   onToggle: () => void;
-  children: React.ReactNode;
 }) {
   return (
     <div
-      className="rounded-xl"
+      className="rounded-xl px-3 py-3"
       style={{ border: "1px solid var(--hairline)", background: "#fff" }}
     >
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center gap-3 px-3 py-2.5 text-left"
-      >
+      <div className="flex items-start gap-3">
         <span
-          className="w-[76px] shrink-0 text-[9.5px] font-semibold uppercase leading-[1.25] tracking-wide"
+          className="w-[76px] shrink-0 pt-0.5 text-[9.5px] font-semibold uppercase leading-[1.25] tracking-wide"
           style={{ color: "var(--ink-300)" }}
         >
           {label}
         </span>
-        <span className="flex-1 truncate text-[13px]" style={{ color: "var(--ink-900)" }}>
-          {summary}
+        <span className="flex-1 text-[13px] leading-snug" style={{ color: "var(--ink-900)" }}>
+          {title}
         </span>
         <Badge kind={kind} />
-        {open ? (
-          <ChevronUp size={15} color="var(--ink-300)" />
-        ) : (
-          <ChevronDown size={15} color="var(--ink-300)" />
-        )}
+      </div>
+
+      <div className="mt-3">{chart}</div>
+
+      <button
+        type="button"
+        onClick={onToggle}
+        className="mt-3 inline-flex items-center gap-1 text-[12px]"
+        style={{ color: "var(--brand-blue)" }}
+      >
+        {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+        {open ? "Hide details" : "Details"}
       </button>
-      {open && (
-        <div
-          className="flex flex-col gap-3 px-3 pb-3.5 pt-1"
-          style={{ borderTop: "1px solid var(--hairline)" }}
-        >
-          {children}
-        </div>
-      )}
+
+      {open && <div className="mt-2 flex flex-col gap-3">{detail}</div>}
+
+      <div className="mt-3">{actions}</div>
     </div>
   );
 }
+
 
 function Group({
   count,
