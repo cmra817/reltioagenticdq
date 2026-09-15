@@ -223,7 +223,7 @@ export function StackedBar({
   total?: number;
   height?: number;
 }) {
-  const sum = total ?? segments.reduce((a, s) => a + s.value, 0) || 1;
+  const sum = (total ?? segments.reduce((a, s) => a + s.value, 0)) || 1;
   return (
     <div className="w-full">
       <div
