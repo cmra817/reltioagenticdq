@@ -103,10 +103,11 @@ export function LineChart({
 
   const width = 320;
   const pad = 6;
-  const all = series.flatMap((s) => s.values);
+  const all = series.flatMap((s) => s.values).concat(threshold != null ? [threshold] : []);
   const min = Math.min(...all);
   const max = Math.max(...all);
   const span = max - min || 1;
+
   const len = Math.max(...series.map((s) => s.values.length));
   const xFor = (i: number) => pad + (i * (width - pad * 2)) / Math.max(len - 1, 1);
   const yFor = (v: number) => pad + (height - pad * 2) * (1 - (v - min) / span);
