@@ -210,3 +210,60 @@ export function LineChart({
     </div>
   );
 }
+
+export type StackSegment = { label: string; value: number; color: string; tag?: string };
+
+/** Single horizontal stacked bar with a labelled legend below. */
+export function StackedBar({
+  segments,
+  total,
+  height = 12,
+}: {
+  segments: StackSegment[];
+  total?: number;
+  height?: number;
+}) {
+  const sum = total ?? segments.reduce((a, s) => a + s.value, 0) || 1;
+  return (
+    <div className="w-full">
+      <div
+        className="flex w-full overflow-hidden rounded-full"
+        style={{ height, background: "var(--surface-soft)" }}
+      >
+        {segments.map((s) => (
+          <div
+            key={s.label}
+            style={{ width: `${(s.value / sum) * 100}%`, background: s.color }}
+            title={`${s.label}: ${s.value}`}
+          />
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+        {segments.map((s) => (
+          <span
+            key={s.label}
+            className="inline-flex items-center gap-1.5 text-[11.5px]"
+            style={{ color: "var(--ink-500)" }}
+          >
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ background: s.color }}
+            />
+            <span className="font-mono" style={{ color: "var(--ink-900)" }}>
+              {s.value.toLocaleString()}
+            </span>
+            {s.label}
+            {s.tag && (
+              <span
+                className="rounded px-1 py-0.5 text-[10px]"
+                style={{ background: "var(--surface-soft)", color: "var(--ink-500)" }}
+              >
+                {s.tag}
+              </span>
+            )}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
