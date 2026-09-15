@@ -413,7 +413,7 @@ export function EvidencePanel({
 }) {
   return (
     <aside
-      className="flex h-full shrink-0 flex-col gap-4 overflow-y-auto border-l px-4 py-4 transition-[width] duration-200"
+      className="flex h-full shrink-0 flex-col gap-4 overflow-y-auto border-l px-4 pb-4 pt-2 transition-[width] duration-200"
       style={{
         width: openView ? 545 : 300,
         borderColor: "var(--hairline)",
