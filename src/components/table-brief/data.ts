@@ -3,7 +3,7 @@
 export const TABLE = {
   name: "customer_data",
   domain: "Finance · Orders",
-  entry: "Opened from uniqueness alert · 7:41am",
+  entry: "",
 };
 
 export const ROWS_SERIES = [
