@@ -139,7 +139,6 @@ export const EVIDENCE_ITEMS: {
   count: string;
   tone: "red" | "amber" | "neutral";
 }[] = [
-  { id: "duplicates", label: "Duplicate rows", count: "1,204", tone: "red" },
   { id: "sample", label: "Sample data", count: "10 rows", tone: "neutral" },
   { id: "profiling", label: "Column profiling", count: "47", tone: "neutral" },
   { id: "checks", label: "Checks", count: "20/21", tone: "red" },
