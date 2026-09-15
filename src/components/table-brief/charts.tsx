@@ -129,7 +129,7 @@ export function LineChart({
         {series.map((s) => (
           <path
             key={s.label}
-            d={pathFor(s.values, width, height, pad)}
+            d={pathFor(s.values, width, height, pad, { min, max })}
             fill="none"
             stroke={s.color}
             strokeOpacity={s.opacity ?? 1}
