@@ -440,11 +440,16 @@ export function EvidencePanel({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        {METRIC_TILES.map((t) => (
-          <MetricTileCard key={t.id} tile={t} onOpen={onOpen} />
-        ))}
+      <div className="flex flex-col gap-2">
+        <SectionTitle>Overview</SectionTitle>
+        <div className="grid grid-cols-2 gap-2">
+          {METRIC_TILES.map((t) => (
+            <MetricTileCard key={t.id} tile={t} onOpen={onOpen} />
+          ))}
+        </div>
+        <OverviewTrend />
       </div>
+
 
       <div className="flex flex-col gap-2">
         <SectionTitle
