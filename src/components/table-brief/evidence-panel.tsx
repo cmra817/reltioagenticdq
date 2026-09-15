@@ -358,14 +358,14 @@ function ChecksView() {
   );
 }
 
-function TrendView() {
+function OverviewTrend() {
   return (
     <div
       className="rounded-xl p-3"
       style={{ border: "1px solid var(--hairline)", background: "#fff" }}
     >
       <LineChart
-        height={180}
+        height={110}
         markerIndex={AUG19}
         markerLabel="Aug 19"
         series={[
@@ -373,24 +373,8 @@ function TrendView() {
           { label: "distinct flat", values: DISTINCT_SERIES, color: "var(--brand-blue)" },
         ]}
       />
-      <p className="mt-2 text-[12px]" style={{ color: "var(--ink-500)" }}>
+      <p className="mt-2 text-[11.5px] leading-snug" style={{ color: "var(--ink-500)" }}>
         The two lines tracked each other until Aug 19 and haven't since.
-      </p>
-    </div>
-  );
-}
-
-function SchemaView() {
-  return (
-    <div
-      className="rounded-xl p-3"
-      style={{ border: "1px solid var(--hairline)", background: "#fff" }}
-    >
-      <p className="text-[13px]" style={{ color: "var(--ink-900)" }}>
-        No schema changes in 90 days.
-      </p>
-      <p className="mt-1 text-[12px]" style={{ color: "var(--ink-300)" }}>
-        Worth noting — this rules out a column change as the cause.
       </p>
     </div>
   );
