@@ -109,35 +109,52 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
           </div>
           <form
             onSubmit={submit}
-            className="flex items-center gap-2 rounded-2xl px-3 py-2"
-            style={{ background: "#E3E3F2" }}
+            className="flex flex-col items-start gap-2 rounded-2xl p-3"
+            style={{
+              background: "#E3E3F2",
+              boxSizing: "border-box",
+              minHeight: "112px",
+              border: "1px solid rgba(0, 0, 204, 0.14)",
+              boxShadow:
+                "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.5)",
+            }}
           >
-            {scope && (
-              <span
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-2 py-1 text-[11.5px]"
-                style={{ color: "var(--ink-700)" }}
+            <div className="flex w-full items-start gap-2">
+              {scope && (
+                <span
+                  className="mt-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-2 py-1 text-[11.5px]"
+                  style={{ color: "var(--ink-700)" }}
+                >
+                  {TABLE.name} › {scope}
+                  <button type="button" onClick={() => setScope(null)} aria-label="Clear scope">
+                    <X size={11} />
+                  </button>
+                </span>
+              )}
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    submit();
+                  }
+                }}
+                placeholder={scope ? `Ask about ${scope}…` : "Ask about this table…"}
+                className="min-h-[56px] flex-1 resize-none bg-transparent px-1 py-0.5 text-[13px] outline-none"
+                style={{ color: "var(--ink-900)" }}
+              />
+            </div>
+            <div className="flex w-full justify-end px-1 pb-1">
+              <button
+                type="submit"
+                aria-label="Send"
+                className="flex h-8 w-8 items-center justify-center rounded-full"
+                style={{ background: "var(--brand-blue)", color: "#fff" }}
               >
-                {TABLE.name} › {scope}
-                <button type="button" onClick={() => setScope(null)} aria-label="Clear scope">
-                  <X size={11} />
-                </button>
-              </span>
-            )}
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={scope ? `Ask about ${scope}…` : "Ask about this table…"}
-              className="flex-1 bg-transparent text-[13px] outline-none"
-              style={{ color: "var(--ink-900)" }}
-            />
-            <button
-              type="submit"
-              aria-label="Send"
-              className="flex h-7 w-7 items-center justify-center rounded-full"
-              style={{ background: "var(--brand-blue)", color: "#fff" }}
-            >
-              <ArrowUp size={14} />
-            </button>
+                <ArrowUp size={16} />
+              </button>
+            </div>
           </form>
         </div>
       </div>
