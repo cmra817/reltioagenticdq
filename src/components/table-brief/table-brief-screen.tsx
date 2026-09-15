@@ -1,10 +1,27 @@
 import * as React from "react";
-import { ArrowUp, X } from "lucide-react";
+import { ArrowUp, Clock, X } from "lucide-react";
+import { DatasetIcon, SourceLogo, TableIcon } from "@/components/explore-screen";
 import { ComposedBrief, type Pin } from "./composed-brief";
 import { EvidencePanel } from "./evidence-panel";
 import { Thread, type ThreadMessage } from "./thread";
 import { answerFor, mentionsSfdc, type PinPayload } from "./answers";
 import { TABLE, type EvidenceId } from "./data";
+
+function displayName(slug: string) {
+  if (slug.includes("_")) return slug;
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+const LAST_ANALYZED: Record<string, string> = {
+  orders: "15 hours ago",
+  customer_data: "2 hours ago",
+};
+function lastAnalyzed(slug: string) {
+  return LAST_ANALYZED[slug] ?? "2 hours ago";
+}
 
 const CHIPS = [
   "Why did the check only fire now?",
