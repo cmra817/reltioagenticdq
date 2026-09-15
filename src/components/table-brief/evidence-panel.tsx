@@ -39,12 +39,18 @@ function SectionTitle({ children, right }: { children: React.ReactNode; right?: 
   );
 }
 
-const OVERVIEW_ACTIVITY = [
+type OverviewActivityItem = {
+  label: string;
+  value: string;
+  stale?: boolean;
+};
+
+const OVERVIEW_ACTIVITY: OverviewActivityItem[] = [
   { label: "Last profiled", value: "6 hrs ago" },
   { label: "Checks run", value: "6 hrs ago" },
   { label: "Last synced", value: "14 hrs ago", stale: true },
   { label: "Loaded to Reltio", value: "3 days ago" },
-] as const;
+];
 
 type OverviewCard = {
   id: string;
