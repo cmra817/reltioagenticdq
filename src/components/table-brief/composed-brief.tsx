@@ -198,14 +198,15 @@ export function ComposedBrief({
         <Finding
           label="Rows behind it"
           kind="check"
-          summary="One number, three separate problems with three different owners."
+          summary="1,204 duplicate customer_id values — three separate problems with three owners."
           open={!!open.f1}
           onToggle={() => toggle("f1")}
         >
           <p className="text-[12.5px]" style={{ color: "var(--ink-700)" }}>
-            The check counted 1,204. Pulling those rows and reading their other columns splits them
-            cleanly:
+            Pulling those 1,204 rows and reading their other columns splits them cleanly. Only 900
+            are recent; the rest predate anything happening now:
           </p>
+
           <Group
             count="900"
             title="Re-inserts from SFDC"
