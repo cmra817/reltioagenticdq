@@ -1,5 +1,5 @@
 import * as React from "react";
-import { X, Flag, TriangleAlert, Table2, ListChecks, TrendingUp, History, Activity, Rows3 } from "lucide-react";
+import { X, Flag, TriangleAlert, Table2, ListChecks, Activity, Rows3, Grid3x3 } from "lucide-react";
 import { BandSparkline, LineChart } from "./charts";
 import {
   ACTIVITY_ROWS,
@@ -11,6 +11,8 @@ import {
   EVIDENCE_ITEMS,
   METRIC_TILES,
   ROWS_SERIES,
+  SAMPLE_COLUMNS,
+  SAMPLE_ROWS,
   SIBLING_SERIES,
   type EvidenceId,
 } from "./data";
@@ -20,10 +22,9 @@ const toneColor = (tone: "red" | "amber" | "neutral") =>
 
 const EVIDENCE_ICON: Record<EvidenceId, React.ComponentType<{ size?: number; color?: string }>> = {
   duplicates: Rows3,
-  columns: Table2,
+  sample: Grid3x3,
+  profiling: Table2,
   checks: ListChecks,
-  trend: TrendingUp,
-  schema: History,
   activity: Activity,
 };
 
@@ -223,13 +224,53 @@ function DuplicateRowsView({
   );
 }
 
-function ColumnsView({ onScope }: { onScope: (id: string) => void }) {
+function SampleDataView() {
+  return (
+    <div className="flex flex-col gap-2">
+      <EvidenceTableShell>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr style={{ color: "var(--ink-300)" }}>
+                {SAMPLE_COLUMNS.map((h) => (
+                  <th key={h} className="whitespace-nowrap px-3 py-2 text-left font-mono font-medium">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {SAMPLE_ROWS.map((row, i) => (
+                <tr key={i} style={{ borderTop: "1px solid var(--hairline)" }}>
+                  {row.map((cell, j) => (
+                    <td
+                      key={j}
+                      className="whitespace-nowrap px-3 py-2 font-mono"
+                      style={{ color: j === 0 ? "var(--ink-900)" : "var(--ink-700)" }}
+                    >
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </EvidenceTableShell>
+      <p className="px-1 text-[11.5px]" style={{ color: "var(--ink-300)" }}>
+        10 of 4,897 rows · sampled 6 hours ago.
+      </p>
+    </div>
+  );
+}
+
+function ProfilingView({ onScope }: { onScope: (id: string) => void }) {
   return (
     <EvidenceTableShell>
       <table className="w-full text-[12px]">
         <thead>
           <tr style={{ color: "var(--ink-300)" }}>
-            {["Column", "Type", "Fill", "Unique", "Status"].map((h) => (
+            {["Column", "Type", "Completeness", "Unique", "Status"].map((h) => (
               <th key={h} className="px-3 py-2 text-left font-medium">
                 {h}
               </th>
@@ -317,14 +358,14 @@ function ChecksView() {
   );
 }
 
-function TrendView() {
+function OverviewTrend() {
   return (
     <div
       className="rounded-xl p-3"
       style={{ border: "1px solid var(--hairline)", background: "#fff" }}
     >
       <LineChart
-        height={180}
+        height={110}
         markerIndex={AUG19}
         markerLabel="Aug 19"
         series={[
@@ -332,24 +373,8 @@ function TrendView() {
           { label: "distinct flat", values: DISTINCT_SERIES, color: "var(--brand-blue)" },
         ]}
       />
-      <p className="mt-2 text-[12px]" style={{ color: "var(--ink-500)" }}>
+      <p className="mt-2 text-[11.5px] leading-snug" style={{ color: "var(--ink-500)" }}>
         The two lines tracked each other until Aug 19 and haven't since.
-      </p>
-    </div>
-  );
-}
-
-function SchemaView() {
-  return (
-    <div
-      className="rounded-xl p-3"
-      style={{ border: "1px solid var(--hairline)", background: "#fff" }}
-    >
-      <p className="text-[13px]" style={{ color: "var(--ink-900)" }}>
-        No schema changes in 90 days.
-      </p>
-      <p className="mt-1 text-[12px]" style={{ color: "var(--ink-300)" }}>
-        Worth noting — this rules out a column change as the cause.
       </p>
     </div>
   );
@@ -415,11 +440,16 @@ export function EvidencePanel({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        {METRIC_TILES.map((t) => (
-          <MetricTileCard key={t.id} tile={t} onOpen={onOpen} />
-        ))}
+      <div className="flex flex-col gap-2">
+        <SectionTitle>Overview</SectionTitle>
+        <div className="grid grid-cols-2 gap-2">
+          {METRIC_TILES.map((t) => (
+            <MetricTileCard key={t.id} tile={t} onOpen={onOpen} />
+          ))}
+        </div>
+        <OverviewTrend />
       </div>
+
 
       <div className="flex flex-col gap-2">
         <SectionTitle
@@ -486,10 +516,9 @@ export function EvidencePanel({
           {openView === "duplicates" && (
             <DuplicateRowsView filter={dupeFilter} onClearFilter={onClearDupeFilter} onScope={onScope} />
           )}
-          {openView === "columns" && <ColumnsView onScope={onScope} />}
+          {openView === "sample" && <SampleDataView />}
+          {openView === "profiling" && <ProfilingView onScope={onScope} />}
           {openView === "checks" && <ChecksView />}
-          {openView === "trend" && <TrendView />}
-          {openView === "schema" && <SchemaView />}
           {openView === "activity" && <ActivityView />}
         </div>
       ) : (

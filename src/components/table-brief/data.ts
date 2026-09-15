@@ -55,7 +55,7 @@ export const METRIC_TILES: MetricTile[] = [
     band: [0.05, 0.45],
     breaching: true,
     delta: "+6% · above normal range",
-    evidence: "trend",
+    evidence: "profiling",
   },
   {
     id: "distinct",
@@ -65,7 +65,7 @@ export const METRIC_TILES: MetricTile[] = [
     band: [0.1, 0.9],
     breaching: false,
     delta: "0% · within range",
-    evidence: "columns",
+    evidence: "profiling",
   },
   {
     id: "checks",
@@ -90,10 +90,9 @@ export const METRIC_TILES: MetricTile[] = [
 
 export type EvidenceId =
   | "duplicates"
-  | "columns"
+  | "sample"
+  | "profiling"
   | "checks"
-  | "trend"
-  | "schema"
   | "activity";
 
 export const EVIDENCE_ITEMS: {
@@ -103,11 +102,25 @@ export const EVIDENCE_ITEMS: {
   tone: "red" | "amber" | "neutral";
 }[] = [
   { id: "duplicates", label: "Duplicate rows", count: "1,204", tone: "red" },
-  { id: "columns", label: "Columns", count: "47", tone: "neutral" },
+  { id: "sample", label: "Sample data", count: "10 rows", tone: "neutral" },
+  { id: "profiling", label: "Column profiling", count: "47", tone: "neutral" },
   { id: "checks", label: "Checks", count: "20/21", tone: "red" },
-  { id: "trend", label: "Trend", count: "+6%", tone: "red" },
-  { id: "schema", label: "Schema history", count: "none", tone: "neutral" },
   { id: "activity", label: "Activity", count: "14h", tone: "amber" },
+];
+
+export const SAMPLE_COLUMNS = ["customer_id", "email", "source_system", "country", "created_at"];
+
+export const SAMPLE_ROWS: string[][] = [
+  ["C-40194", "m.reyes@northwind.com", "SFDC", "US", "2026-09-12"],
+  ["C-40194", "m.reyes@northwind.com", "SFDC", "US", "2026-09-12"],
+  ["C-40211", "j.tanaka@kobe-eng.jp", "SFDC", "JP", "2026-09-11"],
+  ["C-40288", "hello@brightbox.co.uk", "SFDC", "GB", "2026-09-09"],
+  ["C-40310", "a.silva@vertexmed.br", "SFDC", "BR", "2026-09-04"],
+  ["C-39877", "lena.k@aurorafin.de", "SFDC", "DE", "2026-08-28"],
+  ["TEST_0091", "qa+91@internal.test", "LEGACY", "US", "2026-03-02"],
+  ["C-11820", "p.okafor@lagosgrid.ng", "LEGACY", "NG", "2026-01-14"],
+  ["C-30442", "s.dubois@cielpar.fr", "SFDC", "FR", "2026-07-19"],
+  ["C-28810", "r.nilsen@fjordlog.no", "LEGACY", "NO", "2026-06-02"],
 ];
 
 export type DupeRow = {
