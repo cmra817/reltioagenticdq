@@ -87,6 +87,8 @@ export function LineChart({
   height = 120,
   showLegend = true,
   yLabels,
+  threshold,
+  thresholdLabel,
 }: {
   series: Series[];
   markerIndex?: number;
@@ -94,7 +96,11 @@ export function LineChart({
   height?: number;
   showLegend?: boolean;
   yLabels?: string[];
+  /** Absolute value to draw a dashed horizontal reference line at. */
+  threshold?: number;
+  thresholdLabel?: string;
 }) {
+
   const width = 320;
   const pad = 6;
   const all = series.flatMap((s) => s.values);
