@@ -198,11 +198,7 @@ export function ComposedBrief({
 
   return (
     <div className="flex flex-col px-1 py-2">
-      <p className="text-[12px]" style={{ color: "var(--ink-300)" }}>
-        customer_data · 4,897 rows · 47 columns · loaded from SFDC and LEGACY · last synced 14 hours
-        ago
-      </p>
-      <p className="mt-2 text-[15px] leading-relaxed" style={{ color: "var(--ink-900)" }}>
+      <p className="text-[15px] leading-relaxed" style={{ color: "var(--ink-900)" }}>
         This table is stable in shape — schema unchanged, 44 of 47 columns profiling normally, 20 of
         21 checks passing. What it isn't is stable in content. Since Aug 19 the row count has climbed
         6% while the number of distinct customers hasn't moved, and customer_id now carries 1,204
