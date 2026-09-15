@@ -171,15 +171,25 @@ export function LineChart({
           );
         })}
       </svg>
-      {markerLabel && (
+      {(markerLabel || thresholdLabel) && (
         <div
-          className="mt-1 text-[11px]"
+          className="mt-1 flex flex-wrap items-center gap-3 text-[11px]"
           style={{ color: "var(--ink-300)" }}
           aria-hidden="true"
         >
-          ↑ {markerLabel}
+          {markerLabel && <span>↑ {markerLabel}</span>}
+          {thresholdLabel && (
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                className="inline-block h-0 w-4"
+                style={{ borderTop: "1px dashed var(--ink-300)" }}
+              />
+              {thresholdLabel}
+            </span>
+          )}
         </div>
       )}
+
       {showLegend && (
         <div className="mt-2 flex flex-wrap items-center gap-3">
           {series.map((s, i) => (
