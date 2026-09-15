@@ -1,5 +1,5 @@
 import * as React from "react";
-import { X, Flag, TriangleAlert, Table2, ListChecks, TrendingUp, History, Activity, Rows3 } from "lucide-react";
+import { X, Flag, TriangleAlert, Table2, ListChecks, Activity, Rows3, Grid3x3 } from "lucide-react";
 import { BandSparkline, LineChart } from "./charts";
 import {
   ACTIVITY_ROWS,
@@ -11,6 +11,8 @@ import {
   EVIDENCE_ITEMS,
   METRIC_TILES,
   ROWS_SERIES,
+  SAMPLE_COLUMNS,
+  SAMPLE_ROWS,
   SIBLING_SERIES,
   type EvidenceId,
 } from "./data";
@@ -20,10 +22,9 @@ const toneColor = (tone: "red" | "amber" | "neutral") =>
 
 const EVIDENCE_ICON: Record<EvidenceId, React.ComponentType<{ size?: number; color?: string }>> = {
   duplicates: Rows3,
-  columns: Table2,
+  sample: Grid3x3,
+  profiling: Table2,
   checks: ListChecks,
-  trend: TrendingUp,
-  schema: History,
   activity: Activity,
 };
 
