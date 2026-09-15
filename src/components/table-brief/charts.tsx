@@ -133,6 +133,18 @@ export function LineChart({
             strokeDasharray="3 3"
           />
         )}
+        {threshold != null && (
+          <line
+            x1={0}
+            x2={width}
+            y1={yFor(threshold)}
+            y2={yFor(threshold)}
+            stroke="var(--ink-300)"
+            strokeWidth={1}
+            strokeDasharray="4 3"
+          />
+        )}
+
         {series.map((s) => (
           <path
             key={s.label}
