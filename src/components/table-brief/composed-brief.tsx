@@ -171,23 +171,28 @@ export function ComposedBrief({
       style={{ border: "1px solid var(--hairline)", background: "rgba(255,255,255,0.75)" }}
     >
       <p className="text-[12px]" style={{ color: "var(--ink-300)" }}>
-        You already know customer_id has 1,204 duplicates — that's what the check told you at 7:41.
+        customer_data · 4,897 rows · 47 columns · loaded from SFDC and LEGACY · last synced 14 hours
+        ago
       </p>
       <p className="mt-2 text-[15px] leading-relaxed" style={{ color: "var(--ink-900)" }}>
-        Here's what it couldn't. This started three weeks ago, not Tuesday — it was 40 duplicates on
-        Aug 19 and your threshold sat at 1,000. It isn't one problem, it's three, and only 900 of
-        them are new. And the 6% row growth you've been seeing since then is entirely these
-        duplicates.
+        This table is stable in shape — schema unchanged, 44 of 47 columns profiling normally, 20 of
+        21 checks passing. What it isn't is stable in content. Since Aug 19 the row count has climbed
+        6% while the number of distinct customers hasn't moved, and customer_id now carries 1,204
+        repeated values. Those two facts are the same event: the table is accumulating copies, not
+        customers. The duplicates split into three unrelated causes, and two sibling tables on the
+        same connector show the identical break on the same day — so the origin is upstream of this
+        table, not in it.
       </p>
 
       <div className="mt-4 flex items-center gap-2">
         <span className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
-          What the check couldn't see
+          What's driving it
         </span>
         <span className="text-[12px]" style={{ color: "var(--ink-300)" }}>
           · 3 findings
         </span>
       </div>
+
 
       <div className="mt-2 flex flex-col gap-2">
         <Finding
