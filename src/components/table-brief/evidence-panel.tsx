@@ -46,14 +46,25 @@ const OVERVIEW_ACTIVITY = [
   { label: "Loaded to Reltio", value: "3 days ago" },
 ] as const;
 
-const OVERVIEW_CARDS = [
+type OverviewCard = {
+  id: string;
+  label: string;
+  value: string;
+  detail: string;
+  warning?: boolean;
+  values?: number[];
+  band?: [number, number];
+  evidence: EvidenceId;
+};
+
+const OVERVIEW_CARDS: OverviewCard[] = [
   {
     id: "columns",
     label: "Columns",
     value: "47",
     detail: "+2 columns since last run",
     warning: true,
-    evidence: "profiling" as EvidenceId,
+    evidence: "profiling",
   },
   {
     id: "rows",
@@ -62,8 +73,8 @@ const OVERVIEW_CARDS = [
     detail: "+6% · outside normal range",
     warning: true,
     values: ROWS_SERIES,
-    band: [0.05, 0.45] as [number, number],
-    evidence: "profiling" as EvidenceId,
+    band: [0.05, 0.45],
+    evidence: "profiling",
   },
   {
     id: "fill",
@@ -71,8 +82,8 @@ const OVERVIEW_CARDS = [
     value: "85%",
     detail: "+1.2 pts · within range",
     values: [82.8, 83.2, 83.6, 83.9, 84.1, 84.4, 85],
-    band: [0.05, 0.9] as [number, number],
-    evidence: "profiling" as EvidenceId,
+    band: [0.05, 0.9],
+    evidence: "profiling",
   },
   {
     id: "checks",
@@ -80,15 +91,15 @@ const OVERVIEW_CARDS = [
     value: "20/21",
     detail: "Decreased 1 from last run",
     values: CHECKS_SERIES,
-    evidence: "checks" as EvidenceId,
+    evidence: "checks",
   },
-] as const;
+];
 
 function OverviewStatusCard({
   card,
   onOpen,
 }: {
-  card: (typeof OVERVIEW_CARDS)[number];
+  card: OverviewCard;
   onOpen: (id: EvidenceId) => void;
 }) {
   return (
@@ -113,7 +124,7 @@ function OverviewStatusCard({
       >
         {card.value}
       </span>
-      {"values" in card && (
+      {card.values && (
         <div className="mt-2 h-7">
           <BandSparkline
             values={card.values}
@@ -383,7 +394,6 @@ export function EvidencePanel({
   openView,
   onOpen,
   onClose,
-  onAsk,
   onScope,
   dupeFilter,
   onClearDupeFilter,
