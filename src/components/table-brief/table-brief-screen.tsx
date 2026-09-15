@@ -1,10 +1,27 @@
 import * as React from "react";
-import { ArrowUp, X } from "lucide-react";
+import { ArrowUp, Clock, X } from "lucide-react";
+import { DatasetIcon, SourceLogo, TableIcon } from "@/components/explore-screen";
 import { ComposedBrief, type Pin } from "./composed-brief";
 import { EvidencePanel } from "./evidence-panel";
 import { Thread, type ThreadMessage } from "./thread";
 import { answerFor, mentionsSfdc, type PinPayload } from "./answers";
 import { TABLE, type EvidenceId } from "./data";
+
+function displayName(slug: string) {
+  if (slug.includes("_")) return slug;
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+const LAST_ANALYZED: Record<string, string> = {
+  orders: "15 hours ago",
+  customer_data: "2 hours ago",
+};
+function lastAnalyzed(slug: string) {
+  return LAST_ANALYZED[slug] ?? "2 hours ago";
+}
 
 const CHIPS = [
   "Why did the check only fire now?",
@@ -59,15 +76,35 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
     <div className="flex h-full min-h-0 flex-1">
       {/* Center column */}
       <div className="flex min-w-0 flex-1 flex-col px-6 py-4">
-        <div className="flex items-center gap-2 pb-3">
-          <span className="font-mono text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
-            {tableName ?? TABLE.name}
+        <div className="flex items-center gap-3 pb-3">
+          <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center">
+            <SourceLogo source="Databricks" />
           </span>
-          <span className="text-[12.5px]" style={{ color: "var(--ink-300)" }}>
-            · {TABLE.domain}
-          </span>
-          <span className="ml-auto text-[12px]" style={{ color: "var(--ink-300)" }}>
-            {TABLE.entry}
+          <div className="min-w-0">
+            <div className="text-[17px] font-semibold" style={{ color: "var(--ink-900)" }}>
+              {displayName(tableName ?? TABLE.name)}
+            </div>
+            <div
+              className="mt-0.5 flex items-center gap-1.5 text-[12px]"
+              style={{ color: "var(--ink-500)" }}
+            >
+              <span style={{ color: "var(--ink-300)" }}>
+                <TableIcon size={13} />
+              </span>
+              <span>Table</span>
+              <span style={{ color: "var(--ink-300)" }}>›</span>
+              <span style={{ color: "var(--brand-blue)" }}>
+                <DatasetIcon size={13} />
+              </span>
+              <span style={{ color: "var(--ink-700)" }}>{TABLE.name}</span>
+            </div>
+          </div>
+          <span
+            className="ml-auto inline-flex items-center gap-1.5 text-[12.5px]"
+            style={{ color: "var(--ink-700)" }}
+          >
+            <Clock size={13} />
+            Last analyzed {lastAnalyzed(tableName ?? TABLE.name)}
           </span>
         </div>
 
