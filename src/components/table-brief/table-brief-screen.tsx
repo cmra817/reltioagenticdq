@@ -36,6 +36,7 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
   const ask = React.useCallback((question: string) => {
     const q = question.trim();
     if (!q) return;
+    setCollapsed(true);
     const answer = answerFor(q);
     setMessages((prev) => [
       ...prev,
@@ -70,22 +71,22 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
           </span>
         </div>
 
-        {/* Pinned composed region — never scrolls away */}
-        <div className="shrink-0">
-          <ComposedBrief
-            collapsed={collapsed}
-            onToggleCollapsed={() => setCollapsed((c) => !c)}
-            pins={pins}
-            onRemovePin={(id) => setPins((prev) => prev.filter((p) => p.id !== id))}
-            onPin={addPin}
-            onAsk={ask}
-            onOpenEvidence={(id) => setEvidence(id)}
-          />
-        </div>
-
-        {/* Thread — independently scrolling */}
-        <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
-          <Thread messages={messages} onAsk={ask} onPin={addPin} />
+        {/* Conversation — brief opens it, then folds into a pinned summary bar */}
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          <div className={collapsed ? "sticky top-0 z-10 pb-3" : ""} style={{ background: "var(--canvas)" }}>
+            <ComposedBrief
+              collapsed={collapsed}
+              onToggleCollapsed={() => setCollapsed((c) => !c)}
+              pins={pins}
+              onRemovePin={(id) => setPins((prev) => prev.filter((p) => p.id !== id))}
+              onPin={addPin}
+              onAsk={ask}
+              onOpenEvidence={(id) => setEvidence(id)}
+            />
+          </div>
+          <div className={messages.length > 0 ? "mt-4" : ""}>
+            <Thread messages={messages} onAsk={ask} onPin={addPin} />
+          </div>
         </div>
 
         {/* Input — fixed at the bottom of the column */}
