@@ -219,113 +219,115 @@ export function ComposedBrief({
 
 
       <div className="mt-2 flex flex-col gap-3">
-        <FindingCard
-          label="Two metrics"
-          kind="anomaly"
-          title="Rows are climbing. Distinct customers are not."
-          open={!!open.f1}
-          onToggle={() => toggle("f1")}
-          chart={
-            <>
-              <LineChart
-                height={150}
-                markerIndex={AUG19}
-                markerLabel="Aug 19"
-                yLabels={["Total rows", "Distinct customer_id"]}
-                series={[
-                  { label: "Total rows", values: ROWS_SERIES, color: "var(--brand-blue-bright)" },
-                  { label: "Distinct customer_id", values: DISTINCT_SERIES, color: "var(--brand-blue)" },
-                ]}
-              />
-              <div className="mt-3 flex gap-3">
-                <Stat value="+287" label="rows since Aug 19" />
-                <Stat value="+5" label="distinct customers since Aug 19" />
-              </div>
-            </>
-          }
-          detail={
-            <p className="text-[12.5px]" style={{ color: "var(--ink-700)" }}>
-              Neither line is alarming on its own — together they only have one explanation. The
-              table gained rows, not customers, and anything counting this table has been counting
-              up for three weeks.
-            </p>
-          }
-          actions={
-            <ActionButtons
-              onAsk={onAsk}
-              onPin={onPin}
-              actions={[
-                {
-                  label: "Pin ↑",
-                  primary: true,
-                  pin: { title: "Growth is fake", value: "+6%", sub: "rows up · distinct flat" },
-                },
-                { label: "How bad is this on a join?", ask: "How bad is this on a join?" },
-              ]}
-            />
-          }
-        />
-
-        <FindingCard
-          label="Duplicate rows"
-          kind="check"
-          title="1,204 rows now carry a repeated customer_id — up from 40 on Aug 19."
-          open={!!open.f2}
-          onToggle={() => toggle("f2")}
-          chart={
-            <>
-              <LineChart
-                height={150}
-                markerIndex={AUG19}
-                markerLabel="Aug 19"
-                showLegend={false}
-                threshold={DUPE_ALERT_THRESHOLD}
-                thresholdLabel="alert threshold · 1,000"
-                series={[
-                  { label: "Rows with duplicate customer_id", values: DUPE_COUNT_SERIES, color: "var(--brand-red)" },
-                ]}
-              />
-              <p className="mt-2 text-[12px]" style={{ color: "var(--ink-300)" }}>
-                The curve crossed the threshold this week — the drift started three weeks earlier.
+        <div className="grid grid-cols-2 gap-3">
+          <FindingCard
+            label="Two metrics"
+            kind="anomaly"
+            title="Rows are climbing. Distinct customers are not."
+            open={!!open.f1}
+            onToggle={() => toggle("f1")}
+            chart={
+              <>
+                <LineChart
+                  height={120}
+                  markerIndex={AUG19}
+                  markerLabel="Aug 19"
+                  yLabels={["Total rows", "Distinct customer_id"]}
+                  series={[
+                    { label: "Total rows", values: ROWS_SERIES, color: "var(--brand-blue-bright)" },
+                    { label: "Distinct customer_id", values: DISTINCT_SERIES, color: "var(--brand-blue)" },
+                  ]}
+                />
+                <div className="mt-3 flex gap-3">
+                  <Stat value="+287" label="rows since Aug 19" />
+                  <Stat value="+5" label="distinct customers since Aug 19" />
+                </div>
+              </>
+            }
+            detail={
+              <p className="text-[12.5px]" style={{ color: "var(--ink-700)" }}>
+                Neither line is alarming on its own — together they only have one explanation. The
+                table gained rows, not customers, and anything counting this table has been counting
+                up for three weeks.
               </p>
-              <div className="mt-3">
-                <StackedBar segments={DUPE_BREAKDOWN} total={1204} />
-              </div>
-            </>
-          }
-          detail={
-            <>
-              <Group
-                count="900"
-                title="Re-inserts from SFDC"
-                tag="new"
-                body="All source_system = SFDC, created in the last 21 days, updated_at never changed — so these are fresh inserts, not edits. This is the connector."
+            }
+            actions={
+              <ActionButtons
+                onAsk={onAsk}
+                onPin={onPin}
+                actions={[
+                  {
+                    label: "Pin ↑",
+                    primary: true,
+                    pin: { title: "Growth is fake", value: "+6%", sub: "rows up · distinct flat" },
+                  },
+                  { label: "How bad is this on a join?", ask: "How bad is this on a join?" },
+                ]}
               />
-              <Group
-                count="300"
-                title="Test records"
-                tag="months old"
-                body="IDs prefixed TEST_, from LEGACY. Present long before this and unrelated to it. Filter at the loader when convenient."
+            }
+          />
+
+          <FindingCard
+            label="Duplicate rows"
+            kind="check"
+            title="1,204 rows now carry a repeated customer_id — up from 40 on Aug 19."
+            open={!!open.f2}
+            onToggle={() => toggle("f2")}
+            chart={
+              <>
+                <LineChart
+                  height={120}
+                  markerIndex={AUG19}
+                  markerLabel="Aug 19"
+                  showLegend={false}
+                  threshold={DUPE_ALERT_THRESHOLD}
+                  thresholdLabel="alert threshold · 1,000"
+                  series={[
+                    { label: "Rows with duplicate customer_id", values: DUPE_COUNT_SERIES, color: "var(--brand-red)" },
+                  ]}
+                />
+                <p className="mt-2 text-[12px]" style={{ color: "var(--ink-300)" }}>
+                  The curve crossed the threshold this week — the drift started three weeks earlier.
+                </p>
+                <div className="mt-3">
+                  <StackedBar segments={DUPE_BREAKDOWN} total={1204} />
+                </div>
+              </>
+            }
+            detail={
+              <>
+                <Group
+                  count="900"
+                  title="Re-inserts from SFDC"
+                  tag="new"
+                  body="All source_system = SFDC, created in the last 21 days, updated_at never changed — so these are fresh inserts, not edits. This is the connector."
+                />
+                <Group
+                  count="300"
+                  title="Test records"
+                  tag="months old"
+                  body="IDs prefixed TEST_, from LEGACY. Present long before this and unrelated to it. Filter at the loader when convenient."
+                />
+                <Group
+                  count="4"
+                  title="Genuine ID collisions"
+                  body="Two source systems assigned the same identifier to different people. I can't tell which is correct — that needs whoever owns ID assignment."
+                />
+              </>
+            }
+            actions={
+              <ActionButtons
+                onAsk={onAsk}
+                onPin={onPin}
+                actions={[
+                  { label: "Investigate the 900", primary: true, ask: "Investigate the SFDC re-inserts" },
+                  { label: "See the rows" },
+                  { label: "Propose a rule", ask: "Prevent this" },
+                ]}
               />
-              <Group
-                count="4"
-                title="Genuine ID collisions"
-                body="Two source systems assigned the same identifier to different people. I can't tell which is correct — that needs whoever owns ID assignment."
-              />
-            </>
-          }
-          actions={
-            <ActionButtons
-              onAsk={onAsk}
-              onPin={onPin}
-              actions={[
-                { label: "Investigate the 900", primary: true, ask: "Investigate the SFDC re-inserts" },
-                { label: "See the rows" },
-                { label: "Propose a rule", ask: "Prevent this" },
-              ]}
-            />
-          }
-        />
+            }
+          />
+        </div>
 
         <FindingCard
           label="Sibling tables"
