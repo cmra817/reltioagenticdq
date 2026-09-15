@@ -48,8 +48,8 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
     }
   }, []);
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const submit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     ask(input);
     setInput("");
   };
