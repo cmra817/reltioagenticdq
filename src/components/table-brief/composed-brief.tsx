@@ -197,10 +197,7 @@ export function ComposedBrief({
   }
 
   return (
-    <div
-      className="flex max-h-[58vh] flex-col overflow-y-auto rounded-xl px-4 py-4"
-      style={{ border: "1px solid var(--hairline)", background: "rgba(255,255,255,0.75)" }}
-    >
+    <div className="flex flex-col px-1 py-2">
       <p className="text-[12px]" style={{ color: "var(--ink-300)" }}>
         customer_data · 4,897 rows · 47 columns · loaded from SFDC and LEGACY · last synced 14 hours
         ago
