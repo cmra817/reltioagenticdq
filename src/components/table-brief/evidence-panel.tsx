@@ -224,13 +224,53 @@ function DuplicateRowsView({
   );
 }
 
-function ColumnsView({ onScope }: { onScope: (id: string) => void }) {
+function SampleDataView() {
+  return (
+    <div className="flex flex-col gap-2">
+      <EvidenceTableShell>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr style={{ color: "var(--ink-300)" }}>
+                {SAMPLE_COLUMNS.map((h) => (
+                  <th key={h} className="whitespace-nowrap px-3 py-2 text-left font-mono font-medium">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {SAMPLE_ROWS.map((row, i) => (
+                <tr key={i} style={{ borderTop: "1px solid var(--hairline)" }}>
+                  {row.map((cell, j) => (
+                    <td
+                      key={j}
+                      className="whitespace-nowrap px-3 py-2 font-mono"
+                      style={{ color: j === 0 ? "var(--ink-900)" : "var(--ink-700)" }}
+                    >
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </EvidenceTableShell>
+      <p className="px-1 text-[11.5px]" style={{ color: "var(--ink-300)" }}>
+        10 of 4,897 rows · sampled 6 hours ago.
+      </p>
+    </div>
+  );
+}
+
+function ProfilingView({ onScope }: { onScope: (id: string) => void }) {
   return (
     <EvidenceTableShell>
       <table className="w-full text-[12px]">
         <thead>
           <tr style={{ color: "var(--ink-300)" }}>
-            {["Column", "Type", "Fill", "Unique", "Status"].map((h) => (
+            {["Column", "Type", "Completeness", "Unique", "Status"].map((h) => (
               <th key={h} className="px-3 py-2 text-left font-medium">
                 {h}
               </th>
