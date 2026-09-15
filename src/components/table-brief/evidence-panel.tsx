@@ -436,23 +436,19 @@ export function EvidencePanel({
 
       <div className="flex flex-col gap-2">
         <SectionTitle>Overview</SectionTitle>
-        <div
-          className="grid grid-cols-3 divide-x rounded-xl px-1 py-2.5"
-          style={{ border: "1px solid var(--hairline)", background: "#fff" }}
-        >
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1">
           {OVERVIEW_ACTIVITY.map((item) => (
-            <div key={item.label} className="min-w-0 px-1.5">
-              <div className="flex items-center gap-1 whitespace-nowrap text-[8.5px]" style={{ color: "var(--ink-300)" }}>
-                <span>{item.label}</span>
-                <Info size={9} className="shrink-0" />
-              </div>
-              <div
-                className="mt-1 flex items-center gap-1 whitespace-nowrap text-[10.5px] font-semibold"
+            <div key={item.label} className="flex items-baseline gap-1.5">
+              <span className="text-[8.5px]" style={{ color: "var(--ink-300)" }}>
+                {item.label}
+              </span>
+              <span
+                className="flex items-center gap-1 whitespace-nowrap text-[10.5px] font-semibold"
                 style={{ color: item.stale ? "#b45309" : "var(--ink-900)" }}
               >
                 {item.stale && <Clock3 size={10} className="shrink-0" />}
                 {item.value}
-              </div>
+              </span>
             </div>
           ))}
         </div>
