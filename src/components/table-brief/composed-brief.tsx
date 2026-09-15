@@ -1,10 +1,21 @@
 import * as React from "react";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
-import { LineChart } from "./charts";
-import { AUG19, DISTINCT_SERIES, ROWS_SERIES, SIBLING_SERIES } from "./data";
+import { LineChart, StackedBar } from "./charts";
+import {
+  AUG19,
+  DISTINCT_SERIES,
+  DUPE_ALERT_THRESHOLD,
+  DUPE_BREAKDOWN,
+  DUPE_COUNT_SERIES,
+  ROWS_SERIES,
+  SIBLING_CARDS,
+  SIBLING_DISTINCT,
+  SIBLING_SERIES,
+} from "./data";
 import type { PinPayload } from "./answers";
 import { ActionButtons } from "./thread";
 import type { EvidenceId } from "./data";
+
 
 export type Pin = PinPayload & { id: string; fresh?: boolean };
 
