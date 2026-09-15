@@ -308,7 +308,7 @@ export function ComposedBrief({
         44 other columns — nothing needed you.{" "}
         <button
           type="button"
-          onClick={() => onOpenEvidence("columns")}
+          onClick={() => onOpenEvidence("profiling")}
           style={{ color: "var(--brand-blue)" }}
         >
           Show all
