@@ -421,10 +421,7 @@ export function EvidencePanel({
       }}
     >
       {/* Overview — always visible */}
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[13px] font-semibold" style={{ color: "var(--ink-900)" }}>
-          customer_data
-        </span>
+      <div className="flex items-center justify-end">
         {openView && (
           <button
             type="button"
