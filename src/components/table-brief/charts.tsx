@@ -1,8 +1,14 @@
 import * as React from "react";
 
-function pathFor(values: number[], w: number, h: number, pad = 2) {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+function pathFor(
+  values: number[],
+  w: number,
+  h: number,
+  pad = 2,
+  scale?: { min: number; max: number },
+) {
+  const min = scale ? scale.min : Math.min(...values);
+  const max = scale ? scale.max : Math.max(...values);
   const span = max - min || 1;
   const stepX = (w - pad * 2) / Math.max(values.length - 1, 1);
   return values
@@ -13,6 +19,7 @@ function pathFor(values: number[], w: number, h: number, pad = 2) {
     })
     .join(" ");
 }
+
 
 /** Sparkline with an optional learned-band shaded behind the line. */
 export function BandSparkline({
