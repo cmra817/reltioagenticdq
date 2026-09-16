@@ -85,10 +85,10 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
       { id: `a-${Date.now() + 1}`, role: "agent", blocks: answer.blocks },
     ]);
     if (mentionsSfdc(q)) {
-      setEvidence("duplicates");
+      openTab("duplicates");
       setDupeFilter("SFDC re-inserts · 900");
     }
-  }, []);
+  }, [openTab]);
 
   const submit = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -98,8 +98,14 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
 
   return (
     <div className="flex h-full min-h-0 flex-1">
-      {/* Center column */}
-      <div className="flex min-w-0 flex-1 flex-col px-6 py-4">
+      {/* Center column — hidden when the panel is expanded full-width */}
+      <div
+        className={
+          widthMode === "expanded"
+            ? "hidden"
+            : "flex min-w-0 flex-1 flex-col px-6 py-4"
+        }
+      >
         <div className="flex items-center gap-3 pb-3">
           <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center">
             <SourceLogo source="Databricks" />
