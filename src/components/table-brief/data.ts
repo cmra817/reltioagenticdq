@@ -147,7 +147,7 @@ export const EVIDENCE_ITEMS: {
 
 export const SAMPLE_COLUMNS = ["customer_id", "email", "source_system", "country", "created_at"];
 
-export const SAMPLE_ROWS: string[][] = [
+const CURATED_SAMPLE_ROWS: string[][] = [
   ["C-40194", "m.reyes@northwind.com", "SFDC", "US", "2026-09-12"],
   ["C-40194", "m.reyes@northwind.com", "SFDC", "US", "2026-09-12"],
   ["C-40211", "j.tanaka@kobe-eng.jp", "SFDC", "JP", "2026-09-11"],
@@ -159,6 +159,39 @@ export const SAMPLE_ROWS: string[][] = [
   ["C-30442", "s.dubois@cielpar.fr", "SFDC", "FR", "2026-07-19"],
   ["C-28810", "r.nilsen@fjordlog.no", "LEGACY", "NO", "2026-06-02"],
 ];
+
+const SAMPLE_FIRST = ["m.reyes", "j.tanaka", "hello", "a.silva", "lena.k", "p.okafor", "s.dubois", "r.nilsen", "k.mensah", "d.novak", "t.andersen", "y.chen", "f.rossi", "n.haddad", "e.moreau", "b.olsen"];
+const SAMPLE_DOMAIN = ["northwind.com", "kobe-eng.jp", "brightbox.co.uk", "vertexmed.br", "aurorafin.de", "lagosgrid.ng", "cielpar.fr", "fjordlog.no", "helixdata.io", "summitops.com"];
+const SAMPLE_COUNTRY = ["US", "JP", "GB", "BR", "DE", "NG", "FR", "NO", "CA", "AU", "IN", "ES"];
+
+// Deterministic pseudo-rows so the prototype can page through a realistic volume.
+function buildSampleRows(total: number): string[][] {
+  const rows = [...CURATED_SAMPLE_ROWS];
+  let seed = 991;
+  const next = (n: number) => {
+    seed = (seed * 1103515245 + 12345) % 2147483647;
+    return seed % n;
+  };
+  for (let i = rows.length; i < total; i++) {
+    const isTest = next(100) < 4;
+    const id = isTest
+      ? `TEST_${String(100 + next(900)).padStart(4, "0")}`
+      : `C-${10000 + next(39000)}`;
+    const email = isTest
+      ? `qa+${next(900)}@internal.test`
+      : `${SAMPLE_FIRST[next(SAMPLE_FIRST.length)]}@${SAMPLE_DOMAIN[next(SAMPLE_DOMAIN.length)]}`;
+    const source = isTest ? "LEGACY" : next(10) < 7 ? "SFDC" : "LEGACY";
+    const country = SAMPLE_COUNTRY[next(SAMPLE_COUNTRY.length)];
+    const month = 1 + next(9);
+    const day = 1 + next(28);
+    const created = `2026-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    rows.push([id, email, source, country, created]);
+  }
+  return rows;
+}
+
+export const SAMPLE_TOTAL_ROWS = 4897;
+export const SAMPLE_ROWS: string[][] = buildSampleRows(600);
 
 export type DupeRow = {
   id: string;
