@@ -33,7 +33,10 @@ function AppShellInner({
   const [slotGrows, setSlotGrows] = React.useState(false);
 
   const left = (
-    <div className="flex min-w-0 flex-1 flex-col">
+    <div
+      className="flex min-w-0 flex-col transition-[width] duration-200"
+      style={slotGrows ? { width: 260, flex: "0 0 260px" } : { flex: "1 1 0%" }}
+    >
       <AgentflowTopbar />
       <DomainConnectedBanner />
       <div className="flex flex-1 overflow-hidden">
