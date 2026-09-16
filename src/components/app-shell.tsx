@@ -64,17 +64,20 @@ function AppShellInner({
           filter: "blur(40px)",
         }}
       />
-      <div className="relative z-10 flex h-screen flex-col">
-        <AgentflowTopbar />
-        <DomainConnectedBanner />
-        <div className="flex flex-1 overflow-hidden">
-          {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "data-health"} />}
-          <main className="relative flex flex-1 flex-col overflow-hidden">
-            {children}
-            {!hideDock && <DockComposer />}
-          </main>
-        </div>
-      </div>
+      {panelFullHeight ? (
+        <RightPanelSlotContext.Provider value={{ node: slotNode, setGrows: setSlotGrows }}>
+          <div className="relative z-10 flex h-screen">
+            {left}
+            <div
+              ref={setSlotNode}
+              className="flex h-full min-w-0"
+              style={{ flex: slotGrows ? "1 1 0%" : "0 0 auto" }}
+            />
+          </div>
+        </RightPanelSlotContext.Provider>
+      ) : (
+        <div className="relative z-10 flex h-screen flex-col">{left}</div>
+      )}
     </div>
   );
 }
