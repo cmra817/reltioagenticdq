@@ -1,7 +1,7 @@
 import * as React from "react";
 import {
   X, Clock3, TriangleAlert, Table2, ListChecks, Activity, Rows3, Grid3x3,
-  ArrowUp, MessagesSquare, Plus, Maximize2, Minimize2, PanelRightClose, PanelRightOpen,
+  ArrowUp, MessagesSquare, Plus, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, Columns3, Check,
 } from "lucide-react";
 import { BandSparkline } from "./charts";
 import { Thread, type ThreadMessage } from "./thread";
