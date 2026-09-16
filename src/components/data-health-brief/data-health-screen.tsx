@@ -103,9 +103,6 @@ export function DataHealthScreen() {
         <h1 className="text-[17px] font-semibold" style={{ color: "var(--ink-900)" }}>
           Data health
         </h1>
-        <span className="text-[12.5px]" style={{ color: "var(--ink-500)" }}>
-          {config.name} · {config.tableCount} tables
-        </span>
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
