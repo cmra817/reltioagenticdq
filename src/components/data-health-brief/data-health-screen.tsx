@@ -69,12 +69,14 @@ export function DataHealthScreen() {
     const q = qRaw.trim();
     if (!q) return;
     const answer = answerFor(q);
+    setLevel("min");
     setMessages((prev) => [
       ...prev,
       { id: `u${prev.length}`, role: "user", text: q },
       { id: `a${prev.length}`, role: "agent", blocks: answer.blocks },
     ]);
   }, []);
+
 
   const addPin = React.useCallback((p: PinPayload) => {
     setLevel("full");
@@ -140,38 +142,35 @@ export function DataHealthScreen() {
         </div>
       </div>
 
-      {/* composed region — pinned, own scroll */}
-      {level === "min" ? (
-        <div className="mx-auto w-full max-w-[900px] shrink-0 px-6">
-          <button
-            type="button"
-            onClick={() => setLevel("full")}
-            className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left"
-            style={{ border: "1px solid var(--hairline)", background: "#fff" }}
-          >
-            <span className="text-[13px] font-medium" style={{ color: "var(--ink-900)" }}>
-              {config.name}
-            </span>
-            <span
-              className="rounded px-1.5 py-0.5 text-[11px] font-medium"
-              style={{ background: "rgba(67,134,250,0.10)", color: "var(--brand-blue)" }}
+      {/* one scroll: dashboard lives in the conversation, folds to a sticky bar */}
+      <div className="mx-auto min-h-0 w-full max-w-[900px] flex-1 overflow-y-auto px-6 pt-1">
+        {level === "min" ? (
+          <div className="sticky top-0 z-10 pb-3 pt-1" style={{ background: "var(--canvas)" }}>
+            <button
+              type="button"
+              onClick={() => setLevel("full")}
+              className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left"
+              style={{ border: "1px solid var(--hairline)", background: "#fff" }}
             >
-              {healthy ? "0 findings" : "3 findings"}
-            </span>
-            <span className="truncate text-[12.5px]" style={{ color: "var(--ink-500)" }}>
-              {healthy ? "all inside band · payments trending" : "SFDC duplicates · orders_fact late · cust_addresses nulls"}
-            </span>
-            <span className="ml-auto text-[12px] underline" style={{ color: "var(--brand-blue)" }}>
-              Expand
-            </span>
-          </button>
-        </div>
-      ) : (
-        <div
-          className="mx-auto flex w-full max-w-[900px] shrink-0 flex-col"
-          style={{ maxHeight: "54vh" }}
-        >
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2">
+              <span className="text-[13px] font-medium" style={{ color: "var(--ink-900)" }}>
+                {config.name}
+              </span>
+              <span
+                className="rounded px-1.5 py-0.5 text-[11px] font-medium"
+                style={{ background: "rgba(67,134,250,0.10)", color: "var(--brand-blue)" }}
+              >
+                {healthy ? "0 findings" : "3 findings"}
+              </span>
+              <span className="truncate text-[12.5px]" style={{ color: "var(--ink-500)" }}>
+                {healthy ? "all inside band · payments trending" : "SFDC duplicates · orders_fact late · cust_addresses nulls"}
+              </span>
+              <span className="ml-auto text-[12px] underline" style={{ color: "var(--brand-blue)" }}>
+                Expand
+              </span>
+            </button>
+          </div>
+        ) : (
+          <div className="pb-2">
             {level === "full" && (
               <Scorecard
                 name={config.name}
@@ -185,43 +184,43 @@ export function DataHealthScreen() {
             )}
             {level === "full" && <div className="my-5 h-px" style={{ background: "var(--hairline)" }} />}
             {healthy ? <HealthyBrief onAsk={ask} onPin={addPin} /> : <TodayBrief onAsk={ask} onPin={addPin} />}
-          </div>
 
-          {/* level control */}
-          <div
-            className="mx-6 flex shrink-0 items-center gap-2 py-2"
-            style={{ borderTop: "1px solid var(--hairline)" }}
-          >
-            {[
-              { k: "full" as Level, label: "Full" },
-              { k: "brief" as Level, label: "Hide scorecard" },
-              { k: "min" as Level, label: "Minimise" },
-            ].map((o) => (
-              <button
-                key={o.k}
-                type="button"
-                onClick={() => setLevel(o.k)}
-                className="rounded-lg px-2.5 py-1 text-[12px] font-medium"
-                style={
-                  level === o.k
-                    ? { background: "var(--surface-soft)", color: "var(--ink-900)", border: "1px solid var(--hairline)" }
-                    : { color: "var(--ink-500)", border: "1px solid transparent" }
-                }
-              >
-                {o.label}
-              </button>
-            ))}
-            <span className="ml-auto text-[11.5px]" style={{ color: "var(--ink-300)" }}>
-              Updated 6:00am · next run 6:00am tomorrow
-            </span>
+            <div
+              className="mt-3 flex items-center gap-2 py-2"
+              style={{ borderTop: "1px solid var(--hairline)" }}
+            >
+              {[
+                { k: "full" as Level, label: "Full" },
+                { k: "brief" as Level, label: "Hide scorecard" },
+                { k: "min" as Level, label: "Minimise" },
+              ].map((o) => (
+                <button
+                  key={o.k}
+                  type="button"
+                  onClick={() => setLevel(o.k)}
+                  className="rounded-lg px-2.5 py-1 text-[12px] font-medium"
+                  style={
+                    level === o.k
+                      ? { background: "var(--surface-soft)", color: "var(--ink-900)", border: "1px solid var(--hairline)" }
+                      : { color: "var(--ink-500)", border: "1px solid transparent" }
+                  }
+                >
+                  {o.label}
+                </button>
+              ))}
+              <span className="ml-auto text-[11.5px]" style={{ color: "var(--ink-300)" }}>
+                Updated 6:00am · next run 6:00am tomorrow
+              </span>
+            </div>
           </div>
+        )}
+
+        <div className={messages.length > 0 ? "mt-4" : ""}>
+          <Thread messages={messages} onAsk={ask} onPin={addPin} />
         </div>
-      )}
-
-      {/* thread */}
-      <div className="mx-auto min-h-0 w-full max-w-[900px] flex-1 overflow-y-auto px-6 pt-3">
-        <Thread messages={messages} onAsk={ask} onPin={addPin} />
       </div>
+
+
 
       {/* input */}
       <div className="mx-auto w-full max-w-[900px] shrink-0 px-6 pb-4 pt-2">
