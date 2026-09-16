@@ -217,6 +217,12 @@ export const DUPE_ROWS: DupeRow[] = [
 export type ColumnRow = {
   name: string;
   type: string;
+  length: string;
+  min: string;
+  max: string;
+  mean: string;
+  nulls: string;
+  distinct: string;
   fill: string;
   unique: string;
   status: string;
@@ -224,15 +230,16 @@ export type ColumnRow = {
 };
 
 const CURATED_COLUMNS_ROWS: ColumnRow[] = [
-  { name: "customer_id", type: "string", fill: "100%", unique: "75.4%", status: "1,204 dupes", bad: true },
-  { name: "email", type: "string", fill: "99.2%", unique: "98.7%", status: "pass", bad: false },
-  { name: "phone_number", type: "string", fill: "94.1%", unique: "96.3%", status: "pass", bad: false },
-  { name: "created_at", type: "timestamp", fill: "100%", unique: "88.0%", status: "pass", bad: false },
-  { name: "updated_at", type: "timestamp", fill: "100%", unique: "72.1%", status: "pass", bad: false },
-  { name: "source_system", type: "string", fill: "100%", unique: "0.1%", status: "pass", bad: false },
-  { name: "country", type: "string", fill: "97.4%", unique: "0.9%", status: "pass", bad: false },
-  { name: "segment", type: "string", fill: "91.8%", unique: "0.2%", status: "pass", bad: false },
+  { name: "customer_id", type: "string", length: "8", min: "C-10001", max: "C-49882", mean: "—", nulls: "0", distinct: "3,693", fill: "100%", unique: "75.4%", status: "1,204 dupes", bad: true },
+  { name: "email", type: "string", length: "24", min: "a.abbot@…", max: "zoe.yu@…", mean: "—", nulls: "39", distinct: "4,835", fill: "99.2%", unique: "98.7%", status: "pass", bad: false },
+  { name: "phone_number", type: "string", length: "12", min: "+1 201…", max: "+61 9…", mean: "—", nulls: "289", distinct: "4,436", fill: "94.1%", unique: "96.3%", status: "pass", bad: false },
+  { name: "created_at", type: "timestamp", length: "—", min: "2021-03-04", max: "2026-09-14", mean: "2024-02-11", nulls: "0", distinct: "4,309", fill: "100%", unique: "88.0%", status: "pass", bad: false },
+  { name: "updated_at", type: "timestamp", length: "—", min: "2021-03-04", max: "2026-09-15", mean: "2025-06-02", nulls: "0", distinct: "3,530", fill: "100%", unique: "72.1%", status: "pass", bad: false },
+  { name: "source_system", type: "string", length: "6", min: "LEGACY", max: "SNOWFLK", mean: "—", nulls: "0", distinct: "4", fill: "100%", unique: "0.1%", status: "pass", bad: false },
+  { name: "country", type: "string", length: "2", min: "AU", max: "US", mean: "—", nulls: "127", distinct: "42", fill: "97.4%", unique: "0.9%", status: "pass", bad: false },
+  { name: "segment", type: "string", length: "10", min: "Enterprise", max: "SMB", mean: "—", nulls: "401", distinct: "9", fill: "91.8%", unique: "0.2%", status: "pass", bad: false },
 ];
+
 
 const EXTRA_COLUMN_NAMES: [string, string][] = [
   ["first_name", "string"],
