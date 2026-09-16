@@ -1,5 +1,7 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { ArrowUp, Clock, X } from "lucide-react";
+import { RightPanelSlotContext } from "@/components/app-shell";
 import { DatasetIcon, SourceLogo, TableIcon } from "@/components/explore-screen";
 import { ComposedBrief, type Pin } from "./composed-brief";
 import { EvidencePanel, type PanelTab, type WidthMode } from "./evidence-panel";
