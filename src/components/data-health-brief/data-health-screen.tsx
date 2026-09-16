@@ -115,29 +115,6 @@ export function DataHealthScreen() {
           >
             Restart setup
           </button>
-          <div
-            className="flex items-center rounded-lg p-0.5"
-            style={{ border: "1px solid var(--hairline)", background: "#fff" }}
-          >
-            {[
-              { k: false, label: "Today" },
-              { k: true, label: "Healthy day" },
-            ].map((o) => (
-              <button
-                key={o.label}
-                type="button"
-                onClick={() => setHealthy(o.k)}
-                className="rounded-md px-2.5 py-1 text-[12px] font-medium"
-                style={
-                  healthy === o.k
-                    ? { background: "var(--brand-blue)", color: "#fff" }
-                    : { color: "var(--ink-500)" }
-                }
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 
