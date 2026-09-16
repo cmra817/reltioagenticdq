@@ -70,16 +70,12 @@ function PinCard({ pin, onRemove }: { pin: Pin; onRemove: () => void }) {
 }
 
 export function Scorecard({
-  name,
-  tableCount,
   dims,
   healthy,
   pins,
   onRemovePin,
   onAsk,
 }: {
-  name: string;
-  tableCount: number;
   dims: Record<DimensionId, boolean>;
   healthy: boolean;
   pins: Pin[];
