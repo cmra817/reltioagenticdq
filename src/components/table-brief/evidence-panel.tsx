@@ -2,13 +2,14 @@ import * as React from "react";
 import {
   X, Clock3, TriangleAlert, Table2, ListChecks, Activity, Rows3, Grid3x3,
   ArrowUp, MessagesSquare, Plus, Maximize2, Minimize2, PanelRightClose, Columns3, Check,
+  ChevronDown, ChevronRight,
 } from "lucide-react";
 import { BandSparkline } from "./charts";
 import { Thread, type ThreadMessage } from "./thread";
 import type { PinPayload } from "./answers";
 import {
   ACTIVITY_ROWS,
-  CHECK_ROWS,
+  CHECK_GROUPS,
   CHECKS_SERIES,
   COLUMNS_ROWS,
   DUPE_ROWS,
@@ -18,6 +19,7 @@ import {
   SAMPLE_ROWS,
   SAMPLE_TOTAL_ROWS,
   type EvidenceId,
+  type CheckRunStatus,
 } from "./data";
 
 const toneColor = (tone: "red" | "amber" | "neutral") =>
@@ -479,42 +481,126 @@ function ProfilingView({ onScope }: { onScope: (id: string) => void }) {
 }
 
 
+const DIMENSION_STYLES = {
+  Validity: { color: "#2563eb", background: "#eff6ff" },
+  Completeness: { color: "#0f766e", background: "#ecfdf5" },
+  Uniqueness: { color: "#be185d", background: "#fdf2f8" },
+  Accuracy: { color: "#b45309", background: "#fff7ed" },
+  Consistency: { color: "#7c3aed", background: "#f5f3ff" },
+} as const;
+
+const STATUS_STYLES: Record<CheckRunStatus, { color: string; background: string; border: string }> = {
+  Passed: { color: "#047857", background: "#ecfdf5", border: "#a7f3d0" },
+  Failed: { color: "var(--brand-red)", background: "#fff1ef", border: "#ffc7bf" },
+  Warning: { color: "#b45309", background: "#fffbeb", border: "#fde68a" },
+};
+
+function StatusBadge({ status }: { status: CheckRunStatus }) {
+  const style = STATUS_STYLES[status];
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold"
+      style={{ color: style.color, background: style.background, border: `1px solid ${style.border}` }}
+    >
+      <span className="h-1.5 w-1.5 rounded-full" style={{ background: style.color }} />
+      {status}
+    </span>
+  );
+}
+
 function ChecksView() {
+  const [expanded, setExpanded] = React.useState<Set<string>>(
+    () => new Set(CHECK_GROUPS.filter((group) => group.expanded).map((group) => group.id)),
+  );
+  const toggle = (id: string) => {
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   return (
     <div className="flex flex-col gap-2">
       <EvidenceTableShell>
-        <table className="w-full text-[12px]">
-          <thead>
-            <tr style={{ color: "var(--ink-300)" }}>
-              {["Check", "Column", "Result"].map((h) => (
-                <th key={h} className="px-3 py-2 text-left font-medium">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {CHECK_ROWS.map((c, i) => (
-              <tr key={`${c.check}-${i}`} style={{ borderTop: "1px solid var(--hairline)" }}>
-                <td className="px-3 py-2 font-mono" style={{ color: "var(--ink-900)" }}>
-                  {c.check}
-                </td>
-                <td className="px-3 py-2 font-mono" style={{ color: "var(--ink-700)" }}>
-                  {c.column}
-                </td>
-                <td
-                  className="px-3 py-2"
-                  style={{ color: c.bad ? "var(--brand-red)" : "var(--ink-500)", fontWeight: c.bad ? 600 : 400 }}
-                >
-                  {c.result}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] table-fixed text-[12px]">
+            <colgroup>
+              <col className="w-[34%]" />
+              <col className="w-[17%]" />
+              <col className="w-[11%]" />
+              <col className="w-[13%]" />
+              <col className="w-[12%]" />
+              <col className="w-[13%]" />
+            </colgroup>
+            <thead>
+              <tr className="uppercase" style={{ color: "var(--ink-300)", background: "var(--canvas)" }}>
+                {["Name", "Dimension", "Coverage", "Last run", "Status", "Pass rate"].map((h) => (
+                  <th key={h} className="whitespace-nowrap px-3 py-2.5 text-left text-[10.5px] font-semibold">
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {CHECK_GROUPS.map((group) => {
+                const isOpen = expanded.has(group.id);
+                const dimensionStyle = DIMENSION_STYLES[group.dimension];
+                return (
+                  <React.Fragment key={group.id}>
+                    <tr style={{ borderTop: "1px solid var(--hairline)" }}>
+                      <td className="px-3 py-2.5">
+                        <button
+                          type="button"
+                          onClick={() => toggle(group.id)}
+                          aria-expanded={isOpen}
+                          className="flex min-w-0 items-center gap-1.5 text-left font-semibold"
+                          style={{ color: "var(--brand-blue)" }}
+                        >
+                          {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                          <span className="truncate">{group.name}</span>
+                        </button>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span
+                          className="inline-flex whitespace-nowrap rounded-full px-2 py-1 text-[10.5px] font-semibold"
+                          style={dimensionStyle}
+                        >
+                          {group.dimension}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 font-mono" style={{ color: "var(--ink-700)" }}>
+                        <span className="inline-flex items-center gap-1.5"><Grid3x3 size={12} />{group.columns.length}</span>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2.5" style={{ color: "var(--ink-500)" }}>{group.lastRun}</td>
+                      <td className="px-3 py-2.5"><StatusBadge status={group.status} /></td>
+                      <td className="whitespace-nowrap px-3 py-2.5 font-mono" style={{ color: "var(--ink-700)" }}>{group.passRate}</td>
+                    </tr>
+                    {isOpen && group.columns.map((column) => (
+                      <tr key={`${group.id}-${column.column}`} style={{ borderTop: "1px solid var(--hairline)" }}>
+                        <td className="px-3 py-2.5 pl-12 font-mono" style={{ color: "var(--ink-700)" }}>
+                          <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                            <Check size={13} color={STATUS_STYLES[column.status].color} />
+                            {column.column}
+                          </span>
+                        </td>
+                        <td />
+                        <td />
+                        <td className="whitespace-nowrap px-3 py-2.5" style={{ color: "var(--ink-500)" }}>{column.lastRun}</td>
+                        <td className="px-3 py-2.5"><StatusBadge status={column.status} /></td>
+                        <td className="whitespace-nowrap px-3 py-2.5 font-mono" style={{ color: "var(--ink-700)" }}>{column.passRate}</td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </EvidenceTableShell>
       <p className="px-1 text-[11.5px]" style={{ color: "var(--ink-300)" }}>
-        Threshold on the uniqueness check is 1,000 rows. It was crossed Tuesday.
+        {CHECK_GROUPS.length} checks across {CHECK_GROUPS.reduce((total, group) => total + group.columns.length, 0)} columns · last run 2 hours ago.
       </p>
     </div>
   );

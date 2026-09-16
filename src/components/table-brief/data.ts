@@ -331,13 +331,106 @@ function buildColumnRows(): ColumnRow[] {
 
 export const COLUMNS_ROWS: ColumnRow[] = buildColumnRows();
 
-export const CHECK_ROWS = [
-  { check: "expect_column_values_to_be_unique", column: "customer_id", result: "1,204 fail", bad: true },
-  { check: "expect_column_values_to_not_be_null", column: "customer_id", result: "pass", bad: false },
-  { check: "expect_column_values_to_not_be_null", column: "email", result: "pass", bad: false },
-  { check: "expect_column_values_to_match_regex", column: "email", result: "pass", bad: false },
-  { check: "expect_column_values_to_be_in_set", column: "source_system", result: "pass", bad: false },
-  { check: "expect_column_values_to_be_between", column: "created_at", result: "pass", bad: false },
+export type CheckRunStatus = "Passed" | "Failed" | "Warning";
+
+export type CheckColumnResult = {
+  column: string;
+  lastRun: string;
+  status: CheckRunStatus;
+  passRate: string;
+};
+
+export type CheckGroup = {
+  id: string;
+  name: string;
+  dimension: "Validity" | "Completeness" | "Uniqueness" | "Accuracy" | "Consistency";
+  lastRun: string;
+  status: CheckRunStatus;
+  passRate: string;
+  columns: CheckColumnResult[];
+  expanded?: boolean;
+};
+
+export const CHECK_GROUPS: CheckGroup[] = [
+  {
+    id: "email-format",
+    name: "Email Format Validation",
+    dimension: "Validity",
+    lastRun: "2h ago",
+    status: "Passed",
+    passRate: "98/100 (98%)",
+    expanded: true,
+    columns: [
+      { column: "attributes.Email", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.SecondaryEmail", lastRun: "2h ago", status: "Passed", passRate: "98/100 (98%)" },
+      { column: "attributes.WorkEmail", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.RecoveryEmail", lastRun: "2h ago", status: "Passed", passRate: "99/100 (99%)" },
+    ],
+  },
+  {
+    id: "phone-completeness",
+    name: "Phone Number Completeness",
+    dimension: "Completeness",
+    lastRun: "2h ago",
+    status: "Failed",
+    passRate: "2/3 (67%)",
+    expanded: true,
+    columns: [
+      { column: "attributes.PrimaryPhone", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.MobilePhone", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "attributes.WorkPhone", lastRun: "2h ago", status: "Failed", passRate: "42/100 (42%)" },
+    ],
+  },
+  {
+    id: "customer-id-uniqueness",
+    name: "Customer ID Uniqueness",
+    dimension: "Uniqueness",
+    lastRun: "2h ago",
+    status: "Failed",
+    passRate: "0/1 (0%)",
+    columns: [
+      { column: "customer_id", lastRun: "2h ago", status: "Failed", passRate: "0/1 (0%)" },
+    ],
+  },
+  {
+    id: "date-range",
+    name: "Date Range Validation",
+    dimension: "Accuracy",
+    lastRun: "3h ago",
+    status: "Warning",
+    passRate: "4/5 (80%)",
+    columns: [
+      { column: "created_at", lastRun: "3h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "updated_at", lastRun: "3h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "first_order_at", lastRun: "3h ago", status: "Passed", passRate: "96/100 (96%)" },
+      { column: "last_order_at", lastRun: "3h ago", status: "Warning", passRate: "80/100 (80%)" },
+      { column: "signup_at", lastRun: "3h ago", status: "Passed", passRate: "99/100 (99%)" },
+    ],
+  },
+  {
+    id: "status-values",
+    name: "Status Value Set Check",
+    dimension: "Consistency",
+    lastRun: "2h ago",
+    status: "Passed",
+    passRate: "2/2 (100%)",
+    columns: [
+      { column: "account_tier", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+      { column: "support_tier", lastRun: "2h ago", status: "Passed", passRate: "100/100 (100%)" },
+    ],
+  },
+  {
+    id: "address-completeness",
+    name: "Address Completeness",
+    dimension: "Completeness",
+    lastRun: "2h ago",
+    status: "Passed",
+    passRate: "2/2 (100%)",
+    columns: [
+      { column: "address_line1", lastRun: "2h ago", status: "Passed", passRate: "99/100 (99%)" },
+      { column: "postal_code", lastRun: "2h ago", status: "Passed", passRate: "98/100 (98%)" },
+    ],
+  },
 ];
 
 export const ACTIVITY_ROWS: { text: string; when: string; tone: "red" | "amber" | "neutral" }[] = [
