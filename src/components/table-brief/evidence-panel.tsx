@@ -320,10 +320,39 @@ function SampleDataView() {
 
 const PROFILING_PAGE = 15;
 
+const PROFILING_FIELDS: { id: string; label: string; get: (c: (typeof COLUMNS_ROWS)[number]) => string; mono?: boolean }[] = [
+  { id: "type", label: "Data type", get: (c) => c.type },
+  { id: "length", label: "Length", get: (c) => c.length, mono: true },
+  { id: "min", label: "Min value", get: (c) => c.min, mono: true },
+  { id: "max", label: "Max value", get: (c) => c.max, mono: true },
+  { id: "mean", label: "Mean value", get: (c) => c.mean, mono: true },
+  { id: "nulls", label: "Null count", get: (c) => c.nulls, mono: true },
+  { id: "distinct", label: "Distinct count", get: (c) => c.distinct, mono: true },
+  { id: "unique", label: "Uniqueness", get: (c) => c.unique, mono: true },
+  { id: "fill", label: "Completeness", get: (c) => c.fill, mono: true },
+];
+
 function ProfilingView({ onScope }: { onScope: (id: string) => void }) {
   const [count, setCount] = React.useState(PROFILING_PAGE);
+  const [visible, setVisible] = React.useState<string[]>(PROFILING_FIELDS.map((f) => f.id));
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement | null>(null);
   const sentinel = React.useRef<HTMLDivElement | null>(null);
   const hasMore = count < COLUMNS_ROWS.length;
+
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
 
   React.useEffect(() => {
     const el = sentinel.current;
@@ -341,18 +370,68 @@ function ProfilingView({ onScope }: { onScope: (id: string) => void }) {
   }, [hasMore, count]);
 
   const rows = COLUMNS_ROWS.slice(0, count);
+  const cols = PROFILING_FIELDS.filter((f) => visible.includes(f.id));
+  const toggle = (id: string) =>
+    setVisible((v) => (v.includes(id) ? v.filter((x) => x !== id) : [...v, id]));
 
   return (
     <div className="flex flex-col gap-2">
+      <div className="relative flex justify-end" ref={menuRef}>
+        <button
+          type="button"
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-label="Show columns"
+          className="flex h-7 w-7 items-center justify-center rounded-lg"
+          style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-700)" }}
+        >
+          <Columns3 size={14} />
+        </button>
+        {menuOpen ? (
+          <div
+            className="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl p-2"
+            style={{ background: "#fff", border: "1px solid var(--hairline)", boxShadow: "0 18px 40px -18px rgba(67,67,112,0.5)" }}
+          >
+            <p className="px-2 py-1 text-[10.5px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-300)" }}>
+              Show columns
+            </p>
+            {PROFILING_FIELDS.map((f) => {
+              const on = visible.includes(f.id);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => toggle(f.id)}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12.5px] hover:bg-[var(--surface-soft)]"
+                  style={{ color: "var(--ink-900)" }}
+                >
+                  <span
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                    style={{
+                      background: on ? "var(--ink-900)" : "transparent",
+                      border: on ? "none" : "1px solid var(--hairline)",
+                      color: "#fff",
+                    }}
+                  >
+                    {on ? <Check size={10} strokeWidth={3} /> : null}
+                  </span>
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
       <EvidenceTableShell>
         <table className="w-full text-[12px]">
           <thead>
             <tr style={{ color: "var(--ink-300)" }}>
-              {["Column", "Type", "Completeness", "Unique", "Status"].map((h) => (
-                <th key={h} className="px-3 py-2 text-left font-medium">
-                  {h}
+              <th className="px-3 py-2 text-left font-medium">Column</th>
+              {cols.map((f) => (
+                <th key={f.id} className="px-3 py-2 text-left font-medium whitespace-nowrap">
+                  {f.label}
                 </th>
               ))}
+              <th className="px-3 py-2 text-left font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -363,20 +442,20 @@ function ProfilingView({ onScope }: { onScope: (id: string) => void }) {
                 className="cursor-pointer hover:bg-[var(--surface-soft)]"
                 style={{ borderTop: "1px solid var(--hairline)" }}
               >
-                <td className="px-3 py-2 font-mono" style={{ color: "var(--ink-900)" }}>
+                <td className="px-3 py-2 font-mono whitespace-nowrap" style={{ color: "var(--ink-900)" }}>
                   {c.name}
                 </td>
-                <td className="px-3 py-2" style={{ color: "var(--ink-500)" }}>
-                  {c.type}
-                </td>
-                <td className="px-3 py-2 font-mono" style={{ color: "var(--ink-700)" }}>
-                  {c.fill}
-                </td>
-                <td className="px-3 py-2 font-mono" style={{ color: "var(--ink-700)" }}>
-                  {c.unique}
-                </td>
+                {cols.map((f) => (
+                  <td
+                    key={f.id}
+                    className={`px-3 py-2 whitespace-nowrap ${f.mono ? "font-mono" : ""}`}
+                    style={{ color: "var(--ink-700)" }}
+                  >
+                    {f.get(c)}
+                  </td>
+                ))}
                 <td
-                  className="px-3 py-2"
+                  className="px-3 py-2 whitespace-nowrap"
                   style={{ color: c.bad ? "var(--brand-red)" : "var(--ink-500)", fontWeight: c.bad ? 600 : 400 }}
                 >
                   {c.bad && <TriangleAlert size={11} className="mr-1 inline" />}
@@ -398,6 +477,7 @@ function ProfilingView({ onScope }: { onScope: (id: string) => void }) {
     </div>
   );
 }
+
 
 function ChecksView() {
   return (
