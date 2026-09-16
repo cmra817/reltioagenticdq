@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { DataHealthDashboard } from "@/components/data-health-dashboard";
+import { DataHealthScreen } from "@/components/data-health-brief/data-health-screen";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -9,10 +9,15 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Monitor overall data quality scores, job summaries, and detailed usage metrics across your data warehouses.",
+          "A daily brief on the tables you own: scorecard, anomalies, check failures, and a conversation to dig in.",
       },
       { property: "og:title", content: "Data Health — Data Quality" },
-      { property: "og:description", content: "Monitor data quality scores and detailed usage metrics." },
+      {
+        property: "og:description",
+        content: "A daily brief on the tables you own, with a scorecard built from what you chose to watch.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Index,
@@ -20,8 +25,8 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <AppShell activeNav="data-health">
-      <DataHealthDashboard />
+    <AppShell activeNav="data-health" hideDock>
+      <DataHealthScreen />
     </AppShell>
   );
 }

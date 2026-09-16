@@ -36,14 +36,14 @@ function AppShellInner({
 
   const left = (
     <div
-      className="flex min-w-0 flex-col transition-[width] duration-200"
+      className="flex min-h-0 min-w-0 flex-col transition-[width] duration-200"
       style={slotGrows ? { width: 260, flex: "0 0 260px" } : { flex: "1 1 0%" }}
     >
       <AgentflowTopbar />
       <DomainConnectedBanner />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "data-health"} />}
-        <main className="relative flex flex-1 flex-col overflow-hidden">
+        <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
           {children}
           {!hideDock && <DockComposer />}
         </main>
@@ -53,7 +53,7 @@ function AppShellInner({
 
   return (
     <div
-      className="relative min-h-screen w-full overflow-hidden"
+      className="relative min-h-screen w-full overflow-clip"
       style={{ background: "var(--canvas)" }}
     >
       <div
