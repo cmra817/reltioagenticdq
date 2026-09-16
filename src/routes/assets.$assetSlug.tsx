@@ -25,7 +25,7 @@ export const Route = createFileRoute("/assets/$assetSlug")({
 function AssetDetailPage() {
   const { assetSlug } = useParams({ from: "/assets/$assetSlug" });
   return (
-    <AppShell activeNav="explore" hideDock>
+    <AppShell activeNav="explore" hideDock panelFullHeight>
       <TableBriefScreen tableName={assetSlug === "customer_data" ? "customer_data" : assetSlug} />
     </AppShell>
   );

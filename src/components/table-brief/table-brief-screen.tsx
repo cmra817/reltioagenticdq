@@ -1,5 +1,7 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { ArrowUp, Clock, X } from "lucide-react";
+import { RightPanelSlotContext } from "@/components/app-shell";
 import { DatasetIcon, SourceLogo, TableIcon } from "@/components/explore-screen";
 import { ComposedBrief, type Pin } from "./composed-brief";
 import { EvidencePanel, type PanelTab, type WidthMode } from "./evidence-panel";
@@ -38,6 +40,13 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
   const [tabs, setTabs] = React.useState<EvidenceId[]>([]);
   const [activeTab, setActiveTab] = React.useState<PanelTab>("chat");
   const [widthMode, setWidthMode] = React.useState<WidthMode>("compact");
+  const slot = React.useContext(RightPanelSlotContext);
+
+  // In expanded mode the panel fills the whole area right of the sidebar.
+  React.useEffect(() => {
+    slot.setGrows(widthMode === "expanded");
+    return () => slot.setGrows(false);
+  }, [slot, widthMode]);
   const [dupeFilter, setDupeFilter] = React.useState<string | null>(null);
 
   const openTab = React.useCallback((id: EvidenceId) => {
@@ -227,7 +236,9 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
         </div>
       </div>
 
-      <EvidencePanel
+      {(() => {
+        const panel = (
+          <EvidencePanel
         tabs={tabs}
         activeTab={activeTab}
         widthMode={widthMode}
@@ -247,7 +258,10 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
         onScope={(id) => setScope(id)}
         dupeFilter={dupeFilter}
         onClearDupeFilter={() => setDupeFilter(null)}
-      />
+          />
+        );
+        return slot.node ? createPortal(panel, slot.node) : panel;
+      })()}
     </div>
   );
 }

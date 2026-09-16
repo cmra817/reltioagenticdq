@@ -1,3 +1,4 @@
+import * as React from "react";
 import { AgentflowSidebar } from "@/components/agentflow-sidebar";
 import { AgentflowTopbar } from "@/components/agentflow-topbar";
 import { SidebarProvider, useSidebarState } from "@/components/sidebar-context";
@@ -6,18 +7,45 @@ import { DomainConnectedBanner } from "@/components/domain-connected-banner";
 import { ChatProvider } from "@/components/chat/chat-context";
 import { DockComposer } from "@/components/chat/dock-composer";
 
+// A full-height slot on the far right of the page (above the topbar's row).
+// Table pages portal their evidence panel into it so the panel spans the
+// entire viewport height and the header only covers the left region.
+export const RightPanelSlotContext = React.createContext<{
+  node: HTMLElement | null;
+  setGrows: (g: boolean) => void;
+}>({ node: null, setGrows: () => {} });
+
 function AppShellInner({
   children,
   activeNav,
   activeTab,
   hideDock,
+  panelFullHeight,
 }: {
   children: React.ReactNode;
   activeNav?: "data-health" | "explore" | "dq-checks";
   activeTab?: "Agents" | "Unstructured" | "Quality";
   hideDock?: boolean;
+  panelFullHeight?: boolean;
 }) {
   const { collapsed } = useSidebarState();
+  const [slotNode, setSlotNode] = React.useState<HTMLElement | null>(null);
+  const [slotGrows, setSlotGrows] = React.useState(false);
+
+  const left = (
+    <div className="flex min-w-0 flex-1 flex-col">
+      <AgentflowTopbar />
+      <DomainConnectedBanner />
+      <div className="flex flex-1 overflow-hidden">
+        {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "data-health"} />}
+        <main className="relative flex flex-1 flex-col overflow-hidden">
+          {children}
+          {!hideDock && <DockComposer />}
+        </main>
+      </div>
+    </div>
+  );
+
   return (
     <div
       className="relative min-h-screen w-full overflow-hidden"
@@ -37,17 +65,20 @@ function AppShellInner({
           filter: "blur(40px)",
         }}
       />
-      <div className="relative z-10 flex h-screen flex-col">
-        <AgentflowTopbar />
-        <DomainConnectedBanner />
-        <div className="flex flex-1 overflow-hidden">
-          {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "data-health"} />}
-          <main className="relative flex flex-1 flex-col overflow-hidden">
-            {children}
-            {!hideDock && <DockComposer />}
-          </main>
-        </div>
-      </div>
+      {panelFullHeight ? (
+        <RightPanelSlotContext.Provider value={{ node: slotNode, setGrows: setSlotGrows }}>
+          <div className="relative z-10 flex h-screen">
+            {left}
+            <div
+              ref={setSlotNode}
+              className="flex h-full min-w-0"
+              style={{ flex: slotGrows ? "1 1 0%" : "0 0 auto" }}
+            />
+          </div>
+        </RightPanelSlotContext.Provider>
+      ) : (
+        <div className="relative z-10 flex h-screen flex-col">{left}</div>
+      )}
     </div>
   );
 }
@@ -57,6 +88,7 @@ export function AppShell(props: {
   activeNav?: "data-health" | "explore" | "dq-checks";
   activeTab?: "Agents" | "Unstructured" | "Quality";
   hideDock?: boolean;
+  panelFullHeight?: boolean;
 }) {
   return (
     <SidebarProvider>
