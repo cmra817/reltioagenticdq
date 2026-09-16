@@ -47,6 +47,14 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
     slot.setGrows(widthMode === "expanded");
     return () => slot.setGrows(false);
   }, [slot, widthMode]);
+
+  // The Chat tab only exists in expanded mode; switch to an evidence tab when leaving it.
+  React.useEffect(() => {
+    if (widthMode !== "expanded" && activeTab === "chat" && tabs.length > 0) {
+      setActiveTab(tabs[tabs.length - 1]);
+    }
+  }, [widthMode, activeTab, tabs]);
+
   const [dupeFilter, setDupeFilter] = React.useState<string | null>(null);
 
   const openTab = React.useCallback((id: EvidenceId) => {
