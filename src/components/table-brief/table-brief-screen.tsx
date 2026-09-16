@@ -2,7 +2,7 @@ import * as React from "react";
 import { ArrowUp, Clock, X } from "lucide-react";
 import { DatasetIcon, SourceLogo, TableIcon } from "@/components/explore-screen";
 import { ComposedBrief, type Pin } from "./composed-brief";
-import { EvidencePanel } from "./evidence-panel";
+import { EvidencePanel, type PanelTab, type WidthMode } from "./evidence-panel";
 import { Thread, type ThreadMessage } from "./thread";
 import { answerFor, mentionsSfdc, type PinPayload } from "./answers";
 import { TABLE, type EvidenceId } from "./data";
@@ -35,8 +35,32 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
   const [messages, setMessages] = React.useState<ThreadMessage[]>([]);
   const [input, setInput] = React.useState("");
   const [scope, setScope] = React.useState<string | null>(null);
-  const [evidence, setEvidence] = React.useState<EvidenceId | null>(null);
+  const [tabs, setTabs] = React.useState<EvidenceId[]>([]);
+  const [activeTab, setActiveTab] = React.useState<PanelTab>("chat");
+  const [widthMode, setWidthMode] = React.useState<WidthMode>("compact");
   const [dupeFilter, setDupeFilter] = React.useState<string | null>(null);
+
+  const openTab = React.useCallback((id: EvidenceId) => {
+    setTabs((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setActiveTab(id);
+    setWidthMode((m) => (m === "compact" ? "docked" : m));
+  }, []);
+
+  const closeTab = React.useCallback(
+    (id: EvidenceId) => {
+      setTabs((prev) => {
+        const next = prev.filter((t) => t !== id);
+        setActiveTab((cur) => (cur === id ? next[next.length - 1] ?? "chat" : cur));
+        if (next.length === 0) {
+          setWidthMode((m) => (m === "docked" ? "compact" : m));
+          setActiveTab((cur) => (cur === id ? "chat" : cur));
+        }
+        return next;
+      });
+      if (id === "duplicates") setDupeFilter(null);
+    },
+    [],
+  );
 
   const addPin = React.useCallback((p: PinPayload) => {
     const id = `${p.title}-${Date.now()}`;
@@ -61,10 +85,10 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
       { id: `a-${Date.now() + 1}`, role: "agent", blocks: answer.blocks },
     ]);
     if (mentionsSfdc(q)) {
-      setEvidence("duplicates");
+      openTab("duplicates");
       setDupeFilter("SFDC re-inserts · 900");
     }
-  }, []);
+  }, [openTab]);
 
   const submit = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -74,8 +98,14 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
 
   return (
     <div className="flex h-full min-h-0 flex-1">
-      {/* Center column */}
-      <div className="flex min-w-0 flex-1 flex-col px-6 py-4">
+      {/* Center column — hidden when the panel is expanded full-width */}
+      <div
+        className={
+          widthMode === "expanded"
+            ? "hidden"
+            : "flex min-w-0 flex-1 flex-col px-6 py-4"
+        }
+      >
         <div className="flex items-center gap-3 pb-3">
           <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center">
             <SourceLogo source="Databricks" />
@@ -118,7 +148,7 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
               onRemovePin={(id) => setPins((prev) => prev.filter((p) => p.id !== id))}
               onPin={addPin}
               onAsk={ask}
-              onOpenEvidence={(id) => setEvidence(id)}
+              onOpenEvidence={openTab}
             />
           </div>
           <div className={messages.length > 0 ? "mt-4" : ""}>
@@ -198,13 +228,22 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
       </div>
 
       <EvidencePanel
-        openView={evidence}
-        onOpen={(id) => setEvidence(id)}
-        onClose={() => {
-          setEvidence(null);
-          setDupeFilter(null);
+        tabs={tabs}
+        activeTab={activeTab}
+        widthMode={widthMode}
+        onOpenTab={openTab}
+        onActivateTab={(t) => {
+          setActiveTab(t);
+          setWidthMode((m) => (m === "compact" ? "docked" : m));
         }}
+        onCloseTab={closeTab}
+        onToggleExpand={() =>
+          setWidthMode((m) => (m === "expanded" ? "docked" : "expanded"))
+        }
+        onCollapse={() => setWidthMode("compact")}
+        messages={messages}
         onAsk={ask}
+        onPin={addPin}
         onScope={(id) => setScope(id)}
         dupeFilter={dupeFilter}
         onClearDupeFilter={() => setDupeFilter(null)}
