@@ -230,7 +230,7 @@ export function SetupFlow({ onCreate }: { onCreate: (c: SetupConfig) => void }) 
   ]);
   const [intent, setIntent] = React.useState("");
   const [draft, setDraft] = React.useState<Draft>({
-    tables: WATCHING.map((w) => w.table),
+    tables: ALL_ROWS.map((w) => w.table),
     added: [],
     dims: { ...DEFAULT_DIMS },
     name: "Q4 migration",
