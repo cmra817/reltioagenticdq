@@ -647,6 +647,9 @@ function EvidenceTabBar({
             </span>
           );
         })}
+      </div>
+
+      <div className="flex shrink-0 items-center gap-0.5 px-1">
         <div className="relative" ref={menuRef}>
           <button
             type="button"
@@ -659,7 +662,7 @@ function EvidenceTabBar({
           </button>
           {menuOpen && (
             <div
-              className="absolute left-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl py-1"
+              className="absolute right-0 top-full z-20 mt-1 w-48 overflow-hidden rounded-xl py-1"
               style={{
                 border: "1px solid var(--hairline)",
                 background: "#fff",
@@ -689,9 +692,6 @@ function EvidenceTabBar({
             </div>
           )}
         </div>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-0.5 px-1">
         <button
           type="button"
           onClick={onToggleExpand}
