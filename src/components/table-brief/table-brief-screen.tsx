@@ -148,7 +148,7 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
               onRemovePin={(id) => setPins((prev) => prev.filter((p) => p.id !== id))}
               onPin={addPin}
               onAsk={ask}
-              onOpenEvidence={(id) => setEvidence(id)}
+              onOpenEvidence={openTab}
             />
           </div>
           <div className={messages.length > 0 ? "mt-4" : ""}>
@@ -228,13 +228,22 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
       </div>
 
       <EvidencePanel
-        openView={evidence}
-        onOpen={(id) => setEvidence(id)}
-        onClose={() => {
-          setEvidence(null);
-          setDupeFilter(null);
+        tabs={tabs}
+        activeTab={activeTab}
+        widthMode={widthMode}
+        onOpenTab={openTab}
+        onActivateTab={(t) => {
+          setActiveTab(t);
+          setWidthMode((m) => (m === "compact" ? "docked" : m));
         }}
+        onCloseTab={closeTab}
+        onToggleExpand={() =>
+          setWidthMode((m) => (m === "expanded" ? "docked" : "expanded"))
+        }
+        onCollapse={() => setWidthMode("compact")}
+        messages={messages}
         onAsk={ask}
+        onPin={addPin}
         onScope={(id) => setScope(id)}
         dupeFilter={dupeFilter}
         onClearDupeFilter={() => setDupeFilter(null)}
