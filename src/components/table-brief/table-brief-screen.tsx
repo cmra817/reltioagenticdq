@@ -2,7 +2,7 @@ import * as React from "react";
 import { ArrowUp, Clock, X } from "lucide-react";
 import { DatasetIcon, SourceLogo, TableIcon } from "@/components/explore-screen";
 import { ComposedBrief, type Pin } from "./composed-brief";
-import { EvidencePanel } from "./evidence-panel";
+import { EvidencePanel, type PanelTab, type WidthMode } from "./evidence-panel";
 import { Thread, type ThreadMessage } from "./thread";
 import { answerFor, mentionsSfdc, type PinPayload } from "./answers";
 import { TABLE, type EvidenceId } from "./data";
@@ -35,8 +35,32 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
   const [messages, setMessages] = React.useState<ThreadMessage[]>([]);
   const [input, setInput] = React.useState("");
   const [scope, setScope] = React.useState<string | null>(null);
-  const [evidence, setEvidence] = React.useState<EvidenceId | null>(null);
+  const [tabs, setTabs] = React.useState<EvidenceId[]>([]);
+  const [activeTab, setActiveTab] = React.useState<PanelTab>("chat");
+  const [widthMode, setWidthMode] = React.useState<WidthMode>("compact");
   const [dupeFilter, setDupeFilter] = React.useState<string | null>(null);
+
+  const openTab = React.useCallback((id: EvidenceId) => {
+    setTabs((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setActiveTab(id);
+    setWidthMode((m) => (m === "compact" ? "docked" : m));
+  }, []);
+
+  const closeTab = React.useCallback(
+    (id: EvidenceId) => {
+      setTabs((prev) => {
+        const next = prev.filter((t) => t !== id);
+        setActiveTab((cur) => (cur === id ? next[next.length - 1] ?? "chat" : cur));
+        if (next.length === 0) {
+          setWidthMode((m) => (m === "docked" ? "compact" : m));
+          setActiveTab((cur) => (cur === id ? "chat" : cur));
+        }
+        return next;
+      });
+      if (id === "duplicates") setDupeFilter(null);
+    },
+    [],
+  );
 
   const addPin = React.useCallback((p: PinPayload) => {
     const id = `${p.title}-${Date.now()}`;
