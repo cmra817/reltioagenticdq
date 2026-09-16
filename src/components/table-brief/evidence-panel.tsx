@@ -795,8 +795,7 @@ export function EvidencePanel({
         onCollapse={onCollapse}
       />
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3 pt-3">
-        {activeTab !== "chat" && <OverviewSection onOpen={onOpenTab} />}
-        <div className={activeTab !== "chat" ? "mt-4" : ""}>
+        <div>
           {activeTab === "chat" ? (
             <Thread messages={messages} onAsk={onAsk} onPin={onPin} />
           ) : (
