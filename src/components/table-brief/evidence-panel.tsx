@@ -16,6 +16,7 @@ import {
   ROWS_SERIES,
   SAMPLE_COLUMNS,
   SAMPLE_ROWS,
+  SAMPLE_TOTAL_ROWS,
   type EvidenceId,
 } from "./data";
 
