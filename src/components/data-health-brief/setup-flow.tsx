@@ -221,13 +221,7 @@ function ExcludedList() {
 }
 
 export function SetupFlow({ onCreate }: { onCreate: (c: SetupConfig) => void }) {
-  const [turns, setTurns] = React.useState<Turn[]>([
-    {
-      id: "open",
-      kind: "agent",
-      text: "What are you responsible for? Describe it the way you'd say it to a colleague — I'll tell you what I'd watch, and you can change it before I build anything.",
-    },
-  ]);
+  const [turns, setTurns] = React.useState<Turn[]>([]);
   const [intent, setIntent] = React.useState("");
   const [draft, setDraft] = React.useState<Draft>({
     tables: ALL_ROWS.map((w) => w.table),
@@ -361,83 +355,109 @@ export function SetupFlow({ onCreate }: { onCreate: (c: SetupConfig) => void }) 
     setInput("");
   };
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="mx-auto min-h-0 w-full max-w-[720px] flex-1 overflow-y-auto px-6 pt-14">
-        <div className="flex flex-col gap-6 pb-6">
-          {turns.map((t) => {
-            if (t.kind === "user") return <UserBubble key={t.id} text={t.text} />;
-            if (t.kind === "agent")
-              return (
-                <AgentBubble key={t.id}>
-                  <p>{t.text}</p>
-                </AgentBubble>
-              );
-            if (t.kind === "thinking") return <Thinking key={t.id} />;
-            if (t.kind === "excluded") return <ExcludedList key={t.id} />;
-            return <Proposal key={t.id} draft={t.draft} intent={intent} />;
-          })}
-          <div ref={bottom} />
-        </div>
-      </div>
-
-      <div className="mx-auto w-full max-w-[720px] shrink-0 px-6 pb-6 pt-2">
-        {!started && (
-          <div className="mb-2 flex flex-wrap gap-2">
-            {STARTERS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => reply(s)}
-                className="rounded-full px-3 py-1.5 text-[12px]"
-                style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-700)" }}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-        <form
-          onSubmit={(e) => {
+  const promptForm = (placeholder: string) => (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        send();
+      }}
+      className="flex flex-col rounded-2xl px-3 py-3"
+      style={{
+        background: "#E3E3F2",
+        border: "1px solid rgba(0,0,204,0.14)",
+        boxShadow:
+          "0px -2px 20px -10px rgba(67,67,112,0.15), 0px 24px 48px -16px rgba(67,67,112,0.5)",
+      }}
+    >
+      <textarea
+        value={input}
+        autoFocus
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             send();
-          }}
-          className="flex flex-col rounded-2xl px-3 py-3"
-          style={{
-            background: "#E3E3F2",
-            border: "1px solid rgba(0,0,204,0.14)",
-            boxShadow:
-              "0px -2px 20px -10px rgba(67,67,112,0.15), 0px 24px 48px -16px rgba(67,67,112,0.5)",
-          }}
+          }
+        }}
+        rows={2}
+        placeholder={placeholder}
+        className="min-h-[52px] flex-1 resize-none bg-transparent text-[13px] outline-none"
+        style={{ color: "var(--ink-900)" }}
+      />
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          aria-label="Send"
+          disabled={busy}
+          className="flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-40"
+          style={{ background: "var(--brand-blue)", color: "#fff" }}
         >
-          <textarea
-            value={input}
-            autoFocus
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-            }}
-            rows={2}
-            placeholder={started ? "Tell me what to change, or say yes…" : "I own the customer data going into our Q4 migration…"}
-            className="min-h-[52px] flex-1 resize-none bg-transparent text-[13px] outline-none"
-            style={{ color: "var(--ink-900)" }}
-          />
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              aria-label="Send"
-              disabled={busy}
-              className="flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-40"
-              style={{ background: "var(--brand-blue)", color: "#fff" }}
-            >
-              <ArrowUp size={15} />
-            </button>
-          </div>
-        </form>
+          <ArrowUp size={15} />
+        </button>
       </div>
+    </form>
+  );
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      {started ? (
+        <>
+          <div className="mx-auto min-h-0 w-full max-w-[720px] flex-1 overflow-y-auto px-6 pt-14">
+            <div className="flex flex-col gap-6 pb-6">
+              {turns.map((t) => {
+                if (t.kind === "user") return <UserBubble key={t.id} text={t.text} />;
+                if (t.kind === "agent")
+                  return (
+                    <AgentBubble key={t.id}>
+                      <p>{t.text}</p>
+                    </AgentBubble>
+                  );
+                if (t.kind === "thinking") return <Thinking key={t.id} />;
+                if (t.kind === "excluded") return <ExcludedList key={t.id} />;
+                return <Proposal key={t.id} draft={t.draft} intent={intent} />;
+              })}
+              <div ref={bottom} />
+            </div>
+          </div>
+
+          <div className="mx-auto w-full max-w-[720px] shrink-0 px-6 pb-6 pt-2">
+            {promptForm("Tell me what to change, or say yes…")}
+          </div>
+        </>
+      ) : (
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6">
+          <div className="w-full max-w-[640px]">
+            <h1
+              className="text-center text-[26px] font-semibold leading-tight"
+              style={{ color: "var(--ink-900)" }}
+            >
+              Let’s build your personal data health dashboard.
+            </h1>
+            <p
+              className="mx-auto mt-3 max-w-[520px] text-center text-[14.5px] leading-relaxed"
+              style={{ color: "var(--ink-500)" }}
+            >
+              What are you responsible for? Describe it the way you’d say to a colleague — I’ll tell you what I’d watch, and you can change it before I build anything.
+            </p>
+
+            <div className="mb-2 mt-8 flex flex-wrap justify-center gap-2">
+              {STARTERS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => reply(s)}
+                  className="rounded-full px-3 py-1.5 text-[12px]"
+                  style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-700)" }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-3">{promptForm("I own the customer data going into our Q4 migration…")}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
