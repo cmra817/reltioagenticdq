@@ -69,12 +69,14 @@ export function DataHealthScreen() {
     const q = qRaw.trim();
     if (!q) return;
     const answer = answerFor(q);
+    setLevel("min");
     setMessages((prev) => [
       ...prev,
       { id: `u${prev.length}`, role: "user", text: q },
       { id: `a${prev.length}`, role: "agent", blocks: answer.blocks },
     ]);
   }, []);
+
 
   const addPin = React.useCallback((p: PinPayload) => {
     setLevel("full");
