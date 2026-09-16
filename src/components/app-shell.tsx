@@ -6,18 +6,45 @@ import { DomainConnectedBanner } from "@/components/domain-connected-banner";
 import { ChatProvider } from "@/components/chat/chat-context";
 import { DockComposer } from "@/components/chat/dock-composer";
 
+// A full-height slot on the far right of the page (above the topbar's row).
+// Table pages portal their evidence panel into it so the panel spans the
+// entire viewport height and the header only covers the left region.
+export const RightPanelSlotContext = React.createContext<{
+  node: HTMLElement | null;
+  setGrows: (g: boolean) => void;
+}>({ node: null, setGrows: () => {} });
+
 function AppShellInner({
   children,
   activeNav,
   activeTab,
   hideDock,
+  panelFullHeight,
 }: {
   children: React.ReactNode;
   activeNav?: "data-health" | "explore" | "dq-checks";
   activeTab?: "Agents" | "Unstructured" | "Quality";
   hideDock?: boolean;
+  panelFullHeight?: boolean;
 }) {
   const { collapsed } = useSidebarState();
+  const [slotNode, setSlotNode] = React.useState<HTMLElement | null>(null);
+  const [slotGrows, setSlotGrows] = React.useState(false);
+
+  const left = (
+    <div className="flex min-w-0 flex-1 flex-col">
+      <AgentflowTopbar />
+      <DomainConnectedBanner />
+      <div className="flex flex-1 overflow-hidden">
+        {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "data-health"} />}
+        <main className="relative flex flex-1 flex-col overflow-hidden">
+          {children}
+          {!hideDock && <DockComposer />}
+        </main>
+      </div>
+    </div>
+  );
+
   return (
     <div
       className="relative min-h-screen w-full overflow-hidden"
