@@ -236,7 +236,9 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
         </div>
       </div>
 
-      <EvidencePanel
+      {(() => {
+        const panel = (
+          <EvidencePanel
         tabs={tabs}
         activeTab={activeTab}
         widthMode={widthMode}
