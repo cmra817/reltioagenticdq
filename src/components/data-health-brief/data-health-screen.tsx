@@ -94,7 +94,7 @@ export function DataHealthScreen() {
   }
 
   const dims = config.dims as Record<DimensionId, boolean>;
-  const chips = healthy ? CHIPS_HEALTHY : CHIPS_TODAY;
+  const chips = CHIPS_TODAY;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
