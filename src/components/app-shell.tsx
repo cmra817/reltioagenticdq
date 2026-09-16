@@ -36,7 +36,7 @@ function AppShellInner({
 
   const left = (
     <div
-      className="flex min-w-0 flex-col transition-[width] duration-200"
+      className="flex min-h-0 min-w-0 flex-col transition-[width] duration-200"
       style={slotGrows ? { width: 260, flex: "0 0 260px" } : { flex: "1 1 0%" }}
     >
       <AgentflowTopbar />
