@@ -1103,7 +1103,7 @@ export function EvidencePanel({
         </div>
       </div>
       {widthMode === "expanded" && (
-        <div className="shrink-0 px-4 pb-3 pt-2">
+        <div className="mx-auto w-full max-w-2xl shrink-0 px-4 pb-3 pt-2">
           <PanelComposer
             scopeLabel={activeTab === "chat" ? null : EVIDENCE_LABEL[activeTab]}
             onSubmit={(q) => {
