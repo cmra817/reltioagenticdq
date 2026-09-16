@@ -25,12 +25,11 @@ function loadConfig(): SetupConfig | null {
 }
 
 const CHIPS_TODAY = ["What should I do first?", "Why is this ranked first?", "Add duplicate rate by table"];
-const CHIPS_HEALTHY = ["What did you clear?", "Why these metrics?", "Add duplicate rate by table"];
 
 export function DataHealthScreen() {
   const [hydrated, setHydrated] = React.useState(false);
   const [config, setConfig] = React.useState<SetupConfig | null>(null);
-  const [healthy, setHealthy] = React.useState(false);
+  const healthy = false;
   const [level, setLevel] = React.useState<Level>("full");
   const [pins, setPins] = React.useState<Pin[]>([]);
   const [messages, setMessages] = React.useState<ThreadMessage[]>([]);
