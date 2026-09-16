@@ -15,6 +15,8 @@ export const RightPanelSlotContext = React.createContext<{
   setGrows: (g: boolean) => void;
 }>({ node: null, setGrows: () => {} });
 
+export const RightPanelExpandedContext = React.createContext<boolean>(false);
+
 function AppShellInner({
   children,
   activeNav,
@@ -70,14 +72,16 @@ function AppShellInner({
       />
       {panelFullHeight ? (
         <RightPanelSlotContext.Provider value={{ node: slotNode, setGrows: setSlotGrows }}>
-          <div className="relative z-10 flex h-screen">
-            {left}
-            <div
-              ref={setSlotNode}
-              className="flex h-full min-w-0"
-              style={{ flex: slotGrows ? "1 1 0%" : "0 0 auto" }}
-            />
-          </div>
+          <RightPanelExpandedContext.Provider value={slotGrows}>
+            <div className="relative z-10 flex h-screen">
+              {left}
+              <div
+                ref={setSlotNode}
+                className="flex h-full min-w-0"
+                style={{ flex: slotGrows ? "1 1 0%" : "0 0 auto" }}
+              />
+            </div>
+          </RightPanelExpandedContext.Provider>
         </RightPanelSlotContext.Provider>
       ) : (
         <div className="relative z-10 flex h-screen flex-col">{left}</div>
