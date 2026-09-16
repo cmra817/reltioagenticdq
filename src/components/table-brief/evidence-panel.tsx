@@ -806,7 +806,7 @@ export function EvidencePanel({
     <aside
       className="flex h-full min-w-0 shrink-0 flex-col border-l transition-[width] duration-200"
       style={{
-        width: widthMode === "expanded" ? undefined : 545,
+        width: widthMode === "expanded" ? undefined : "50vw",
         flex: widthMode === "expanded" ? "1 1 0%" : undefined,
         borderColor: "var(--hairline)",
         background: "rgba(255,255,255,0.7)",
