@@ -249,7 +249,30 @@ function DuplicateRowsView({
   );
 }
 
+const SAMPLE_PAGE = 50;
+
 function SampleDataView() {
+  const [count, setCount] = React.useState(SAMPLE_PAGE);
+  const sentinel = React.useRef<HTMLDivElement | null>(null);
+  const hasMore = count < SAMPLE_ROWS.length;
+
+  React.useEffect(() => {
+    const el = sentinel.current;
+    if (!el || !hasMore) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setCount((c) => Math.min(c + SAMPLE_PAGE, SAMPLE_ROWS.length));
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, count]);
+
+  const rows = SAMPLE_ROWS.slice(0, count);
+
   return (
     <div className="flex flex-col gap-2">
       <EvidenceTableShell>
@@ -265,7 +288,7 @@ function SampleDataView() {
               </tr>
             </thead>
             <tbody>
-              {SAMPLE_ROWS.map((row, i) => (
+              {rows.map((row, i) => (
                 <tr key={i} style={{ borderTop: "1px solid var(--hairline)" }}>
                   {row.map((cell, j) => (
                     <td
