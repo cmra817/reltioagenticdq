@@ -1,44 +1,46 @@
 # Right panel: Cursor-style tabbed evidence with chat
 
-Make the right panel behave like the Cursor side panel: always present, tabs across the top, a "+" to open another evidence view in a new tab, a widen control, and a collapse control. In the expanded state the first tab is the conversation itself, and every evidence tab has a composer at the bottom that writes into the same table thread.
+Make the right panel behave like the Cursor side panel: always present, tabs across the top, "+" opens another evidence view in a new tab, and one control widens / restores / collapses it. When expanded, the panel fills the whole screen (minus the left nav) and the conversation stops being a center column — it becomes the first tab in the panel.
 
-## Behavior
+## Layout states
 
-**Width states**
-- Compact (default, ~300px): Overview cards + the Evidence list. No tabs.
-- Docked (~545px): as soon as the first evidence tab exists.
-- Expanded (~60% of the window, max ~980px): the widen control pushes the conversation column narrower; the same control restores to docked.
+- **Compact (default, ~300px):** Overview cards + the Evidence list. No tabs, no composer. The center column (brief + thread + input) is the conversation surface.
+- **Docked (~545px):** opens as soon as the first evidence tab exists. Tab strip on top, evidence content below, a composer pinned at the bottom of each tab. Center column stays visible alongside.
+- **Expanded (full width minus the left nav):** the widen control stretches the panel across the entire content area — the center column disappears and the conversation moves into the panel as the first tab, "Chat", which renders the same thread. The same control restores Docked.
 
-**Tabs**
-- Tab bar at the top: first tab is always "Chat" (the table conversation), followed by open evidence tabs. Clicking an Evidence line item opens it as a tab and focuses it; an already-open item just gets focused.
-- Each evidence tab shows an icon + label and an x to close. The Chat tab cannot be closed.
-- "+" at the end of the bar opens a small menu of evidence views not yet open (Sample data, Column profiling, Checks, Activity, Duplicate rows) — like Cursor's "Open any file…" menu.
-- Closing the last evidence tab returns the panel to Compact.
-- Overview status cards still open their matching evidence view, now as a tab.
+## Tabs
 
-**Controls, right of the tab bar**
-- Widen / restore (diagonal arrows): Docked ↔ Expanded.
-- Collapse (panel icon): closes the tab strip and returns to Compact; the same control re-opens the last tab set.
+- First tab is **Chat** (always present once the panel is tabbed; cannot be closed). Evidence tabs follow in open order.
+- Clicking an Evidence line item opens it as a tab and focuses it; an already-open item just gets focused.
+- "+" at the end of the bar opens a menu of evidence views not yet open (Sample data, Column profiling, Checks, Activity, Duplicate rows).
+- Each evidence tab has an x; closing the last one returns the panel to Compact (in Docked) and in Expanded returns to the Chat tab.
+- Overview status cards still open their matching evidence view as a tab.
 
-**Chat inside evidence tabs**
-- Every evidence tab has the styled composer pinned at its bottom (same #E3E3F2 box as the center column, sized to the narrower panel).
-- The composer is contextual: placeholder names the current evidence ("Ask about the duplicate rows…"), and the question is sent with that evidence as scope, so the answer is framed around it.
-- Sending from an evidence tab appends the user message and the agent reply to the one table thread — the same messages the center column shows. Nothing forks.
-- After sending, the panel switches to the Chat tab so the reply is visible, and the center column stays in sync (its brief collapses as it does today).
-- The Chat tab renders the same thread as the center column, with its own composer at the bottom.
+## Controls, right of the tab bar
 
-**Kept as-is**
-- Overview (activity band + 2x2 status cards) stays visible in Compact and scrolls above the tab strip.
+- **Widen / restore:** Docked ↔ Expanded.
+- **Collapse:** closes the tab strip and returns to Compact (re-opening restores the last tab set).
+
+## Chat inside evidence tabs
+
+- Every tab (Chat included) has the styled composer pinned at its bottom — same #E3E3F2 box as the center composer, sized to the panel.
+- The composer is contextual: the placeholder names the current evidence ("Ask about the duplicate rows…") and the question is sent with that evidence as scope.
+- Sending appends the user message and agent reply to the one table thread — the same messages everywhere. Nothing forks.
+- After sending from an evidence tab, the panel switches to the Chat tab so the reply is visible; the center column stays in sync when the panel is Docked (its brief collapses as today).
+- The center column's composer disappears in Expanded (the panel's Chat tab composer replaces it); collapsing back to Compact/Docked restores it.
+
+## Kept as-is
+
+- Overview (activity band + 2x2 status cards) stays visible in Compact, and scrolls above the tab strip in Docked/Expanded.
 - SFDC mentions still open the duplicates tab with the "SFDC re-inserts · 900" filter chip.
-- No hover-only interactions: close x and "+" menu are click/keyboard reachable.
+- No hover-only interactions; tab close and "+" are click/keyboard reachable.
 
 ## Technical notes
 
 All in `src/components/table-brief/`:
-- Lift the thread state (`messages`, `ask`) usage so both columns read it: `table-brief-screen.tsx` keeps owning `messages` and passes `messages` + `ask` into `EvidencePanel`.
-- New tab state in `table-brief-screen.tsx`: `tabs: EvidenceId[]`, `activeTab: "chat" | EvidenceId`, `widthMode: "compact" | "docked" | "expanded"`; `openTab(id)` dedupes and focuses.
-- `evidence-panel.tsx`: add `EvidenceTabBar` (Chat tab + evidence tabs + add-menu + widen + collapse) and a `PanelComposer` rendered at the bottom of each tab body. The existing view components (`DuplicateRowsView`, `SampleDataView`, `ProfilingView`, `ChecksView`, `ActivityView`) are unchanged and fill the scroll area above the composer; the Chat tab renders the existing `Thread`.
-- `PanelComposer` reuses the center composer's styling at a smaller min-height; submitting calls `ask(question, { scope: activeTab })` and then sets `activeTab = "chat"`.
-- `answers.ts`: `answerFor` takes an optional scope so scripted matching can prefer an evidence-specific reply; unmatched questions fall back to the current default.
-- Panel width driven by the existing inline `width` style with three values, keeping `transition-[width] duration-200`.
+- `table-brief-screen.tsx` owns shared state: `messages`, `ask`, plus new `tabs: EvidenceId[]`, `activeTab: "chat" | EvidenceId`, `widthMode: "compact" | "docked" | "expanded"`; `openTab(id)` dedupes and focuses. In Expanded the center column is not rendered (header stays as the panel's Chat tab context); the same `messages`/`ask` feed both columns so nothing is lost on state switches.
+- `evidence-panel.tsx`: add `EvidenceTabBar` (Chat tab + evidence tabs + add-menu + widen + collapse) and `PanelComposer` pinned at the bottom of each tab body. Existing view components (`DuplicateRowsView`, `SampleDataView`, `ProfilingView`, `ChecksView`, `ActivityView`) unchanged; the Chat tab renders the existing `Thread`.
+- `PanelComposer` reuses the center composer's styling at a smaller min-height; submitting calls `ask(question, { scope: activeTab })`, then focuses the Chat tab.
+- `answers.ts`: `answerFor` gains an optional scope argument so scripted matching can prefer an evidence-specific reply; unmatched input falls back to the current default.
+- Panel width via the existing inline `width` style; Expanded uses `flex: 1` over the content area. Transition stays `transition-[width] duration-200`.
 - Add-menu is an absolutely-positioned list closed on outside click/Escape — no new dependency.
