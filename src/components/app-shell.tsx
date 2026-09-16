@@ -87,6 +87,7 @@ export function AppShell(props: {
   activeNav?: "data-health" | "explore" | "dq-checks";
   activeTab?: "Agents" | "Unstructured" | "Quality";
   hideDock?: boolean;
+  panelFullHeight?: boolean;
 }) {
   return (
     <SidebarProvider>
