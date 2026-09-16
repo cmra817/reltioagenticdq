@@ -600,19 +600,21 @@ function EvidenceTabBar({
       style={{ borderColor: "var(--hairline)", background: "rgba(255,255,255,0.85)" }}
     >
       <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
-        <button
-          type="button"
-          onClick={() => onActivate("chat")}
-          className={tabBase}
-          style={{
-            color: activeTab === "chat" ? "var(--ink-900)" : "var(--ink-500)",
-            background: activeTab === "chat" ? "#fff" : "transparent",
-            boxShadow: activeTab === "chat" ? "inset 0 2px 0 0 var(--brand-blue)" : "none",
-          }}
-        >
-          <MessagesSquare size={13} />
-          Chat
-        </button>
+        {widthMode === "expanded" && (
+          <button
+            type="button"
+            onClick={() => onActivate("chat")}
+            className={tabBase}
+            style={{
+              color: activeTab === "chat" ? "var(--ink-900)" : "var(--ink-500)",
+              background: activeTab === "chat" ? "#fff" : "transparent",
+              boxShadow: activeTab === "chat" ? "inset 0 2px 0 0 var(--brand-blue)" : "none",
+            }}
+          >
+            <MessagesSquare size={13} />
+            Chat
+          </button>
+        )}
         {tabs.map((id) => {
           const Icon = EVIDENCE_ICON[id];
           const active = activeTab === id;
