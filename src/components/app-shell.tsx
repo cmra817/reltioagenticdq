@@ -15,6 +15,8 @@ export const RightPanelSlotContext = React.createContext<{
   setGrows: (g: boolean) => void;
 }>({ node: null, setGrows: () => {} });
 
+export const RightPanelExpandedContext = React.createContext<boolean>(false);
+
 function AppShellInner({
   children,
   activeNav,
