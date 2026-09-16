@@ -489,14 +489,12 @@ function PanelComposer({
   return (
     <form
       onSubmit={submit}
-      className="flex flex-col items-start gap-2 rounded-2xl p-3"
+      className="flex items-center gap-2 rounded-xl px-3 py-1.5"
       style={{
         background: "#E3E3F2",
         boxSizing: "border-box",
-        minHeight: "84px",
+        minHeight: "40px",
         border: "1px solid rgba(0, 0, 204, 0.14)",
-        boxShadow:
-          "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.5)",
       }}
     >
       <textarea
@@ -508,11 +506,12 @@ function PanelComposer({
             submit();
           }
         }}
+        rows={1}
         placeholder={scopeLabel ? `Ask about ${scopeLabel}…` : "Ask about this table…"}
-        className="min-h-[36px] w-full flex-1 resize-none bg-transparent px-1 py-0.5 text-[13px] outline-none"
+        className="min-h-[24px] w-full flex-1 resize-none bg-transparent px-1 py-0.5 text-[13px] outline-none"
         style={{ color: "var(--ink-900)" }}
       />
-      <div className="flex w-full justify-end">
+      <div className="flex items-center">
         <button
           type="submit"
           aria-label="Send"
@@ -810,15 +809,17 @@ export function EvidencePanel({
           )}
         </div>
       </div>
-      <div className="shrink-0 px-4 pb-4 pt-2">
-        <PanelComposer
-          scopeLabel={activeTab === "chat" ? null : EVIDENCE_LABEL[activeTab]}
-          onSubmit={(q) => {
-            onAsk(q);
-            onActivateTab("chat");
-          }}
-        />
-      </div>
+      {widthMode === "expanded" && (
+        <div className="shrink-0 px-4 pb-3 pt-2">
+          <PanelComposer
+            scopeLabel={activeTab === "chat" ? null : EVIDENCE_LABEL[activeTab]}
+            onSubmit={(q) => {
+              onAsk(q);
+              onActivateTab("chat");
+            }}
+          />
+        </div>
+      )}
     </aside>
   );
 }
