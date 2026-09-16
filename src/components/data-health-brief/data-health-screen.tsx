@@ -149,8 +149,6 @@ export function DataHealthScreen() {
           <div className="pb-2">
             {level === "full" && (
               <Scorecard
-                name={config.name}
-                tableCount={config.tableCount}
                 dims={dims}
                 healthy={healthy}
                 pins={pins}

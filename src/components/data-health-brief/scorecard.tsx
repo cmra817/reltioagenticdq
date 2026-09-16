@@ -70,16 +70,12 @@ function PinCard({ pin, onRemove }: { pin: Pin; onRemove: () => void }) {
 }
 
 export function Scorecard({
-  name,
-  tableCount,
   dims,
   healthy,
   pins,
   onRemovePin,
   onAsk,
 }: {
-  name: string;
-  tableCount: number;
   dims: Record<DimensionId, boolean>;
   healthy: boolean;
   pins: Pin[];
@@ -95,9 +91,6 @@ export function Scorecard({
         <h2 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>
           Scorecard
         </h2>
-        <span className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-          {name} · {tableCount} tables
-        </span>
         <button
           type="button"
           onClick={() => onAsk("Why these metrics?")}
