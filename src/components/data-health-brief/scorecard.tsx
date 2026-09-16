@@ -95,9 +95,6 @@ export function Scorecard({
         <h2 className="text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>
           Scorecard
         </h2>
-        <span className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-          {name} · {tableCount} tables
-        </span>
         <button
           type="button"
           onClick={() => onAsk("Why these metrics?")}
