@@ -16,6 +16,7 @@ import {
   ROWS_SERIES,
   SAMPLE_COLUMNS,
   SAMPLE_ROWS,
+  SAMPLE_TOTAL_ROWS,
   type EvidenceId,
 } from "./data";
 
@@ -249,7 +250,30 @@ function DuplicateRowsView({
   );
 }
 
+const SAMPLE_PAGE = 50;
+
 function SampleDataView() {
+  const [count, setCount] = React.useState(SAMPLE_PAGE);
+  const sentinel = React.useRef<HTMLDivElement | null>(null);
+  const hasMore = count < SAMPLE_ROWS.length;
+
+  React.useEffect(() => {
+    const el = sentinel.current;
+    if (!el || !hasMore) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setCount((c) => Math.min(c + SAMPLE_PAGE, SAMPLE_ROWS.length));
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, count]);
+
+  const rows = SAMPLE_ROWS.slice(0, count);
+
   return (
     <div className="flex flex-col gap-2">
       <EvidenceTableShell>
@@ -265,7 +289,7 @@ function SampleDataView() {
               </tr>
             </thead>
             <tbody>
-              {SAMPLE_ROWS.map((row, i) => (
+              {rows.map((row, i) => (
                 <tr key={i} style={{ borderTop: "1px solid var(--hairline)" }}>
                   {row.map((cell, j) => (
                     <td
@@ -282,8 +306,13 @@ function SampleDataView() {
           </table>
         </div>
       </EvidenceTableShell>
+      {hasMore ? (
+        <div ref={sentinel} className="px-1 py-2 text-[11.5px]" style={{ color: "var(--ink-300)" }}>
+          Loading more rows…
+        </div>
+      ) : null}
       <p className="px-1 text-[11.5px]" style={{ color: "var(--ink-300)" }}>
-        10 of 4,897 rows · sampled 6 hours ago.
+        {rows.length.toLocaleString()} of {SAMPLE_TOTAL_ROWS.toLocaleString()} rows · sampled 6 hours ago.
       </p>
     </div>
   );
