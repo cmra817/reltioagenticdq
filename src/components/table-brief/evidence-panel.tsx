@@ -1,6 +1,11 @@
 import * as React from "react";
-import { X, Clock3, Info, TriangleAlert, Table2, ListChecks, Activity, Rows3, Grid3x3 } from "lucide-react";
+import {
+  X, Clock3, TriangleAlert, Table2, ListChecks, Activity, Rows3, Grid3x3,
+  ArrowUp, MessagesSquare, Plus, Maximize2, Minimize2, PanelRightClose, PanelRightOpen,
+} from "lucide-react";
 import { BandSparkline } from "./charts";
+import { Thread, type ThreadMessage } from "./thread";
+import type { PinPayload } from "./answers";
 import {
   ACTIVITY_ROWS,
   CHECK_ROWS,
