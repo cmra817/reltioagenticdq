@@ -166,7 +166,7 @@ export function DataHealthScreen() {
       ) : (
         <div
           className="mx-auto flex w-full max-w-[900px] shrink-0 flex-col"
-          style={{ maxHeight: "64vh" }}
+          style={{ maxHeight: "54vh" }}
         >
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2">
             {level === "full" && (
