@@ -1,7 +1,7 @@
 import * as React from "react";
 import {
   X, Clock3, TriangleAlert, Table2, ListChecks, Activity, Rows3, Grid3x3,
-  ArrowUp, MessagesSquare, Plus, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, Columns3, Check,
+  ArrowUp, MessagesSquare, Plus, Maximize2, Minimize2, PanelRightClose, Columns3, Check,
 } from "lucide-react";
 import { BandSparkline } from "./charts";
 import { Thread, type ThreadMessage } from "./thread";
@@ -862,18 +862,6 @@ export function EvidencePanel({
         className="flex h-full shrink-0 flex-col gap-4 overflow-y-auto border-l px-4 pb-4 pt-2 transition-[width] duration-200"
         style={{ width: 300, borderColor: "var(--hairline)", background: "rgba(255,255,255,0.7)" }}
       >
-        <div className="flex items-center justify-end">
-          {tabs.length > 0 && (
-            <button
-              type="button"
-              onClick={() => onActivateTab(activeTab)}
-              className="inline-flex items-center gap-1 text-[12px]"
-              style={{ color: "var(--ink-500)" }}
-            >
-              <PanelRightOpen size={13} /> Reopen
-            </button>
-          )}
-        </div>
         <OverviewSection onOpen={onOpenTab} />
         <div className="flex flex-col gap-2">
           <SectionTitle>Evidence</SectionTitle>
