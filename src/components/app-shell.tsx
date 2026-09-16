@@ -41,9 +41,9 @@ function AppShellInner({
     >
       <AgentflowTopbar />
       <DomainConnectedBanner />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {!collapsed && <AgentflowSidebar activeNav={activeNav ?? "data-health"} />}
-        <main className="relative flex flex-1 flex-col overflow-hidden">
+        <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
           {children}
           {!hideDock && <DockComposer />}
         </main>
@@ -53,7 +53,7 @@ function AppShellInner({
 
   return (
     <div
-      className="relative min-h-screen w-full overflow-hidden"
+      className="relative min-h-screen w-full overflow-clip"
       style={{ background: "var(--canvas)" }}
     >
       <div
