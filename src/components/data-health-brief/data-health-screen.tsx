@@ -25,12 +25,11 @@ function loadConfig(): SetupConfig | null {
 }
 
 const CHIPS_TODAY = ["What should I do first?", "Why is this ranked first?", "Add duplicate rate by table"];
-const CHIPS_HEALTHY = ["What did you clear?", "Why these metrics?", "Add duplicate rate by table"];
 
 export function DataHealthScreen() {
   const [hydrated, setHydrated] = React.useState(false);
   const [config, setConfig] = React.useState<SetupConfig | null>(null);
-  const [healthy, setHealthy] = React.useState(false);
+  const healthy = false;
   const [level, setLevel] = React.useState<Level>("full");
   const [pins, setPins] = React.useState<Pin[]>([]);
   const [messages, setMessages] = React.useState<ThreadMessage[]>([]);
@@ -95,7 +94,7 @@ export function DataHealthScreen() {
   }
 
   const dims = config.dims as Record<DimensionId, boolean>;
-  const chips = healthy ? CHIPS_HEALTHY : CHIPS_TODAY;
+  const chips = CHIPS_TODAY;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -116,29 +115,6 @@ export function DataHealthScreen() {
           >
             Restart setup
           </button>
-          <div
-            className="flex items-center rounded-lg p-0.5"
-            style={{ border: "1px solid var(--hairline)", background: "#fff" }}
-          >
-            {[
-              { k: false, label: "Today" },
-              { k: true, label: "Healthy day" },
-            ].map((o) => (
-              <button
-                key={o.label}
-                type="button"
-                onClick={() => setHealthy(o.k)}
-                className="rounded-md px-2.5 py-1 text-[12px] font-medium"
-                style={
-                  healthy === o.k
-                    ? { background: "var(--brand-blue)", color: "#fff" }
-                    : { color: "var(--ink-500)" }
-                }
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 
