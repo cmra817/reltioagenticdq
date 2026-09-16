@@ -40,6 +40,13 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
   const [tabs, setTabs] = React.useState<EvidenceId[]>([]);
   const [activeTab, setActiveTab] = React.useState<PanelTab>("chat");
   const [widthMode, setWidthMode] = React.useState<WidthMode>("compact");
+  const slot = React.useContext(RightPanelSlotContext);
+
+  // In expanded mode the panel fills the whole area right of the sidebar.
+  React.useEffect(() => {
+    slot.setGrows(widthMode === "expanded");
+    return () => slot.setGrows(false);
+  }, [slot, widthMode]);
   const [dupeFilter, setDupeFilter] = React.useState<string | null>(null);
 
   const openTab = React.useCallback((id: EvidenceId) => {
