@@ -83,7 +83,7 @@ export function DataHealthScreen() {
   if (!hydrated) return <div className="flex-1" />;
   if (!config) {
     return (
-      <div className="flex flex-1 flex-col overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <SetupFlow onCreate={create} />
       </div>
     );
