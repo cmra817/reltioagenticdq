@@ -305,8 +305,13 @@ function SampleDataView() {
           </table>
         </div>
       </EvidenceTableShell>
+      {hasMore ? (
+        <div ref={sentinel} className="px-1 py-2 text-[11.5px]" style={{ color: "var(--ink-300)" }}>
+          Loading more rows…
+        </div>
+      ) : null}
       <p className="px-1 text-[11.5px]" style={{ color: "var(--ink-300)" }}>
-        10 of 4,897 rows · sampled 6 hours ago.
+        {rows.length.toLocaleString()} of {SAMPLE_TOTAL_ROWS.toLocaleString()} rows · sampled 6 hours ago.
       </p>
     </div>
   );
