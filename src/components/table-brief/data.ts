@@ -433,9 +433,51 @@ export const CHECK_GROUPS: CheckGroup[] = [
   },
 ];
 
-export const ACTIVITY_ROWS: { text: string; when: string; tone: "red" | "amber" | "neutral" }[] = [
-  { text: "Uniqueness check failed", when: "7:41am today", tone: "red" },
-  { text: "Profiled", when: "6 hours ago", tone: "neutral" },
-  { text: "Synced from Snowflake", when: "14 hours ago", tone: "amber" },
-  { text: "SFDC connector sync schedule changed", when: "Aug 19, 02:10", tone: "neutral" },
+export type ActivityRun = {
+  id: string;
+  day: string;
+  check: string;
+  dimension: CheckGroup["dimension"];
+  column: string;
+  ranOn: string;
+  status: CheckRunStatus;
+};
+
+const ACTIVITY_TEMPLATES: Omit<ActivityRun, "id" | "day" | "ranOn">[] = [
+  { check: "ExpectColumnMostCommonValueToBeInSet", dimension: "Validity", column: "first_name", status: "Passed" },
+  { check: "ExpectColumnValueLengthsToBeBetween", dimension: "Validity", column: "customer_id", status: "Failed" },
+  { check: "ExpectColumnValuesToNotBeNull", dimension: "Completeness", column: "email", status: "Passed" },
+  { check: "ExpectColumnValuesToBeUnique", dimension: "Uniqueness", column: "customer_id", status: "Failed" },
+  { check: "ExpectColumnPairValuesAToBeGreaterThanB", dimension: "Consistency", column: "updated_at, created_at", status: "Failed" },
+  { check: "ExpectColumnValuesToMatchRegex", dimension: "Validity", column: "phone_number", status: "Warning" },
+  { check: "ExpectColumnValuesToBeBetween", dimension: "Accuracy", column: "lifetime_value", status: "Passed" },
+  { check: "ExpectColumnValuesToNotBeNull", dimension: "Completeness", column: "address_line1", status: "Passed" },
+  { check: "ExpectColumnValuesToBeInSet", dimension: "Validity", column: "account_tier", status: "Passed" },
+  { check: "ExpectColumnValuesToBeUnique", dimension: "Uniqueness", column: "tax_id", status: "Passed" },
+  { check: "ExpectColumnValuesToBeInSet", dimension: "Consistency", column: "support_tier", status: "Passed" },
+  { check: "ExpectColumnValuesToNotBeNull", dimension: "Completeness", column: "postal_code", status: "Warning" },
 ];
+
+const ACTIVITY_DAYS = ["Today", "Yesterday", "Sunday", "Saturday", "Thursday", "Wednesday", "September 9", "September 8"];
+const ACTIVITY_TIMES = ["2:45 AM", "1:30 AM", "12:12 AM", "11:05 PM", "6:12 PM", "9:30 AM", "2:22 PM", "8:05 AM", "4:40 PM", "6:00 AM", "11:18 AM", "7:25 AM"];
+
+export const ACTIVITY_ROWS: ActivityRun[] = Array.from({ length: 48 }, (_, index) => {
+  const template = ACTIVITY_TEMPLATES[index % ACTIVITY_TEMPLATES.length];
+  const day = ACTIVITY_DAYS[Math.min(Math.floor(index / 6), ACTIVITY_DAYS.length - 1)];
+  return {
+    ...template,
+    id: `run-${index + 1}`,
+    day,
+    ranOn: ACTIVITY_TIMES[index % ACTIVITY_TIMES.length],
+  };
+});
+
+/** One value per week: 0 failed, 1 mixed, 2 mostly passed, 3 passed. */
+export const ACTIVITY_HEATMAP = Array.from({ length: 52 * 7 }, (_, index) => {
+  const week = Math.floor(index / 7);
+  const day = index % 7;
+  if ((week + day * 3) % 19 === 0) return 0;
+  if ((week * 2 + day) % 13 === 0) return 1;
+  if (week < 9 || (week + day) % 5 === 0) return 2;
+  return 3;
+});
