@@ -666,8 +666,9 @@ function EvidenceTabBar({
                 boxShadow: "0 8px 24px -8px rgba(14,14,37,0.18)",
               }}
             >
-              {ADDABLE.filter((id) => !tabs.includes(id)).map((id) => {
+              {ADDABLE.map((id) => {
                 const Icon = EVIDENCE_ICON[id];
+                const open = tabs.includes(id);
                 return (
                   <button
                     key={id}
@@ -677,18 +678,14 @@ function EvidenceTabBar({
                       setMenuOpen(false);
                     }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] hover:bg-[var(--surface-soft)]"
-                    style={{ color: "var(--ink-700)" }}
+                    style={{ color: open ? "var(--ink-300)" : "var(--ink-700)" }}
                   >
-                    <Icon size={13} color="var(--ink-300)" />
-                    {EVIDENCE_LABEL[id]}
+                    <Icon size={13} color={open ? "var(--ink-200)" : "var(--ink-300)"} />
+                    <span className="flex-1">{EVIDENCE_LABEL[id]}</span>
+                    {open && <span className="text-[10px]">Open</span>}
                   </button>
                 );
               })}
-              {ADDABLE.every((id) => tabs.includes(id)) && (
-                <p className="px-3 py-2 text-[11.5px]" style={{ color: "var(--ink-300)" }}>
-                  Everything is open.
-                </p>
-              )}
             </div>
           )}
         </div>
