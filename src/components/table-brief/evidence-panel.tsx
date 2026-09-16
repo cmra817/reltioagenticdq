@@ -9,6 +9,7 @@ import { Thread, type ThreadMessage } from "./thread";
 import type { PinPayload } from "./answers";
 import {
   ACTIVITY_ROWS,
+  ACTIVITY_HEATMAP,
   CHECK_GROUPS,
   CHECKS_SERIES,
   COLUMNS_ROWS,
@@ -607,19 +608,102 @@ function ChecksView() {
 }
 
 function ActivityView() {
+  const PAGE_SIZE = 18;
+  const [count, setCount] = React.useState(PAGE_SIZE);
+  const sentinel = React.useRef<HTMLDivElement | null>(null);
+  const hasMore = count < ACTIVITY_ROWS.length;
+  const rows = ACTIVITY_ROWS.slice(0, count);
+
+  React.useEffect(() => {
+    const element = sentinel.current;
+    if (!element || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setCount((current) => Math.min(current + PAGE_SIZE, ACTIVITY_ROWS.length));
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [hasMore, count]);
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const heatColors = ["#e8edf4", "#d0f0dc", "#83d49d", "#168442"];
+
   return (
-    <EvidenceTableShell>
-      {ACTIVITY_ROWS.map((a, i) => (
-        <div
-          key={a.text}
-          className="flex items-center justify-between px-3 py-2.5 text-[12px]"
-          style={{ borderTop: i === 0 ? "none" : "1px solid var(--hairline)" }}
-        >
-          <span style={{ color: toneColor(a.tone) }}>{a.text}</span>
-          <span style={{ color: "var(--ink-300)" }}>{a.when}</span>
+    <div className="flex flex-col gap-4">
+      <div className="rounded-xl p-4" style={{ border: "1px solid var(--hairline)", background: "#fff" }}>
+        <div className="mb-2 grid grid-cols-12 pl-7 text-[10.5px]" style={{ color: "var(--ink-500)" }}>
+          {months.map((month) => <span key={month}>{month}</span>)}
         </div>
-      ))}
-    </EvidenceTableShell>
+        <div className="flex gap-2">
+          <div className="flex h-[78px] w-5 shrink-0 flex-col justify-between text-[10px]" style={{ color: "var(--ink-500)" }}>
+            <span>Mon</span><span>Wed</span><span>Fri</span>
+          </div>
+          <div className="grid min-w-0 flex-1 grid-flow-col grid-rows-7 gap-1">
+            {ACTIVITY_HEATMAP.map((value, index) => (
+              <span
+                key={index}
+                className="aspect-square min-w-0 rounded-[2px]"
+                style={{ background: heatColors[value] }}
+                aria-label={`Week ${Math.floor(index / 7) + 1}, ${value === 0 ? "failed" : value === 3 ? "passed" : "mixed"}`}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-end gap-1.5 text-[10px]" style={{ color: "var(--ink-500)" }}>
+          <span>Failed</span>
+          {heatColors.map((color) => <span key={color} className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />)}
+          <span>Passed</span>
+        </div>
+      </div>
+
+      <EvidenceTableShell>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] table-fixed text-[12px]">
+            <colgroup>
+              <col className="w-[39%]" /><col className="w-[17%]" /><col className="w-[22%]" />
+              <col className="w-[11%]" /><col className="w-[11%]" />
+            </colgroup>
+            <thead>
+              <tr className="uppercase" style={{ color: "var(--ink-300)", background: "var(--canvas)" }}>
+                {["Check", "Dimension", "Column", "Ran on", "Status"].map((heading) => (
+                  <th key={heading} className="whitespace-nowrap px-3 py-2.5 text-left text-[10.5px] font-semibold">{heading}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((run, index) => {
+                const showDay = index === 0 || rows[index - 1]?.day !== run.day;
+                const dimensionStyle = DIMENSION_STYLES[run.dimension];
+                return (
+                  <React.Fragment key={run.id}>
+                    {showDay ? (
+                      <tr style={{ background: "var(--canvas)", borderTop: "1px solid var(--hairline)" }}>
+                        <td colSpan={5} className="px-3 py-1.5 text-[10px] font-semibold uppercase" style={{ color: "var(--ink-500)" }}>{run.day}</td>
+                      </tr>
+                    ) : null}
+                    <tr style={{ borderTop: "1px solid var(--hairline)" }}>
+                      <td className="truncate px-3 py-2.5 font-mono" title={run.check} style={{ color: "var(--ink-900)" }}>{run.check}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="inline-flex whitespace-nowrap rounded-full px-2 py-1 text-[10.5px] font-semibold" style={dimensionStyle}>{run.dimension}</span>
+                      </td>
+                      <td className="truncate px-3 py-2.5 font-mono" title={run.column} style={{ color: "var(--ink-700)" }}>{run.column}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5" style={{ color: "var(--ink-500)" }}>{run.ranOn}</td>
+                      <td className="px-3 py-2.5"><StatusBadge status={run.status} /></td>
+                    </tr>
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </EvidenceTableShell>
+      {hasMore ? <div ref={sentinel} className="px-1 py-2 text-[11.5px]" style={{ color: "var(--ink-300)" }}>Loading more runs…</div> : null}
+      <p className="px-1 text-[11.5px]" style={{ color: "var(--ink-300)" }}>{rows.length} of {ACTIVITY_ROWS.length} check runs.</p>
+    </div>
   );
 }
 
