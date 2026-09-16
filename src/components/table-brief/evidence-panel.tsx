@@ -318,56 +318,84 @@ function SampleDataView() {
   );
 }
 
+const PROFILING_PAGE = 15;
+
 function ProfilingView({ onScope }: { onScope: (id: string) => void }) {
+  const [count, setCount] = React.useState(PROFILING_PAGE);
+  const sentinel = React.useRef<HTMLDivElement | null>(null);
+  const hasMore = count < COLUMNS_ROWS.length;
+
+  React.useEffect(() => {
+    const el = sentinel.current;
+    if (!el || !hasMore) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setCount((c) => Math.min(c + PROFILING_PAGE, COLUMNS_ROWS.length));
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, count]);
+
+  const rows = COLUMNS_ROWS.slice(0, count);
+
   return (
-    <EvidenceTableShell>
-      <table className="w-full text-[12px]">
-        <thead>
-          <tr style={{ color: "var(--ink-300)" }}>
-            {["Column", "Type", "Completeness", "Unique", "Status"].map((h) => (
-              <th key={h} className="px-3 py-2 text-left font-medium">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {COLUMNS_ROWS.map((c) => (
-            <tr
-              key={c.name}
-              onClick={() => onScope(c.name)}
-              className="cursor-pointer hover:bg-[var(--surface-soft)]"
-              style={{ borderTop: "1px solid var(--hairline)" }}
-            >
-              <td className="px-3 py-2 font-mono" style={{ color: "var(--ink-900)" }}>
-                {c.name}
-              </td>
-              <td className="px-3 py-2" style={{ color: "var(--ink-500)" }}>
-                {c.type}
-              </td>
-              <td className="px-3 py-2 font-mono" style={{ color: "var(--ink-700)" }}>
-                {c.fill}
-              </td>
-              <td className="px-3 py-2 font-mono" style={{ color: "var(--ink-700)" }}>
-                {c.unique}
-              </td>
-              <td
-                className="px-3 py-2"
-                style={{ color: c.bad ? "var(--brand-red)" : "var(--ink-500)", fontWeight: c.bad ? 600 : 400 }}
-              >
-                {c.bad && <TriangleAlert size={11} className="mr-1 inline" />}
-                {c.status}
-              </td>
+    <div className="flex flex-col gap-2">
+      <EvidenceTableShell>
+        <table className="w-full text-[12px]">
+          <thead>
+            <tr style={{ color: "var(--ink-300)" }}>
+              {["Column", "Type", "Completeness", "Unique", "Status"].map((h) => (
+                <th key={h} className="px-3 py-2 text-left font-medium">
+                  {h}
+                </th>
+              ))}
             </tr>
-          ))}
-          <tr style={{ borderTop: "1px solid var(--hairline)" }}>
-            <td className="px-3 py-2 text-[11.5px]" colSpan={5} style={{ color: "var(--ink-100)" }}>
-              39 more columns
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </EvidenceTableShell>
+          </thead>
+          <tbody>
+            {rows.map((c) => (
+              <tr
+                key={c.name}
+                onClick={() => onScope(c.name)}
+                className="cursor-pointer hover:bg-[var(--surface-soft)]"
+                style={{ borderTop: "1px solid var(--hairline)" }}
+              >
+                <td className="px-3 py-2 font-mono" style={{ color: "var(--ink-900)" }}>
+                  {c.name}
+                </td>
+                <td className="px-3 py-2" style={{ color: "var(--ink-500)" }}>
+                  {c.type}
+                </td>
+                <td className="px-3 py-2 font-mono" style={{ color: "var(--ink-700)" }}>
+                  {c.fill}
+                </td>
+                <td className="px-3 py-2 font-mono" style={{ color: "var(--ink-700)" }}>
+                  {c.unique}
+                </td>
+                <td
+                  className="px-3 py-2"
+                  style={{ color: c.bad ? "var(--brand-red)" : "var(--ink-500)", fontWeight: c.bad ? 600 : 400 }}
+                >
+                  {c.bad && <TriangleAlert size={11} className="mr-1 inline" />}
+                  {c.status}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </EvidenceTableShell>
+      {hasMore ? (
+        <div ref={sentinel} className="px-1 py-2 text-[11.5px]" style={{ color: "var(--ink-300)" }}>
+          Loading more columns…
+        </div>
+      ) : null}
+      <p className="px-1 text-[11.5px]" style={{ color: "var(--ink-300)" }}>
+        {rows.length} of {COLUMNS_ROWS.length} columns · profiled 6 hours ago.
+      </p>
+    </div>
   );
 }
 

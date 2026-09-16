@@ -214,7 +214,16 @@ export const DUPE_ROWS: DupeRow[] = [
   { id: "C-12043", times: 2, source: "SFDC / LEGACY", created: "Feb 03", updated: "Jun 09", group: "collision" },
 ];
 
-export const COLUMNS_ROWS = [
+export type ColumnRow = {
+  name: string;
+  type: string;
+  fill: string;
+  unique: string;
+  status: string;
+  bad: boolean;
+};
+
+const CURATED_COLUMNS_ROWS: ColumnRow[] = [
   { name: "customer_id", type: "string", fill: "100%", unique: "75.4%", status: "1,204 dupes", bad: true },
   { name: "email", type: "string", fill: "99.2%", unique: "98.7%", status: "pass", bad: false },
   { name: "phone_number", type: "string", fill: "94.1%", unique: "96.3%", status: "pass", bad: false },
@@ -224,6 +233,73 @@ export const COLUMNS_ROWS = [
   { name: "country", type: "string", fill: "97.4%", unique: "0.9%", status: "pass", bad: false },
   { name: "segment", type: "string", fill: "91.8%", unique: "0.2%", status: "pass", bad: false },
 ];
+
+const EXTRA_COLUMN_NAMES: [string, string][] = [
+  ["first_name", "string"],
+  ["last_name", "string"],
+  ["company", "string"],
+  ["job_title", "string"],
+  ["address_line1", "string"],
+  ["address_line2", "string"],
+  ["city", "string"],
+  ["state", "string"],
+  ["postal_code", "string"],
+  ["account_id", "string"],
+  ["account_name", "string"],
+  ["account_tier", "string"],
+  ["lifetime_value", "number"],
+  ["order_count", "number"],
+  ["last_order_at", "timestamp"],
+  ["first_order_at", "timestamp"],
+  ["signup_at", "timestamp"],
+  ["signup_channel", "string"],
+  ["referral_code", "string"],
+  ["marketing_opt_in", "boolean"],
+  ["email_verified", "boolean"],
+  ["phone_verified", "boolean"],
+  ["preferred_locale", "string"],
+  ["timezone", "string"],
+  ["currency", "string"],
+  ["tax_id", "string"],
+  ["billing_email", "string"],
+  ["billing_country", "string"],
+  ["shipping_country", "string"],
+  ["loyalty_points", "number"],
+  ["loyalty_tier", "string"],
+  ["last_login_at", "timestamp"],
+  ["login_count", "number"],
+  ["support_tier", "string"],
+  ["notes_count", "number"],
+  ["is_active", "boolean"],
+  ["deleted_at", "timestamp"],
+  ["merged_into_id", "string"],
+  ["sync_batch_id", "string"],
+];
+
+// Deterministic stats for the remaining columns so the prototype can page
+// through the full profiled column set.
+function buildColumnRows(): ColumnRow[] {
+  const rows = [...CURATED_COLUMNS_ROWS];
+  let seed = 4242;
+  const next = (n: number) => {
+    seed = (seed * 1103515245 + 12345) % 2147483647;
+    return seed % n;
+  };
+  for (const [name, type] of EXTRA_COLUMN_NAMES) {
+    const fillBase = type === "boolean" ? 96 + next(4) : 88 + next(13);
+    const fill = fillBase >= 100 ? "100%" : `${fillBase}.${next(9)}%`;
+    let unique: string;
+    if (type === "boolean") unique = "0.0%";
+    else if (name.includes("_count") || name === "loyalty_points" || name === "lifetime_value") unique = `${(2 + next(30)).toFixed(1)}%`;
+    else if (name.endsWith("_at") || name === "tax_id") unique = `${(60 + next(35)).toFixed(1)}%`;
+    else if (name.includes("country") || name === "currency" || name.includes("tier") || name === "timezone" || name === "preferred_locale") unique = `0.${next(9)}%`;
+    else unique = `${(10 + next(60)).toFixed(1)}%`;
+    rows.push({ name, type, fill, unique, status: "pass", bad: false });
+  }
+  return rows;
+}
+
+export const COLUMNS_ROWS: ColumnRow[] = buildColumnRows();
 
 export const CHECK_ROWS = [
   { check: "expect_column_values_to_be_unique", column: "customer_id", result: "1,204 fail", bad: true },
