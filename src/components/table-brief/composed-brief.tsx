@@ -75,17 +75,17 @@ function FindingCard({
       className="rounded-xl px-3 py-3"
       style={{ border: "1px solid var(--hairline)", background: "#fff" }}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start justify-between gap-3">
         <span
           className="w-[76px] shrink-0 pt-0.5 text-[9.5px] font-semibold uppercase leading-[1.25] tracking-wide"
           style={{ color: "var(--ink-300)" }}
         >
           {label}
         </span>
-        <span className="flex-1 text-[13px] leading-snug" style={{ color: "var(--ink-900)" }}>
-          {title}
-        </span>
         <Badge kind={kind} />
+      </div>
+      <div className="mt-1.5 text-[13px] leading-snug" style={{ color: "var(--ink-900)" }}>
+        {title}
       </div>
 
       <div className="mt-3">{chart}</div>
