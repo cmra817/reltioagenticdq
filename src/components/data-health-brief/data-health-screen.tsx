@@ -43,6 +43,9 @@ export function DataHealthScreen() {
 
   const create = (c: SetupConfig) => {
     setConfig(c);
+    setMessages([]);
+    setPins([]);
+    setLevel("full");
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(c));
     } catch {
@@ -83,7 +86,7 @@ export function DataHealthScreen() {
   if (!hydrated) return <div className="flex-1" />;
   if (!config) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <SetupFlow onCreate={create} />
       </div>
     );

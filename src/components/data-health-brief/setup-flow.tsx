@@ -1,11 +1,9 @@
 import * as React from "react";
-import { Check, ChevronDown, ChevronRight, Loader2, X } from "lucide-react";
+import { ArrowUp, Check, Loader2 } from "lucide-react";
 import {
   DEFAULT_DIMS,
-  DEFAULT_INTENT,
   DIMENSIONS,
   EXCLUDED,
-  INTENT_RESTATEMENT,
   STARTERS,
   WATCHING,
   WATCHING_HIDDEN,
@@ -25,407 +23,420 @@ const RESOLVE_STEPS = [
   "Ranking by how much each table has moved recently",
 ];
 
-function Eyebrow({ children }: { children: React.ReactNode }) {
+type Draft = {
+  tables: string[];
+  added: string[];
+  dims: Record<DimensionId, boolean>;
+  name: string;
+};
+
+type Turn =
+  | { id: string; kind: "agent"; text: string }
+  | { id: string; kind: "user"; text: string }
+  | { id: string; kind: "thinking" }
+  | { id: string; kind: "proposal"; draft: Draft }
+  | { id: string; kind: "excluded" };
+
+const ALL_ROWS = [...WATCHING, ...WATCHING_HIDDEN];
+
+const DIM_WORDS: { id: DimensionId; words: string[] }[] = [
+  { id: "uniqueness", words: ["unique", "duplicate", "dupe", "key"] },
+  { id: "completeness", words: ["complete", "null", "fill", "missing"] },
+  { id: "volume", words: ["volume", "row count", "drift", "growth"] },
+  { id: "timeliness", words: ["fresh", "timeli", "late", "stale", "load time"] },
+  { id: "format", words: ["format", "pattern", "valid"] },
+];
+
+function listNames(names: string[]) {
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+function deriveName(intent: string) {
+  const q = intent.match(/q[1-4]/i);
+  if (q && /migrat/i.test(intent)) return `${q[0].toUpperCase()} migration`;
+  if (/migrat/i.test(intent)) return "Migration";
+  if (/finance|revenue|billing/i.test(intent)) return "Finance tables";
+  if (/customer|crm/i.test(intent)) return "Customer data";
+  return "Data health";
+}
+
+function Mono({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="text-[11px] font-semibold uppercase tracking-[0.14em]"
-      style={{ color: "var(--ink-300)" }}
-    >
+    <span className="font-mono text-[12.5px]" style={{ color: "var(--ink-900)" }}>
+      {children}
+    </span>
+  );
+}
+
+function AgentBubble({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="max-w-[640px] text-[14px] leading-relaxed" style={{ color: "var(--ink-900)" }}>
       {children}
     </div>
   );
 }
 
-function Toggle({ on, onChange, label }: { on: boolean; onChange: () => void; label: string }) {
+function UserBubble({ text }: { text: string }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      aria-label={label}
-      onClick={onChange}
-      className="relative h-[20px] w-[34px] shrink-0 rounded-full transition-colors"
-      style={{ background: on ? "var(--brand-blue)" : "var(--hairline)" }}
-    >
-      <span
-        className="absolute top-[2px] h-4 w-4 rounded-full bg-white transition-all"
-        style={{ left: on ? 16 : 2, boxShadow: "0 1px 2px rgba(0,0,0,0.2)" }}
-      />
-    </button>
+    <div className="flex justify-end">
+      <div
+        className="max-w-[520px] rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed"
+        style={{ background: "var(--surface-soft)", color: "var(--ink-900)", border: "1px solid var(--hairline)" }}
+      >
+        {text}
+      </div>
+    </div>
   );
 }
 
-export function SetupFlow({ onCreate }: { onCreate: (c: SetupConfig) => void }) {
-  const [step, setStep] = React.useState<1 | 2 | 3>(1);
-  const [intent, setIntent] = React.useState(DEFAULT_INTENT);
+function Thinking() {
   const [done, setDone] = React.useState(0);
-
-  // draft state
-  const [removed, setRemoved] = React.useState<string[]>([]);
-  const [showMore, setShowMore] = React.useState(false);
-  const [dims, setDims] = React.useState<Record<DimensionId, boolean>>({ ...DEFAULT_DIMS });
-  const [excludedOpen, setExcludedOpen] = React.useState(false);
-  const [refine, setRefine] = React.useState("");
-  const [refined, setRefined] = React.useState<string[]>([]);
-  const [name, setName] = React.useState("Q4 migration");
-  const [editingSentence, setEditingSentence] = React.useState(false);
-  const [sentence, setSentence] = React.useState(INTENT_RESTATEMENT);
-
   React.useEffect(() => {
-    if (step !== 2) return;
-    setDone(0);
     const timers = [
       setTimeout(() => setDone(1), 650),
       setTimeout(() => setDone(2), 1300),
       setTimeout(() => setDone(3), 1950),
-      setTimeout(() => setStep(3), 2500),
     ];
     return () => timers.forEach(clearTimeout);
-  }, [step]);
-
-  const totalTables = 14 - removed.length + refined.length;
-  const tiles = [
-    ...DIMENSIONS.filter((d) => dims[d.id]).map((d) => d.tile),
-    "Checks passing",
-  ];
-
-  /* ---------------- screen 1 ---------------- */
-  if (step === 1) {
-    return (
-      <div className="mx-auto w-full max-w-[720px] px-6 py-16">
-        <Eyebrow>Data health · First run</Eyebrow>
-        <h1 className="mt-4 text-[34px] font-semibold leading-tight" style={{ color: "var(--ink-900)" }}>
-          What are you responsible for?
-        </h1>
-        <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "var(--ink-500)" }}>
-          Describe it the way you'd say it to a colleague. I'll tell you what I'd watch, and you can change
-          it.
-        </p>
-
-        <textarea
-          value={intent}
-          onChange={(e) => setIntent(e.target.value)}
-          rows={4}
-          className="mt-6 w-full resize-none rounded-2xl px-4 py-3 text-[14px] outline-none"
-          style={{
-            border: "1px solid var(--hairline)",
-            background: "#fff",
-            color: "var(--ink-900)",
-            boxShadow: "var(--shadow-input)",
-          }}
-        />
-
-        <div className="mt-6 text-[12.5px]" style={{ color: "var(--ink-500)" }}>
-          Or start from something I found in your warehouse
-        </div>
-        <div className="mt-2 flex flex-col gap-2">
-          {STARTERS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setIntent(s)}
-              className="rounded-xl px-3.5 py-2.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
-              style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-700)" }}
+  }, []);
+  return (
+    <div className="flex flex-col gap-2.5">
+      {RESOLVE_STEPS.map((s, i) => {
+        const complete = done > i;
+        return (
+          <div key={s} className="flex items-center gap-2.5" style={{ opacity: complete ? 1 : 0.5 }}>
+            <span
+              className="flex h-4 w-4 items-center justify-center rounded-full"
+              style={{
+                background: complete ? "var(--brand-blue)" : "transparent",
+                border: complete ? "none" : "1px solid var(--hairline)",
+              }}
             >
+              {complete ? (
+                <Check size={10} color="#fff" strokeWidth={3} />
+              ) : (
+                <Loader2 size={10} className="animate-spin" color="var(--ink-300)" />
+              )}
+            </span>
+            <span className="text-[13px]" style={{ color: "var(--ink-500)" }}>
               {s}
-            </button>
-          ))}
-        </div>
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
-        <button
-          type="button"
-          onClick={() => setStep(2)}
-          disabled={!intent.trim()}
-          className="mt-8 rounded-xl px-5 py-2.5 text-[13px] font-medium disabled:opacity-40"
-          style={{ background: "var(--brand-blue)", color: "#fff" }}
-        >
-          Continue
-        </button>
-      </div>
-    );
-  }
-
-  /* ---------------- screen 2 ---------------- */
-  if (step === 2) {
-    return (
-      <div className="mx-auto w-full max-w-[720px] px-6 py-16">
-        <Eyebrow>Reading your warehouse</Eyebrow>
-        <div
-          className="mt-4 rounded-2xl px-4 py-3 text-[14px]"
-          style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-900)" }}
-        >
-          {intent}
-        </div>
-        <div className="mt-8 flex flex-col gap-4">
-          {RESOLVE_STEPS.map((s, i) => {
-            const complete = done > i;
-            return (
-              <div key={s} className="flex items-center gap-3 transition-opacity" style={{ opacity: complete ? 1 : 0.45 }}>
-                <span
-                  className="flex h-5 w-5 items-center justify-center rounded-full"
-                  style={{
-                    background: complete ? "var(--brand-blue)" : "transparent",
-                    border: complete ? "none" : "1px solid var(--hairline)",
-                  }}
-                >
-                  {complete ? (
-                    <Check size={12} color="#fff" strokeWidth={3} />
-                  ) : (
-                    <Loader2 size={12} className="animate-spin" color="var(--ink-300)" />
-                  )}
-                </span>
-                <span className="text-[13.5px]" style={{ color: "var(--ink-700)" }}>
-                  {s}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  /* ---------------- screen 3 ---------------- */
-  const visible = WATCHING.concat(showMore ? WATCHING_HIDDEN : []);
+function Proposal({ draft, intent }: { draft: Draft; intent: string }) {
+  const [open, setOpen] = React.useState(false);
+  const all = [...draft.tables, ...draft.added];
+  const lead = all.slice(0, 6);
+  const rest = all.slice(6);
+  const measures = DIMENSIONS.filter((d) => draft.dims[d.id]).map((d) => d.name.replace(/ on .*$/, ""));
+  const dropped = DIMENSIONS.filter((d) => !draft.dims[d.id]);
+  const reason = ALL_ROWS.find((r) => r.table === all[0])?.reason;
 
   return (
-    <div className="mx-auto w-full max-w-[820px] px-6 py-12">
-      <Eyebrow>Here's my draft — change anything</Eyebrow>
+    <AgentBubble>
+      <p>
+        Here's what I'd do. You own {intent.replace(/^i own /i, "").replace(/\.$/, "")}, so I'll watch the{" "}
+        {all.length} tables that flow into it and leave the copies, backups and derived views out of it.
+      </p>
 
-      <div className="mt-4">
-        {editingSentence ? (
-          <textarea
-            value={sentence}
-            autoFocus
-            onChange={(e) => setSentence(e.target.value)}
-            onBlur={() => setEditingSentence(false)}
-            rows={4}
-            className="w-full resize-none rounded-xl px-3 py-2 text-[15px] leading-relaxed outline-none"
-            style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-900)" }}
-          />
-        ) : (
-          <p className="text-[15px] leading-relaxed" style={{ color: "var(--ink-900)" }}>
-            {sentence}
-          </p>
+      <p className="mt-3">
+        I'd start with{" "}
+        {lead.map((t, i) => (
+          <React.Fragment key={t}>
+            <Mono>{t}</Mono>
+            {i < lead.length - 2 ? ", " : i === lead.length - 2 ? " and " : ""}
+          </React.Fragment>
+        ))}
+        {rest.length > 0 && (
+          <>
+            {" "}
+            plus{" "}
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="underline"
+              style={{ color: "var(--brand-blue)" }}
+            >
+              {rest.length} more
+            </button>
+          </>
         )}
-        <button
-          type="button"
-          onClick={() => setEditingSentence(true)}
-          className="mt-2 text-[12.5px] underline"
-          style={{ color: "var(--brand-blue)" }}
-        >
-          Edit this sentence
-        </button>
-      </div>
+        . {reason ? <span style={{ color: "var(--ink-500)" }}>{reason}.</span> : null}
+      </p>
 
-      {/* WATCHING */}
-      <div className="mt-8">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--ink-500)" }}>
-          Watching — {totalTables} tables
+      {open && rest.length > 0 && (
+        <div className="mt-2 flex flex-col gap-1.5 pl-3" style={{ borderLeft: "2px solid var(--hairline)" }}>
+          {rest.map((t) => (
+            <div key={t}>
+              <Mono>{t}</Mono>
+              <span className="ml-2 text-[12.5px]" style={{ color: "var(--ink-500)" }}>
+                {ALL_ROWS.find((r) => r.table === t)?.reason ?? "Added by you"}
+              </span>
+            </div>
+          ))}
         </div>
-        <div className="mt-3 overflow-hidden rounded-xl" style={{ border: "1px solid var(--hairline)", background: "#fff" }}>
-          {visible.map((r, i) => {
-            const gone = removed.includes(r.table);
-            return (
-              <div
-                key={r.table}
-                className="flex items-start gap-3 px-3 py-2.5"
-                style={{ borderTop: i === 0 ? "none" : "1px solid var(--hairline)" }}
-              >
-                <div className="min-w-0 flex-1">
-                  <div
-                    className="font-mono text-[12.5px]"
-                    style={{
-                      color: gone ? "var(--ink-100)" : "var(--ink-900)",
-                      textDecoration: gone ? "line-through" : "none",
-                    }}
-                  >
-                    {r.table}
-                  </div>
-                  <div
-                    className="mt-0.5 text-[12px] leading-snug"
-                    style={{
-                      color: gone ? "var(--ink-100)" : "var(--ink-500)",
-                      textDecoration: gone ? "line-through" : "none",
-                    }}
-                  >
-                    {r.reason}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  aria-label={gone ? `Put ${r.table} back` : `Remove ${r.table}`}
-                  onClick={() =>
-                    setRemoved((prev) => (gone ? prev.filter((t) => t !== r.table) : [...prev, r.table]))
-                  }
-                  className="mt-0.5 shrink-0 rounded-md p-1 transition-colors hover:bg-[color:var(--surface-soft)]"
-                  style={{ color: "var(--ink-300)" }}
-                >
-                  {gone ? <span className="text-[11px] px-1">Undo</span> : <X size={14} />}
-                </button>
-              </div>
-            );
+      )}
+
+      <p className="mt-3">
+        I'd measure {listNames(measures.map((m) => m.toLowerCase()))}, and always show how many checks are passing.{" "}
+        {dropped.length > 0 && (
+          <span style={{ color: "var(--ink-500)" }}>
+            I'm leaving {listNames(dropped.map((d) => d.name.toLowerCase()))} out — {dropped[0].reason}.
+          </span>
+        )}
+      </p>
+
+      <p className="mt-3" style={{ color: "var(--ink-500)" }}>
+        I can't see what reads these tables downstream yet — connect dbt or query history and I'll rank on that too.
+      </p>
+
+      <p className="mt-3 font-medium">Want me to build this? You can also tell me what to change.</p>
+    </AgentBubble>
+  );
+}
+
+function ExcludedList() {
+  return (
+    <AgentBubble>
+      <p>These six matched your description, but I left them out:</p>
+      <div className="mt-2 flex flex-col gap-1.5 pl-3" style={{ borderLeft: "2px solid var(--hairline)" }}>
+        {EXCLUDED.map((r) => (
+          <div key={r.table}>
+            <Mono>{r.table}</Mono>
+            <span className="ml-2 text-[12.5px]" style={{ color: "var(--ink-500)" }}>
+              {r.reason}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3">Say the word and I'll put any of them back. Otherwise — shall I build it?</p>
+    </AgentBubble>
+  );
+}
+
+export function SetupFlow({ onCreate }: { onCreate: (c: SetupConfig) => void }) {
+  const [turns, setTurns] = React.useState<Turn[]>([
+    {
+      id: "open",
+      kind: "agent",
+      text: "What are you responsible for? Describe it the way you'd say it to a colleague — I'll tell you what I'd watch, and you can change it before I build anything.",
+    },
+  ]);
+  const [intent, setIntent] = React.useState("");
+  const [draft, setDraft] = React.useState<Draft>({
+    tables: ALL_ROWS.map((w) => w.table),
+    added: [],
+    dims: { ...DEFAULT_DIMS },
+    name: "Q4 migration",
+  });
+  const [input, setInput] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const bottom = React.useRef<HTMLDivElement>(null);
+  const started = intent.length > 0;
+
+  React.useEffect(() => {
+    bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [turns]);
+
+  const push = (t: Turn) => setTurns((prev) => [...prev, t]);
+
+  const proposeAfterThinking = (nextDraft: Draft, nextIntent: string) => {
+    setBusy(true);
+    push({ id: `t${Date.now()}`, kind: "thinking" });
+    setTimeout(() => {
+      setTurns((prev) => [...prev, { id: `p${Date.now()}`, kind: "proposal", draft: nextDraft }]);
+      setBusy(false);
+      void nextIntent;
+    }, 2400);
+  };
+
+  const firstAnswer = (text: string) => {
+    setIntent(text);
+    const nextDraft = { ...draft, name: deriveName(text) };
+    setDraft(nextDraft);
+    push({ id: `u${Date.now()}`, kind: "user", text });
+    proposeAfterThinking(nextDraft, text);
+  };
+
+  const reply = (raw: string) => {
+    const text = raw.trim();
+    if (!text || busy) return;
+    if (!started) {
+      firstAnswer(text);
+      return;
+    }
+    push({ id: `u${Date.now()}`, kind: "user", text });
+    const q = text.toLowerCase();
+
+    // build it
+    if (/^(yes|yep|yeah|ok|okay|sure|go|do it|build|looks good|ship it|perfect|great)\b/.test(q) || /build (it|this)/.test(q)) {
+      const total = draft.tables.length + draft.added.length;
+      push({
+        id: `a${Date.now()}`,
+        kind: "agent",
+        text: `Building it now — I'll call it "${draft.name}". ${total} tables, checked every morning at 6:00am.`,
+      });
+      setBusy(true);
+      setTimeout(() => onCreate({ intent, name: draft.name, tableCount: total, dims: draft.dims }), 900);
+      return;
+    }
+
+    // what are you skipping
+    if (/skip|exclud|left out|leaving out|why not/.test(q)) {
+      push({ id: `e${Date.now()}`, kind: "excluded" });
+      return;
+    }
+
+    let next = { ...draft, dims: { ...draft.dims } };
+    const notes: string[] = [];
+
+    // name it
+    const nameMatch = text.match(/(?:call it|name it)\s+"?([^".]+)"?/i);
+    if (nameMatch) {
+      next.name = nameMatch[1].trim();
+      notes.push(`Calling it "${next.name}".`);
+    }
+
+    // remove tables
+    if (/\b(drop|remove|exclude|ignore|don'?t watch)\b/.test(q)) {
+      const hits = [...next.tables, ...next.added].filter((t) => q.includes(t.toLowerCase()));
+      if (hits.length) {
+        next.tables = next.tables.filter((t) => !hits.includes(t));
+        next.added = next.added.filter((t) => !hits.includes(t));
+        notes.push(`Dropped ${listNames(hits)}.`);
+      }
+    }
+
+    // add tables
+    if (/\b(add|include|also watch|watch)\b/.test(q)) {
+      const known = ALL_ROWS.map((r) => r.table).filter(
+        (t) => q.includes(t.toLowerCase()) && !next.tables.includes(t) && !next.added.includes(t),
+      );
+      let picked = known;
+      if (!picked.length) {
+        const word = (q.match(/[a-z_]{5,}/g) ?? []).find(
+          (w) => !["include", "tables", "table", "please", "should", "watch"].includes(w),
+        );
+        if (word) picked = [`${word}_tables`];
+      }
+      if (picked.length) {
+        next.added = [...next.added, ...picked];
+        notes.push(`Added ${listNames(picked)}.`);
+      }
+    }
+
+    // dimensions
+    const on = /\b(add|include|also|care about|want|track)\b/.test(q);
+    const off = /\b(drop|remove|ignore|don'?t|stop)\b/.test(q);
+    for (const d of DIM_WORDS) {
+      if (!d.words.some((w) => q.includes(w))) continue;
+      if (off && next.dims[d.id]) {
+        next.dims[d.id] = false;
+        notes.push(`Dropped ${DIMENSIONS.find((x) => x.id === d.id)!.name.toLowerCase()}.`);
+      } else if (on && !next.dims[d.id]) {
+        next.dims[d.id] = true;
+        notes.push(`Measuring ${DIMENSIONS.find((x) => x.id === d.id)!.name.toLowerCase()} too.`);
+      }
+    }
+
+    setDraft(next);
+    push({
+      id: `a${Date.now()}`,
+      kind: "agent",
+      text: notes.length
+        ? `${notes.join(" ")} Here's the updated version.`
+        : "Noted — I've kept the rest the same. Here's where that leaves us.",
+    });
+    setTurns((prev) => [...prev, { id: `p${Date.now()}`, kind: "proposal", draft: next }]);
+  };
+
+  const send = () => {
+    reply(input);
+    setInput("");
+  };
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="mx-auto min-h-0 w-full max-w-[720px] flex-1 overflow-y-auto px-6 pt-14">
+        <div className="flex flex-col gap-6 pb-6">
+          {turns.map((t) => {
+            if (t.kind === "user") return <UserBubble key={t.id} text={t.text} />;
+            if (t.kind === "agent")
+              return (
+                <AgentBubble key={t.id}>
+                  <p>{t.text}</p>
+                </AgentBubble>
+              );
+            if (t.kind === "thinking") return <Thinking key={t.id} />;
+            if (t.kind === "excluded") return <ExcludedList key={t.id} />;
+            return <Proposal key={t.id} draft={t.draft} intent={intent} />;
           })}
-          {refined.map((t) => (
-            <div key={t} className="flex items-start gap-3 px-3 py-2.5" style={{ borderTop: "1px solid var(--hairline)" }}>
-              <div className="min-w-0 flex-1">
-                <div className="font-mono text-[12.5px]" style={{ color: "var(--ink-900)" }}>
-                  {t}
-                </div>
-                <div className="mt-0.5 text-[12px]" style={{ color: "var(--ink-500)" }}>
-                  Added by you just now
-                </div>
-              </div>
+          <div ref={bottom} />
+        </div>
+      </div>
+
+      <div className="mx-auto w-full max-w-[720px] shrink-0 px-6 pb-6 pt-2">
+        {!started && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {STARTERS.map((s) => (
               <button
+                key={s}
                 type="button"
-                aria-label={`Remove ${t}`}
-                onClick={() => setRefined((p) => p.filter((x) => x !== t))}
-                className="mt-0.5 shrink-0 rounded-md p-1 hover:bg-[color:var(--surface-soft)]"
-                style={{ color: "var(--ink-300)" }}
+                onClick={() => reply(s)}
+                className="rounded-full px-3 py-1.5 text-[12px]"
+                style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-700)" }}
               >
-                <X size={14} />
+                {s}
               </button>
-            </div>
-          ))}
-        </div>
-        {!showMore && (
-          <button
-            type="button"
-            onClick={() => setShowMore(true)}
-            className="mt-2 text-[12.5px] underline"
-            style={{ color: "var(--brand-blue)" }}
-          >
-            Show 8 more
-          </button>
-        )}
-      </div>
-
-      {/* PRIORITISING */}
-      <div className="mt-8">
-        <div className="flex items-baseline gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--ink-500)" }}>
-            Prioritising
-          </span>
-          <span className="text-[12px]" style={{ color: "var(--ink-300)" }}>
-            these become your scorecard
-          </span>
-        </div>
-        <div className="mt-3 flex flex-col gap-3">
-          {DIMENSIONS.filter((d) => d.prioritised).map((d) => (
-            <div key={d.id} className="flex items-start gap-3">
-              <Toggle on={dims[d.id]} label={d.name} onChange={() => setDims((p) => ({ ...p, [d.id]: !p[d.id] }))} />
-              <div className="min-w-0">
-                <div className="text-[13px] font-medium" style={{ color: "var(--ink-900)" }}>
-                  {d.name}
-                </div>
-                <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-                  {d.reason}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div
-          className="mt-4 rounded-xl px-3 py-2 text-[12.5px]"
-          style={{ background: "var(--surface-soft)", color: "var(--ink-700)" }}
-        >
-          Scorecard will show: {tiles.join(" · ")}
-        </div>
-      </div>
-
-      {/* DEPRIORITISING */}
-      <div className="mt-8">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--ink-500)" }}>
-          Deprioritising
-        </div>
-        <div className="mt-3 flex flex-col gap-3">
-          {DIMENSIONS.filter((d) => !d.prioritised).map((d) => (
-            <div key={d.id} className="flex items-start gap-3">
-              <Toggle on={dims[d.id]} label={d.name} onChange={() => setDims((p) => ({ ...p, [d.id]: !p[d.id] }))} />
-              <div className="min-w-0">
-                <div className="text-[13px] font-medium" style={{ color: "var(--ink-900)" }}>
-                  {d.name}
-                </div>
-                <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-                  {d.reason}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* considered and excluded */}
-      <div className="mt-8">
-        <button
-          type="button"
-          onClick={() => setExcludedOpen((v) => !v)}
-          className="flex items-center gap-1.5 text-[12.5px]"
-          style={{ color: "var(--ink-500)" }}
-          aria-expanded={excludedOpen}
-        >
-          {excludedOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          I considered 6 more and left them out — see why
-        </button>
-        {excludedOpen && (
-          <div className="mt-3 overflow-hidden rounded-xl" style={{ border: "1px solid var(--hairline)", background: "#fff" }}>
-            {EXCLUDED.map((r, i) => (
-              <div
-                key={r.table}
-                className="px-3 py-2.5"
-                style={{ borderTop: i === 0 ? "none" : "1px solid var(--hairline)" }}
-              >
-                <div className="font-mono text-[12.5px]" style={{ color: "var(--ink-700)" }}>
-                  {r.table}
-                </div>
-                <div className="mt-0.5 text-[12px]" style={{ color: "var(--ink-500)" }}>
-                  {r.reason}
-                </div>
-              </div>
             ))}
           </div>
         )}
-      </div>
-
-      {/* refine */}
-      <form
-        className="mt-8"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const q = refine.trim();
-          if (!q) return;
-          const words = q.match(/[a-z_]+_?[a-z]*/gi) ?? [];
-          const guess = words.find((w) => w.length > 4 && !["also", "include", "tables", "table", "add", "the"].includes(w.toLowerCase()));
-          setRefined((p) => [...p, guess ? `${guess.toLowerCase()}_tables` : "additional_tables"]);
-          setRefine("");
-        }}
-      >
-        <input
-          value={refine}
-          onChange={(e) => setRefine(e.target.value)}
-          placeholder="Anything I'm missing? e.g. 'also include the billing tables'"
-          className="w-full rounded-xl px-3.5 py-2.5 text-[13px] outline-none"
-          style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-900)" }}
-        />
-      </form>
-
-      {/* name + create */}
-      <div className="mt-8 flex items-center gap-3">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          aria-label="Dashboard name"
-          className="rounded-xl px-3.5 py-2.5 text-[13px] outline-none"
-          style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-900)", width: 220 }}
-        />
-        <button
-          type="button"
-          onClick={() => onCreate({ intent, name: name.trim() || "Q4 migration", tableCount: totalTables, dims })}
-          className="rounded-xl px-5 py-2.5 text-[13px] font-medium"
-          style={{ background: "var(--brand-blue)", color: "#fff" }}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send();
+          }}
+          className="flex flex-col rounded-2xl px-3 py-3"
+          style={{
+            background: "#E3E3F2",
+            border: "1px solid rgba(0,0,204,0.14)",
+            boxShadow:
+              "0px -2px 20px -10px rgba(67,67,112,0.15), 0px 24px 48px -16px rgba(67,67,112,0.5)",
+          }}
         >
-          Create dashboard
-        </button>
+          <textarea
+            value={input}
+            autoFocus
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            rows={2}
+            placeholder={started ? "Tell me what to change, or say yes…" : "I own the customer data going into our Q4 migration…"}
+            className="min-h-[52px] flex-1 resize-none bg-transparent text-[13px] outline-none"
+            style={{ color: "var(--ink-900)" }}
+          />
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              aria-label="Send"
+              disabled={busy}
+              className="flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-40"
+              style={{ background: "var(--brand-blue)", color: "#fff" }}
+            >
+              <ArrowUp size={15} />
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
