@@ -258,7 +258,10 @@ export function TableBriefScreen({ tableName }: { tableName?: string }) {
         onScope={(id) => setScope(id)}
         dupeFilter={dupeFilter}
         onClearDupeFilter={() => setDupeFilter(null)}
-      />
+          />
+        );
+        return slot.node ? createPortal(panel, slot.node) : panel;
+      })()}
     </div>
   );
 }
