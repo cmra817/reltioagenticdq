@@ -8,8 +8,11 @@ Today a new visitor gets the setup conversation. Instead, the screen opens strai
 finished dashboard — the same scorecard, brief and conversation you see after setup today,
 built from the tables this account is already connected to and monitoring.
 
-Setup isn't deleted: "Restart setup" still opens the setup conversation, and finishing it
-replaces the default dashboard as before.
+There is no setup step on entry at all. The setup conversation only appears when you ask for
+something bigger than a tweak — "build me a dashboard for the finance tables", "start over with
+a new dashboard" — and it happens inside the dashboard page's own conversation: the agent states
+the plan for the new dashboard, you confirm, and it regenerates in place. No separate screen,
+no wizard.
 
 ## 2. The dashboard changes when you ask it to
 
