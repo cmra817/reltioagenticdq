@@ -139,6 +139,7 @@ export function TodayBrief({
           <ActionButtons
             actions={[
               { label: "Should I worry?", ask: "Should I worry about orders_fact?" },
+              { label: "Investigate", ask: "Why is orders_fact late?" },
               { label: "Pin ↑", pin: { title: "orders_fact load", value: "19m", sub: "out of band 3 of 9 days" } },
             ]}
             onAsk={onAsk}
