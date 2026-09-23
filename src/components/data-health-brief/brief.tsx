@@ -164,11 +164,11 @@ export function TodayBrief({
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => onAsk("Should I worry about cust_addresses?")}
+            onClick={() => onAsk("Look into the cust_addresses nulls")}
             className="rounded-lg px-2.5 py-1 text-[12px]"
             style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-700)" }}
           >
-            Look
+            Investigate
           </button>
           <button
             type="button"
