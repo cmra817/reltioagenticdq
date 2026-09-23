@@ -206,11 +206,11 @@ export function DataHealthScreen() {
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
-            onClick={restart}
+            onClick={() => setSetupMode(true)}
             className="text-[12px] underline"
             style={{ color: "var(--ink-300)" }}
           >
-            Restart setup
+            Build a new dashboard
           </button>
         </div>
       </div>
