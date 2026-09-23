@@ -8,8 +8,11 @@ Today a new visitor gets the setup conversation. Instead, the screen opens strai
 finished dashboard — the same scorecard, brief and conversation you see after setup today,
 built from the tables this account is already connected to and monitoring.
 
-Setup isn't deleted: "Restart setup" still opens the setup conversation, and finishing it
-replaces the default dashboard as before.
+There is no setup step on entry at all. The setup conversation only appears when you ask for
+something bigger than a tweak — "build me a dashboard for the finance tables", "start over with
+a new dashboard" — and it happens inside the dashboard page's own conversation: the agent states
+the plan for the new dashboard, you confirm, and it regenerates in place. No separate screen,
+no wizard.
 
 ## 2. The dashboard changes when you ask it to
 
@@ -35,10 +38,9 @@ New suggestion chips reflect this: one question chip, one "add a chart" chip, on
 
 Asking the dashboard to dig into something — "what's happening with the duplicates?",
 "why is orders_fact late?", "look into the cust_addresses nulls" — no longer answers inline.
-The agent posts a short line in the dashboard thread ("Opening an investigation into duplicate
-growth →") and opens a **new chat thread** on its own page, the way the consistency
-investigation already works today. The dashboard thread stays where it was; the investigation
-lives in Recent chats and can be reopened.
+The agent opens a **new chat thread** on its own page straight away, the way the consistency
+investigation already works today — nothing is added to the dashboard thread. The dashboard
+stays exactly as it was; the investigation lives in Recent chats and can be reopened.
 
 Each investigation is a scripted, chart-heavy thread, in the shape of the existing consistency
 one:
