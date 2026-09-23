@@ -101,6 +101,7 @@ export function TodayBrief({
           <ActionButtons
             actions={[
               { label: "What should I do first?", primary: true, ask: "What should I do first?" },
+              { label: "Investigate", ask: "What's happening with the duplicates?" },
               { label: "Compare the three", ask: "Show me the three tables" },
               { label: "Pin ↑", pin: { title: "Duplicate rate", value: "24.6%", sub: "customer_data · 3 tables on one connector" } },
             ]}
@@ -138,6 +139,7 @@ export function TodayBrief({
           <ActionButtons
             actions={[
               { label: "Should I worry?", ask: "Should I worry about orders_fact?" },
+              { label: "Investigate", ask: "Why is orders_fact late?" },
               { label: "Pin ↑", pin: { title: "orders_fact load", value: "19m", sub: "out of band 3 of 9 days" } },
             ]}
             onAsk={onAsk}
@@ -162,11 +164,11 @@ export function TodayBrief({
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => onAsk("Should I worry about cust_addresses?")}
+            onClick={() => onAsk("Look into the cust_addresses nulls")}
             className="rounded-lg px-2.5 py-1 text-[12px]"
             style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-700)" }}
           >
-            Look
+            Investigate
           </button>
           <button
             type="button"

@@ -72,17 +72,20 @@ function PinCard({ pin, onRemove }: { pin: Pin; onRemove: () => void }) {
 export function Scorecard({
   dims,
   healthy,
+  extras = [],
   pins,
   onRemovePin,
   onAsk,
 }: {
   dims: Record<DimensionId, boolean>;
   healthy: boolean;
+  extras?: MetricCard[];
   pins: Pin[];
   onRemovePin: (id: string) => void;
   onAsk: (q: string) => void;
 }) {
   const cards = DIMENSIONS.filter((d) => dims[d.id]).map((d) => metricFor(d.id, healthy));
+  cards.push(...extras);
   cards.push(checksCard(healthy));
 
   return (

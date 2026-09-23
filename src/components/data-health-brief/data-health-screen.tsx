@@ -1,34 +1,59 @@
 import * as React from "react";
 import { ArrowUp } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { SetupFlow, type SetupConfig } from "./setup-flow";
 import { Scorecard, type Pin } from "./scorecard";
 import { HealthyBrief, TodayBrief } from "./brief";
 import { Thread, type ThreadMessage } from "./thread";
-import { answerFor, type PinPayload } from "./answers";
-import { DEFAULT_DIMS, type DimensionId } from "./data";
+import { answerFor, type Block, type PinPayload } from "./answers";
+import { DEFAULT_DIMS, DEFAULT_INTENT, type DimensionId } from "./data";
+import { newChatId } from "@/components/chat/chat-context";
+import {
+  EXTRA_CARDS,
+  KNOWN_METRICS,
+  parseCommand,
+  type ExtraId,
+} from "./dashboard-commands";
 
 const STORAGE_KEY = "dq.datahealth.setup.v1";
 
 type Level = "full" | "brief" | "min";
 
-function loadConfig(): SetupConfig | null {
-  if (typeof window === "undefined") return null;
+type StoredConfig = SetupConfig & { extras?: ExtraId[] };
+
+/** What a returning-but-unconfigured account sees: the tables it already connects and monitors. */
+const DEFAULT_CONFIG: StoredConfig = {
+  intent: DEFAULT_INTENT,
+  name: "Customer data health",
+  tableCount: 14,
+  dims: { ...DEFAULT_DIMS },
+  extras: [],
+};
+
+function loadConfig(): StoredConfig {
+  if (typeof window === "undefined") return DEFAULT_CONFIG;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as SetupConfig;
-    if (!parsed?.dims) return null;
-    return { ...parsed, dims: { ...DEFAULT_DIMS, ...parsed.dims } };
+    if (!raw) return DEFAULT_CONFIG;
+    const parsed = JSON.parse(raw) as StoredConfig;
+    if (!parsed?.dims) return DEFAULT_CONFIG;
+    return { ...parsed, dims: { ...DEFAULT_DIMS, ...parsed.dims }, extras: parsed.extras ?? [] };
   } catch {
-    return null;
+    return DEFAULT_CONFIG;
   }
 }
 
-const CHIPS_TODAY = ["What should I do first?", "Why is this ranked first?", "Add duplicate rate by table"];
+const CHIPS_TODAY = [
+  "What should I do first?",
+  "Add duplicate rate by table",
+  "What's happening with the duplicates?",
+];
 
 export function DataHealthScreen() {
+  const navigate = useNavigate();
   const [hydrated, setHydrated] = React.useState(false);
-  const [config, setConfig] = React.useState<SetupConfig | null>(null);
+  const [config, setConfig] = React.useState<StoredConfig>(DEFAULT_CONFIG);
+  const [setupMode, setSetupMode] = React.useState(false);
   const healthy = false;
   const [level, setLevel] = React.useState<Level>("full");
   const [pins, setPins] = React.useState<Pin[]>([]);
@@ -40,11 +65,8 @@ export function DataHealthScreen() {
     setHydrated(true);
   }, []);
 
-  const create = (c: SetupConfig) => {
+  const persist = (c: StoredConfig) => {
     setConfig(c);
-    setMessages([]);
-    setPins([]);
-    setLevel("full");
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(c));
     } catch {
@@ -52,30 +74,107 @@ export function DataHealthScreen() {
     }
   };
 
-  const restart = () => {
-    try {
-      window.localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      /* ignore */
-    }
-    setConfig(null);
+  const create = (c: SetupConfig) => {
+    persist({ ...c, extras: [] });
+    setSetupMode(false);
     setMessages([]);
     setPins([]);
     setLevel("full");
   };
 
-  const ask = React.useCallback((qRaw: string) => {
-    const q = qRaw.trim();
-    if (!q) return;
-    const answer = answerFor(q);
-    setLevel("min");
+  const say = React.useCallback((q: string, blocks: Block[]) => {
     setMessages((prev) => [
       ...prev,
       { id: `u${prev.length}`, role: "user", text: q },
-      { id: `a${prev.length}`, role: "agent", blocks: answer.blocks },
+      { id: `a${prev.length}`, role: "agent", blocks },
     ]);
   }, []);
 
+  const ask = React.useCallback(
+    (qRaw: string) => {
+      const q = qRaw.trim();
+      if (!q) return;
+      const cmd = parseCommand(q);
+
+      if (cmd.kind === "investigate") {
+        const thread = newChatId();
+        void navigate({
+          to: "/investigate/$topic",
+          params: { topic: cmd.topic },
+          search: { q, thread },
+        });
+        return;
+      }
+
+      if (cmd.kind === "rebuild") {
+        setSetupMode(true);
+        return;
+      }
+
+      if (cmd.kind === "add" || cmd.kind === "remove") {
+        const on = cmd.kind === "add";
+        const { extra, dim, name } = cmd.target;
+        setConfig((prev) => {
+          const next: StoredConfig = {
+            ...prev,
+            dims: dim ? { ...prev.dims, [dim]: on } : prev.dims,
+            extras: extra
+              ? on
+                ? prev.extras?.includes(extra)
+                  ? prev.extras
+                  : [...(prev.extras ?? []), extra]
+                : (prev.extras ?? []).filter((e) => e !== extra)
+              : prev.extras,
+          };
+          try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+          } catch {
+            /* ignore */
+          }
+          return next;
+        });
+        setLevel("full");
+        say(q, [
+          {
+            kind: "p",
+            lead: true,
+            text: on
+              ? `Added ${name} to your scorecard — it's the last card, above checks passing.`
+              : `Removed ${name} from your scorecard.`,
+          },
+          {
+            kind: "p",
+            text: on
+              ? "It uses the same learned band as everything else here, so the delta is against normal for this table, not against zero."
+              : "Say the opposite and I'll put it back.",
+          },
+          {
+            kind: "actions",
+            actions: [
+              {
+                label: on ? "Undo" : "Put it back",
+                ask: on ? `remove ${name}` : `add ${name}`,
+              },
+            ],
+          },
+        ]);
+        return;
+      }
+
+      if (cmd.kind === "unknown-metric") {
+        setLevel("min");
+        say(q, [
+          { kind: "p", lead: true, text: "I can't map that to a metric I actually collect." },
+          { kind: "p", text: `What I can put on this dashboard: ${KNOWN_METRICS}.` },
+        ]);
+        return;
+      }
+
+      setLevel("min");
+      say(q, answerFor(q).blocks);
+    },
+    [navigate, say],
+  );
 
   const addPin = React.useCallback((p: PinPayload) => {
     setLevel("full");
@@ -85,7 +184,7 @@ export function DataHealthScreen() {
   }, []);
 
   if (!hydrated) return <div className="flex-1" />;
-  if (!config) {
+  if (setupMode) {
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <SetupFlow onCreate={create} />
@@ -94,6 +193,7 @@ export function DataHealthScreen() {
   }
 
   const dims = config.dims as Record<DimensionId, boolean>;
+  const extras = (config.extras ?? []).map((e) => EXTRA_CARDS[e]);
   const chips = CHIPS_TODAY;
 
   return (
@@ -106,11 +206,11 @@ export function DataHealthScreen() {
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
-            onClick={restart}
+            onClick={() => setSetupMode(true)}
             className="text-[12px] underline"
             style={{ color: "var(--ink-300)" }}
           >
-            Restart setup
+            Build a new dashboard
           </button>
         </div>
       </div>
@@ -147,6 +247,7 @@ export function DataHealthScreen() {
             {level === "full" && (
               <Scorecard
                 dims={dims}
+                extras={extras}
                 healthy={healthy}
                 pins={pins}
                 onRemovePin={(id) => setPins((p) => p.filter((x) => x.id !== id))}

@@ -15,6 +15,7 @@ import { Route as DqChecksRouteImport } from './routes/dq-checks'
 import { Route as DataHealthRouteImport } from './routes/data-health'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InvestigateConsistencyRouteImport } from './routes/investigate.consistency'
+import { Route as InvestigateTopicRouteImport } from './routes/investigate.$topic'
 import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -49,6 +50,11 @@ const InvestigateConsistencyRoute = InvestigateConsistencyRouteImport.update({
   path: '/investigate/consistency',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvestigateTopicRoute = InvestigateTopicRouteImport.update({
+  id: '/investigate/$topic',
+  path: '/investigate/$topic',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatChatIdRoute = ChatChatIdRouteImport.update({
   id: '/chat/$chatId',
   path: '/chat/$chatId',
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/investigate/$topic'
     | '/investigate/consistency'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/investigate/$topic'
     | '/investigate/consistency'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/investigate/$topic'
     | '/investigate/consistency'
   fileRoutesById: FileRoutesById
 }
@@ -144,6 +156,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   AssetsAssetSlugRoute: typeof AssetsAssetSlugRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
+  InvestigateTopicRoute: typeof InvestigateTopicRoute
   InvestigateConsistencyRoute: typeof InvestigateConsistencyRoute
 }
 
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvestigateConsistencyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/investigate/$topic': {
+      id: '/investigate/$topic'
+      path: '/investigate/$topic'
+      fullPath: '/investigate/$topic'
+      preLoaderRoute: typeof InvestigateTopicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chat/$chatId': {
       id: '/chat/$chatId'
       path: '/chat/$chatId'
@@ -224,6 +244,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   AssetsAssetSlugRoute: AssetsAssetSlugRoute,
   ChatChatIdRoute: ChatChatIdRoute,
+  InvestigateTopicRoute: InvestigateTopicRoute,
   InvestigateConsistencyRoute: InvestigateConsistencyRoute,
 }
 export const routeTree = rootRouteImport
