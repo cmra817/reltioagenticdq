@@ -38,10 +38,9 @@ New suggestion chips reflect this: one question chip, one "add a chart" chip, on
 
 Asking the dashboard to dig into something — "what's happening with the duplicates?",
 "why is orders_fact late?", "look into the cust_addresses nulls" — no longer answers inline.
-The agent posts a short line in the dashboard thread ("Opening an investigation into duplicate
-growth →") and opens a **new chat thread** on its own page, the way the consistency
-investigation already works today. The dashboard thread stays where it was; the investigation
-lives in Recent chats and can be reopened.
+The agent opens a **new chat thread** on its own page straight away, the way the consistency
+investigation already works today — nothing is added to the dashboard thread. The dashboard
+stays exactly as it was; the investigation lives in Recent chats and can be reopened.
 
 Each investigation is a scripted, chart-heavy thread, in the shape of the existing consistency
 one:
