@@ -247,6 +247,7 @@ export function DataHealthScreen() {
             {level === "full" && (
               <Scorecard
                 dims={dims}
+                extras={extras}
                 healthy={healthy}
                 pins={pins}
                 onRemovePin={(id) => setPins((p) => p.filter((x) => x.id !== id))}
