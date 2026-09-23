@@ -101,6 +101,7 @@ export function TodayBrief({
           <ActionButtons
             actions={[
               { label: "What should I do first?", primary: true, ask: "What should I do first?" },
+              { label: "Investigate", ask: "What's happening with the duplicates?" },
               { label: "Compare the three", ask: "Show me the three tables" },
               { label: "Pin ↑", pin: { title: "Duplicate rate", value: "24.6%", sub: "customer_data · 3 tables on one connector" } },
             ]}
