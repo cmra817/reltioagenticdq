@@ -9,6 +9,8 @@ export type Check = {
   description: string;
   dimension: Dimension;
   field: string;
+  /** Columns the check is applied to. Defaults to [field] when omitted. */
+  fields?: string[];
   /** Who created or recommended this check. Defaults to Reltio for generated checks. */
   creator?: Creator;
   /** GX expectation function name, e.g. expect_column_values_to_not_be_null. */
