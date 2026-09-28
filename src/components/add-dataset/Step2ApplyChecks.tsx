@@ -423,7 +423,7 @@ export function Step2ApplyChecks({
               </div>
               <div className="flex min-w-0 items-center gap-2">
                 {/* Library search */}
-                <div className="relative w-[220px] min-w-0" ref={searchRef}>
+                <div className="relative w-[180px] min-w-0" ref={searchRef}>
                   <Search
                     size={13}
                     className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
