@@ -278,6 +278,8 @@ export function Step1SelectData({
                     activeSchema={activeSchema!}
                     selected={selected}
                     onToggle={onToggle}
+                    pageSize={pageSize}
+                    page={currentPage}
                   />
                 ) : (
                   <SearchBody
@@ -285,9 +287,21 @@ export function Step1SelectData({
                     activeSchema={activeSchema}
                     selected={selected}
                     onToggle={onToggle}
+                    pageSize={pageSize}
+                    page={currentPage}
                   />
                 )}
               </div>
+              {total > 0 && (
+                <PaginationFooter
+                  total={total}
+                  pageSize={pageSize}
+                  page={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  onPageSizeChange={setPageSize}
+                />
+              )}
             </>
           )}
         </section>
