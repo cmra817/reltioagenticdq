@@ -551,9 +551,9 @@ export function Step2ApplyChecks({
                 </div>
               </div>
 
-              {/* Rows */}
+              {/* Checks table */}
               <div
-                className="mt-4 rounded-2xl border bg-white"
+                className="mt-4 overflow-hidden rounded-2xl border bg-white"
                 style={{ borderColor: "var(--hairline)" }}
               >
                 {visibleChecks.length === 0 ? (
@@ -564,24 +564,35 @@ export function Step2ApplyChecks({
                     No checks selected for {active.name}. Search your library or add a new check.
                   </div>
                 ) : (
-                  visibleChecks.map((check) => {
-                    const rowKey = `${active.key}::${check.id}`;
-                    return (
-                      <CheckRow
-                        key={check.id}
-                        check={check}
-                        expanded={expandedKey === rowKey}
-                        threshold={thresholds[rowKey] ?? checkLogic(check).threshold}
-                        onToggleExpand={() =>
-                          setExpandedKey((prev) => (prev === rowKey ? null : rowKey))
-                        }
-                        onThresholdChange={(value) =>
-                          setThresholds((prev) => ({ ...prev, [rowKey]: value }))
-                        }
-                        onRemove={() => onToggleCheck(active.key, check.id)}
-                      />
-                    );
-                  })
+                  <>
+                    <div
+                      className="grid grid-cols-[minmax(0,1fr)_150px_minmax(0,240px)] gap-4 border-b px-6 py-2.5 pl-[54px] text-[11px] font-semibold uppercase tracking-wide"
+                      style={{ borderColor: "var(--hairline)", color: "var(--ink-500)", background: "var(--surface-soft)" }}
+                    >
+                      <span>DQ check</span>
+                      <span>Dimension</span>
+                      <span>Columns applied to</span>
+                    </div>
+                    {groupChecks(visibleChecks).map(({ rule, fields, ids }) => {
+                      const rowKey = `${active.key}::${ids[0]}`;
+                      return (
+                        <CheckRow
+                          key={rowKey}
+                          check={rule}
+                          fields={fields}
+                          expanded={expandedKey === rowKey}
+                          threshold={thresholds[rowKey] ?? checkLogic(rule).threshold}
+                          onToggleExpand={() =>
+                            setExpandedKey((prev) => (prev === rowKey ? null : rowKey))
+                          }
+                          onThresholdChange={(value) =>
+                            setThresholds((prev) => ({ ...prev, [rowKey]: value }))
+                          }
+                          onRemove={() => ids.forEach((id) => onToggleCheck(active.key, id))}
+                        />
+                      );
+                    })}
+                  </>
                 )}
               </div>
             </div>
