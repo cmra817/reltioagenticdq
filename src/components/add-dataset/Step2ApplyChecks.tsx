@@ -363,7 +363,7 @@ export function Step2ApplyChecks({
                       {warehouse}
                     </button>
                     {!collapsed &&
-                      connections.map(({ name, list }) => (
+                      connections.map(({ name, items }) => (
                         <div key={name} className="mb-2">
                           <div
                             className="py-1.5 pl-[34px] pr-4 text-[13px] font-medium"
@@ -371,7 +371,7 @@ export function Step2ApplyChecks({
                           >
                             {name}
                           </div>
-                          {list.map((a) => {
+                          {items.map((a) => {
                             const isActive = a.key === active.key;
                             const count = (checked[a.key] ?? new Set()).size;
                             return (
