@@ -73,7 +73,7 @@ function checkFields(check: Check): string[] {
 
 /** Groups checks that share the same rule pattern so one row lists every column it applies to. */
 function groupChecks(checks: Check[]): { rule: Check; fields: string[]; ids: string[] }[] {
-  const groups = new Map<string, { rule: Check; fields: string[]; ids: string[] }>();
+  const groups = new Map<string, { rule: Check; fields: string[]; ids: string[]; pattern: string }>();
   for (const check of checks) {
     const pattern = check.rule.toLowerCase().split(check.field.toLowerCase()).join("").trim();
     const key = `${pattern}::${check.dimension}`;
@@ -84,10 +84,15 @@ function groupChecks(checks: Check[]): { rule: Check; fields: string[]; ids: str
       }
       existing.ids.push(check.id);
     } else {
-      groups.set(key, { rule: check, fields: [...checkFields(check)], ids: [check.id] });
+      groups.set(key, { rule: check, fields: [...checkFields(check)], ids: [check.id], pattern });
     }
   }
-  return Array.from(groups.values());
+  return Array.from(groups.values()).map(({ rule, fields, ids, pattern }) => ({
+    // Multi-column groups show the shared rule pattern instead of one column's name.
+    rule: fields.length > 1 ? { ...rule, rule: pattern.charAt(0).toUpperCase() + pattern.slice(1) } : rule,
+    fields,
+    ids,
+  }));
 }
 
 function CheckRow({
