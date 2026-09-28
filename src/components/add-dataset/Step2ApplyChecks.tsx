@@ -421,7 +421,7 @@ export function Step2ApplyChecks({
                 </span>
                 <span> · {activeChecked.size} checks</span>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 {/* Library search */}
                 <div className="relative w-[220px] min-w-0" ref={searchRef}>
                   <Search
