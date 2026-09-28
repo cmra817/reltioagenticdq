@@ -423,7 +423,7 @@ export function Step2ApplyChecks({
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {/* Library search */}
-                <div className="relative" ref={searchRef}>
+                <div className="relative w-[220px] min-w-0" ref={searchRef}>
                   <Search
                     size={13}
                     className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
@@ -437,7 +437,7 @@ export function Step2ApplyChecks({
                     }}
                     onFocus={() => setSearchOpen(true)}
                     placeholder="Search checks library…"
-                    className="w-[220px] rounded-full border bg-white py-1.5 pl-7 pr-3 text-[12px] outline-none focus:border-[color:var(--brand-blue)]"
+                    className="w-full rounded-full border bg-white py-1.5 pl-7 pr-3 text-[12px] outline-none focus:border-[color:var(--brand-blue)]"
                     style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
                   />
                   {searchOpen && (
