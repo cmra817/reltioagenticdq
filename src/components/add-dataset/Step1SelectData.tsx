@@ -8,6 +8,7 @@ import {
   WAREHOUSES,
   assetKey,
   formatRows,
+  type Asset,
   type Connection,
   type WarehouseType,
 } from "./mock-warehouses";
