@@ -349,10 +349,14 @@ function BrowseBody({
   activeSchema,
   selected,
   onToggle,
+  pageSize,
+  page,
 }: {
   activeSchema: { connId: string; schema: string };
   selected: Set<string>;
   onToggle: (key: string) => void;
+  pageSize: number;
+  page: number;
 }) {
   const conn = WAREHOUSES.find((c) => c.id === activeSchema.connId)!;
   const sch = conn.schemas.find((s) => s.name === activeSchema.schema)!;
@@ -360,6 +364,8 @@ function BrowseBody({
   const selectedInSchema = sch.assets.filter((a) =>
     selected.has(assetKey(conn.id, sch.name, a.name)),
   ).length;
+  const start = (page - 1) * pageSize;
+  const visible = sch.assets.slice(start, start + pageSize);
 
   return (
     <div>
@@ -373,7 +379,7 @@ function BrowseBody({
         {sch.assets.length} tables · {formatRows(totalRows)} rows · {selectedInSchema} selected
       </div>
       <div className="mt-4 flex flex-col gap-1">
-        {sch.assets.map((a) => {
+        {visible.map((a) => {
           const k = assetKey(conn.id, sch.name, a.name);
           return (
             <AssetRow
