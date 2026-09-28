@@ -572,7 +572,7 @@ export function Step2ApplyChecks({
                 ) : (
                   <>
                     <div
-                      className="grid grid-cols-[minmax(0,1fr)_150px_minmax(0,240px)] gap-4 border-b px-6 py-2.5 pl-[54px] text-[11px] font-semibold uppercase tracking-wide"
+                      className="grid min-w-[680px] grid-cols-[minmax(0,1fr)_140px_minmax(0,220px)] gap-4 border-b px-6 py-2.5 pl-[54px] text-[11px] font-semibold uppercase tracking-wide"
                       style={{ borderColor: "var(--hairline)", color: "var(--ink-500)", background: "var(--surface-soft)" }}
                     >
                       <span>DQ check</span>
