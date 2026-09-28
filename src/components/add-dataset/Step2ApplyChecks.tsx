@@ -303,7 +303,7 @@ export function Step2ApplyChecks({
     }
     return Array.from(byWarehouse.entries()).map(([warehouse, conns]) => ({
       warehouse,
-      connections: Array.from(conns.entries()).map(([name, list]) => ({ name, assets: list })),
+      connections: Array.from(conns.entries()).map(([name, list]) => ({ name, items: list })),
     }));
   }, [assets]);
 
