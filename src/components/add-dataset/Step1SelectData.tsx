@@ -441,6 +441,11 @@ function SearchBody({
   const start = (page - 1) * pageSize;
   const visible = flat.slice(start, start + pageSize);
 
+  // Totals per connection, so group headers report all matches, not just the page's slice.
+  const perConnTotal = new Map<string, number>();
+  for (const item of flat)
+    perConnTotal.set(item.conn.id, (perConnTotal.get(item.conn.id) ?? 0) + 1);
+
   // Regroup the current page's rows by connection for display.
   const groups = new Map<Connection, { schema: string; asset: Asset }[]>();
   for (const item of visible) {
@@ -451,33 +456,36 @@ function SearchBody({
 
   return (
     <div className="flex flex-col gap-6">
-      {Array.from(groups.entries()).map(([conn, matches]) => (
-        <div key={conn.id}>
-          <div
-            className="mb-2 text-[11px] font-semibold uppercase tracking-wide"
-            style={{ color: "var(--ink-300)" }}
-          >
-            {conn.name} · {matches.length} {matches.length === 1 ? "match" : "matches"}
+      {Array.from(groups.entries()).map(([conn, matches]) => {
+        const n = perConnTotal.get(conn.id) ?? 0;
+        return (
+          <div key={conn.id}>
+            <div
+              className="mb-2 text-[11px] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--ink-300)" }}
+            >
+              {conn.name} · {n} {n === 1 ? "match" : "matches"}
+            </div>
+            <div className="flex flex-col gap-1">
+              {matches.map(({ schema, asset }) => {
+                const k = assetKey(conn.id, schema, asset.name);
+                return (
+                  <AssetRow
+                    key={k}
+                    asset={asset}
+                    schema={schema}
+                    connection={conn.name}
+                    warehouse={conn.warehouse}
+                    selected={selected.has(k)}
+                    onToggle={() => onToggle(k)}
+                    highlight={query}
+                  />
+                );
+              })}
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            {matches.map(({ schema, asset }) => {
-              const k = assetKey(conn.id, schema, asset.name);
-              return (
-                <AssetRow
-                  key={k}
-                  asset={asset}
-                  schema={schema}
-                  connection={conn.name}
-                  warehouse={conn.warehouse}
-                  selected={selected.has(k)}
-                  onToggle={() => onToggle(k)}
-                  highlight={query}
-                />
-              );
-            })}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
