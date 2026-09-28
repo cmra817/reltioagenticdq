@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { LineChart, ClipboardCheck } from "lucide-react";
+
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export type Frequency = "6h" | "12h" | "daily" | "weekly" | "custom";
 export type EndsMode = "never" | "on" | "after";
@@ -10,6 +13,8 @@ export type ScheduleConfig = {
   endsMode: EndsMode;
   endsOn: string;
   endsAfter: number;
+  day?: string;
+  time?: string;
 };
 
 export const FREQUENCY_OPTIONS: { value: Frequency; label: string }[] = [
@@ -21,7 +26,9 @@ export const FREQUENCY_OPTIONS: { value: Frequency; label: string }[] = [
 ];
 
 export const DEFAULT_SCHEDULE: ScheduleConfig = {
-  frequency: "6h",
+  frequency: "weekly",
+  day: "Monday",
+  time: "00:05",
   repeatEvery: 1,
   repeatUnit: "days",
   endsMode: "never",
@@ -51,38 +58,55 @@ export function Step3Schedule({
   onChangeProfiling: (c: ScheduleConfig) => void;
   onChangeChecks: (c: ScheduleConfig) => void;
 }) {
+  const [same, setSame] = useState(false);
+  const setProfiling = (c: ScheduleConfig) => {
+    onChangeProfiling(c);
+    if (same) onChangeChecks(c);
+  };
   return (
     <div className="px-10 py-8">
-      {/* Sub-header */}
+      <h2 className="text-[17px] font-semibold" style={{ color: "var(--ink-900)" }}>
+        Schedule when profiling and checks run
+      </h2>
       <div
-        className="flex items-center gap-4 border-b pb-4"
+        className="mt-5 rounded-3xl border bg-white p-8"
         style={{ borderColor: "var(--hairline)" }}
       >
-        <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
-          Schedule when profiling and checks run
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ScheduleCard
+            icon={<LineChart size={17} />}
+            title="Profiling"
+            description="Column stats, distributions, and history used to detect drift."
+            value={profiling}
+            onChange={setProfiling}
+          />
+          <ScheduleCard
+            icon={<ClipboardCheck size={17} />}
+            title="DQ checks"
+            description={`Runs the ${checkCount} ${checkCount === 1 ? "check" : "checks"} configured for this source.`}
+            value={same ? profiling : checks}
+            onChange={onChangeChecks}
+            disabled={same}
+            extra={
+              <label
+                className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-[14px]"
+                style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)", color: "var(--ink-900)" }}
+              >
+                <input
+                  type="checkbox"
+                  checked={same}
+                  onChange={(e) => {
+                    setSame(e.target.checked);
+                    if (e.target.checked) onChangeChecks(profiling);
+                  }}
+                  className="h-4 w-4"
+                  style={{ accentColor: "var(--brand-blue)" }}
+                />
+                Run on the same schedule as profiling
+              </label>
+            }
+          />
         </div>
-        <div className="h-5 w-px" style={{ background: "var(--hairline)" }} aria-hidden="true" />
-        <span className="text-[12px] font-medium" style={{ color: "var(--ink-700)" }}>
-          Profiling {frequencyLabel(profiling).toLowerCase()} · Checks{" "}
-          {frequencyLabel(checks).toLowerCase()}
-        </span>
-      </div>
-
-      <div className="mt-6 grid gap-5 lg:grid-cols-2">
-        <ScheduleCard
-          icon={<LineChart size={17} />}
-          title="Profiling"
-          description="Column stats, distributions, and history used to detect drift."
-          value={profiling}
-          onChange={onChangeProfiling}
-        />
-        <ScheduleCard
-          icon={<ClipboardCheck size={17} />}
-          title="DQ checks"
-          description={`Runs the ${checkCount} ${checkCount === 1 ? "check" : "checks"} you configured against incoming data.`}
-          value={checks}
-          onChange={onChangeChecks}
-        />
       </div>
     </div>
   );
@@ -94,7 +118,11 @@ export function ScheduleCard({
   description,
   value,
   onChange,
+  extra,
+  disabled,
 }: {
+  extra?: React.ReactNode;
+  disabled?: boolean;
   icon: React.ReactNode;
   title: string;
   description: string;
@@ -117,6 +145,8 @@ export function ScheduleCard({
       <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "var(--ink-700)" }}>
         {description}
       </p>
+      {extra}
+      <fieldset disabled={disabled} className={disabled ? "opacity-50" : ""}>
 
       <label
         className="mt-5 block text-[12px] font-medium"
@@ -232,9 +262,38 @@ export function ScheduleCard({
         </div>
       )}
 
-      <p className="mt-3 text-[12px]" style={{ color: "var(--ink-500)" }}>
-        First run starts immediately after setup.
-      </p>
+      {value.frequency === "weekly" && (
+        <>
+          <label className="mt-4 block text-[12px] font-medium" style={{ color: "var(--ink-500)" }}>
+            Day
+          </label>
+          <select
+            value={value.day ?? "Monday"}
+            onChange={(e) => set({ day: e.target.value })}
+            className="mt-1.5 h-10 w-full rounded-xl border bg-white px-3 text-[14px] outline-none"
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+          >
+            {DAYS.map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+        </>
+      )}
+      {(value.frequency === "weekly" || value.frequency === "daily" || value.frequency === "custom") && (
+        <>
+          <label className="mt-4 block text-[12px] font-medium" style={{ color: "var(--ink-500)" }}>
+            Time
+          </label>
+          <input
+            type="time"
+            value={value.time ?? "00:05"}
+            onChange={(e) => set({ time: e.target.value })}
+            className="mt-1.5 h-10 w-full rounded-xl border bg-white px-3 text-[14px] outline-none"
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+          />
+        </>
+      )}
+      </fieldset>
     </div>
   );
 }
