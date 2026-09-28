@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { ChevronDown, Search, Plus, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, Search, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AssetRow } from "./AssetRow";
 import { NewConnectionModal } from "./NewConnectionModal";
@@ -8,6 +8,7 @@ import {
   WAREHOUSES,
   assetKey,
   formatRows,
+  type Asset,
   type Connection,
   type WarehouseType,
 } from "./mock-warehouses";
@@ -41,6 +42,11 @@ export function Step1SelectData({
   const [query, setQuery] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [newConnOpen, setNewConnOpen] = useState(false);
+  const [pageSize, setPageSize] = useState<10 | 20 | 50>(10);
+  const [page, setPage] = useState(1);
+
+  // Any change to the list itself resets pagination.
+  useEffect(() => setPage(1), [query, activeSchema, pageSize]);
 
   const grouped = useMemo(() => {
     const map = new Map<WarehouseType, Connection[]>();
@@ -52,8 +58,27 @@ export function Step1SelectData({
     return Array.from(map.entries());
   }, []);
 
+  const browseTotal = useMemo(() => {
+    if (!activeSchema) return 0;
+    const conn = WAREHOUSES.find((c) => c.id === activeSchema.connId);
+    return conn?.schemas.find((s) => s.name === activeSchema.schema)?.assets.length ?? 0;
+  }, [activeSchema]);
+
+  const searchTotal = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q === "") return 0;
+    let n = 0;
+    for (const conn of WAREHOUSES)
+      for (const sch of conn.schemas)
+        for (const a of sch.assets) if (a.name.toLowerCase().includes(q)) n += 1;
+    return n;
+  }, [query]);
+
   const state: "idle" | "browse" | "search" =
     query.trim() === "" ? (activeSchema ? "browse" : "idle") : "search";
+  const total = state === "browse" ? browseTotal : searchTotal;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, totalPages);
 
   const toggleGroup = (g: string) =>
     setCollapsedGroups((s) => {
@@ -254,6 +279,8 @@ export function Step1SelectData({
                     activeSchema={activeSchema!}
                     selected={selected}
                     onToggle={onToggle}
+                    pageSize={pageSize}
+                    page={currentPage}
                   />
                 ) : (
                   <SearchBody
@@ -261,9 +288,21 @@ export function Step1SelectData({
                     activeSchema={activeSchema}
                     selected={selected}
                     onToggle={onToggle}
+                    pageSize={pageSize}
+                    page={currentPage}
                   />
                 )}
               </div>
+              {total > 0 && (
+                <PaginationFooter
+                  total={total}
+                  pageSize={pageSize}
+                  page={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  onPageSizeChange={setPageSize}
+                />
+              )}
             </>
           )}
         </section>
@@ -311,10 +350,14 @@ function BrowseBody({
   activeSchema,
   selected,
   onToggle,
+  pageSize,
+  page,
 }: {
   activeSchema: { connId: string; schema: string };
   selected: Set<string>;
   onToggle: (key: string) => void;
+  pageSize: number;
+  page: number;
 }) {
   const conn = WAREHOUSES.find((c) => c.id === activeSchema.connId)!;
   const sch = conn.schemas.find((s) => s.name === activeSchema.schema)!;
@@ -322,6 +365,8 @@ function BrowseBody({
   const selectedInSchema = sch.assets.filter((a) =>
     selected.has(assetKey(conn.id, sch.name, a.name)),
   ).length;
+  const start = (page - 1) * pageSize;
+  const visible = sch.assets.slice(start, start + pageSize);
 
   return (
     <div>
@@ -335,7 +380,7 @@ function BrowseBody({
         {sch.assets.length} tables · {formatRows(totalRows)} rows · {selectedInSchema} selected
       </div>
       <div className="mt-4 flex flex-col gap-1">
-        {sch.assets.map((a) => {
+        {visible.map((a) => {
           const k = assetKey(conn.id, sch.name, a.name);
           return (
             <AssetRow
@@ -359,32 +404,33 @@ function SearchBody({
   activeSchema,
   selected,
   onToggle,
+  pageSize,
+  page,
 }: {
   query: string;
   activeSchema: ActiveSchema;
   selected: Set<string>;
   onToggle: (key: string) => void;
+  pageSize: number;
+  page: number;
 }) {
   const q = query.trim().toLowerCase();
-  const groups = WAREHOUSES.map((conn) => {
-    const matches: { schema: string; asset: (typeof conn.schemas)[number]["assets"][number] }[] =
-      [];
+  const flat: { conn: Connection; schema: string; asset: Asset }[] = [];
+  for (const conn of WAREHOUSES) {
     for (const sch of conn.schemas) {
       for (const a of sch.assets) {
-        if (a.name.toLowerCase().includes(q)) matches.push({ schema: sch.name, asset: a });
+        if (a.name.toLowerCase().includes(q)) flat.push({ conn, schema: sch.name, asset: a });
       }
     }
-    return { conn, matches };
-  }).filter((g) => g.matches.length > 0);
-
-  // Float active connection's group to top
+  }
+  // Float active connection's matches to top
   if (activeSchema) {
-    groups.sort((a, b) =>
+    flat.sort((a, b) =>
       a.conn.id === activeSchema.connId ? -1 : b.conn.id === activeSchema.connId ? 1 : 0,
     );
   }
 
-  if (groups.length === 0) {
+  if (flat.length === 0) {
     return (
       <div className="py-12 text-center text-[13px]" style={{ color: "var(--ink-500)" }}>
         No tables match "{query}"
@@ -392,35 +438,135 @@ function SearchBody({
     );
   }
 
+  const start = (page - 1) * pageSize;
+  const visible = flat.slice(start, start + pageSize);
+
+  // Totals per connection, so group headers report all matches, not just the page's slice.
+  const perConnTotal = new Map<string, number>();
+  for (const item of flat)
+    perConnTotal.set(item.conn.id, (perConnTotal.get(item.conn.id) ?? 0) + 1);
+
+  // Regroup the current page's rows by connection for display.
+  const groups = new Map<Connection, { schema: string; asset: Asset }[]>();
+  for (const item of visible) {
+    const arr = groups.get(item.conn) ?? [];
+    arr.push({ schema: item.schema, asset: item.asset });
+    groups.set(item.conn, arr);
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      {groups.map(({ conn, matches }) => (
-        <div key={conn.id}>
-          <div
-            className="mb-2 text-[11px] font-semibold uppercase tracking-wide"
-            style={{ color: "var(--ink-300)" }}
+      {Array.from(groups.entries()).map(([conn, matches]) => {
+        const n = perConnTotal.get(conn.id) ?? 0;
+        return (
+          <div key={conn.id}>
+            <div
+              className="mb-2 text-[11px] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--ink-300)" }}
+            >
+              {conn.name} · {n} {n === 1 ? "match" : "matches"}
+            </div>
+            <div className="flex flex-col gap-1">
+              {matches.map(({ schema, asset }) => {
+                const k = assetKey(conn.id, schema, asset.name);
+                return (
+                  <AssetRow
+                    key={k}
+                    asset={asset}
+                    schema={schema}
+                    connection={conn.name}
+                    warehouse={conn.warehouse}
+                    selected={selected.has(k)}
+                    onToggle={() => onToggle(k)}
+                    highlight={query}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function PaginationFooter({
+  total,
+  pageSize,
+  page,
+  totalPages,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  total: number;
+  pageSize: number;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: 10 | 20 | 50) => void;
+}) {
+  const start = (page - 1) * pageSize + 1;
+  const end = Math.min(total, page * pageSize);
+  const arrow =
+    "flex h-7 w-7 items-center justify-center rounded-lg border bg-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 hover:bg-[color:var(--surface-soft)]";
+
+  return (
+    <div
+      className="flex shrink-0 items-center justify-between border-t px-8 py-2.5"
+      style={{ borderColor: "var(--hairline)" }}
+    >
+      <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+        Showing{" "}
+        <span style={{ color: "var(--ink-900)" }}>
+          {start}–{end}
+        </span>{" "}
+        of <span style={{ color: "var(--ink-900)" }}>{total}</span>{" "}
+        {total === 1 ? "table" : "tables"}
+      </div>
+      <div className="flex items-center gap-5">
+        <label
+          className="flex items-center gap-2 text-[12px]"
+          style={{ color: "var(--ink-500)" }}
+        >
+          Per page
+          <select
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value) as 10 | 20 | 50)}
+            className="h-7 rounded-lg border bg-white px-2 text-[12px] outline-none"
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+            aria-label="Tables per page"
           >
-            {conn.name} · {matches.length} {matches.length === 1 ? "match" : "matches"}
-          </div>
-          <div className="flex flex-col gap-1">
-            {matches.map(({ schema, asset }) => {
-              const k = assetKey(conn.id, schema, asset.name);
-              return (
-                <AssetRow
-                  key={k}
-                  asset={asset}
-                  schema={schema}
-                  connection={conn.name}
-                  warehouse={conn.warehouse}
-                  selected={selected.has(k)}
-                  onToggle={() => onToggle(k)}
-                  highlight={query}
-                />
-              );
-            })}
-          </div>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+        </label>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
+            className={arrow}
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+            aria-label="Previous page"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <span className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+            Page <span style={{ color: "var(--ink-900)" }}>{page}</span> of {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
+            className={arrow}
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+            aria-label="Next page"
+          >
+            <ChevronRight size={14} />
+          </button>
         </div>
-      ))}
+      </div>
     </div>
   );
 }
