@@ -2,7 +2,8 @@ import { DimensionBadge } from "@/components/dq-dimensions";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check as CheckIcon, ChevronDown, ChevronRight, Copy, Lock, Plus, Search, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
-import { WAREHOUSES } from "./mock-warehouses";
+import { WAREHOUSES, type WarehouseType } from "./mock-warehouses";
+import { BigQueryIcon, DatabricksIcon, SnowflakeIcon } from "@/components/brand-icons";
 import { checkLogic, generateChecks, type Check } from "./mock-checks";
 import { RuleModal } from "@/components/dq-checks/RuleModal";
 import { MOCK_RULES, type Rule } from "@/components/dq-checks/mock-rules";
@@ -50,6 +51,20 @@ function ruleToCheck(rule: Rule, idPrefix = ""): Check {
 
 function summaryFor(dimension: string, pattern: string, threshold: number) {
   return `Flags ${dimension.toLowerCase()} issues by checking values against ${pattern}, and fails the rule when more than ${threshold}% of values don't match.`;
+}
+
+function WarehouseLogo({ warehouse }: { warehouse: WarehouseType }) {
+  const Icon =
+    warehouse === "Databricks"
+      ? DatabricksIcon
+      : warehouse === "Snowflake"
+        ? SnowflakeIcon
+        : BigQueryIcon;
+  return (
+    <span className="inline-flex h-4 w-4 items-center justify-center [&>svg]:h-4 [&>svg]:w-4">
+      <Icon />
+    </span>
+  );
 }
 
 function CheckRow({
@@ -222,6 +237,7 @@ export function Step2ApplyChecks({
   const [modalOpen, setModalOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [collapsedWarehouses, setCollapsedWarehouses] = useState<Set<string>>(new Set());
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [thresholds, setThresholds] = useState<Record<string, number>>({});
   const searchRef = useRef<HTMLDivElement>(null);
@@ -276,12 +292,30 @@ export function Step2ApplyChecks({
 
   const visibleChecks = active.checks.filter((c) => activeChecked.has(c.id));
 
+  const groupedAssets = useMemo(() => {
+    const byWarehouse = new Map<WarehouseType, Map<string, AssetEntry[]>>();
+    for (const conn of WAREHOUSES) {
+      const list = assets.filter((a) => a.key.split("::")[0] === conn.id);
+      if (list.length === 0) continue;
+      const inner = byWarehouse.get(conn.warehouse) ?? new Map<string, AssetEntry[]>();
+      inner.set(conn.name, [...(inner.get(conn.name) ?? []), ...list]);
+      byWarehouse.set(conn.warehouse, inner);
+    }
+    return Array.from(byWarehouse.entries()).map(([warehouse, conns]) => ({
+      warehouse,
+      connections: Array.from(conns.entries()).map(([name, list]) => ({ name, items: list })),
+    }));
+  }, [assets]);
+
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="px-10 py-8">
+      <div
+        className="mx-10 my-8 flex min-h-[calc(100vh-280px)] flex-col overflow-hidden rounded-2xl border bg-white"
+        style={{ borderColor: "var(--hairline)" }}
+      >
         {/* Sub-header */}
         <div
-          className="flex items-center gap-4 border-b pb-4"
+          className="flex shrink-0 items-center gap-4 border-b px-6 py-3"
           style={{ borderColor: "var(--hairline)" }}
         >
           <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
@@ -294,178 +328,241 @@ export function Step2ApplyChecks({
           </span>
         </div>
 
-        {/* Recommended-checks note */}
-        <div
-          className="mt-5 flex items-start gap-2.5 rounded-xl border px-4 py-3"
-          style={{ borderColor: "var(--hairline)", background: "rgba(67,134,250,0.06)" }}
-        >
-          <Sparkles size={15} className="mt-0.5 shrink-0" style={{ color: "var(--brand-blue)" }} />
-          <div className="text-[13px]" style={{ color: "var(--ink-700)" }}>
-            These are checks recommended for the {assets.length === 1 ? "table" : "tables"} you
-            selected, based on their columns and profiles. Remove any you don't need, or search your
-            checks library to add more.
-          </div>
-        </div>
-
-        {/* Card */}
-        <div
-          className="mt-6 rounded-2xl border bg-white"
-          style={{ borderColor: "var(--hairline)" }}
-        >
-          {/* Tabs */}
-          <div
-            className="flex items-center justify-between border-b px-6"
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar: selected tables, grouped like step 1 */}
+          <aside
+            className="flex w-[280px] shrink-0 flex-col overflow-hidden border-r"
             style={{ borderColor: "var(--hairline)" }}
           >
-            <div className="flex items-center gap-1 overflow-x-auto">
-              {assets.map((a) => {
-                const isActive = a.key === active.key;
-                const count = (checked[a.key] ?? new Set()).size;
+            <div className="flex-1 overflow-y-auto py-3">
+              {groupedAssets.map(({ warehouse, connections }) => {
+                const collapsed = collapsedWarehouses.has(warehouse);
                 return (
-                  <button
-                    key={a.key}
-                    type="button"
-                    onClick={() => setActiveKey(a.key)}
-                    className="relative whitespace-nowrap px-3 py-3 text-[13px] font-medium transition-colors"
-                    style={{
-                      color: isActive ? "var(--ink-900)" : "var(--ink-500)",
-                    }}
-                  >
-                    <span className="font-mono">{a.name}</span>{" "}
-                    <span style={{ color: isActive ? "var(--ink-500)" : "var(--ink-300)" }}>
-                      ({count})
-                    </span>
-                    {isActive && (
-                      <span
-                        className="absolute inset-x-2 -bottom-px h-0.5"
-                        style={{ background: "var(--brand-blue)" }}
+                  <div key={warehouse} className="mb-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCollapsedWarehouses((s) => {
+                          const n = new Set(s);
+                          n.has(warehouse) ? n.delete(warehouse) : n.add(warehouse);
+                          return n;
+                        })
+                      }
+                      className="flex w-full items-center gap-2 px-4 py-1.5 text-[12px] font-semibold"
+                      style={{ color: "var(--ink-700)" }}
+                    >
+                      <ChevronDown
+                        size={12}
+                        style={{
+                          transform: collapsed ? "rotate(-90deg)" : "rotate(0)",
+                          transition: "transform 150ms",
+                          color: "var(--ink-300)",
+                        }}
                       />
-                    )}
-                  </button>
+                      <WarehouseLogo warehouse={warehouse} />
+                      {warehouse}
+                    </button>
+                    {!collapsed &&
+                      connections.map(({ name, items }) => (
+                        <div key={name} className="mb-2">
+                          <div
+                            className="py-1.5 pl-[34px] pr-4 text-[13px] font-medium"
+                            style={{ color: "var(--ink-700)" }}
+                          >
+                            {name}
+                          </div>
+                          {items.map((a) => {
+                            const isActive = a.key === active.key;
+                            const count = (checked[a.key] ?? new Set()).size;
+                            return (
+                              <button
+                                key={a.key}
+                                type="button"
+                                onClick={() => setActiveKey(a.key)}
+                                className="flex w-full items-center justify-between gap-2 py-1.5 pl-[50px] pr-4 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
+                                style={{
+                                  background: isActive ? "rgba(67,134,250,0.10)" : "transparent",
+                                  color: isActive ? "var(--brand-blue)" : "var(--ink-700)",
+                                  borderLeft: isActive
+                                    ? "2px solid var(--brand-blue)"
+                                    : "2px solid transparent",
+                                }}
+                              >
+                                <span className="min-w-0 truncate font-mono text-[12px]">
+                                  {a.name}
+                                </span>
+                                <span
+                                  className="shrink-0 text-[11px]"
+                                  style={{ color: "var(--ink-300)" }}
+                                >
+                                  {count}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ))}
+                  </div>
                 );
               })}
             </div>
-            <div className="my-2 flex shrink-0 items-center gap-2">
-              {/* Library search */}
-              <div className="relative" ref={searchRef}>
-                <Search
-                  size={13}
-                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
-                  style={{ color: "var(--ink-500)" }}
-                />
-                <input
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setSearchOpen(true);
+          </aside>
+
+          {/* Right panel: checks for the active table */}
+          <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            {/* Toolbar */}
+            <div
+              className="flex shrink-0 items-center justify-between gap-4 border-b px-6 py-3"
+              style={{ borderColor: "var(--hairline)" }}
+            >
+              <div className="min-w-0 truncate text-[13px]" style={{ color: "var(--ink-500)" }}>
+                <span className="font-mono font-semibold" style={{ color: "var(--ink-900)" }}>
+                  {active.name}
+                </span>
+                <span> · {activeChecked.size} checks</span>
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                {/* Library search */}
+                <div className="relative w-[160px] min-w-0" ref={searchRef}>
+                  <Search
+                    size={13}
+                    className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--ink-500)" }}
+                  />
+                  <input
+                    value={query}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setSearchOpen(true);
+                    }}
+                    onFocus={() => setSearchOpen(true)}
+                    placeholder="Search checks library…"
+                    className="w-full rounded-full border bg-white py-1.5 pl-7 pr-3 text-[12px] outline-none focus:border-[color:var(--brand-blue)]"
+                    style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+                  />
+                  {searchOpen && (
+                    <div
+                      className="absolute right-0 top-[calc(100%+6px)] z-30 w-[380px] overflow-hidden rounded-xl border bg-white shadow-lg"
+                      style={{ borderColor: "var(--hairline)" }}
+                    >
+                      {libraryResults.length === 0 ? (
+                        <div className="px-4 py-3 text-[12px]" style={{ color: "var(--ink-500)" }}>
+                          No other checks found in your library.
+                        </div>
+                      ) : (
+                        libraryResults.map((rule) => (
+                          <button
+                            key={rule.id}
+                            type="button"
+                            onClick={() => {
+                              onAddCheck(active.key, ruleToCheck(rule, "lib-"));
+                              setQuery("");
+                              setSearchOpen(false);
+                            }}
+                            className="flex w-full items-start gap-3 border-b px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
+                            style={{ borderColor: "var(--hairline)" }}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div
+                                className="truncate text-[13px] font-medium"
+                                style={{ color: "var(--ink-900)" }}
+                              >
+                                {rule.name}
+                              </div>
+                              <div
+                                className="mt-0.5 line-clamp-1 text-[12px]"
+                                style={{ color: "var(--ink-500)" }}
+                              >
+                                {rule.description}
+                              </div>
+                              <div className="mt-1.5">
+                                <DimensionBadge label={rule.dimension} size="sm" />
+                              </div>
+                            </div>
+                            <Plus size={14} className="mt-1 shrink-0" style={{ color: "var(--brand-blue)" }} />
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(true)}
+                  className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors"
+                  style={{
+                    background: "rgba(67,134,250,0.10)",
+                    color: "var(--brand-blue)",
                   }}
-                  onFocus={() => setSearchOpen(true)}
-                  placeholder="Search checks library…"
-                  className="w-[220px] rounded-full border bg-white py-1.5 pl-7 pr-3 text-[12px] outline-none focus:border-[color:var(--brand-blue)]"
-                  style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
-                />
-                {searchOpen && (
+                >
+                  <Plus size={12} />
+                  Checks
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 pb-6">
+              {/* Recommended-checks note */}
+              <div
+                className="mt-4 flex items-start gap-2.5 rounded-xl border px-4 py-3"
+                style={{ borderColor: "var(--hairline)", background: "rgba(67,134,250,0.06)" }}
+              >
+                <Sparkles size={15} className="mt-0.5 shrink-0" style={{ color: "var(--brand-blue)" }} />
+                <div className="text-[13px]" style={{ color: "var(--ink-700)" }}>
+                  These are checks recommended for the {assets.length === 1 ? "table" : "tables"} you
+                  selected, based on their columns and profiles. Remove any you don't need, or search
+                  your checks library to add more.
+                </div>
+              </div>
+
+              {/* Rows */}
+              <div
+                className="mt-4 rounded-2xl border bg-white"
+                style={{ borderColor: "var(--hairline)" }}
+              >
+                {visibleChecks.length === 0 ? (
                   <div
-                    className="absolute right-0 top-[calc(100%+6px)] z-30 w-[380px] overflow-hidden rounded-xl border bg-white shadow-lg"
-                    style={{ borderColor: "var(--hairline)" }}
+                    className="px-6 py-10 text-center text-[13px]"
+                    style={{ color: "var(--ink-500)" }}
                   >
-                    {libraryResults.length === 0 ? (
-                      <div className="px-4 py-3 text-[12px]" style={{ color: "var(--ink-500)" }}>
-                        No other checks found in your library.
-                      </div>
-                    ) : (
-                      libraryResults.map((rule) => (
-                        <button
-                          key={rule.id}
-                          type="button"
-                          onClick={() => {
-                            onAddCheck(active.key, ruleToCheck(rule, "lib-"));
-                            setQuery("");
-                            setSearchOpen(false);
-                          }}
-                          className="flex w-full items-start gap-3 border-b px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-[color:var(--surface-soft)]"
-                          style={{ borderColor: "var(--hairline)" }}
-                        >
-                          <div className="min-w-0 flex-1">
-                            <div
-                              className="truncate text-[13px] font-medium"
-                              style={{ color: "var(--ink-900)" }}
-                            >
-                              {rule.name}
-                            </div>
-                            <div
-                              className="mt-0.5 line-clamp-1 text-[12px]"
-                              style={{ color: "var(--ink-500)" }}
-                            >
-                              {rule.description}
-                            </div>
-                            <div className="mt-1.5">
-                              <DimensionBadge label={rule.dimension} size="sm" />
-                            </div>
-                          </div>
-                          <Plus size={14} className="mt-1 shrink-0" style={{ color: "var(--brand-blue)" }} />
-                        </button>
-                      ))
-                    )}
+                    No checks selected for {active.name}. Search your library or add a new check.
                   </div>
+                ) : (
+                  visibleChecks.map((check) => {
+                    const rowKey = `${active.key}::${check.id}`;
+                    return (
+                      <CheckRow
+                        key={check.id}
+                        check={check}
+                        expanded={expandedKey === rowKey}
+                        threshold={thresholds[rowKey] ?? checkLogic(check).threshold}
+                        onToggleExpand={() =>
+                          setExpandedKey((prev) => (prev === rowKey ? null : rowKey))
+                        }
+                        onThresholdChange={(value) =>
+                          setThresholds((prev) => ({ ...prev, [rowKey]: value }))
+                        }
+                        onRemove={() => onToggleCheck(active.key, check.id)}
+                      />
+                    );
+                  })
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => setModalOpen(true)}
-                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors"
-                style={{
-                  background: "rgba(67,134,250,0.10)",
-                  color: "var(--brand-blue)",
-                }}
-              >
-                <Plus size={12} />
-                Checks
-              </button>
             </div>
-          </div>
-
-          {/* Rows */}
-          <div>
-            {visibleChecks.length === 0 ? (
-              <div className="px-6 py-10 text-center text-[13px]" style={{ color: "var(--ink-500)" }}>
-                No checks selected for {active.name}. Search your library or add a new check.
-              </div>
-            ) : (
-              visibleChecks.map((check) => {
-                const rowKey = `${active.key}::${check.id}`;
-                return (
-                  <CheckRow
-                    key={check.id}
-                    check={check}
-                    expanded={expandedKey === rowKey}
-                    threshold={thresholds[rowKey] ?? checkLogic(check).threshold}
-                    onToggleExpand={() =>
-                      setExpandedKey((prev) => (prev === rowKey ? null : rowKey))
-                    }
-                    onThresholdChange={(value) =>
-                      setThresholds((prev) => ({ ...prev, [rowKey]: value }))
-                    }
-                    onRemove={() => onToggleCheck(active.key, check.id)}
-                  />
-                );
-              })
-            )}
-          </div>
-
+          </section>
         </div>
-
-        <RuleModal
-          open={modalOpen}
-          mode="create"
-          source={null}
-          onClose={() => setModalOpen(false)}
-          onSave={(rule) => {
-            onAddCheck(active.key, ruleToCheck(rule));
-            setModalOpen(false);
-          }}
-        />
       </div>
+
+      <RuleModal
+        open={modalOpen}
+        mode="create"
+        source={null}
+        onClose={() => setModalOpen(false)}
+        onSave={(rule) => {
+          onAddCheck(active.key, ruleToCheck(rule));
+          setModalOpen(false);
+        }}
+      />
     </TooltipProvider>
   );
 }
