@@ -403,32 +403,33 @@ function SearchBody({
   activeSchema,
   selected,
   onToggle,
+  pageSize,
+  page,
 }: {
   query: string;
   activeSchema: ActiveSchema;
   selected: Set<string>;
   onToggle: (key: string) => void;
+  pageSize: number;
+  page: number;
 }) {
   const q = query.trim().toLowerCase();
-  const groups = WAREHOUSES.map((conn) => {
-    const matches: { schema: string; asset: (typeof conn.schemas)[number]["assets"][number] }[] =
-      [];
+  const flat: { conn: Connection; schema: string; asset: Asset }[] = [];
+  for (const conn of WAREHOUSES) {
     for (const sch of conn.schemas) {
       for (const a of sch.assets) {
-        if (a.name.toLowerCase().includes(q)) matches.push({ schema: sch.name, asset: a });
+        if (a.name.toLowerCase().includes(q)) flat.push({ conn, schema: sch.name, asset: a });
       }
     }
-    return { conn, matches };
-  }).filter((g) => g.matches.length > 0);
-
-  // Float active connection's group to top
+  }
+  // Float active connection's matches to top
   if (activeSchema) {
-    groups.sort((a, b) =>
+    flat.sort((a, b) =>
       a.conn.id === activeSchema.connId ? -1 : b.conn.id === activeSchema.connId ? 1 : 0,
     );
   }
 
-  if (groups.length === 0) {
+  if (flat.length === 0) {
     return (
       <div className="py-12 text-center text-[13px]" style={{ color: "var(--ink-500)" }}>
         No tables match "{query}"
@@ -436,9 +437,20 @@ function SearchBody({
     );
   }
 
+  const start = (page - 1) * pageSize;
+  const visible = flat.slice(start, start + pageSize);
+
+  // Regroup the current page's rows by connection for display.
+  const groups = new Map<Connection, { schema: string; asset: Asset }[]>();
+  for (const item of visible) {
+    const arr = groups.get(item.conn) ?? [];
+    arr.push({ schema: item.schema, asset: item.asset });
+    groups.set(item.conn, arr);
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      {groups.map(({ conn, matches }) => (
+      {Array.from(groups.entries()).map(([conn, matches]) => (
         <div key={conn.id}>
           <div
             className="mb-2 text-[11px] font-semibold uppercase tracking-wide"
@@ -465,6 +477,87 @@ function SearchBody({
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function PaginationFooter({
+  total,
+  pageSize,
+  page,
+  totalPages,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  total: number;
+  pageSize: number;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: 10 | 20 | 50) => void;
+}) {
+  const start = (page - 1) * pageSize + 1;
+  const end = Math.min(total, page * pageSize);
+  const arrow =
+    "flex h-7 w-7 items-center justify-center rounded-lg border bg-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 hover:bg-[color:var(--surface-soft)]";
+
+  return (
+    <div
+      className="flex shrink-0 items-center justify-between border-t px-8 py-2.5"
+      style={{ borderColor: "var(--hairline)" }}
+    >
+      <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+        Showing{" "}
+        <span style={{ color: "var(--ink-900)" }}>
+          {start}–{end}
+        </span>{" "}
+        of <span style={{ color: "var(--ink-900)" }}>{total}</span>{" "}
+        {total === 1 ? "table" : "tables"}
+      </div>
+      <div className="flex items-center gap-5">
+        <label
+          className="flex items-center gap-2 text-[12px]"
+          style={{ color: "var(--ink-500)" }}
+        >
+          Per page
+          <select
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value) as 10 | 20 | 50)}
+            className="h-7 rounded-lg border bg-white px-2 text-[12px] outline-none"
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+            aria-label="Tables per page"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+        </label>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
+            className={arrow}
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+            aria-label="Previous page"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <span className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+            Page <span style={{ color: "var(--ink-900)" }}>{page}</span> of {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= totalPages}
+            className={arrow}
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+            aria-label="Next page"
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
