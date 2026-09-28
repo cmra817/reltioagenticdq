@@ -47,6 +47,16 @@ export function Step1SelectData({
   // Any change to the list itself resets pagination.
   useEffect(() => setPage(1), [query, activeSchema, pageSize]);
 
+  const grouped = useMemo(() => {
+    const map = new Map<WarehouseType, Connection[]>();
+    for (const c of WAREHOUSES) {
+      const arr = map.get(c.warehouse) ?? [];
+      arr.push(c);
+      map.set(c.warehouse, arr);
+    }
+    return Array.from(map.entries());
+  }, []);
+
   const browseTotal = useMemo(() => {
     if (!activeSchema) return 0;
     const conn = WAREHOUSES.find((c) => c.id === activeSchema.connId);
