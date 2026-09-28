@@ -53,6 +53,20 @@ function summaryFor(dimension: string, pattern: string, threshold: number) {
   return `Flags ${dimension.toLowerCase()} issues by checking values against ${pattern}, and fails the rule when more than ${threshold}% of values don't match.`;
 }
 
+function WarehouseLogo({ warehouse }: { warehouse: WarehouseType }) {
+  const Icon =
+    warehouse === "Databricks"
+      ? DatabricksIcon
+      : warehouse === "Snowflake"
+        ? SnowflakeIcon
+        : BigQueryIcon;
+  return (
+    <span className="inline-flex h-4 w-4 items-center justify-center [&>svg]:h-4 [&>svg]:w-4">
+      <Icon />
+    </span>
+  );
+}
+
 function CheckRow({
   check,
   expanded,
@@ -223,6 +237,7 @@ export function Step2ApplyChecks({
   const [modalOpen, setModalOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [collapsedWarehouses, setCollapsedWarehouses] = useState<Set<string>>(new Set());
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [thresholds, setThresholds] = useState<Record<string, number>>({});
   const searchRef = useRef<HTMLDivElement>(null);
