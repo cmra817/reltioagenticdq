@@ -67,8 +67,31 @@ function WarehouseLogo({ warehouse }: { warehouse: WarehouseType }) {
   );
 }
 
+function checkFields(check: Check): string[] {
+  return check.fields ?? [check.field];
+}
+
+/** Groups checks that share the same rule so one row can list every column it applies to. */
+function groupChecks(checks: Check[]): { rule: Check; fields: string[]; ids: string[] }[] {
+  const groups = new Map<string, { rule: Check; fields: string[]; ids: string[] }>();
+  for (const check of checks) {
+    const key = `${check.rule}::${check.dimension}`;
+    const existing = groups.get(key);
+    if (existing) {
+      for (const f of checkFields(check)) {
+        if (!existing.fields.includes(f)) existing.fields.push(f);
+      }
+      existing.ids.push(check.id);
+    } else {
+      groups.set(key, { rule: check, fields: [...checkFields(check)], ids: [check.id] });
+    }
+  }
+  return Array.from(groups.values());
+}
+
 function CheckRow({
   check,
+  fields,
   expanded,
   threshold,
   onToggleExpand,
@@ -76,6 +99,7 @@ function CheckRow({
   onRemove,
 }: {
   check: Check;
+  fields: string[];
   expanded: boolean;
   threshold: number;
   onToggleExpand: () => void;
@@ -86,32 +110,44 @@ function CheckRow({
   const managed = (check.creator ?? { kind: "reltio" }).kind === "reltio";
 
   return (
-    <div className="group border-b" style={{ borderColor: "var(--hairline)" }}>
+    <div className="group border-b last:border-b-0" style={{ borderColor: "var(--hairline)" }}>
       <div className="flex items-center gap-3 px-6 py-3.5 transition-colors hover:bg-[color:var(--surface-soft)]">
         <button
           type="button"
           onClick={onToggleExpand}
           aria-expanded={expanded}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_150px_minmax(0,240px)] items-center gap-4 text-left"
         >
-          <span className="shrink-0" style={{ color: "var(--ink-500)" }}>
-            {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+          <span className="flex min-w-0 items-start gap-3">
+            <span className="mt-0.5 shrink-0" style={{ color: "var(--ink-500)" }}>
+              {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+            </span>
+            <span className="min-w-0">
+              <span
+                className="flex items-center gap-1.5 text-[13px] font-semibold"
+                style={{ color: "var(--ink-900)" }}
+              >
+                {managed && <Lock size={11} className="shrink-0" style={{ color: "var(--ink-500)" }} />}
+                <span className="truncate">{check.rule}</span>
+              </span>
+              <span className="mt-0.5 block truncate text-[12px]" style={{ color: "var(--ink-500)" }}>
+                {check.description}
+              </span>
+            </span>
           </span>
-          <span
-            className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold"
-            style={{ color: "var(--ink-900)" }}
-          >
-            {managed && <Lock size={11} style={{ color: "var(--ink-500)" }} />}
-            {check.rule}
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[12px]" style={{ color: "var(--ink-500)" }}>
-            {check.description}
-          </span>
-          <span className="shrink-0">
+          <span>
             <DimensionBadge label={check.dimension} size="sm" />
           </span>
-          <span className="shrink-0 font-mono text-[12px]" style={{ color: "var(--ink-700)" }}>
-            {check.field}
+          <span className="flex min-w-0 flex-wrap items-center gap-1">
+            {fields.map((f) => (
+              <span
+                key={f}
+                className="rounded-md border px-1.5 py-0.5 font-mono text-[11px]"
+                style={{ borderColor: "var(--hairline)", color: "var(--ink-700)", background: "var(--surface-soft)" }}
+              >
+                {f}
+              </span>
+            ))}
           </span>
         </button>
         <Tooltip>
