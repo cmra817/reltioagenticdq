@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { ChevronDown, Search, Plus, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, Search, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { AssetRow } from "./AssetRow";
 import { NewConnectionModal } from "./NewConnectionModal";
@@ -41,19 +41,33 @@ export function Step1SelectData({
   const [query, setQuery] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [newConnOpen, setNewConnOpen] = useState(false);
+  const [pageSize, setPageSize] = useState<10 | 20 | 50>(10);
+  const [page, setPage] = useState(1);
 
-  const grouped = useMemo(() => {
-    const map = new Map<WarehouseType, Connection[]>();
-    for (const c of WAREHOUSES) {
-      const arr = map.get(c.warehouse) ?? [];
-      arr.push(c);
-      map.set(c.warehouse, arr);
-    }
-    return Array.from(map.entries());
-  }, []);
+  // Any change to the list itself resets pagination.
+  useEffect(() => setPage(1), [query, activeSchema, pageSize]);
+
+  const browseTotal = useMemo(() => {
+    if (!activeSchema) return 0;
+    const conn = WAREHOUSES.find((c) => c.id === activeSchema.connId);
+    return conn?.schemas.find((s) => s.name === activeSchema.schema)?.assets.length ?? 0;
+  }, [activeSchema]);
+
+  const searchTotal = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q === "") return 0;
+    let n = 0;
+    for (const conn of WAREHOUSES)
+      for (const sch of conn.schemas)
+        for (const a of sch.assets) if (a.name.toLowerCase().includes(q)) n += 1;
+    return n;
+  }, [query]);
 
   const state: "idle" | "browse" | "search" =
     query.trim() === "" ? (activeSchema ? "browse" : "idle") : "search";
+  const total = state === "browse" ? browseTotal : searchTotal;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, totalPages);
 
   const toggleGroup = (g: string) =>
     setCollapsedGroups((s) => {
