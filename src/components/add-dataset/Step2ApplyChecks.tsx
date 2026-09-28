@@ -122,7 +122,7 @@ function CheckRow({
           type="button"
           onClick={onToggleExpand}
           aria-expanded={expanded}
-          className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_150px_minmax(0,240px)] items-center gap-4 text-left"
+          className="grid min-w-[680px] flex-1 grid-cols-[minmax(0,1fr)_140px_minmax(0,220px)] items-center gap-4 text-left"
         >
           <span className="flex min-w-0 items-start gap-3">
             <span className="mt-0.5 shrink-0" style={{ color: "var(--ink-500)" }}>
@@ -559,7 +559,7 @@ export function Step2ApplyChecks({
 
               {/* Checks table */}
               <div
-                className="mt-4 overflow-hidden rounded-2xl border bg-white"
+                className="mt-4 overflow-x-auto rounded-2xl border bg-white"
                 style={{ borderColor: "var(--hairline)" }}
               >
                 {visibleChecks.length === 0 ? (
