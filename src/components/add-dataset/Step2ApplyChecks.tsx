@@ -67,8 +67,37 @@ function WarehouseLogo({ warehouse }: { warehouse: WarehouseType }) {
   );
 }
 
+function checkFields(check: Check): string[] {
+  return check.fields ?? [check.field];
+}
+
+/** Groups checks that share the same rule pattern so one row lists every column it applies to. */
+function groupChecks(checks: Check[]): { rule: Check; fields: string[]; ids: string[] }[] {
+  const groups = new Map<string, { rule: Check; fields: string[]; ids: string[]; pattern: string }>();
+  for (const check of checks) {
+    const pattern = check.rule.toLowerCase().split(check.field.toLowerCase()).join("").trim();
+    const key = `${pattern}::${check.dimension}`;
+    const existing = groups.get(key);
+    if (existing) {
+      for (const f of checkFields(check)) {
+        if (!existing.fields.includes(f)) existing.fields.push(f);
+      }
+      existing.ids.push(check.id);
+    } else {
+      groups.set(key, { rule: check, fields: [...checkFields(check)], ids: [check.id], pattern });
+    }
+  }
+  return Array.from(groups.values()).map(({ rule, fields, ids, pattern }) => ({
+    // Multi-column groups show the shared rule pattern instead of one column's name.
+    rule: fields.length > 1 ? { ...rule, rule: pattern.charAt(0).toUpperCase() + pattern.slice(1) } : rule,
+    fields,
+    ids,
+  }));
+}
+
 function CheckRow({
   check,
+  fields,
   expanded,
   threshold,
   onToggleExpand,
@@ -76,6 +105,7 @@ function CheckRow({
   onRemove,
 }: {
   check: Check;
+  fields: string[];
   expanded: boolean;
   threshold: number;
   onToggleExpand: () => void;
@@ -86,32 +116,44 @@ function CheckRow({
   const managed = (check.creator ?? { kind: "reltio" }).kind === "reltio";
 
   return (
-    <div className="group border-b" style={{ borderColor: "var(--hairline)" }}>
+    <div className="group border-b last:border-b-0" style={{ borderColor: "var(--hairline)" }}>
       <div className="flex items-center gap-3 px-6 py-3.5 transition-colors hover:bg-[color:var(--surface-soft)]">
         <button
           type="button"
           onClick={onToggleExpand}
           aria-expanded={expanded}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          className="grid min-w-[560px] flex-1 grid-cols-[minmax(0,1fr)_120px_minmax(0,190px)] items-center gap-3 text-left"
         >
-          <span className="shrink-0" style={{ color: "var(--ink-500)" }}>
-            {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+          <span className="flex min-w-0 items-start gap-3">
+            <span className="mt-0.5 shrink-0" style={{ color: "var(--ink-500)" }}>
+              {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+            </span>
+            <span className="min-w-0">
+              <span
+                className="flex items-center gap-1.5 text-[13px] font-semibold"
+                style={{ color: "var(--ink-900)" }}
+              >
+                {managed && <Lock size={11} className="shrink-0" style={{ color: "var(--ink-500)" }} />}
+                <span className="truncate">{check.rule}</span>
+              </span>
+              <span className="mt-0.5 block truncate text-[12px]" style={{ color: "var(--ink-500)" }}>
+                {check.description}
+              </span>
+            </span>
           </span>
-          <span
-            className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold"
-            style={{ color: "var(--ink-900)" }}
-          >
-            {managed && <Lock size={11} style={{ color: "var(--ink-500)" }} />}
-            {check.rule}
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[12px]" style={{ color: "var(--ink-500)" }}>
-            {check.description}
-          </span>
-          <span className="shrink-0">
+          <span>
             <DimensionBadge label={check.dimension} size="sm" />
           </span>
-          <span className="shrink-0 font-mono text-[12px]" style={{ color: "var(--ink-700)" }}>
-            {check.field}
+          <span className="flex min-w-0 flex-wrap items-center gap-1">
+            {fields.map((f) => (
+              <span
+                key={f}
+                className="rounded-md border px-1.5 py-0.5 font-mono text-[11px]"
+                style={{ borderColor: "var(--hairline)", color: "var(--ink-700)", background: "var(--surface-soft)" }}
+              >
+                {f}
+              </span>
+            ))}
           </span>
         </button>
         <Tooltip>
@@ -515,9 +557,9 @@ export function Step2ApplyChecks({
                 </div>
               </div>
 
-              {/* Rows */}
+              {/* Checks table */}
               <div
-                className="mt-4 rounded-2xl border bg-white"
+                className="mt-4 overflow-x-auto rounded-2xl border bg-white"
                 style={{ borderColor: "var(--hairline)" }}
               >
                 {visibleChecks.length === 0 ? (
@@ -528,24 +570,35 @@ export function Step2ApplyChecks({
                     No checks selected for {active.name}. Search your library or add a new check.
                   </div>
                 ) : (
-                  visibleChecks.map((check) => {
-                    const rowKey = `${active.key}::${check.id}`;
-                    return (
-                      <CheckRow
-                        key={check.id}
-                        check={check}
-                        expanded={expandedKey === rowKey}
-                        threshold={thresholds[rowKey] ?? checkLogic(check).threshold}
-                        onToggleExpand={() =>
-                          setExpandedKey((prev) => (prev === rowKey ? null : rowKey))
-                        }
-                        onThresholdChange={(value) =>
-                          setThresholds((prev) => ({ ...prev, [rowKey]: value }))
-                        }
-                        onRemove={() => onToggleCheck(active.key, check.id)}
-                      />
-                    );
-                  })
+                  <>
+                    <div
+                      className="grid min-w-[560px] grid-cols-[minmax(0,1fr)_120px_minmax(0,190px)] gap-3 border-b px-6 py-2.5 pl-[54px] text-[11px] font-semibold uppercase tracking-wide"
+                      style={{ borderColor: "var(--hairline)", color: "var(--ink-500)", background: "var(--surface-soft)" }}
+                    >
+                      <span>DQ check</span>
+                      <span>Dimension</span>
+                      <span>Columns applied to</span>
+                    </div>
+                    {groupChecks(visibleChecks).map(({ rule, fields, ids }) => {
+                      const rowKey = `${active.key}::${ids[0]}`;
+                      return (
+                        <CheckRow
+                          key={rowKey}
+                          check={rule}
+                          fields={fields}
+                          expanded={expandedKey === rowKey}
+                          threshold={thresholds[rowKey] ?? checkLogic(rule).threshold}
+                          onToggleExpand={() =>
+                            setExpandedKey((prev) => (prev === rowKey ? null : rowKey))
+                          }
+                          onThresholdChange={(value) =>
+                            setThresholds((prev) => ({ ...prev, [rowKey]: value }))
+                          }
+                          onRemove={() => ids.forEach((id) => onToggleCheck(active.key, id))}
+                        />
+                      );
+                    })}
+                  </>
                 )}
               </div>
             </div>
