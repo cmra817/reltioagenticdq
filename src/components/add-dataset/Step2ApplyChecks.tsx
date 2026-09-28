@@ -71,11 +71,12 @@ function checkFields(check: Check): string[] {
   return check.fields ?? [check.field];
 }
 
-/** Groups checks that share the same rule so one row can list every column it applies to. */
+/** Groups checks that share the same rule pattern so one row lists every column it applies to. */
 function groupChecks(checks: Check[]): { rule: Check; fields: string[]; ids: string[] }[] {
   const groups = new Map<string, { rule: Check; fields: string[]; ids: string[] }>();
   for (const check of checks) {
-    const key = `${check.rule}::${check.dimension}`;
+    const pattern = check.rule.toLowerCase().split(check.field.toLowerCase()).join("").trim();
+    const key = `${pattern}::${check.dimension}`;
     const existing = groups.get(key);
     if (existing) {
       for (const f of checkFields(check)) {
