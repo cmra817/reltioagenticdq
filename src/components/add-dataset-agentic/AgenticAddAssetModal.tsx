@@ -244,11 +244,11 @@ export function AgenticAddAssetModal({
     const tz = parseTimeZone(text);
     if (tz) p = { ...p, timeZone: tz };
     setPlanRaw(p);
+    // No questions about checks, schedule, or time zone — the plan uses the
+    // recommended checks and schedule by default. Only ask when the tables
+    // themselves couldn't be identified.
     const qs: Question[] = [];
     if (!found.length) qs.push(Q_TABLES);
-    qs.push(Q_CHECKS);
-    if (!sched) qs.push(Q_SCHEDULE);
-    if (!tz) qs.push(Q_TZ);
     agentSay(() => {
       if (missingWh)
         push({
@@ -258,7 +258,7 @@ export function AgenticAddAssetModal({
       if (found.length)
         push({
           role: "agent",
-          text: `I looked up your connections and found ${found.length} matching ${found.length === 1 ? "table" : "tables"}: ${found.map((f) => f.name).join(", ")}.`,
+          text: `I looked up your connections and found ${found.length} matching ${found.length === 1 ? "table" : "tables"}: ${found.map((f) => f.name).join(", ")}. I'll use the recommended checks and schedule — you can change anything once the plan is drafted.`,
         });
       askNext(qs, p);
     }, 900);
