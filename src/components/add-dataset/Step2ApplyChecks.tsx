@@ -135,7 +135,7 @@ function CheckRow({
           type="button"
           onClick={onToggleExpand}
           aria-expanded={expanded}
-          className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-left @[700px]:grid-cols-[minmax(0,1fr)_110px_150px]"
+          className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] items-center gap-3 text-left @[700px]:grid-cols-[minmax(0,1fr)_150px]"
         >
           <span className="flex min-w-0 items-start gap-3">
             <span className="mt-0.5 shrink-0" style={{ color: "var(--ink-500)" }}>
@@ -146,7 +146,14 @@ function CheckRow({
                 className="flex items-center gap-1.5 text-[13px] font-semibold"
                 style={{ color: "var(--ink-900)" }}
               >
-                {managed && <Lock size={11} className="shrink-0" style={{ color: "var(--ink-500)" }} />}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="shrink-0 cursor-default" aria-label={check.dimension}>
+                      <DimensionIcon label={check.dimension} size={12} />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">{check.dimension}</TooltipContent>
+                </Tooltip>
                 <span className="truncate">{check.rule}</span>
               </span>
               <span className="mt-0.5 block truncate text-[12px]" style={{ color: "var(--ink-500)" }}>
@@ -154,9 +161,7 @@ function CheckRow({
               </span>
             </span>
           </span>
-          <span>
-            <DimensionBadge label={check.dimension} size="sm" />
-          </span>
+
           <span ref={colsRef} className="relative hidden min-w-0 items-center gap-1 @[700px]:flex">
             {fields[0] && (
               <span
@@ -639,13 +644,13 @@ export function Step2ApplyChecks({
                 ) : (
                   <>
                     <div
-                      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 border-b px-4 py-2.5 pl-[54px] text-[11px] font-semibold uppercase tracking-wide @[700px]:grid-cols-[minmax(0,1fr)_110px_150px] @[820px]:px-6"
+                      className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 border-b px-4 py-2.5 pl-[54px] text-[11px] font-semibold uppercase tracking-wide @[700px]:grid-cols-[minmax(0,1fr)_150px] @[820px]:px-6"
                       style={{ borderColor: "var(--hairline)", color: "var(--ink-500)", background: "var(--surface-soft)" }}
                     >
                       <span>DQ check</span>
-                      <span>Dimension</span>
                       <span className="hidden @[700px]:inline">Columns</span>
                     </div>
+
                     {groupChecks(visibleChecks).map(({ rule, fields, ids }) => {
                       const rowKey = `${active.key}::${ids[0]}`;
                       return (
