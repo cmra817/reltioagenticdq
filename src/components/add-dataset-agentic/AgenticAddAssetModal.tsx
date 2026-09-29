@@ -846,7 +846,7 @@ export function AgenticAddAssetModal({
   }
 
   // ---- Workspace ----
-  const ring = (s: Section | "confirm") => (flash === s ? "0 0 0 3px rgba(67,134,250,0.35)" : "none");
+
 
   const sectionMeta: { id: Section; title: string; has: boolean; summary: React.ReactNode }[] = [
     {
