@@ -47,6 +47,7 @@ export function Step1SelectData({
   const [newConnOpen, setNewConnOpen] = useState(false);
   const [pageSize, setPageSize] = useState<10 | 20 | 50>(10);
   const [page, setPage] = useState(1);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   // Any change to the list itself resets pagination.
   useEffect(() => setPage(1), [query, activeSchema, pageSize]);
