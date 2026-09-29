@@ -1,6 +1,6 @@
 import { DimensionBadge, DimensionIcon } from "@/components/dq-dimensions";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check as CheckIcon, ChevronDown, ChevronRight, Copy, Plus, Search, Sparkles, X } from "lucide-react";
+import { Check as CheckIcon, ChevronDown, ChevronRight, Copy, Plus, Search, X } from "lucide-react";
 
 import { toast } from "sonner";
 import { WAREHOUSES, type WarehouseType } from "./mock-warehouses";
@@ -617,18 +617,6 @@ export function Step2ApplyChecks({
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 pb-6 @[820px]:px-6">
-              {/* Recommended-checks note */}
-              <div
-                className="mt-4 flex items-start gap-2.5 rounded-xl border px-4 py-3"
-                style={{ borderColor: "var(--hairline)", background: "rgba(67,134,250,0.06)" }}
-              >
-                <Sparkles size={15} className="mt-0.5 shrink-0" style={{ color: "var(--brand-blue)" }} />
-                <div className="text-[13px]" style={{ color: "var(--ink-700)" }}>
-                  These are checks recommended for the {assets.length === 1 ? "table" : "tables"} you
-                  selected, based on their columns and profiles. Remove any you don't need, or search
-                  your checks library to add more.
-                </div>
-              </div>
 
               {/* Checks table */}
               <div
