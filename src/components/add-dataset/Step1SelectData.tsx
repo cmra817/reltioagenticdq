@@ -102,12 +102,12 @@ export function Step1SelectData({
 
   return (
     <div
-      className="mx-10 my-8 flex min-h-[calc(100vh-280px)] flex-col overflow-hidden rounded-2xl border bg-white"
+      className="@container mx-4 my-6 flex min-h-[calc(100vh-280px)] flex-col overflow-hidden rounded-2xl border bg-white @[900px]:mx-10 @[900px]:my-8"
       style={{ borderColor: "var(--hairline)" }}
     >
       {/* Sub-header / toolbar */}
       <div
-        className="flex items-center gap-4 border-b px-6 py-3"
+        className="flex items-center gap-4 border-b px-4 py-3 @[820px]:px-6"
         style={{ borderColor: "var(--hairline)" }}
       >
         <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
@@ -182,7 +182,7 @@ export function Step1SelectData({
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside
-          className="flex w-[280px] shrink-0 flex-col overflow-hidden border-r"
+          className="flex w-[190px] shrink-0 flex-col overflow-hidden border-r @[820px]:w-[280px]"
           style={{ borderColor: "var(--hairline)" }}
         >
           <div
@@ -283,10 +283,10 @@ export function Step1SelectData({
             </div>
           ) : (
             <>
-              <div className="px-8 pt-6 pb-4">
+              <div className="px-4 pt-6 pb-4 @[820px]:px-8">
                 <SearchInput value={query} onChange={setQuery} large={false} />
               </div>
-              <div className="flex-1 overflow-y-auto px-8 pb-6">
+              <div className="flex-1 overflow-y-auto px-4 pb-6 @[820px]:px-8">
                 {state === "browse" ? (
                   <BrowseBody
                     activeSchema={activeSchema!}
@@ -529,7 +529,7 @@ function PaginationFooter({
 
   return (
     <div
-      className="flex shrink-0 items-center justify-between border-t px-8 py-2.5"
+      className="flex shrink-0 items-center justify-between border-t px-4 py-2.5 @[820px]:px-8"
       style={{ borderColor: "var(--hairline)" }}
     >
       <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>

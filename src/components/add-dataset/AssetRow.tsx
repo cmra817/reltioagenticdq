@@ -73,7 +73,7 @@ export function AssetRow({
           </span>
           <span style={{ color: "var(--ink-700)" }}>{schema}</span>
         </div>
-        <p className="mt-2 text-[13px]" style={{ color: "var(--ink-700)" }}>
+        <p className="mt-2 line-clamp-2 text-[13px]" style={{ color: "var(--ink-700)" }}>
           {asset.description}
         </p>
       </div>
@@ -81,8 +81,8 @@ export function AssetRow({
         className="flex shrink-0 items-center gap-6 pt-1 text-[12px]"
         style={{ color: "var(--ink-500)" }}
       >
-        <span className="tabular-nums">{formatRows(asset.rows)} rows</span>
-        <span>{relativeTime(asset.lastSyncedISO)}</span>
+        <span className="tabular-nums whitespace-nowrap">{formatRows(asset.rows)} rows</span>
+        <span className="hidden whitespace-nowrap @[640px]:inline">{relativeTime(asset.lastSyncedISO)}</span>
       </div>
     </button>
   );
