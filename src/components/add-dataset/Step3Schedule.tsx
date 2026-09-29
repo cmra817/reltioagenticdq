@@ -140,7 +140,7 @@ export function ScheduleCard({
     >
       <div className="flex items-center gap-2.5">
         <span style={{ color: "var(--ink-900)" }}>{icon}</span>
-        <h3 className="text-[16px] font-semibold" style={{ color: "var(--ink-900)" }}>
+        <h3 className="text-[13.5px] font-medium" style={{ color: "var(--ink-900)" }}>
           {title}
         </h3>
       </div>
