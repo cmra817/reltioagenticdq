@@ -775,9 +775,6 @@ export function AgenticAddAssetModal({
           </span>
         )}
       </div>
-      <button aria-label="Close" onClick={() => onOpenChange(false)} className="rounded-full p-2 hover:bg-[color:var(--surface-soft)]">
-        <X size={18} />
-      </button>
     </header>
   );
 
