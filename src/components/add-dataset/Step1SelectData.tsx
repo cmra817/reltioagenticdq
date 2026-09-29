@@ -47,6 +47,7 @@ export function Step1SelectData({
   const [newConnOpen, setNewConnOpen] = useState(false);
   const [pageSize, setPageSize] = useState<10 | 20 | 50>(10);
   const [page, setPage] = useState(1);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   // Any change to the list itself resets pagination.
   useEffect(() => setPage(1), [query, activeSchema, pageSize]);
@@ -120,26 +121,26 @@ export function Step1SelectData({
               style={{ background: "var(--hairline)" }}
               aria-hidden="true"
             />
-            <div className="flex flex-1 flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2">
               <span
-                className="text-[12px] font-medium"
+                className="shrink-0 text-[12px] font-medium"
                 style={{ color: "var(--ink-700)" }}
               >
                 {selected.size} selected
               </span>
-              {Array.from(selected).slice(0, 6).map((k) => {
+              {Array.from(selected).slice(0, 3).map((k) => {
                 const name = k.split("::")[2];
                 return (
                   <span
                     key={k}
-                    className="inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[12px]"
+                    className="inline-flex min-w-0 items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[12px]"
                     style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
                   >
-                    <span className="font-mono">{name}</span>
+                    <span className="truncate font-mono">{name}</span>
                     <button
                       type="button"
                       onClick={() => onToggle(k)}
-                      className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-[color:var(--surface-soft)]"
+                      className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full hover:bg-[color:var(--surface-soft)]"
                       style={{ color: "var(--ink-500)" }}
                       aria-label={`Remove ${name}`}
                     >
@@ -148,13 +149,68 @@ export function Step1SelectData({
                   </span>
                 );
               })}
-              {selected.size > 6 && (
-                <span
-                  className="rounded-full bg-[color:var(--surface-soft)] px-2.5 py-1 text-[12px]"
-                  style={{ color: "var(--ink-700)" }}
-                >
-                  +{selected.size - 6} more
-                </span>
+              {selected.size > 3 && (
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setMoreOpen((v) => !v)}
+                    className="rounded-full bg-[color:var(--surface-soft)] px-2.5 py-1 text-[12px] font-medium hover:bg-[color:var(--hairline)]"
+                    style={{ color: "var(--ink-700)" }}
+                    aria-expanded={moreOpen}
+                  >
+                    +{selected.size - 3}
+                  </button>
+                  {moreOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setMoreOpen(false)}
+                        aria-hidden="true"
+                      />
+                      <div
+                        className="absolute left-0 top-full z-20 mt-1.5 max-h-64 w-64 overflow-y-auto rounded-xl border bg-white py-1 shadow-lg"
+                        style={{ borderColor: "var(--hairline)" }}
+                        role="menu"
+                      >
+                        {Array.from(selected).slice(3).map((k) => {
+                          const name = k.split("::")[2];
+                          const crumb = k.split("::").slice(0, 2).join(" · ");
+                          return (
+                            <div
+                              key={k}
+                              className="flex items-center gap-2 px-3 py-1.5 hover:bg-[color:var(--surface-soft)]"
+                              role="menuitem"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div
+                                  className="truncate font-mono text-[12px]"
+                                  style={{ color: "var(--ink-900)" }}
+                                >
+                                  {name}
+                                </div>
+                                <div
+                                  className="truncate text-[11px]"
+                                  style={{ color: "var(--ink-500)" }}
+                                >
+                                  {crumb}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => onToggle(k)}
+                                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full hover:bg-[color:var(--hairline)]"
+                                style={{ color: "var(--ink-500)" }}
+                                aria-label={`Remove ${name}`}
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
               <button
                 type="button"
