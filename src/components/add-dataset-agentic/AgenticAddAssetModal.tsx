@@ -791,7 +791,7 @@ export function AgenticAddAssetModal({
               What data should we start watching?
             </h1>
             <p className="mb-6 text-center text-[14px]" style={{ color: "var(--ink-500)" }}>
-              Tell me the connection, tables, checks and schedule in a sentence or two. I'll draft the plan.
+              Tell me the connection, tables and schedule in a sentence or two. I'll propose a plan before building anything.
             </p>
             {composer("Monitor dim_customers in Databricks, daily at 6pm…")}
             <div className="mt-4 flex flex-wrap justify-center gap-2">
