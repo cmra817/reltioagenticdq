@@ -107,7 +107,7 @@ export function Step1SelectData({
     >
       {/* Sub-header / toolbar */}
       <div
-        className="flex items-center gap-4 border-b px-6 py-3"
+        className="flex items-center gap-4 border-b px-4 py-3 @[820px]:px-6"
         style={{ borderColor: "var(--hairline)" }}
       >
         <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
@@ -529,7 +529,7 @@ function PaginationFooter({
 
   return (
     <div
-      className="flex shrink-0 items-center justify-between border-t px-8 py-2.5"
+      className="flex shrink-0 items-center justify-between border-t px-4 py-2.5 @[820px]:px-8"
       style={{ borderColor: "var(--hairline)" }}
     >
       <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
