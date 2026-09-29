@@ -25,10 +25,7 @@ import {
 import {
   CONFIRM_WORDS,
   EXAMPLES,
-  Q_CHECKS,
-  Q_SCHEDULE,
   Q_TABLES,
-  Q_TZ,
   UNSUPPORTED_WAREHOUSES,
   findSchema,
   findTables,
