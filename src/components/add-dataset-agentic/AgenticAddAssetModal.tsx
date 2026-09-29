@@ -775,6 +775,23 @@ export function AgenticAddAssetModal({
           </span>
         )}
       </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onOpenChange(false)}
+          className="h-9 rounded-full border px-4 text-[13px] font-medium"
+          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={confirm}
+          disabled={plan.selected.length === 0 || !!done}
+          className="h-9 rounded-full px-4 text-[13px] font-medium text-white transition-shadow disabled:opacity-50"
+          style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
+        >
+          Complete setup
+        </button>
+      </div>
     </header>
   );
 
@@ -1007,15 +1024,6 @@ export function AgenticAddAssetModal({
       </div>
       {chatBody}
       <div className="px-4 pb-4">
-        {mode !== "manual" && !done && (
-          <button
-            onClick={confirm}
-            className="mb-2 h-10 w-full rounded-full text-[14px] font-medium text-white transition-shadow"
-            style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
-          >
-            Confirm
-          </button>
-        )}
         {composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}
       </div>
     </aside>
