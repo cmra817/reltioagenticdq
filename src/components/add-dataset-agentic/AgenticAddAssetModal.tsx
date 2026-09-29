@@ -765,6 +765,8 @@ export function AgenticAddAssetModal({
     </form>
   );
 
+  const ring = (s: Section | "confirm") => (flash === s ? "0 0 0 3px rgba(67,134,250,0.35)" : "none");
+
   const header = (
     <header className="flex h-14 shrink-0 items-center justify-between border-b bg-white px-5" style={{ borderColor: "var(--hairline)" }}>
       <div className="flex items-center gap-2 text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
@@ -774,6 +776,23 @@ export function AgenticAddAssetModal({
             · {domainName}
           </span>
         )}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onOpenChange(false)}
+          className="h-9 rounded-full border px-4 text-[13px] font-medium"
+          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={confirm}
+          disabled={plan.selected.length === 0 || !!done}
+          className="h-9 rounded-full px-4 text-[13px] font-medium text-white transition-shadow disabled:opacity-50"
+          style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
+        >
+          Complete setup
+        </button>
       </div>
     </header>
   );
@@ -827,7 +846,7 @@ export function AgenticAddAssetModal({
   }
 
   // ---- Workspace ----
-  const ring = (s: Section | "confirm") => (flash === s ? "0 0 0 3px rgba(67,134,250,0.35)" : "none");
+
 
   const sectionMeta: { id: Section; title: string; has: boolean; summary: React.ReactNode }[] = [
     {
@@ -1007,15 +1026,6 @@ export function AgenticAddAssetModal({
       </div>
       {chatBody}
       <div className="px-4 pb-4">
-        {mode !== "manual" && !done && (
-          <button
-            onClick={confirm}
-            className="mb-2 h-10 w-full rounded-full text-[14px] font-medium text-white transition-shadow"
-            style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
-          >
-            Confirm
-          </button>
-        )}
         {composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}
       </div>
     </aside>
