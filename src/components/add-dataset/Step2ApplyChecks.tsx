@@ -103,7 +103,9 @@ function CheckRow({
   onToggleExpand,
   onThresholdChange,
   onRemove,
+  flash,
 }: {
+  flash?: boolean;
   check: Check;
   fields: string[];
   expanded: boolean;
@@ -117,7 +119,7 @@ function CheckRow({
 
   return (
     <div className="group border-b last:border-b-0" style={{ borderColor: "var(--hairline)" }}>
-      <div className="flex items-center gap-3 px-6 py-3.5 transition-colors hover:bg-[color:var(--surface-soft)]">
+      <div className="flex items-center gap-3 px-6 py-3.5 transition-colors duration-500 hover:bg-[color:var(--surface-soft)]" style={flash ? { background: "rgba(67,134,250,0.14)" } : undefined}>
         <button
           type="button"
           onClick={onToggleExpand}
@@ -266,7 +268,13 @@ export function Step2ApplyChecks({
   customChecks,
   onToggleCheck,
   onAddCheck,
+  flashIds,
+  focusKey,
 }: {
+  /** Optional: check ids to briefly tint. */
+  flashIds?: Set<string>;
+  /** Optional: table to switch to. */
+  focusKey?: string;
   selected: Set<string>;
   /** checked[assetKey] = Set<checkId> currently kept */
   checked: Record<string, Set<string>>;
@@ -283,6 +291,10 @@ export function Step2ApplyChecks({
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [thresholds, setThresholds] = useState<Record<string, number>>({});
   const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (focusKey) setActiveKey(focusKey);
+  }, [focusKey, flashIds]);
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -586,6 +598,7 @@ export function Step2ApplyChecks({
                           key={rowKey}
                           check={rule}
                           fields={fields}
+                          flash={ids.some((id) => flashIds?.has(id))}
                           expanded={expandedKey === rowKey}
                           threshold={thresholds[rowKey] ?? checkLogic(rule).threshold}
                           onToggleExpand={() =>

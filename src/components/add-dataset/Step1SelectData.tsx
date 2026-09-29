@@ -366,8 +366,10 @@ function BrowseBody({
   onToggle,
   pageSize,
   page,
+  flashKeys,
 }: {
   activeSchema: { connId: string; schema: string };
+  flashKeys?: Set<string>;
   selected: Set<string>;
   onToggle: (key: string) => void;
   pageSize: number;
@@ -405,6 +407,7 @@ function BrowseBody({
               warehouse={conn.warehouse}
               selected={selected.has(k)}
               onToggle={() => onToggle(k)}
+              flash={flashKeys?.has(k)}
             />
           );
         })}
