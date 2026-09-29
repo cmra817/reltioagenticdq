@@ -1,6 +1,7 @@
-import { DimensionBadge } from "@/components/dq-dimensions";
+import { DimensionBadge, DimensionIcon } from "@/components/dq-dimensions";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check as CheckIcon, ChevronDown, ChevronRight, Copy, Lock, Plus, Search, Sparkles, X } from "lucide-react";
+import { Check as CheckIcon, ChevronDown, ChevronRight, Copy, Plus, Search, Sparkles, X } from "lucide-react";
+
 import { toast } from "sonner";
 import { WAREHOUSES, type WarehouseType } from "./mock-warehouses";
 import { BigQueryIcon, DatabricksIcon, SnowflakeIcon } from "@/components/brand-icons";
@@ -115,7 +116,7 @@ function CheckRow({
   onRemove: () => void;
 }) {
   const logic = checkLogic(check);
-  const managed = (check.creator ?? { kind: "reltio" }).kind === "reltio";
+
   const [colsOpen, setColsOpen] = useState(false);
   const colsRef = useRef<HTMLSpanElement>(null);
 
