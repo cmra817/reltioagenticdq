@@ -153,6 +153,37 @@ export function dimensionsInUse(plan: Plan): string[] {
   return Array.from(s);
 }
 
+/** Why the recommended checks were picked, grounded in the columns they landed on. */
+const RATIONALE: Record<string, string> = {
+  Uniqueness: "these read as identifiers, so a repeat means the same record is counted twice",
+  Completeness: "every row has a value there today, so an empty one would be new",
+  Validity: "the values follow one shape today, so I check they keep it",
+  Consistency: "these values agree with each other today, and drift is easy to miss",
+  Timeliness: "this is how I can tell the table stopped loading on time",
+  "Format and range": "the values sit inside a steady range today",
+};
+
+export function checkRationale(plan: Plan): { dimension: string; columns: string[]; count: number; why: string }[] {
+  const by = new Map<string, { columns: Set<string>; count: number }>();
+  for (const k of plan.selected)
+    for (const c of keptChecks(plan, k)) {
+      const e = by.get(c.dimension) ?? { columns: new Set<string>(), count: 0 };
+      (c.fields ?? [c.field]).forEach((f) => f && e.columns.add(f));
+      e.count += 1;
+      by.set(c.dimension, e);
+    }
+  return Array.from(by.entries())
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 4)
+    .map(([dimension, e]) => ({
+      dimension,
+      columns: Array.from(e.columns).slice(0, 3),
+      count: e.count,
+      why: RATIONALE[dimension] ?? "these columns behave consistently today",
+    }));
+}
+
+
 export function assetOf(key: string) {
   const [connId, schemaName, assetName] = key.split("::");
   const conn = WAREHOUSES.find((c) => c.id === connId);
