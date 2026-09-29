@@ -765,6 +765,8 @@ export function AgenticAddAssetModal({
     </form>
   );
 
+  const ring = (s: Section | "confirm") => (flash === s ? "0 0 0 3px rgba(67,134,250,0.35)" : "none");
+
   const header = (
     <header className="flex h-14 shrink-0 items-center justify-between border-b bg-white px-5" style={{ borderColor: "var(--hairline)" }}>
       <div className="flex items-center gap-2 text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
