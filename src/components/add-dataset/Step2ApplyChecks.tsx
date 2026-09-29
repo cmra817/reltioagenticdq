@@ -116,6 +116,17 @@ function CheckRow({
 }) {
   const logic = checkLogic(check);
   const managed = (check.creator ?? { kind: "reltio" }).kind === "reltio";
+  const [colsOpen, setColsOpen] = useState(false);
+  const colsRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!colsOpen) return;
+    function onDoc(e: MouseEvent) {
+      if (colsRef.current && !colsRef.current.contains(e.target as Node)) setColsOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [colsOpen]);
 
   return (
     <div className="group border-b last:border-b-0" style={{ borderColor: "var(--hairline)" }}>
@@ -124,7 +135,7 @@ function CheckRow({
           type="button"
           onClick={onToggleExpand}
           aria-expanded={expanded}
-          className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-left @[700px]:grid-cols-[minmax(0,1fr)_120px_minmax(0,190px)]"
+          className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-left @[700px]:grid-cols-[minmax(0,1fr)_110px_150px]"
         >
           <span className="flex min-w-0 items-start gap-3">
             <span className="mt-0.5 shrink-0" style={{ color: "var(--ink-500)" }}>
@@ -146,16 +157,63 @@ function CheckRow({
           <span>
             <DimensionBadge label={check.dimension} size="sm" />
           </span>
-          <span className="hidden min-w-0 flex-wrap items-center gap-1 @[700px]:flex">
-            {fields.map((f) => (
+          <span ref={colsRef} className="relative hidden min-w-0 items-center gap-1 @[700px]:flex">
+            {fields[0] && (
               <span
-                key={f}
-                className="rounded-md border px-1.5 py-0.5 font-mono text-[11px]"
+                className="max-w-[100px] truncate rounded-md border px-1.5 py-0.5 font-mono text-[11px]"
                 style={{ borderColor: "var(--hairline)", color: "var(--ink-700)", background: "var(--surface-soft)" }}
               >
-                {f}
+                {fields[0]}
               </span>
-            ))}
+            )}
+            {fields.length > 1 && (
+              <span
+                role="button"
+                tabIndex={0}
+                aria-haspopup="menu"
+                aria-expanded={colsOpen}
+                aria-label={`${fields.length - 1} more columns`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setColsOpen((v) => !v);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setColsOpen((v) => !v);
+                  }
+                }}
+                className="cursor-pointer rounded-md border px-1.5 py-0.5 font-mono text-[11px] transition-colors hover:bg-[color:var(--surface-soft)]"
+                style={{ borderColor: "var(--hairline)", color: "var(--brand-blue)", background: "var(--surface-soft)" }}
+              >
+                +{fields.length - 1}
+              </span>
+            )}
+            {colsOpen && fields.length > 1 && (
+              <span
+                role="menu"
+                className="absolute right-0 top-[calc(100%+6px)] z-30 block w-[220px] overflow-hidden rounded-xl border bg-white py-1 shadow-lg"
+                style={{ borderColor: "var(--hairline)" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span
+                  className="block px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide"
+                  style={{ color: "var(--ink-500)" }}
+                >
+                  Columns
+                </span>
+                {fields.map((f) => (
+                  <span
+                    key={f}
+                    className="block truncate px-3 py-1.5 font-mono text-[12px]"
+                    style={{ color: "var(--ink-700)" }}
+                  >
+                    {f}
+                  </span>
+                ))}
+              </span>
+            )}
           </span>
         </button>
         <Tooltip>
@@ -584,12 +642,12 @@ export function Step2ApplyChecks({
                 ) : (
                   <>
                     <div
-                      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 border-b px-4 py-2.5 pl-[54px] text-[11px] font-semibold uppercase tracking-wide @[700px]:grid-cols-[minmax(0,1fr)_120px_minmax(0,190px)] @[820px]:px-6"
+                      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 border-b px-4 py-2.5 pl-[54px] text-[11px] font-semibold uppercase tracking-wide @[700px]:grid-cols-[minmax(0,1fr)_110px_150px] @[820px]:px-6"
                       style={{ borderColor: "var(--hairline)", color: "var(--ink-500)", background: "var(--surface-soft)" }}
                     >
                       <span>DQ check</span>
                       <span>Dimension</span>
-                      <span className="hidden @[700px]:inline">Columns applied to</span>
+                      <span className="hidden @[700px]:inline">Columns</span>
                     </div>
                     {groupChecks(visibleChecks).map(({ rule, fields, ids }) => {
                       const rowKey = `${active.key}::${ids[0]}`;
