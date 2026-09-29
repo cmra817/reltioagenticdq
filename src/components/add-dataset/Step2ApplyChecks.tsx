@@ -430,15 +430,12 @@ export function Step2ApplyChecks({
           className="flex shrink-0 items-center gap-4 border-b px-4 py-3 @[820px]:px-6"
           style={{ borderColor: "var(--hairline)" }}
         >
-          <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
-            Apply data quality checks
-          </div>
-          <div className="h-5 w-px" style={{ background: "var(--hairline)" }} aria-hidden="true" />
           <span className="text-[12px] font-medium" style={{ color: "var(--ink-700)" }}>
             {assets.length} {assets.length === 1 ? "table" : "tables"} ·{" "}
             {Object.values(checked).reduce((sum, s) => sum + s.size, 0)} checks
           </span>
         </div>
+
 
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar: selected tables, grouped like step 1 */}
