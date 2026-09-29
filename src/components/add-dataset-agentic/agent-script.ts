@@ -103,6 +103,12 @@ export const Q_TZ: Question = {
 
 export const CONFIRM_WORDS = /^(go ahead|confirm|create( it)?|do it|ship it|yes,? create|finish|looks good,? create)/;
 
+// ---- Plan proposal (stated in chat before anything is drafted) ----
+
+export const PROPOSAL_YES = /^(y|yes|yep|yeah|yup|sure|ok|okay|go ahead|proceed|looks good|sounds good|do it|generate|build it|confirm|perfect|that works)\b/;
+export const PROPOSAL_CHIPS = ["Yes, generate the plan", "Change the schedule", "Add more tables"];
+
+
 // ---- Create-a-check flow ----
 
 export const WANTS_NEW_CHECK = /\b(create|new|make|build|write|add)\b[^.]*\b(dq )?(check|rule)\b/;
