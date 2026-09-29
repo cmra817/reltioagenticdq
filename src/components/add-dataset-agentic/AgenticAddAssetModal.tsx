@@ -458,7 +458,7 @@ export function AgenticAddAssetModal({
       }
       if (CONFIRM_WORDS.test(t)) {
         pulse("confirm");
-        return push({ role: "agent", text: "Only the Confirm button creates it — it's highlighted at the bottom right." });
+        return push({ role: "agent", text: "Only **Complete setup** (top right) creates it — everything here is just the draft until then." });
       }
       if (/^undo\b/.test(t)) return undo();
       const removing = /\b(remove|drop|delete|exclude|without)\b/.test(t);
