@@ -120,6 +120,8 @@ export function AgenticAddAssetModal({
       setHistory([]);
       setMsgs([]);
       setQueue([]);
+      setProposal(null);
+
       setThinking(false);
       setFilled(3);
       setDone(null);
