@@ -96,6 +96,8 @@ export function AgenticAddAssetModal({
   const [history, setHistory] = useState<Plan[]>([]);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [queue, setQueue] = useState<Question[]>([]);
+  const [proposal, setProposal] = useState<Plan | null>(null);
+
   const [thinking, setThinking] = useState(false);
   const [filled, setFilled] = useState(3);
   const [flash, setFlash] = useState<Section | "confirm" | null>(null);
