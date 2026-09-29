@@ -655,7 +655,7 @@ export function AgenticAddAssetModal({
               </p>
             ) : (
               <div
-                className={m.role === "user" ? "max-w-[85%] rounded-2xl px-3.5 py-2 text-[14px]" : "text-[14px] leading-relaxed"}
+                className={m.role === "user" ? "max-w-[85%] rounded-2xl px-3.5 py-2 text-[14px]" : "whitespace-pre-line text-[14px] leading-relaxed"}
                 style={m.role === "user" ? { background: "var(--surface-soft)", color: "var(--ink-900)" } : { color: "var(--ink-900)" }}
               >
                 <RichText text={m.text} />
