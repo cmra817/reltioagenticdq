@@ -159,7 +159,9 @@ export function PlanView(p: Props) {
     if (plan.selected.length <= 3) setOpenTables(new Set(plan.selected));
   }, [stage, plan.selected]);
 
-  useEffect(() => p.onDialogChange(!!dialog), [dialog]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    p.onDialogChange(!!dialog);
+  }, [dialog]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Expand + scroll to revealed tables.
   useEffect(() => {

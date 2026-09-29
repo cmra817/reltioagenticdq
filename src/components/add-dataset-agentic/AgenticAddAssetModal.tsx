@@ -784,7 +784,9 @@ export function AgenticAddAssetModal({
         ruleRequest={ruleRequest}
         filter={filter}
         onClearFilter={() => setFilter(null)}
-        onDialogChange={(o) => (dialogOpenRef.current = o)}
+        onDialogChange={(o) => {
+          dialogOpenRef.current = o;
+        }}
         pulseSchedule={flash === "schedule"}
       />
     </div>
