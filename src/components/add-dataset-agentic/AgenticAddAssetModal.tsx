@@ -16,6 +16,7 @@ import {
   TIME_ZONES,
   buildAssets,
   checkTotal,
+  checkRationale,
   assetOf,
   keptChecks,
   dimensionsInUse,
@@ -32,6 +33,8 @@ import {
 import {
   CONFIRM_WORDS,
   EXAMPLES,
+  PROPOSAL_CHIPS,
+  PROPOSAL_YES,
   Q_TABLES,
   UNSUPPORTED_WAREHOUSES,
   APPLY_CHIPS,
@@ -43,6 +46,7 @@ import {
   parseTimeZone,
   type Question,
 } from "./agent-script";
+
 
 type Section = "select" | "checks" | "schedule";
 type Msg = {
@@ -92,6 +96,8 @@ export function AgenticAddAssetModal({
   const [history, setHistory] = useState<Plan[]>([]);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [queue, setQueue] = useState<Question[]>([]);
+  const [proposal, setProposal] = useState<Plan | null>(null);
+
   const [thinking, setThinking] = useState(false);
   const [filled, setFilled] = useState(3);
   const [flash, setFlash] = useState<Section | "confirm" | null>(null);
@@ -114,6 +120,8 @@ export function AgenticAddAssetModal({
       setHistory([]);
       setMsgs([]);
       setQueue([]);
+      setProposal(null);
+
       setThinking(false);
       setFilled(3);
       setDone(null);
@@ -203,17 +211,98 @@ export function AgenticAddAssetModal({
       let text = `I'm monitoring ${n} ${n === 1 ? "table" : "tables"} in ${whs.join(" and ")} for ${dimText}, ${scheduleLabel(final.profiling, final.timeZone).replace(/^D/, "d").replace(/^W/, "w")}.`;
       if (defaulted.length) text += ` I used the recommended ${defaulted.join(" and ")}.`;
       push({ role: "agent", text });
+      const why = checkRationale(final).slice(0, 3);
+      if (why.length)
+        push({
+          role: "agent",
+          text:
+            `I included the recommended checks based on what the columns already look like:\n` +
+            why
+              .map((r) => `**${r.dimension}** on ${r.columns.map((c) => `\`${c}\``).join(", ")} — ${r.why}.`)
+              .join("\n"),
+          showMe: "checks",
+        });
       observations(final).forEach((o) =>
         push({ role: "agent", text: o.text, showMe: o.text.includes("uniqueness") ? "checks" : "select", showKeys: o.keys }),
       );
+      push({ role: "agent", text: "Open any section on the right to change a threshold or drop a check, or just tell me here." });
     }, 800 * 3 + 200);
   };
 
+  /** State the plan in plain language and wait for a yes before drafting. */
+  const proposeText = (p: Plan) => {
+    const names = p.selected.map(tableName);
+    const whs = Array.from(new Set(p.selected.map((k) => assetOf(k).conn?.warehouse).filter(Boolean))) as string[];
+    const schemas = Array.from(new Set(p.selected.map((k) => k.split("::")[1])));
+    const dims = dimensionsInUse(p);
+    const sched = scheduleLabel(p.profiling ?? RECOMMENDED_SCHEDULE, p.timeZone ?? RECOMMENDED_TZ);
+    return (
+      `Here's what I'd set up:\n` +
+      `**Tables (${names.length})** ${names.map((n) => `\`${n}\``).join(", ")} — ${whs.join(", ")} · ${schemas.join(", ")}\n` +
+      `**Checks** Recommended for each table — ${dims.join(", ")} (${checkTotal(p)} in total)\n` +
+      `**Schedule** ${sched}${p.profiling ? "" : " (recommended)"}\n` +
+      `Does that look right, or should I change something first?`
+    );
+  };
+
+  const propose = (p: Plan) => {
+    setProposal(p);
+    push({ role: "agent", text: proposeText(p), chips: PROPOSAL_CHIPS });
+  };
+
+  const proposalReply = (text: string) => {
+    push({ role: "user", text });
+    const t = text.toLowerCase().trim();
+    const base = proposal ?? plan;
+    agentSay(() => {
+      if (PROPOSAL_YES.test(t)) {
+        setProposal(null);
+        push({ role: "agent", text: "Setting it up now." });
+        return startDrafting(base, { schedule: !!base.profiling, tz: !!base.timeZone });
+      }
+      if (/^change the schedule/.test(t))
+        return push({ role: "agent", text: "How often should it run, and at what time? For example \"weekly on Monday at 7am\"." });
+      if (/^add more tables/.test(t))
+        return push({ role: "agent", text: "Which tables should I add? Name them, or name a schema and I'll take everything in it." });
+
+      let p = base;
+      const changed: string[] = [];
+      const sched = parseSchedule(text);
+      const tz = parseTimeZone(text);
+      if (sched) {
+        p = { ...p, profiling: sched, checks: sched };
+        changed.push("schedule");
+      }
+      if (tz) {
+        p = { ...p, timeZone: tz };
+        changed.push("time zone");
+      }
+      const removing = /\b(remove|drop|delete|exclude|without)\b/.test(t);
+      const schema = /schema|everything in|all of/.test(t) ? findSchema(t) : null;
+      const tables = schema ? ALL_ASSETS.filter((a) => a.schema === schema) : ALL_ASSETS.filter((a) => t.includes(a.name.toLowerCase()));
+      if (tables.length) {
+        const keys = tables.map((a) => a.key);
+        p = removing ? withoutTables(p, keys) : withTables(p, keys);
+        changed.push("tables");
+      }
+      if (!changed.length)
+        return push({
+          role: "agent",
+          text: "I can change the tables, the schedule or the time zone before I draft anything. Otherwise say yes and I'll build it.",
+          chips: PROPOSAL_CHIPS,
+        });
+      setProposal(p);
+      push({ role: "agent", text: `Updated the ${changed.join(" and ")}.\n` + proposeText(p), chips: PROPOSAL_CHIPS });
+    });
+  };
+
   const askNext = (q: Question[], p: Plan) => {
-    if (q.length === 0) return startDrafting(p, { schedule: !!p.profiling, tz: !!p.timeZone });
+    if (q.length === 0) return propose(p);
     setQueue(q);
     push({ role: "agent", text: q[0].text, question: q[0] });
   };
+
+
 
   const applyAnswer = (q: Question, answer: string, p: Plan): Plan => {
     const a = answer.toLowerCase();
@@ -247,7 +336,7 @@ export function AgenticAddAssetModal({
       let p = plan;
       for (const qq of queue) p = applyAnswer(qq, qq.options.find((o) => o.recommended)!.label, p);
       setQueue([]);
-      agentSay(() => startDrafting(p, { schedule: !!p.profiling, tz: !!p.timeZone }));
+      agentSay(() => propose(p));
       return;
     }
     const p = applyAnswer(q, answer, plan);
@@ -446,7 +535,9 @@ export function AgenticAddAssetModal({
     setInput("");
     if (mode === "chat" && msgs.length === 0) firstMessage(text);
     else if (queue.length) answerQuestion(text);
+    else if (proposal) proposalReply(text);
     else command(text);
+
     inputRef.current?.focus();
   };
 
@@ -564,7 +655,7 @@ export function AgenticAddAssetModal({
               </p>
             ) : (
               <div
-                className={m.role === "user" ? "max-w-[85%] rounded-2xl px-3.5 py-2 text-[14px]" : "text-[14px] leading-relaxed"}
+                className={m.role === "user" ? "max-w-[85%] rounded-2xl px-3.5 py-2 text-[14px]" : "whitespace-pre-line text-[14px] leading-relaxed"}
                 style={m.role === "user" ? { background: "var(--surface-soft)", color: "var(--ink-900)" } : { color: "var(--ink-900)" }}
               >
                 <RichText text={m.text} />
@@ -582,7 +673,7 @@ export function AgenticAddAssetModal({
                     )}
                   </span>
                 )}
-                {m.chips && m.id === lastChipsId && cc && (
+                {m.chips && m.id === lastChipsId && (cc || proposal) && (
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     {m.chips.map((c) => (
                       <button
@@ -700,7 +791,7 @@ export function AgenticAddAssetModal({
               What data should we start watching?
             </h1>
             <p className="mb-6 text-center text-[14px]" style={{ color: "var(--ink-500)" }}>
-              Tell me the connection, tables, checks and schedule in a sentence or two. I'll draft the plan.
+              Tell me the connection, tables and schedule in a sentence or two. I'll propose a plan before building anything.
             </p>
             {composer("Monitor dim_customers in Databricks, daily at 6pm…")}
             <div className="mt-4 flex flex-wrap justify-center gap-2">
