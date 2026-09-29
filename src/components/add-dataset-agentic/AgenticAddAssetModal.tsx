@@ -993,7 +993,7 @@ export function AgenticAddAssetModal({
       ) : (
         accordion
       )}
-      {bottomBar}
+      {mode === "manual" && bottomBar}
     </div>
   );
 
@@ -1008,7 +1008,18 @@ export function AgenticAddAssetModal({
         )}
       </div>
       {chatBody}
-      <div className="px-4 pb-4">{composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}</div>
+      <div className="px-4 pb-4">
+        {mode !== "manual" && !done && (
+          <button
+            onClick={confirm}
+            className="mb-2 h-10 w-full rounded-full text-[14px] font-medium text-white transition-shadow"
+            style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
+          >
+            Confirm
+          </button>
+        )}
+        {composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}
+      </div>
     </aside>
   );
 
