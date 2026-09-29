@@ -545,10 +545,11 @@ export function AgenticAddAssetModal({
     const { plan: final, defaults } = finalize(plan);
     const result = buildAssets(final, domainName ?? "");
     onComplete?.(result);
-    setDone(
+    const doneText =
       `Created ${result.tables.length} ${result.tables.length === 1 ? "asset" : "assets"} with ${result.checkCount} checks.` +
-        (defaults.length ? ` Defaults applied — ${defaults.join("; ")}.` : ""),
-    );
+      (defaults.length ? ` Defaults applied — ${defaults.join("; ")}.` : "");
+    if (mode !== "manual") push({ role: "note", text: doneText });
+    setDone(doneText);
     window.setTimeout(() => onOpenChange(false), 2600);
   };
 
@@ -993,7 +994,7 @@ export function AgenticAddAssetModal({
       ) : (
         accordion
       )}
-      {bottomBar}
+      {mode === "manual" && bottomBar}
     </div>
   );
 
@@ -1008,7 +1009,18 @@ export function AgenticAddAssetModal({
         )}
       </div>
       {chatBody}
-      <div className="px-4 pb-4">{composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}</div>
+      <div className="px-4 pb-4">
+        {mode !== "manual" && !done && (
+          <button
+            onClick={confirm}
+            className="mb-2 h-10 w-full rounded-full text-[14px] font-medium text-white transition-shadow"
+            style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
+          >
+            Confirm
+          </button>
+        )}
+        {composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}
+      </div>
     </aside>
   );
 
