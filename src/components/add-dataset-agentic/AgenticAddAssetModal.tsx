@@ -401,18 +401,6 @@ export function AgenticAddAssetModal({
       setCc(null);
       openRuleDialog(text);
       return true;
-      const rule = draftRule(t);
-      if (!rule) {
-        push({ role: "agent", text: "Which column should it look at, and what should be true about it? For example \"email is never empty\" or \"amount is between 0 and 10000\"." });
-        return true;
-      }
-      setCc({ stage: "target", rule });
-      push({
-        role: "agent",
-        text: `Here's the rule: **${rule.rule}** (${rule.dimension}). Expectation \`${rule.expectation}\`, pattern \`${rule.pattern}\`, fails if more than ${rule.threshold}% of values don't match. I tested it against a sample and it runs. Where should I apply it?`,
-        chips: APPLY_CHIPS,
-      });
-      return true;
     }
     if (cc.stage === "target" && cc.rule) {
       const named = plan.selected.filter((k) => t.includes(tableName(k).toLowerCase()));
@@ -451,13 +439,6 @@ export function AgenticAddAssetModal({
         if (rule) {
           openRuleDialog(text.replace(/^(can you |please )?(create|make|add|write)( me)? (a )?(new )?(dq )?(check|rule)( that| to| which)?/i, "").trim() || text);
           return;
-        }
-        if (false) {
-          return push({
-            role: "agent",
-            text: `Here's the rule: **${rule.rule}** (${rule.dimension}). Expectation \`${rule.expectation}\`, pattern \`${rule.pattern}\`, fails if more than ${rule.threshold}% of values don't match. I tested it against a sample and it runs. Where should I apply it?`,
-            chips: APPLY_CHIPS,
-          });
         }
         setCc({ stage: "describe" });
         return push({ role: "agent", text: "Sure. What should the check verify? Name the column and what should be true about it." });
