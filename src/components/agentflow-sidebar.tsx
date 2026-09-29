@@ -13,6 +13,7 @@ import {
 import { useDomainState } from "./domain-context";
 import { CreateDomainDialog } from "./create-domain-dialog";
 import { AddDatasetModal } from "./add-dataset/AddDatasetModal";
+import { AgenticAddAssetModal } from "./add-dataset-agentic/AgenticAddAssetModal";
 import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
 import { newChatId, useChatThreads } from "./chat/chat-context";
@@ -275,6 +276,7 @@ function NewMenu() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [domainOpen, setDomainOpen] = useState(false);
+  const [agenticOpen, setAgenticOpen] = useState(false);
   const [datasetOpen, setDatasetOpen] = useState(false);
   const [pendingDomain, setPendingDomain] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -362,6 +364,20 @@ function NewMenu() {
             role="menuitem"
             onClick={() => {
               setOpen(false);
+              setPendingDomain(selected);
+              setAgenticOpen(true);
+            }}
+            className={itemClass}
+            style={{ color: "var(--ink-900)" }}
+          >
+            <PlusIcon size={14} />
+            <span>Add new data asset (agentic)</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
               setDomainOpen(true);
             }}
             className={itemClass}
@@ -387,6 +403,25 @@ function NewMenu() {
         open={datasetOpen}
         onOpenChange={(o) => {
           setDatasetOpen(o);
+          if (!o) setPendingDomain(null);
+        }}
+        domainName={pendingDomain ?? selected}
+        onComplete={({ tables, checkCount, assets }) => {
+          completeConnection({ domain: pendingDomain ?? selected, tables, checkCount });
+          // Register the new assets so they appear in Explore with their checks + schedule.
+          addAssets(assets);
+          // Newly added datasets kick off profiling + DQ checks; notify on completion.
+          tables.forEach((table, i) => {
+            runJob({ kind: "profiling", table, delayMs: 3500 + i * 1200 });
+            runJob({ kind: "checks", table, delayMs: 7000 + i * 1200 });
+          });
+          setPendingDomain(null);
+        }}
+      />
+      <AgenticAddAssetModal
+        open={agenticOpen}
+        onOpenChange={(o) => {
+          setAgenticOpen(o);
           if (!o) setPendingDomain(null);
         }}
         domainName={pendingDomain ?? selected}
