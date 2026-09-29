@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Check as CheckIcon, ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { ArrowUp, Check as CheckIcon, ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { DimensionBadge } from "../dq-dimensions";
 import { SourceLogo } from "@/components/explore-screen";
 import { Stepper } from "../add-dataset/Stepper";
@@ -775,9 +775,6 @@ export function AgenticAddAssetModal({
           </span>
         )}
       </div>
-      <button aria-label="Close" onClick={() => onOpenChange(false)} className="rounded-full p-2 hover:bg-[color:var(--surface-soft)]">
-        <X size={18} />
-      </button>
     </header>
   );
 
