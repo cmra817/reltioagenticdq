@@ -106,22 +106,14 @@ export function Step1SelectData({
       className="@container mx-4 my-6 flex min-h-[calc(100vh-280px)] flex-col overflow-hidden rounded-2xl border bg-white @[900px]:mx-10 @[900px]:my-8"
       style={{ borderColor: "var(--hairline)" }}
     >
-      {/* Sub-header / toolbar */}
-      <div
-        className="flex items-center gap-4 border-b px-4 py-3 @[820px]:px-6"
-        style={{ borderColor: "var(--hairline)" }}
-      >
-        <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
-          Select tables to monitor
-        </div>
-        {selected.size > 0 && (
-          <>
-            <div
-              className="h-5 w-px"
-              style={{ background: "var(--hairline)" }}
-              aria-hidden="true"
-            />
-            <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2">
+      {/* Selected-tables bar (only when something is selected) */}
+      {selected.size > 0 && (
+        <div
+          className="flex items-center gap-4 border-b px-4 py-3 @[820px]:px-6"
+          style={{ borderColor: "var(--hairline)" }}
+        >
+          <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2">
+
               <span
                 className="shrink-0 text-[12px] font-medium"
                 style={{ color: "var(--ink-700)" }}
@@ -221,9 +213,9 @@ export function Step1SelectData({
                 Clear all
               </button>
             </div>
-          </>
-        )}
-      </div>
+        </div>
+      )}
+
 
       <NewConnectionModal
         open={newConnOpen}
