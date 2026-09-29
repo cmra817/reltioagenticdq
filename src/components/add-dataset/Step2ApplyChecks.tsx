@@ -119,7 +119,7 @@ function CheckRow({
 
   return (
     <div className="group border-b last:border-b-0" style={{ borderColor: "var(--hairline)" }}>
-      <div className="flex items-center gap-3 px-6 py-3.5 transition-colors duration-500 hover:bg-[color:var(--surface-soft)]" style={flash ? { background: "rgba(67,134,250,0.14)" } : undefined}>
+      <div className="flex items-center gap-3 px-4 py-3.5 transition-colors duration-500 hover:bg-[color:var(--surface-soft)] @[820px]:px-6" style={flash ? { background: "rgba(67,134,250,0.14)" } : undefined}>
         <button
           type="button"
           onClick={onToggleExpand}
@@ -466,7 +466,7 @@ export function Step2ApplyChecks({
           <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
             {/* Toolbar */}
             <div
-              className="flex shrink-0 items-center justify-between gap-4 border-b px-6 py-3"
+              className="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 @[820px]:gap-4 @[820px]:px-6"
               style={{ borderColor: "var(--hairline)" }}
             >
               <div className="min-w-0 truncate text-[13px]" style={{ color: "var(--ink-500)" }}>
@@ -477,7 +477,7 @@ export function Step2ApplyChecks({
               </div>
               <div className="flex min-w-0 items-center gap-2">
                 {/* Library search */}
-                <div className="relative w-[160px] min-w-0" ref={searchRef}>
+                <div className="relative w-[110px] min-w-0 @[700px]:w-[160px]" ref={searchRef}>
                   <Search
                     size={13}
                     className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
@@ -555,7 +555,7 @@ export function Step2ApplyChecks({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <div className="flex-1 overflow-y-auto px-4 pb-6 @[820px]:px-6">
               {/* Recommended-checks note */}
               <div
                 className="mt-4 flex items-start gap-2.5 rounded-xl border px-4 py-3"
