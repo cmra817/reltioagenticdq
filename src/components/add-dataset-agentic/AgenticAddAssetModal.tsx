@@ -336,7 +336,7 @@ export function AgenticAddAssetModal({
       let p = plan;
       for (const qq of queue) p = applyAnswer(qq, qq.options.find((o) => o.recommended)!.label, p);
       setQueue([]);
-      agentSay(() => startDrafting(p, { schedule: !!p.profiling, tz: !!p.timeZone }));
+      agentSay(() => propose(p));
       return;
     }
     const p = applyAnswer(q, answer, plan);
