@@ -124,7 +124,7 @@ function CheckRow({
           type="button"
           onClick={onToggleExpand}
           aria-expanded={expanded}
-          className="grid min-w-[560px] flex-1 grid-cols-[minmax(0,1fr)_120px_minmax(0,190px)] items-center gap-3 text-left"
+          className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-left @[700px]:grid-cols-[minmax(0,1fr)_120px_minmax(0,190px)]"
         >
           <span className="flex min-w-0 items-start gap-3">
             <span className="mt-0.5 shrink-0" style={{ color: "var(--ink-500)" }}>
@@ -146,7 +146,7 @@ function CheckRow({
           <span>
             <DimensionBadge label={check.dimension} size="sm" />
           </span>
-          <span className="flex min-w-0 flex-wrap items-center gap-1">
+          <span className="hidden min-w-0 flex-wrap items-center gap-1 @[700px]:flex">
             {fields.map((f) => (
               <span
                 key={f}
@@ -364,12 +364,12 @@ export function Step2ApplyChecks({
   return (
     <TooltipProvider delayDuration={200}>
       <div
-        className="mx-10 my-8 flex min-h-[calc(100vh-280px)] flex-col overflow-hidden rounded-2xl border bg-white"
+        className="@container mx-4 my-6 flex min-h-[calc(100vh-280px)] flex-col overflow-hidden rounded-2xl border bg-white @[900px]:mx-10 @[900px]:my-8"
         style={{ borderColor: "var(--hairline)" }}
       >
         {/* Sub-header */}
         <div
-          className="flex shrink-0 items-center gap-4 border-b px-6 py-3"
+          className="flex shrink-0 items-center gap-4 border-b px-4 py-3 @[820px]:px-6"
           style={{ borderColor: "var(--hairline)" }}
         >
           <div className="text-[15px]" style={{ color: "var(--ink-700)" }}>
@@ -385,7 +385,7 @@ export function Step2ApplyChecks({
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar: selected tables, grouped like step 1 */}
           <aside
-            className="flex w-[280px] shrink-0 flex-col overflow-hidden border-r"
+            className="flex w-[170px] shrink-0 flex-col overflow-hidden border-r @[820px]:w-[280px]"
             style={{ borderColor: "var(--hairline)" }}
           >
             <div className="flex-1 overflow-y-auto py-3">
@@ -584,12 +584,12 @@ export function Step2ApplyChecks({
                 ) : (
                   <>
                     <div
-                      className="grid min-w-[560px] grid-cols-[minmax(0,1fr)_120px_minmax(0,190px)] gap-3 border-b px-6 py-2.5 pl-[54px] text-[11px] font-semibold uppercase tracking-wide"
+                      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 border-b px-4 py-2.5 pl-[54px] text-[11px] font-semibold uppercase tracking-wide @[700px]:grid-cols-[minmax(0,1fr)_120px_minmax(0,190px)] @[820px]:px-6"
                       style={{ borderColor: "var(--hairline)", color: "var(--ink-500)", background: "var(--surface-soft)" }}
                     >
                       <span>DQ check</span>
                       <span>Dimension</span>
-                      <span>Columns applied to</span>
+                      <span className="hidden @[700px]:inline">Columns applied to</span>
                     </div>
                     {groupChecks(visibleChecks).map(({ rule, fields, ids }) => {
                       const rowKey = `${active.key}::${ids[0]}`;
