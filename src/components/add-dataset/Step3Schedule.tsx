@@ -64,7 +64,7 @@ export function Step3Schedule({
     if (same) onChangeChecks(c);
   };
   return (
-    <div className="px-10 py-8">
+    <div className="@container px-10 py-8">
       <h2 className="text-[17px] font-semibold" style={{ color: "var(--ink-900)" }}>
         Schedule when profiling and checks run
       </h2>
@@ -72,7 +72,8 @@ export function Step3Schedule({
         className="mt-5 rounded-3xl border bg-white p-8"
         style={{ borderColor: "var(--hairline)" }}
       >
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 @[820px]:grid-cols-2">
+
           <ScheduleCard
             icon={<LineChart size={17} />}
             title="Profiling"
