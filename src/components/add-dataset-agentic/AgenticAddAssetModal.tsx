@@ -673,7 +673,7 @@ export function AgenticAddAssetModal({
                     )}
                   </span>
                 )}
-                {m.chips && m.id === lastChipsId && cc && (
+                {m.chips && m.id === lastChipsId && (cc || proposal) && (
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     {m.chips.map((c) => (
                       <button
