@@ -16,6 +16,7 @@ import {
   TIME_ZONES,
   buildAssets,
   checkTotal,
+  checkRationale,
   assetOf,
   keptChecks,
   dimensionsInUse,
@@ -32,6 +33,8 @@ import {
 import {
   CONFIRM_WORDS,
   EXAMPLES,
+  PROPOSAL_CHIPS,
+  PROPOSAL_YES,
   Q_TABLES,
   UNSUPPORTED_WAREHOUSES,
   APPLY_CHIPS,
@@ -43,6 +46,7 @@ import {
   parseTimeZone,
   type Question,
 } from "./agent-script";
+
 
 type Section = "select" | "checks" | "schedule";
 type Msg = {
