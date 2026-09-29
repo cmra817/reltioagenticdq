@@ -535,7 +535,9 @@ export function AgenticAddAssetModal({
     setInput("");
     if (mode === "chat" && msgs.length === 0) firstMessage(text);
     else if (queue.length) answerQuestion(text);
+    else if (proposal) proposalReply(text);
     else command(text);
+
     inputRef.current?.focus();
   };
 
