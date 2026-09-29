@@ -545,10 +545,11 @@ export function AgenticAddAssetModal({
     const { plan: final, defaults } = finalize(plan);
     const result = buildAssets(final, domainName ?? "");
     onComplete?.(result);
-    setDone(
+    const doneText =
       `Created ${result.tables.length} ${result.tables.length === 1 ? "asset" : "assets"} with ${result.checkCount} checks.` +
-        (defaults.length ? ` Defaults applied — ${defaults.join("; ")}.` : ""),
-    );
+      (defaults.length ? ` Defaults applied — ${defaults.join("; ")}.` : "");
+    if (mode !== "manual") push({ role: "note", text: doneText });
+    setDone(doneText);
     window.setTimeout(() => onOpenChange(false), 2600);
   };
 
