@@ -1,3 +1,4 @@
+import type { Check } from "../add-dataset/mock-checks";
 import { DEFAULT_SCHEDULE, type ScheduleConfig } from "../add-dataset/Step3Schedule";
 import { ALL_ASSETS, RECOMMENDED_SCHEDULE, type FlatAsset } from "./plan-state";
 
@@ -103,7 +104,6 @@ export const Q_TZ: Question = {
 export const CONFIRM_WORDS = /^(go ahead|confirm|create( it)?|do it|ship it|yes,? create|finish|looks good,? create)/;
 
 // ---- Create-a-check flow ----
-import type { Check } from "../add-dataset/mock-checks";
 
 export const WANTS_NEW_CHECK = /\b(create|new|make|build|write|add)\b[^.]*\b(dq )?(check|rule)\b/;
 
