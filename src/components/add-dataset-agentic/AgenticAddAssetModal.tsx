@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Check as CheckIcon, ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { DimensionBadge } from "../dq-dimensions";
-import { SourceLogo } from "@/components/explore-screen";
-import { Stepper } from "../add-dataset/Stepper";
-import { Step1SelectData } from "../add-dataset/Step1SelectData";
-import { Step2ApplyChecks } from "../add-dataset/Step2ApplyChecks";
-import { Step3Schedule } from "../add-dataset/Step3Schedule";
+import { ArrowUp, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PlanView, hasKey, type PlanFilter, type Reveal, type RuleRequest } from "./PlanView";
 import { generateChecks, type Check } from "../add-dataset/mock-checks";
 import type { AddDatasetCompletion } from "../add-dataset/AddDatasetModal";
 import {
@@ -13,16 +8,12 @@ import {
   EMPTY_PLAN,
   RECOMMENDED_SCHEDULE,
   RECOMMENDED_TZ,
-  TIME_ZONES,
   buildAssets,
   checkTotal,
-  checkRationale,
   assetOf,
   keptChecks,
   dimensionsInUse,
-  formatRowCount,
   observations,
-  totalRows,
   finalize,
   scheduleLabel,
   tableName,
@@ -57,6 +48,7 @@ type Msg = {
   undo?: boolean;
   showMe?: Section;
   showKeys?: string[];
+  filterLabel?: string;
   chips?: string[];
 };
 type Flash = { keys?: Set<string>; ids?: Set<string>; focusKey?: string } | null;
@@ -88,7 +80,10 @@ export function AgenticAddAssetModal({
   onComplete?: (r: AddDatasetCompletion) => void;
 }) {
   const [mode, setMode] = useState<"chat" | "plan" | "manual">("chat");
-  const [openSection, setOpenSection] = useState<Section | null>(null);
+  const [reveal, setReveal] = useState<Reveal>(null);
+  const [ruleRequest, setRuleRequest] = useState<RuleRequest>(null);
+  const [filter, setFilter] = useState<PlanFilter>(null);
+  const dialogOpenRef = useRef(false);
   const [rowFlash, setRowFlash] = useState<Flash>(null);
   const [cc, setCc] = useState<CreateFlow>(null);
   const [manualStep, setManualStep] = useState(0);
@@ -112,7 +107,9 @@ export function AgenticAddAssetModal({
   useEffect(() => {
     if (!open) {
       setMode("chat");
-      setOpenSection(null);
+      setReveal(null);
+      setRuleRequest(null);
+      setFilter(null);
       setRowFlash(null);
       setCc(null);
       setManualStep(0);
@@ -135,7 +132,7 @@ export function AgenticAddAssetModal({
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onOpenChange(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !dialogOpenRef.current && onOpenChange(false);
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onOpenChange]);
@@ -162,10 +159,10 @@ export function AgenticAddAssetModal({
   const chatChange = (next: Plan, line: string, section: Section, f?: Flash) => {
     setHistory((h) => [...h, plan]);
     setPlanRaw(next);
-    if (mode !== "manual") setOpenSection(section);
-    else setManualStep(section === "select" ? 0 : section === "checks" ? 1 : 2);
     pulse(section);
     if (f) flashRows(f);
+    const keys = f?.keys ? Array.from(f.keys) : f?.focusKey ? [f.focusKey] : [];
+    if (keys.length) setReveal({ keys, nonce: Date.now() });
     push({ role: "agent", text: line, undo: true });
   };
   const undo = () => {
@@ -196,37 +193,27 @@ export function AgenticAddAssetModal({
     setMode("plan");
     setTab("plan");
     setFilled(0);
-    const order: Section[] = ["select", "checks", "schedule"];
-    order.forEach((sec, i) => {
-      window.setTimeout(() => setOpenSection(sec), 800 * i);
-      window.setTimeout(() => setFilled(i + 1), 800 * i + 650);
-    });
+    [1, 2, 3].forEach((n) => window.setTimeout(() => setFilled(n), 700 * n));
     window.setTimeout(() => {
-      setOpenSection(null);
       const whs = Array.from(new Set(final.selected.map((k) => assetOf(k).conn?.warehouse ?? ""))).filter(Boolean);
       const dims = dimensionsInUse(final).map((d) => d.toLowerCase());
       const dimText = dims.length > 1 ? `${dims.slice(0, -1).join(", ")} and ${dims[dims.length - 1]}` : dims[0] ?? "the recommended checks";
       const n = final.selected.length;
       const defaulted = [!given.schedule && "schedule", !given.tz && "time zone"].filter(Boolean) as string[];
-      let text = `I'm monitoring ${n} ${n === 1 ? "table" : "tables"} in ${whs.join(" and ")} for ${dimText}, ${scheduleLabel(final.profiling, final.timeZone).replace(/^D/, "d").replace(/^W/, "w")}.`;
+      let text = `I'm monitoring ${n} ${n === 1 ? "table" : "tables"} in ${whs.join(" and ")} for ${dimText}, ${scheduleLabel(final.profiling, final.timeZone).replace(/^(\w)/, (m) => m.toLowerCase())}.`;
       if (defaulted.length) text += ` I used the recommended ${defaulted.join(" and ")}.`;
-      push({ role: "agent", text });
-      const why = checkRationale(final).slice(0, 3);
-      if (why.length)
-        push({
-          role: "agent",
-          text:
-            `I included the recommended checks based on what the columns already look like:\n` +
-            why
-              .map((r) => `**${r.dimension}** on ${r.columns.map((c) => `\`${c}\``).join(", ")} — ${r.why}.`)
-              .join("\n"),
-          showMe: "checks",
-        });
-      observations(final).forEach((o) =>
-        push({ role: "agent", text: o.text, showMe: o.text.includes("uniqueness") ? "checks" : "select", showKeys: o.keys }),
-      );
-      push({ role: "agent", text: "Open any section on the right to change a threshold or drop a check, or just tell me here." });
-    }, 800 * 3 + 200);
+      const obs = observations(final);
+      if (n > 10) text += `\nWith ${n} tables I'll stagger the runs a few minutes apart so they don't all hit the warehouse at once.`;
+      obs.forEach((o) => (text += `\n${o.text}`));
+      text += "\nChange anything on the right, or tell me here.";
+      const keys = Array.from(new Set(obs.flatMap((o) => o.keys)));
+      const noKey = final.selected.filter((k) => !hasKey(k));
+      push({
+        role: "agent",
+        text,
+        ...(keys.length ? { showMe: "select" as Section, showKeys: keys, filterLabel: noKey.length && keys.every((k) => noKey.includes(k)) ? "Tables without a primary key" : undefined } : {}),
+      });
+    }, 700 * 3 + 200);
   };
 
   /** State the plan in plain language and wait for a yes before drafting. */
@@ -379,6 +366,19 @@ export function AgenticAddAssetModal({
     }, 900);
   };
 
+  /** Open the Create a new rule dialog on the most relevant table. */
+  const openRuleDialog = (description: string) => {
+    const low = description.toLowerCase();
+    const key =
+      plan.selected.find((k) => low.includes(tableName(k).toLowerCase())) ??
+      plan.selected.find((k) => keptChecks(plan, k).some((c) => (c.fields ?? [c.field]).some((f) => f && low.includes(f.toLowerCase())))) ??
+      plan.selected[0];
+    if (!key) return push({ role: "agent", text: "Add a table first, then I'll create the check for it." });
+    setTab("plan");
+    setRuleRequest({ key, description, nonce: Date.now() });
+    push({ role: "agent", text: `I drafted the rule on \`${tableName(key)}\` — check the pattern and save it on the right.` });
+  };
+
   const applyRule = (rule: Check, keys: string[]) => {
     let next = plan;
     const ids = new Set<string>();
@@ -398,6 +398,9 @@ export function AgenticAddAssetModal({
   const createFlow = (text: string, t: string) => {
     if (!cc) return false;
     if (cc.stage === "describe") {
+      setCc(null);
+      openRuleDialog(text);
+      return true;
       const rule = draftRule(t);
       if (!rule) {
         push({ role: "agent", text: "Which column should it look at, and what should be true about it? For example \"email is never empty\" or \"amount is between 0 and 10000\"." });
@@ -446,7 +449,10 @@ export function AgenticAddAssetModal({
         if (!plan.selected.length) return push({ role: "agent", text: "Add a table first, then I'll create the check for it." });
         const rule = draftRule(t);
         if (rule) {
-          setCc({ stage: "target", rule });
+          openRuleDialog(text.replace(/^(can you |please )?(create|make|add|write)( me)? (a )?(new )?(dq )?(check|rule)( that| to| which)?/i, "").trim() || text);
+          return;
+        }
+        if (false) {
           return push({
             role: "agent",
             text: `Here's the rule: **${rule.rule}** (${rule.dimension}). Expectation \`${rule.expectation}\`, pattern \`${rule.pattern}\`, fails if more than ${rule.threshold}% of values don't match. I tested it against a sample and it runs. Where should I apply it?`,
@@ -461,6 +467,13 @@ export function AgenticAddAssetModal({
         return push({ role: "agent", text: "Only **Complete setup** (top right) creates it — everything here is just the draft until then." });
       }
       if (/^undo\b/.test(t)) return undo();
+      if (/without (any )?checks|no checks|profiling only/.test(t) && /show|which|list/.test(t)) {
+        const keys = plan.selected.filter((k) => keptChecks(plan, k).length === 0);
+        if (!keys.length) return push({ role: "agent", text: "Every table in the job has at least one check." });
+        setFilter({ label: "Tables without checks", keys });
+        setTab("plan");
+        return push({ role: "agent", text: `${keys.length} ${keys.length === 1 ? "table has" : "tables have"} no checks and will be profiled only.` });
+      }
       const removing = /\b(remove|drop|delete|exclude|without)\b/.test(t);
       const adding = /\b(add|include|also|plus|monitor|watch)\b/.test(t);
       const schema = /schema|everything in|all of/.test(t) ? findSchema(t) : null;
@@ -556,90 +569,20 @@ export function AgenticAddAssetModal({
   const openManual = () => {
     setMode("manual");
     setManualStep(0);
+    setFilled(3);
+    setPlanRaw({ ...EMPTY_PLAN, profiling: RECOMMENDED_SCHEDULE, checks: RECOMMENDED_SCHEDULE, timeZone: RECOMMENDED_TZ });
     setTab("plan");
     push({ role: "note", text: "Setting it up step by step. Ask me anything along the way." });
   };
 
-  const showMe = (s: Section, keys?: string[]) => {
-    if (mode === "manual") setManualStep(s === "select" ? 0 : s === "checks" ? 1 : 2);
-    else setOpenSection(s);
+  const showMe = (s: Section, keys?: string[], filterLabel?: string) => {
     setTab("plan");
-    pulse(s);
-    if (keys?.length) flashRows(s === "select" ? { keys: new Set(keys) } : { focusKey: keys[0] });
-  };
-
-  // ---- Step screens wired to the plan ----
-  const renderStep = (s: Section) => {
-    if (s === "select")
-      return (
-        <Step1SelectData
-          selected={selectedSet}
-          flashKeys={rowFlash?.keys}
-          onToggle={(key) =>
-            selectedSet.has(key)
-              ? workspaceChange(withoutTables(plan, [key]), `You removed ${tableName(key)}.`)
-              : workspaceChange(withTables(plan, [key]), `You added ${tableName(key)}.`)
-          }
-          onClear={() => workspaceChange(withoutTables(plan, plan.selected), `You removed ${plan.selected.length} tables.`)}
-        />
-      );
-    if (s === "checks")
-      return (
-        <Step2ApplyChecks
-          selected={selectedSet}
-          checked={checkedSets}
-          customChecks={plan.customChecks}
-          flashIds={rowFlash?.ids}
-          focusKey={rowFlash?.focusKey}
-          onToggleCheck={(key, id) => {
-            const cur = plan.checked[key] ?? [];
-            const on = cur.includes(id);
-            workspaceChange(
-              { ...plan, checked: { ...plan.checked, [key]: on ? cur.filter((x) => x !== id) : [...cur, id] } },
-              `You ${on ? "turned off" : "turned on"} a check on ${tableName(key)}.`,
-            );
-          }}
-          onAddCheck={(key, c) =>
-            workspaceChange(
-              {
-                ...plan,
-                customChecks: { ...plan.customChecks, [key]: [...(plan.customChecks[key] ?? []), c] },
-                checked: { ...plan.checked, [key]: [...(plan.checked[key] ?? []), c.id] },
-              },
-              `You added "${c.rule}" to ${tableName(key)}.`,
-            )
-          }
-        />
-      );
-    return (
-      <div>
-        <Step3Schedule
-          checkCount={checkTotal(plan)}
-          profiling={plan.profiling ?? RECOMMENDED_SCHEDULE}
-          checks={plan.checks ?? RECOMMENDED_SCHEDULE}
-          onChangeProfiling={(c) => workspaceChange({ ...plan, profiling: c, checks: plan.linked ? c : plan.checks }, "You changed the profiling schedule.")}
-          onChangeChecks={(c) => workspaceChange({ ...plan, checks: c, linked: false }, "You changed the DQ checks schedule.")}
-        />
-        <div className="mx-auto -mt-4 max-w-[960px] px-10 pb-10">
-          <label className="flex max-w-[260px] flex-col gap-1.5 text-[13px] font-medium" style={{ color: "var(--ink-700)" }}>
-            Time zone
-            <select
-              value={plan.timeZone ?? ""}
-              onChange={(e) => workspaceChange({ ...plan, timeZone: e.target.value || null }, `You set the time zone to ${e.target.value}.`)}
-              className="h-10 rounded-lg border bg-white px-3 text-[14px]"
-              style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
-            >
-              <option value="">Not set</option>
-              {TIME_ZONES.map((z) => (
-                <option key={z} value={z}>
-                  {z}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </div>
-    );
+    if (s === "schedule") pulse("schedule");
+    if (filterLabel && keys?.length) setFilter({ label: filterLabel, keys });
+    if (keys?.length) {
+      setReveal({ keys, nonce: Date.now() });
+      flashRows({ keys: new Set(keys) });
+    }
   };
 
   // ---- Chat UI ----
@@ -668,7 +611,7 @@ export function AgenticAddAssetModal({
                       </button>
                     )}
                     {m.showMe && (
-                      <button className="underline" style={{ color: "var(--brand-blue)" }} onClick={() => showMe(m.showMe!, m.showKeys)}>
+                      <button className="underline" style={{ color: "var(--brand-blue)" }} onClick={() => showMe(m.showMe!, m.showKeys, m.filterLabel)}>
                         Show me
                       </button>
                     )}
@@ -787,7 +730,7 @@ export function AgenticAddAssetModal({
         </button>
         <button
           onClick={confirm}
-          disabled={plan.selected.length === 0 || !!done}
+          disabled={!!done}
           className="h-9 rounded-full px-4 text-[13px] font-medium text-white transition-shadow disabled:opacity-50"
           style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
         >
@@ -848,169 +791,21 @@ export function AgenticAddAssetModal({
   // ---- Workspace ----
 
 
-  const sectionMeta: { id: Section; title: string; has: boolean; summary: React.ReactNode }[] = [
-    {
-      id: "select",
-      title: "Select data",
-      has: plan.selected.length > 0,
-      summary: (() => {
-        const names = plan.selected.map(tableName);
-        const whs = Array.from(new Set(plan.selected.map((k) => assetOf(k).conn?.warehouse).filter(Boolean))) as string[];
-        return (
-          <span className="flex min-w-0 items-center gap-2">
-            {whs.map((w) => (
-              <span key={w} className="inline-flex h-4 w-4 shrink-0 items-center justify-center">
-                <SourceLogo source={w as never} />
-              </span>
-            ))}
-            <span className="truncate font-mono text-[12px]">
-              {names.slice(0, 2).join(", ")}
-              {names.length > 2 && ` +${names.length - 2} more`}
-            </span>
-            {names.length > 2 && <span className="shrink-0">· {formatRowCount(totalRows(plan))} rows</span>}
-          </span>
-        );
-      })(),
-    },
-    {
-      id: "checks",
-      title: "Apply checks",
-      has: checkTotal(plan) > 0,
-      summary: (
-        <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-          {dimensionsInUse(plan).map((d) => (
-            <DimensionBadge key={d} label={d} size="sm" />
-          ))}
-          <span className="shrink-0 pl-1">{checkTotal(plan)} checks</span>
-        </span>
-      ),
-    },
-    {
-      id: "schedule",
-      title: "Schedule",
-      has: !!plan.profiling,
-      summary: (
-        <span className="truncate">
-          {scheduleLabel(plan.profiling, plan.timeZone)}
-          {plan.profiling && !plan.linked && ` · DQ checks ${scheduleLabel(plan.checks, plan.timeZone).replace(/^D/, "d").replace(/^W/, "w")}`}
-        </span>
-      ),
-    },
-  ];
-
-  const accordion = (
-    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-4">
-      {sectionMeta.map((sec, i) => {
-        const isOpen = openSection === sec.id;
-        const loading = filled <= i;
-        return (
-          <section
-            key={sec.id}
-            className={`flex min-h-0 flex-col overflow-hidden rounded-xl border bg-white transition-[flex-grow,box-shadow] duration-300 ease-out motion-reduce:transition-none ${isOpen ? "flex-1" : "flex-none"}`}
-            style={{ borderColor: "var(--hairline)", boxShadow: ring(sec.id) }}
-          >
-            <h3>
-              <button
-                type="button"
-                aria-expanded={isOpen}
-                aria-controls={`plan-${sec.id}`}
-                onClick={() => setOpenSection(isOpen ? null : sec.id)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-[color:var(--surface-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--brand-blue)]"
-              >
-                <span
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold"
-                  style={sec.has && !loading ? { background: "var(--brand-blue)", color: "white" } : { background: "var(--surface-soft)", color: "var(--ink-500)" }}
-                >
-                  {sec.has && !loading ? <CheckIcon size={13} strokeWidth={3} /> : i + 1}
-                </span>
-                <span className="w-[110px] shrink-0 text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                  {sec.title}
-                </span>
-                <span className="min-w-0 flex-1 text-[13px]" style={{ color: "var(--ink-500)" }}>
-                  {loading ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 size={13} className="animate-spin" /> Drafting…
-                    </span>
-                  ) : sec.has ? (
-                    <span style={{ color: "var(--ink-700)" }}>{sec.summary}</span>
-                  ) : (
-                    "Not set"
-                  )}
-                </span>
-                <ChevronDown size={16} className={`shrink-0 transition-transform duration-300 motion-reduce:transition-none ${isOpen ? "rotate-180" : ""}`} style={{ color: "var(--ink-500)" }} />
-              </button>
-            </h3>
-            {isOpen && (
-              <div id={`plan-${sec.id}`} className="min-h-0 flex-1 overflow-y-auto border-t animate-in fade-in duration-300 motion-reduce:animate-none" style={{ borderColor: "var(--hairline)" }}>
-                {loading ? (
-                  <div className="flex h-full items-center justify-center gap-2 text-[13px]" style={{ color: "var(--ink-500)" }}>
-                    <Loader2 size={14} className="animate-spin" /> Filling in {sec.title.toLowerCase()}…
-                  </div>
-                ) : (
-                  renderStep(sec.id)
-                )}
-              </div>
-            )}
-          </section>
-        );
-      })}
-    </div>
-  );
-
-  const bottomBar = (
-    <div className="flex shrink-0 items-center justify-between gap-4 border-t bg-white px-6 py-3" style={{ borderColor: "var(--hairline)" }}>
-      {done ? (
-        <p className="text-[14px]" style={{ color: "var(--ink-900)" }}>
-          {done}
-        </p>
-      ) : (
-        <div className="flex flex-wrap gap-x-5 gap-y-1 text-[13px]" style={{ color: "var(--ink-700)" }}>
-          <span>
-            <b>{plan.selected.length}</b> tables
-          </span>
-          <span>
-            <b>{checkTotal(plan)}</b> checks
-          </span>
-          <span>{scheduleLabel(plan.profiling ?? RECOMMENDED_SCHEDULE, plan.timeZone ?? RECOMMENDED_TZ)}</span>
-        </div>
-      )}
-      <div className="flex items-center gap-2">
-        {mode === "manual" && manualStep > 0 && (
-          <button onClick={() => setManualStep((s) => s - 1)} className="h-10 rounded-full border px-5 text-[14px]" style={{ borderColor: "var(--hairline)" }}>
-            Back
-          </button>
-        )}
-        {mode === "manual" && manualStep < 2 ? (
-          <button onClick={() => setManualStep((s) => s + 1)} className="h-10 rounded-full px-6 text-[14px] font-medium text-white" style={{ background: "var(--brand-blue)" }}>
-            Continue
-          </button>
-        ) : (
-          <button
-            onClick={confirm}
-            disabled={!!done}
-            className="h-10 rounded-full px-7 text-[14px] font-medium text-white transition-shadow"
-            style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
-          >
-            Confirm
-          </button>
-        )}
-      </div>
-    </div>
-  );
-
   const workspace = (
-    <div className="flex min-w-0 flex-1 flex-col overflow-hidden animate-in slide-in-from-right duration-300" style={{ background: "var(--canvas)" }}>
-      {mode === "manual" ? (
-        <>
-          <div className="shrink-0 border-b bg-white px-8 py-4" style={{ borderColor: "var(--hairline)" }}>
-            <Stepper steps={[{ label: "Select data" }, { label: "Apply checks" }, { label: "Schedule" }]} current={manualStep} />
-          </div>
-          <div className="flex-1 overflow-y-auto">{renderStep((["select", "checks", "schedule"] as Section[])[manualStep])}</div>
-        </>
-      ) : (
-        accordion
-      )}
-      {mode === "manual" && bottomBar}
+    <div className="flex min-w-0 flex-1 flex-col overflow-hidden animate-in slide-in-from-right duration-300 motion-reduce:animate-none" style={{ background: "var(--canvas)" }}>
+      <PlanView
+        plan={plan}
+        stage={filled}
+        onChange={(next, line) => workspaceChange(next, line)}
+        flashKeys={rowFlash?.keys}
+        flashIds={rowFlash?.ids}
+        reveal={reveal}
+        ruleRequest={ruleRequest}
+        filter={filter}
+        onClearFilter={() => setFilter(null)}
+        onDialogChange={(o) => (dialogOpenRef.current = o)}
+        pulseSchedule={flash === "schedule"}
+      />
     </div>
   );
 
