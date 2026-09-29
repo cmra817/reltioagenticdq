@@ -36,12 +36,18 @@ export function RuleModal({
   source,
   onClose,
   onSave,
+  contained = false,
+  initialDescription,
 }: {
   open: boolean;
   mode: Mode;
   source?: Rule | null;
   onClose: () => void;
   onSave: (rule: Rule) => void;
+  /** Render inside the nearest positioned parent instead of over the whole screen. */
+  contained?: boolean;
+  /** Prefill "Describe it" and generate a pattern straight away. */
+  initialDescription?: string;
 }) {
   const [name, setName] = useState("");
   const [dimension, setDimension] = useState<Dimension>("Validity");
@@ -82,12 +88,21 @@ export function RuleModal({
       setExpectation("expect_column_values_to_match_regex");
       setThreshold(5);
       setTab("describe");
+      if (initialDescription) {
+        const sg = suggestFromDescription(initialDescription);
+        setDescription(initialDescription);
+        setPattern(sg.pattern);
+        setExpectation(sg.expectation);
+        setThreshold(sg.threshold);
+        setDimension(sg.dimension);
+        setName(sg.name);
+      }
     }
     setSampleMode(HAS_CONNECTED_SOURCES ? "column" : "manual");
     setColumnQuery("");
     setSelectedColumn(null);
     setManualStrings("");
-  }, [open, mode, source]);
+  }, [open, mode, source, initialDescription]);
 
 
   useEffect(() => {
@@ -209,12 +224,13 @@ export function RuleModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto p-6">
+    <div className={`${contained ? "absolute z-[40] max-sm:fixed max-sm:p-0" : "fixed z-[70]"} inset-0 flex items-start justify-center overflow-y-auto p-6`}>
       <button
         type="button"
         aria-label="Close"
+        tabIndex={-1}
         onClick={onClose}
-        className="fixed inset-0 cursor-default"
+        className={`${contained ? "absolute" : "fixed"} inset-0 cursor-default`}
         style={{ background: "rgba(15,23,42,0.42)" }}
       />
       <div
@@ -223,7 +239,12 @@ export function RuleModal({
         className="relative z-10 my-6 w-full max-w-[720px] rounded-2xl border bg-white"
         style={{ borderColor: "var(--hairline)", boxShadow: "0 24px 64px rgba(15,23,42,0.22)" }}
       >
-        <div className="px-7 pt-6">
+        <div className="relative px-7 pt-6">
+          {contained && (
+            <button type="button" aria-label="Close" onClick={onClose} className="absolute right-5 top-5 rounded-full p-2 hover:bg-[color:var(--surface-soft)]">
+              <X size={18} />
+            </button>
+          )}
           <h2 className="text-[22px] font-semibold" style={{ color: "var(--ink-900)" }}>
             {mode === "edit" ? "Edit rule" : mode === "clone" ? "Clone rule" : "Create a new rule"}
           </h2>
