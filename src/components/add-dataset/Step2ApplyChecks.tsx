@@ -1,6 +1,6 @@
 import { DimensionBadge, DimensionIcon } from "@/components/dq-dimensions";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check as CheckIcon, ChevronDown, ChevronRight, Copy, Plus, Search, Sparkles, X } from "lucide-react";
+import { Check as CheckIcon, ChevronDown, ChevronRight, Copy, Plus, Search, X } from "lucide-react";
 
 import { toast } from "sonner";
 import { WAREHOUSES, type WarehouseType } from "./mock-warehouses";
