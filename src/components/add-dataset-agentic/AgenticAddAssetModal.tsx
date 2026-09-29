@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowUp, Loader2, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { ArrowUp, Check as CheckIcon, ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { DimensionBadge } from "../dq-dimensions";
+import { SourceLogo } from "@/components/explore-screen";
 import { Stepper } from "../add-dataset/Stepper";
 import { Step1SelectData } from "../add-dataset/Step1SelectData";
 import { Step2ApplyChecks } from "../add-dataset/Step2ApplyChecks";
@@ -14,7 +16,12 @@ import {
   TIME_ZONES,
   buildAssets,
   checkTotal,
-  connectionSummary,
+  assetOf,
+  keptChecks,
+  dimensionsInUse,
+  formatRowCount,
+  observations,
+  totalRows,
   finalize,
   scheduleLabel,
   tableName,
@@ -27,6 +34,9 @@ import {
   EXAMPLES,
   Q_TABLES,
   UNSUPPORTED_WAREHOUSES,
+  APPLY_CHIPS,
+  WANTS_NEW_CHECK,
+  draftRule,
   findSchema,
   findTables,
   parseSchedule,
@@ -42,7 +52,11 @@ type Msg = {
   question?: Question;
   undo?: boolean;
   showMe?: Section;
+  showKeys?: string[];
+  chips?: string[];
 };
+type Flash = { keys?: Set<string>; ids?: Set<string>; focusKey?: string } | null;
+type CreateFlow = { stage: "describe" | "target" | "choose"; rule?: Check } | null;
 
 let MID = 0;
 const mid = () => ++MID;
@@ -70,7 +84,9 @@ export function AgenticAddAssetModal({
   onComplete?: (r: AddDatasetCompletion) => void;
 }) {
   const [mode, setMode] = useState<"chat" | "plan" | "manual">("chat");
-  const [view, setView] = useState<"overview" | Section>("overview");
+  const [openSection, setOpenSection] = useState<Section | null>(null);
+  const [rowFlash, setRowFlash] = useState<Flash>(null);
+  const [cc, setCc] = useState<CreateFlow>(null);
   const [manualStep, setManualStep] = useState(0);
   const [plan, setPlanRaw] = useState<Plan>(EMPTY_PLAN);
   const [history, setHistory] = useState<Plan[]>([]);
@@ -90,7 +106,9 @@ export function AgenticAddAssetModal({
   useEffect(() => {
     if (!open) {
       setMode("chat");
-      setView("overview");
+      setOpenSection(null);
+      setRowFlash(null);
+      setCc(null);
       setManualStep(0);
       setPlanRaw(EMPTY_PLAN);
       setHistory([]);
@@ -129,11 +147,18 @@ export function AgenticAddAssetModal({
     window.setTimeout(() => setFlash(null), 1400);
   };
   /** Change the plan from chat (undoable). */
-  const chatChange = (next: Plan, line: string, section: Section) => {
+  const flashRows = (f: Flash) => {
+    setRowFlash(f);
+    window.setTimeout(() => setRowFlash((cur) => (cur === f ? null : cur)), 2000);
+  };
+  const chatChange = (next: Plan, line: string, section: Section, f?: Flash) => {
     setHistory((h) => [...h, plan]);
     setPlanRaw(next);
+    if (mode !== "manual") setOpenSection(section);
+    else setManualStep(section === "select" ? 0 : section === "checks" ? 1 : 2);
     pulse(section);
-    push({ role: "agent", text: line, undo: true, showMe: section });
+    if (f) flashRows(f);
+    push({ role: "agent", text: line, undo: true });
   };
   const undo = () => {
     const prev = history[history.length - 1];
@@ -157,26 +182,35 @@ export function AgenticAddAssetModal({
     }, ms);
   };
 
-  const startDrafting = (p: Plan) => {
-    push({ role: "agent", text: "No more questions. I'm drafting your plan now — you can change anything on the right." });
-    setPlanRaw(p);
+  const startDrafting = (p: Plan, given: { schedule: boolean; tz: boolean } = { schedule: false, tz: false }) => {
+    const final = { ...p, timeZone: p.timeZone ?? RECOMMENDED_TZ, profiling: p.profiling ?? RECOMMENDED_SCHEDULE, checks: p.checks ?? p.profiling ?? RECOMMENDED_SCHEDULE };
+    setPlanRaw(final);
     setMode("plan");
-    setView("overview");
     setTab("plan");
     setFilled(0);
-    [1, 2, 3].forEach((n) => window.setTimeout(() => setFilled(n), 700 * n));
-    window.setTimeout(
-      () =>
-        push({
-          role: "agent",
-          text: `Your plan is ready: ${connectionSummary(p)}, ${checkTotal(p)} checks, ${scheduleLabel(p.profiling, p.timeZone)}. Press Confirm when it looks right.`,
-        }),
-      2300,
-    );
+    const order: Section[] = ["select", "checks", "schedule"];
+    order.forEach((sec, i) => {
+      window.setTimeout(() => setOpenSection(sec), 800 * i);
+      window.setTimeout(() => setFilled(i + 1), 800 * i + 650);
+    });
+    window.setTimeout(() => {
+      setOpenSection(null);
+      const whs = Array.from(new Set(final.selected.map((k) => assetOf(k).conn?.warehouse ?? ""))).filter(Boolean);
+      const dims = dimensionsInUse(final).map((d) => d.toLowerCase());
+      const dimText = dims.length > 1 ? `${dims.slice(0, -1).join(", ")} and ${dims[dims.length - 1]}` : dims[0] ?? "the recommended checks";
+      const n = final.selected.length;
+      const defaulted = [!given.schedule && "schedule", !given.tz && "time zone"].filter(Boolean) as string[];
+      let text = `I'm monitoring ${n} ${n === 1 ? "table" : "tables"} in ${whs.join(" and ")} for ${dimText}, ${scheduleLabel(final.profiling, final.timeZone).replace(/^D/, "d").replace(/^W/, "w")}.`;
+      if (defaulted.length) text += ` I used the recommended ${defaulted.join(" and ")}.`;
+      push({ role: "agent", text });
+      observations(final).forEach((o) =>
+        push({ role: "agent", text: o.text, showMe: o.text.includes("uniqueness") ? "checks" : "select", showKeys: o.keys }),
+      );
+    }, 800 * 3 + 200);
   };
 
   const askNext = (q: Question[], p: Plan) => {
-    if (q.length === 0) return startDrafting(p);
+    if (q.length === 0) return startDrafting(p, { schedule: !!p.profiling, tz: !!p.timeZone });
     setQueue(q);
     push({ role: "agent", text: q[0].text, question: q[0] });
   };
@@ -213,7 +247,7 @@ export function AgenticAddAssetModal({
       let p = plan;
       for (const qq of queue) p = applyAnswer(qq, qq.options.find((o) => o.recommended)!.label, p);
       setQueue([]);
-      agentSay(() => startDrafting(p));
+      agentSay(() => startDrafting(p, { schedule: !!p.profiling, tz: !!p.timeZone }));
       return;
     }
     const p = applyAnswer(q, answer, plan);
@@ -252,19 +286,87 @@ export function AgenticAddAssetModal({
           role: "agent",
           text: `You don't have a ${missingWh[0].toUpperCase() + missingWh.slice(1)} connection yet. You can connect one from Explore; for now I'll look in your connected warehouses.`,
         });
-      if (found.length)
-        push({
-          role: "agent",
-          text: `I looked up your connections and found ${found.length} matching ${found.length === 1 ? "table" : "tables"}: ${found.map((f) => f.name).join(", ")}. I'll use the recommended checks and schedule — you can change anything once the plan is drafted.`,
-        });
       askNext(qs, p);
     }, 900);
+  };
+
+  const applyRule = (rule: Check, keys: string[]) => {
+    let next = plan;
+    const ids = new Set<string>();
+    for (const k of keys) {
+      const c = { ...rule, id: `${rule.id}-${k}` };
+      ids.add(c.id);
+      next = {
+        ...next,
+        customChecks: { ...next.customChecks, [k]: [...(next.customChecks[k] ?? []), c] },
+        checked: { ...next.checked, [k]: [...(next.checked[k] ?? []), c.id] },
+      };
+    }
+    setCc(null);
+    chatChange(next, `Added "${rule.rule}" to ${keys.length === 1 ? tableName(keys[0]) : `${keys.length} tables`}.`, "checks", { ids, focusKey: keys[0] });
+  };
+
+  const createFlow = (text: string, t: string) => {
+    if (!cc) return false;
+    if (cc.stage === "describe") {
+      const rule = draftRule(t);
+      if (!rule) {
+        push({ role: "agent", text: "Which column should it look at, and what should be true about it? For example \"email is never empty\" or \"amount is between 0 and 10000\"." });
+        return true;
+      }
+      setCc({ stage: "target", rule });
+      push({
+        role: "agent",
+        text: `Here's the rule: **${rule.rule}** (${rule.dimension}). Expectation \`${rule.expectation}\`, pattern \`${rule.pattern}\`, fails if more than ${rule.threshold}% of values don't match. I tested it against a sample and it runs. Where should I apply it?`,
+        chips: APPLY_CHIPS,
+      });
+      return true;
+    }
+    if (cc.stage === "target" && cc.rule) {
+      const named = plan.selected.filter((k) => t.includes(tableName(k).toLowerCase()));
+      if (/all/.test(t)) applyRule(cc.rule, plan.selected);
+      else if (named.length) applyRule(cc.rule, named);
+      else if (/choose|pick|select/.test(t)) {
+        setCc({ ...cc, stage: "choose" });
+        push({ role: "agent", text: "Which tables?", chips: plan.selected.map(tableName) });
+      } else {
+        const col = cc.rule.field;
+        const withCol = plan.selected.find((k) => keptChecks(plan, k).some((c) => (c.fields ?? [c.field]).includes(col))) ?? plan.selected[0];
+        applyRule(cc.rule, [withCol]);
+      }
+      return true;
+    }
+    if (cc.stage === "choose" && cc.rule) {
+      const named = plan.selected.filter((k) => t.includes(tableName(k).toLowerCase()));
+      if (!named.length) {
+        push({ role: "agent", text: "I didn't catch a table from the plan. Pick one below.", chips: plan.selected.map(tableName) });
+        return true;
+      }
+      applyRule(cc.rule, named);
+      return true;
+    }
+    return false;
   };
 
   const command = (text: string) => {
     push({ role: "user", text });
     const t = text.toLowerCase().trim();
     agentSay(() => {
+      if (createFlow(text, t)) return;
+      if (WANTS_NEW_CHECK.test(t) && !/(null|unique)[^.]*check/.test(t)) {
+        if (!plan.selected.length) return push({ role: "agent", text: "Add a table first, then I'll create the check for it." });
+        const rule = draftRule(t);
+        if (rule) {
+          setCc({ stage: "target", rule });
+          return push({
+            role: "agent",
+            text: `Here's the rule: **${rule.rule}** (${rule.dimension}). Expectation \`${rule.expectation}\`, pattern \`${rule.pattern}\`, fails if more than ${rule.threshold}% of values don't match. I tested it against a sample and it runs. Where should I apply it?`,
+            chips: APPLY_CHIPS,
+          });
+        }
+        setCc({ stage: "describe" });
+        return push({ role: "agent", text: "Sure. What should the check verify? Name the column and what should be true about it." });
+      }
       if (CONFIRM_WORDS.test(t)) {
         pulse("confirm");
         return push({ role: "agent", text: "Only the Confirm button creates it — it's highlighted at the bottom right." });
@@ -302,6 +404,7 @@ export function AgenticAddAssetModal({
           },
           `Added "${c.rule}" to ${tableName(key)}.`,
           "checks",
+          { ids: new Set([c.id]), focusKey: key },
         );
       }
       if (tables.length && removing) {
@@ -311,7 +414,7 @@ export function AgenticAddAssetModal({
       if (tables.length) {
         const keys = tables.map((a) => a.key).filter((k) => !selectedSet.has(k));
         if (!keys.length) return push({ role: "agent", text: "Those are already in the plan." });
-        return chatChange(withTables(plan, keys), `Added ${keys.length} ${keys.length === 1 ? "table" : "tables"}: ${keys.map(tableName).join(", ")}.`, "select");
+        return chatChange(withTables(plan, keys), `Added ${keys.length} ${keys.length === 1 ? "table" : "tables"}: ${keys.map(tableName).join(", ")}.`, "select", { keys: new Set(keys) });
       }
       const sched = parseSchedule(t);
       const tz = parseTimeZone(text);
@@ -326,13 +429,13 @@ export function AgenticAddAssetModal({
       if (/which|what|missing|unused|stale/.test(t)) {
         return push({
           role: "agent",
-          text: "You can review the tables directly — I'll open the list so you can add or remove by clicking.",
+          text: "I can't rank tables by usage from here. The closest I can do is open the table list so you can add or remove them directly.",
           showMe: "select",
         });
       }
       push({
         role: "agent",
-        text: "I can add or remove tables or a whole schema, add or remove a check, change the schedule, or undo. Try \"remove fct_orders_daily\" or \"run every 6 hours\".",
+        text: "I'm not sure what to change from that. I can't answer general data questions in this setup, but if you name a table, a check or a schedule I'll update the plan.",
       });
     });
   };
@@ -365,11 +468,12 @@ export function AgenticAddAssetModal({
     push({ role: "note", text: "Setting it up step by step. Ask me anything along the way." });
   };
 
-  const showMe = (s: Section) => {
+  const showMe = (s: Section, keys?: string[]) => {
     if (mode === "manual") setManualStep(s === "select" ? 0 : s === "checks" ? 1 : 2);
-    else setView(s);
+    else setOpenSection(s);
     setTab("plan");
     pulse(s);
+    if (keys?.length) flashRows(s === "select" ? { keys: new Set(keys) } : { focusKey: keys[0] });
   };
 
   // ---- Step screens wired to the plan ----
@@ -378,6 +482,7 @@ export function AgenticAddAssetModal({
       return (
         <Step1SelectData
           selected={selectedSet}
+          flashKeys={rowFlash?.keys}
           onToggle={(key) =>
             selectedSet.has(key)
               ? workspaceChange(withoutTables(plan, [key]), `You removed ${tableName(key)}.`)
@@ -392,6 +497,8 @@ export function AgenticAddAssetModal({
           selected={selectedSet}
           checked={checkedSets}
           customChecks={plan.customChecks}
+          flashIds={rowFlash?.ids}
+          focusKey={rowFlash?.focusKey}
           onToggleCheck={(key, id) => {
             const cur = plan.checked[key] ?? [];
             const on = cur.includes(id);
@@ -445,6 +552,7 @@ export function AgenticAddAssetModal({
 
   // ---- Chat UI ----
   const lastQuestionId = [...msgs].reverse().find((m) => m.question)?.id;
+  const lastChipsId = [...msgs].reverse().find((m) => m.chips)?.id;
   const chatBody = (
     <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5">
       <div className="mx-auto flex max-w-[720px] flex-col gap-3">
@@ -459,7 +567,7 @@ export function AgenticAddAssetModal({
                 className={m.role === "user" ? "max-w-[85%] rounded-2xl px-3.5 py-2 text-[14px]" : "text-[14px] leading-relaxed"}
                 style={m.role === "user" ? { background: "var(--surface-soft)", color: "var(--ink-900)" } : { color: "var(--ink-900)" }}
               >
-                {m.text}
+                <RichText text={m.text} />
                 {(m.undo || m.showMe) && (
                   <span className="ml-2 inline-flex gap-2 text-[13px]">
                     {m.undo && (
@@ -468,11 +576,25 @@ export function AgenticAddAssetModal({
                       </button>
                     )}
                     {m.showMe && (
-                      <button className="underline" style={{ color: "var(--brand-blue)" }} onClick={() => showMe(m.showMe!)}>
+                      <button className="underline" style={{ color: "var(--brand-blue)" }} onClick={() => showMe(m.showMe!, m.showKeys)}>
                         Show me
                       </button>
                     )}
                   </span>
+                )}
+                {m.chips && m.id === lastChipsId && cc && (
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {m.chips.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => send(c)}
+                        className="rounded-full border px-3 py-1.5 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
+                        style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
                 )}
                 {m.question && m.id === lastQuestionId && queue.length > 0 && (
                   <div className="mt-2.5 flex flex-wrap gap-2">
@@ -618,63 +740,112 @@ export function AgenticAddAssetModal({
   // ---- Workspace ----
   const ring = (s: Section | "confirm") => (flash === s ? "0 0 0 3px rgba(67,134,250,0.35)" : "none");
 
-  const overview = (
-    <div className="mx-auto max-w-[880px] px-8 py-8">
-      <h2 className="mb-1 text-[22px] font-semibold" style={{ color: "var(--ink-900)" }}>
-        Your plan
-      </h2>
-      <p className="mb-6 text-[14px]" style={{ color: "var(--ink-500)" }}>
-        Review what will be set up. Edit any part directly.
-      </p>
-      <div className="flex flex-col gap-3">
-        {(
-          [
-            ["select", "Select data", connectionSummary(plan), plan.selected.map(tableName).join(", ")],
-            ["checks", "Apply checks", plan.selected.length ? `${checkTotal(plan)} checks` : "Not set", plan.selected.length ? `Across ${plan.selected.length} tables` : ""],
-            [
-              "schedule",
-              "Schedule",
-              scheduleLabel(plan.profiling, plan.timeZone),
-              plan.profiling ? (plan.linked ? "Profiling and DQ checks run together" : `DQ checks: ${scheduleLabel(plan.checks, plan.timeZone)}`) : "",
-            ],
-          ] as [Section, string, string, string][]
-        ).map(([id, title, value, sub], i) => (
+  const sectionMeta: { id: Section; title: string; has: boolean; summary: React.ReactNode }[] = [
+    {
+      id: "select",
+      title: "Select data",
+      has: plan.selected.length > 0,
+      summary: (() => {
+        const names = plan.selected.map(tableName);
+        const whs = Array.from(new Set(plan.selected.map((k) => assetOf(k).conn?.warehouse).filter(Boolean))) as string[];
+        return (
+          <span className="flex min-w-0 items-center gap-2">
+            {whs.map((w) => (
+              <span key={w} className="inline-flex h-4 w-4 shrink-0 items-center justify-center">
+                <SourceLogo source={w as never} />
+              </span>
+            ))}
+            <span className="truncate font-mono text-[12px]">
+              {names.slice(0, 2).join(", ")}
+              {names.length > 2 && ` +${names.length - 2} more`}
+            </span>
+            {names.length > 2 && <span className="shrink-0">· {formatRowCount(totalRows(plan))} rows</span>}
+          </span>
+        );
+      })(),
+    },
+    {
+      id: "checks",
+      title: "Apply checks",
+      has: checkTotal(plan) > 0,
+      summary: (
+        <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+          {dimensionsInUse(plan).map((d) => (
+            <DimensionBadge key={d} label={d} size="sm" />
+          ))}
+          <span className="shrink-0 pl-1">{checkTotal(plan)} checks</span>
+        </span>
+      ),
+    },
+    {
+      id: "schedule",
+      title: "Schedule",
+      has: !!plan.profiling,
+      summary: (
+        <span className="truncate">
+          {scheduleLabel(plan.profiling, plan.timeZone)}
+          {plan.profiling && !plan.linked && ` · DQ checks ${scheduleLabel(plan.checks, plan.timeZone).replace(/^D/, "d").replace(/^W/, "w")}`}
+        </span>
+      ),
+    },
+  ];
+
+  const accordion = (
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-4">
+      {sectionMeta.map((sec, i) => {
+        const isOpen = openSection === sec.id;
+        const loading = filled <= i;
+        return (
           <section
-            key={id}
-            className="flex items-center justify-between rounded-xl border bg-white px-5 py-4 transition-shadow"
-            style={{ borderColor: "var(--hairline)", boxShadow: ring(id) }}
+            key={sec.id}
+            className={`flex min-h-0 flex-col overflow-hidden rounded-xl border bg-white transition-[flex-grow,box-shadow] duration-300 ease-out motion-reduce:transition-none ${isOpen ? "flex-1" : "flex-none"}`}
+            style={{ borderColor: "var(--hairline)", boxShadow: ring(sec.id) }}
           >
-            <div className="min-w-0">
-              <div className="text-[12px] font-medium uppercase tracking-wide" style={{ color: "var(--ink-500)" }}>
-                {title}
-              </div>
-              {filled > i ? (
-                <>
-                  <div className="mt-1 text-[16px] font-semibold" style={{ color: value === "Not set" ? "var(--ink-500)" : "var(--ink-900)" }}>
-                    {value}
-                  </div>
-                  {sub && (
-                    <div className="mt-0.5 truncate font-mono text-[12px]" style={{ color: "var(--ink-500)" }}>
-                      {sub}
-                    </div>
+            <h3>
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                aria-controls={`plan-${sec.id}`}
+                onClick={() => setOpenSection(isOpen ? null : sec.id)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-[color:var(--surface-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--brand-blue)]"
+              >
+                <span
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold"
+                  style={sec.has && !loading ? { background: "var(--brand-blue)", color: "white" } : { background: "var(--surface-soft)", color: "var(--ink-500)" }}
+                >
+                  {sec.has && !loading ? <CheckIcon size={13} strokeWidth={3} /> : i + 1}
+                </span>
+                <span className="w-[110px] shrink-0 text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>
+                  {sec.title}
+                </span>
+                <span className="min-w-0 flex-1 text-[13px]" style={{ color: "var(--ink-500)" }}>
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 size={13} className="animate-spin" /> Drafting…
+                    </span>
+                  ) : sec.has ? (
+                    <span style={{ color: "var(--ink-700)" }}>{sec.summary}</span>
+                  ) : (
+                    "Not set"
                   )}
-                </>
-              ) : (
-                <div className="mt-2 flex items-center gap-2 text-[13px]" style={{ color: "var(--ink-500)" }}>
-                  <Loader2 size={14} className="animate-spin" /> Drafting…
-                </div>
-              )}
-            </div>
-            <button
-              onClick={() => setView(id)}
-              className="h-9 shrink-0 rounded-full border px-4 text-[13px] font-medium hover:bg-[color:var(--surface-soft)]"
-              style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
-            >
-              Edit
-            </button>
+                </span>
+                <ChevronDown size={16} className={`shrink-0 transition-transform duration-300 motion-reduce:transition-none ${isOpen ? "rotate-180" : ""}`} style={{ color: "var(--ink-500)" }} />
+              </button>
+            </h3>
+            {isOpen && (
+              <div id={`plan-${sec.id}`} className="min-h-0 flex-1 overflow-y-auto border-t animate-in fade-in duration-300 motion-reduce:animate-none" style={{ borderColor: "var(--hairline)" }}>
+                {loading ? (
+                  <div className="flex h-full items-center justify-center gap-2 text-[13px]" style={{ color: "var(--ink-500)" }}>
+                    <Loader2 size={14} className="animate-spin" /> Filling in {sec.title.toLowerCase()}…
+                  </div>
+                ) : (
+                  renderStep(sec.id)
+                )}
+              </div>
+            )}
           </section>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 
@@ -692,7 +863,7 @@ export function AgenticAddAssetModal({
           <span>
             <b>{checkTotal(plan)}</b> checks
           </span>
-          <span>{scheduleLabel(plan.profiling, plan.timeZone)}</span>
+          <span>{scheduleLabel(plan.profiling ?? RECOMMENDED_SCHEDULE, plan.timeZone ?? RECOMMENDED_TZ)}</span>
         </div>
       )}
       <div className="flex items-center gap-2">
@@ -722,21 +893,15 @@ export function AgenticAddAssetModal({
   const workspace = (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden animate-in slide-in-from-right duration-300" style={{ background: "var(--canvas)" }}>
       {mode === "manual" ? (
-        <div className="shrink-0 border-b bg-white px-8 py-4" style={{ borderColor: "var(--hairline)" }}>
-          <Stepper steps={[{ label: "Select data" }, { label: "Apply checks" }, { label: "Schedule" }]} current={manualStep} />
-        </div>
-      ) : (
-        view !== "overview" && (
-          <div className="shrink-0 border-b bg-white px-6 py-3" style={{ borderColor: "var(--hairline)" }}>
-            <button onClick={() => setView("overview")} className="flex items-center gap-1.5 text-[13px] font-medium" style={{ color: "var(--brand-blue)" }}>
-              <ArrowLeft size={14} /> Back to plan
-            </button>
+        <>
+          <div className="shrink-0 border-b bg-white px-8 py-4" style={{ borderColor: "var(--hairline)" }}>
+            <Stepper steps={[{ label: "Select data" }, { label: "Apply checks" }, { label: "Schedule" }]} current={manualStep} />
           </div>
-        )
+          <div className="flex-1 overflow-y-auto">{renderStep((["select", "checks", "schedule"] as Section[])[manualStep])}</div>
+        </>
+      ) : (
+        accordion
       )}
-      <div className="flex-1 overflow-y-auto">
-        {mode === "manual" ? renderStep((["select", "checks", "schedule"] as Section[])[manualStep]) : view === "overview" ? overview : renderStep(view)}
-      </div>
       {bottomBar}
     </div>
   );
@@ -795,5 +960,25 @@ export function AgenticAddAssetModal({
         )}
       </div>
     </div>
+  );
+}
+
+/** Plain text with **bold** and `monospace` spans. */
+function RichText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.startsWith("**") ? (
+          <b key={i}>{p.slice(2, -2)}</b>
+        ) : p.startsWith("`") ? (
+          <code key={i} className="rounded px-1 font-mono text-[12.5px]" style={{ background: "var(--surface-soft)" }}>
+            {p.slice(1, -1)}
+          </code>
+        ) : (
+          <span key={i}>{p}</span>
+        ),
+      )}
+    </>
   );
 }

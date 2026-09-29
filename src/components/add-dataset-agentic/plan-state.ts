@@ -139,3 +139,47 @@ export function buildAssets(plan: Plan, domain: string): { tables: string[]; che
   }
   return { tables, checkCount, assets };
 }
+
+/** Checks currently kept for a table (generated + custom). */
+export function keptChecks(plan: Plan, key: string): Check[] {
+  const all = [...generateChecks(tableName(key)), ...(plan.customChecks[key] ?? [])];
+  const keep = new Set(plan.checked[key] ?? []);
+  return all.filter((c) => keep.has(c.id));
+}
+
+export function dimensionsInUse(plan: Plan): string[] {
+  const s = new Set<string>();
+  for (const k of plan.selected) keptChecks(plan, k).forEach((c) => s.add(c.dimension));
+  return Array.from(s);
+}
+
+export function assetOf(key: string) {
+  const [connId, schemaName, assetName] = key.split("::");
+  const conn = WAREHOUSES.find((c) => c.id === connId);
+  return { conn, asset: conn?.schemas.find((s) => s.name === schemaName)?.assets.find((a) => a.name === assetName) };
+}
+
+export function totalRows(plan: Plan) {
+  return plan.selected.reduce((n, k) => n + (assetOf(k).asset?.rows ?? 0), 0);
+}
+
+export function formatRowCount(n: number) {
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `${Math.round(n / 1e3)}K`;
+  return String(n);
+}
+
+/** Things worth saying in chat (never shown as warnings in the workspace). */
+export function observations(plan: Plan): { text: string; keys: string[] }[] {
+  const out: { text: string; keys: string[] }[] = [];
+  const views = plan.selected.filter((k) => assetOf(k).asset?.type === "view");
+  if (views.length)
+    out.push({ text: `${views.map(tableName).join(", ")} ${views.length === 1 ? "is a view" : "are views"}, so checks run against the view's query each time.`, keys: views });
+  const empty = plan.selected.filter((k) => (assetOf(k).asset?.rows ?? 1) === 0);
+  if (empty.length) out.push({ text: `${empty.map(tableName).join(", ")} has no rows yet, so its checks would fail on day one.`, keys: empty });
+  const noKey = plan.selected.filter((k) => !keptChecks(plan, k).some((c) => c.dimension === "Uniqueness"));
+  if (noKey.length && noKey.length < plan.selected.length)
+    out.push({ text: `I couldn't find a primary key on ${noKey.map(tableName).join(", ")}, so there's no uniqueness check there.`, keys: noKey });
+  return out.slice(0, 2);
+}

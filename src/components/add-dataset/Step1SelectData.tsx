@@ -33,10 +33,13 @@ export function Step1SelectData({
   selected,
   onToggle,
   onClear,
+  flashKeys,
 }: {
   selected: Set<string>;
   onToggle: (key: string) => void;
   onClear: () => void;
+  /** Optional: rows to briefly tint; the view jumps to the first one's schema. */
+  flashKeys?: Set<string>;
 }) {
   const [activeSchema, setActiveSchema] = useState<ActiveSchema>(null);
   const [query, setQuery] = useState("");
@@ -47,6 +50,16 @@ export function Step1SelectData({
 
   // Any change to the list itself resets pagination.
   useEffect(() => setPage(1), [query, activeSchema, pageSize]);
+
+  useEffect(() => {
+    const first = flashKeys ? Array.from(flashKeys)[0] : undefined;
+    if (!first) return;
+    const [connId, schema] = first.split("::");
+    if (connId && schema) {
+      setQuery("");
+      setActiveSchema({ connId, schema });
+    }
+  }, [flashKeys]);
 
   const grouped = useMemo(() => {
     const map = new Map<WarehouseType, Connection[]>();
@@ -278,6 +291,7 @@ export function Step1SelectData({
                   <BrowseBody
                     activeSchema={activeSchema!}
                     selected={selected}
+                    flashKeys={flashKeys}
                     onToggle={onToggle}
                     pageSize={pageSize}
                     page={currentPage}
@@ -352,8 +366,10 @@ function BrowseBody({
   onToggle,
   pageSize,
   page,
+  flashKeys,
 }: {
   activeSchema: { connId: string; schema: string };
+  flashKeys?: Set<string>;
   selected: Set<string>;
   onToggle: (key: string) => void;
   pageSize: number;
@@ -391,6 +407,7 @@ function BrowseBody({
               warehouse={conn.warehouse}
               selected={selected.has(k)}
               onToggle={() => onToggle(k)}
+              flash={flashKeys?.has(k)}
             />
           );
         })}

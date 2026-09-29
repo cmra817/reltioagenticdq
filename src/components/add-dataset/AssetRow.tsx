@@ -29,6 +29,7 @@ export function AssetRow({
   selected,
   onToggle,
   highlight,
+  flash,
 }: {
   asset: Asset;
   schema: string;
@@ -37,6 +38,7 @@ export function AssetRow({
   selected: boolean;
   onToggle: () => void;
   highlight?: string;
+  flash?: boolean;
 }) {
   const isTable = asset.type === "table";
   return (
@@ -44,7 +46,7 @@ export function AssetRow({
       type="button"
       onClick={onToggle}
       className="group flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-[color:var(--surface-soft)]"
-      style={{ background: selected ? "rgba(67,134,250,0.06)" : undefined }}
+      style={{ background: flash ? "rgba(67,134,250,0.18)" : selected ? "rgba(67,134,250,0.06)" : undefined, transition: "background-color 600ms" }}
     >
       <CheckSquare checked={selected} />
       <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
