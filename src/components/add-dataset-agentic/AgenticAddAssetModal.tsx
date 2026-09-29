@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, Check as CheckIcon, ChevronDown, Loader2, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { DimensionBadge } from "../dq-dimensions";
-import { SourceLogo } from "../brand-icons";
+import { SourceLogo } from "@/components/explore-screen";
 import { Stepper } from "../add-dataset/Stepper";
 import { Step1SelectData } from "../add-dataset/Step1SelectData";
 import { Step2ApplyChecks } from "../add-dataset/Step2ApplyChecks";
