@@ -101,3 +101,34 @@ export const Q_TZ: Question = {
 };
 
 export const CONFIRM_WORDS = /^(go ahead|confirm|create( it)?|do it|ship it|yes,? create|finish|looks good,? create)/;
+
+// ---- Create-a-check flow ----
+import type { Check } from "../add-dataset/mock-checks";
+
+export const WANTS_NEW_CHECK = /\b(create|new|make|build|write|add)\b[^.]*\b(dq )?(check|rule)\b/;
+
+/** Draft a rule from a plain-language description, the way the Create rule modal does. */
+export function draftRule(text: string): Check | null {
+  const t = text.toLowerCase();
+  const col =
+    t.match(/\b([a-z]+_[a-z_]+)\b/)?.[1] ??
+    t.match(/(?:column|field|on)\s+([a-z_]+)/)?.[1] ??
+    (/email/.test(t) ? "email" : /phone/.test(t) ? "phone_number" : null);
+  if (!col) return null;
+  const id = `chat-rule-${Date.now()}`;
+  const base = { id, field: col, fields: [col], creator: { kind: "reltio" as const }, threshold: 0 };
+  if (/null|empty|missing|blank|required|always (have|has)/.test(t))
+    return { ...base, rule: `${col} is not null`, description: `Every row must have a ${col}`, dimension: "Completeness", expectation: "expect_column_values_to_not_be_null", pattern: "not_null" };
+  if (/unique|duplicate|repeat/.test(t))
+    return { ...base, rule: `${col} is unique`, description: `${col} values must not repeat`, dimension: "Uniqueness", expectation: "expect_column_values_to_be_unique", pattern: "unique" };
+  if (/email/.test(t))
+    return { ...base, rule: `${col} is a valid email`, description: `${col} must look like name@domain.tld`, dimension: "Validity", expectation: "expect_column_values_to_match_regex", pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" };
+  const range = t.match(/between\s+(-?\d+)\s+and\s+(-?\d+)/) ?? (/(positive|greater than 0|above zero)/.test(t) ? ["", "0", "∞"] : null);
+  if (range)
+    return { ...base, rule: `${col} is between ${range[1]} and ${range[2]}`, description: `${col} must stay within the expected range`, dimension: "Format and range", expectation: "expect_column_values_to_be_between", pattern: `between(${range[1]}, ${range[2]})` };
+  if (/format|pattern|match|regex|valid/.test(t))
+    return { ...base, rule: `${col} matches expected format`, description: `${col} must match the agreed format`, dimension: "Validity", expectation: "expect_column_values_to_match_regex", pattern: "^[A-Za-z0-9_-]+$" };
+  return null;
+}
+
+export const APPLY_CHIPS = ["This table", "All tables", "Choose tables"];
