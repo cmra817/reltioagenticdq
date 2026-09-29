@@ -76,10 +76,12 @@ export function scheduleLabel(s: ScheduleConfig | null, tz: string | null) {
   if (!s) return "Not set";
   const base =
     s.frequency === "weekly"
-      ? `Weekly on ${s.day ?? "Monday"} at ${to12h(s.time)}`
+      ? `Weekly on ${s.day ?? "Monday"}s at ${to12h(s.time)}`
       : s.frequency === "daily"
         ? `Daily at ${to12h(s.time)}`
-        : frequencyLabel(s);
+        : s.frequency === "custom" && s.repeatUnit === "hours"
+          ? s.repeatEvery === 1 ? "Every hour" : `Every ${s.repeatEvery} hours`
+          : frequencyLabel(s);
   return tz ? `${base} ${tz}` : base;
 }
 

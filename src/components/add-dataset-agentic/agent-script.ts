@@ -32,6 +32,7 @@ export function findSchema(text: string): string | null {
 export function parseSchedule(text: string): ScheduleConfig | null {
   const t = text.toLowerCase();
   let freq: ScheduleConfig["frequency"] | null = null;
+  if (/every hour|hourly|each hour/.test(t)) return { ...DEFAULT_SCHEDULE, frequency: "custom", repeatEvery: 1, repeatUnit: "hours" };
   if (/every 6|6 ?h/.test(t)) freq = "6h";
   else if (/every 12|12 ?h/.test(t)) freq = "12h";
   else if (/weekly|every week|monday|tuesday|wednesday|thursday|friday|saturday|sunday/.test(t)) freq = "weekly";
