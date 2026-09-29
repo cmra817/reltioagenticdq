@@ -65,9 +65,10 @@ export function Step3Schedule({
   };
   return (
     <div className="@container px-10 py-8">
-      <h2 className="text-[17px] font-semibold" style={{ color: "var(--ink-900)" }}>
+      <p className="text-[13px]" style={{ color: "var(--ink-700)" }}>
         Schedule when profiling and checks run
-      </h2>
+      </p>
+
       <div
         className="mt-5 rounded-3xl border bg-white p-8"
         style={{ borderColor: "var(--hairline)" }}
