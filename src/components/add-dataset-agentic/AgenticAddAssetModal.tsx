@@ -701,23 +701,6 @@ export function AgenticAddAssetModal({
           </span>
         )}
       </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onOpenChange(false)}
-          className="h-9 rounded-full border px-4 text-[13px] font-medium"
-          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-        >
-          Cancel
-        </button>
-        <button
-          onClick={confirm}
-          disabled={!!done}
-          className="h-9 rounded-full px-4 text-[13px] font-medium text-white transition-shadow disabled:opacity-50"
-          style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
-        >
-          Complete setup
-        </button>
-      </div>
     </header>
   );
 
