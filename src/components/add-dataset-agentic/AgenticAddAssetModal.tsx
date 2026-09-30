@@ -73,11 +73,16 @@ export function AgenticAddAssetModal({
   onOpenChange,
   domainName,
   onComplete,
+  snapshot,
+  onPersist,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   domainName?: string;
   onComplete?: (r: AddDatasetCompletion) => void;
+  /** Saved state of an in-progress setup, restored when the user reopens it. */
+  snapshot?: SetupSnapshot | null;
+  onPersist?: (s: SetupSnapshot) => void;
 }) {
   const [mode, setMode] = useState<"chat" | "plan" | "manual">("chat");
   const [reveal, setReveal] = useState<Reveal>(null);
