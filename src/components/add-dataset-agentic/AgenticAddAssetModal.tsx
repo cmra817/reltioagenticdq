@@ -790,15 +790,13 @@ export function AgenticAddAssetModal({
 
   const rail = (
     <aside className="flex h-full min-w-0 flex-1 flex-col border-r bg-white" style={{ borderColor: "var(--hairline)", width: narrow ? "100%" : undefined }}>
-      {header}
-      <div className="flex items-center justify-between px-4 pt-3 text-[12px] font-medium" style={{ color: "var(--ink-500)" }}>
-        Assistant
-        {!narrow && (
+      {header(
+        !narrow && (
           <button aria-label="Collapse chat" onClick={() => setRailOpen(false)} className="rounded p-1 hover:bg-[color:var(--surface-soft)]">
             <PanelLeftClose size={16} />
           </button>
-        )}
-      </div>
+        ),
+      )}
       {chatBody}
       <div className="px-4 pb-4">
         {composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}
