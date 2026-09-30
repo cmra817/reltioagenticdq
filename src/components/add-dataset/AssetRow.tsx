@@ -90,6 +90,14 @@ export function AssetRow({
         className="flex shrink-0 items-center gap-6 pt-1 text-[12px]"
         style={{ color: "var(--ink-500)" }}
       >
+        {locked && (
+          <span
+            className="whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium"
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
+          >
+            Selected
+          </span>
+        )}
         <span className="tabular-nums whitespace-nowrap">{formatRows(asset.rows)} rows</span>
         <span className="hidden whitespace-nowrap @[640px]:inline">{relativeTime(asset.lastSyncedISO)}</span>
       </div>
