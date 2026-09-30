@@ -756,7 +756,7 @@ export function AgenticAddAssetModal({
 
 
   const workspace = (
-    <div className="flex min-w-0 flex-1 flex-col overflow-hidden animate-in slide-in-from-right duration-300 motion-reduce:animate-none" style={{ background: "var(--canvas)" }}>
+    <div className="flex min-h-0 w-[50vw] min-w-0 shrink-0 flex-col overflow-hidden animate-in slide-in-from-right duration-300 motion-reduce:animate-none" style={{ background: "var(--canvas)" }}>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <PlanView
           plan={plan}
@@ -788,7 +788,7 @@ export function AgenticAddAssetModal({
   );
 
   const rail = (
-    <aside className="flex h-full min-w-0 flex-col border-r bg-white" style={{ borderColor: "var(--hairline)", width: narrow ? "100%" : "50%" }}>
+    <aside className="flex h-full min-w-0 flex-1 flex-col border-r bg-white" style={{ borderColor: "var(--hairline)", width: narrow ? "100%" : undefined }}>
       <div className="flex items-center justify-between px-4 pt-3 text-[12px] font-medium" style={{ color: "var(--ink-500)" }}>
         Assistant
         {!narrow && (
