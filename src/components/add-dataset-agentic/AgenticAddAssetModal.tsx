@@ -659,35 +659,46 @@ export function AgenticAddAssetModal({
         e.preventDefault();
         send();
       }}
-      className="relative rounded-2xl border bg-white p-2"
-      style={{ borderColor: "#E3E3F2" }}
+      className="flex flex-col items-start gap-2 rounded-2xl p-3"
+      style={{
+        background: "#E3E3F2",
+        boxSizing: "border-box",
+        minHeight: "112px",
+        border: "1px solid rgba(0, 0, 204, 0.14)",
+        boxShadow:
+          "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.5)",
+      }}
     >
-      <textarea
-        ref={inputRef}
-        autoFocus
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            send();
-          }
-        }}
-        rows={2}
-        placeholder={placeholder}
-        className="w-full resize-none bg-transparent px-2 py-1 pr-10 text-[14px] outline-none"
-        style={{ color: "var(--ink-900)" }}
-      />
-      <button
-        type="submit"
-        aria-label="Send"
-        className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-full text-white"
-        style={{ background: "var(--brand-blue)", opacity: input.trim() ? 1 : 0.5 }}
-      >
-        <ArrowUp size={16} />
-      </button>
+      <div className="flex w-full items-start gap-2">
+        <textarea
+          ref={inputRef}
+          autoFocus
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          }}
+          placeholder={placeholder}
+          className="min-h-[56px] flex-1 resize-none bg-transparent px-1 py-0.5 text-[13px] outline-none"
+          style={{ color: "var(--ink-900)" }}
+        />
+      </div>
+      <div className="flex w-full justify-end px-1 pb-1">
+        <button
+          type="submit"
+          aria-label="Send"
+          className="flex h-8 w-8 items-center justify-center rounded-full"
+          style={{ background: "var(--brand-blue)", color: "#fff" }}
+        >
+          <ArrowUp size={16} />
+        </button>
+      </div>
     </form>
   );
+
 
   const ring = (s: Section | "confirm") => (flash === s ? "0 0 0 3px rgba(67,134,250,0.35)" : "none");
 
