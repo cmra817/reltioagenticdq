@@ -821,10 +821,7 @@ export function AgenticAddAssetModal({
 
 
   const collapsed = !railOpen && !narrow;
-  const lastAgent = [...msgs].reverse().find((m) => m.role === "agent");
   const lastUser = [...msgs].reverse().find((m) => m.role === "user");
-  const turnId = lastAgent?.id ?? null;
-  const showTurn = collapsed && !thinking && turnId !== null && dismissedTurn !== turnId;
   const showAsk = collapsed && thinking && !!lastUser;
 
   const pill = (
