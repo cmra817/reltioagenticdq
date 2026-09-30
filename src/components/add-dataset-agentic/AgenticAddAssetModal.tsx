@@ -103,6 +103,7 @@ export function AgenticAddAssetModal({
   const [filled, setFilled] = useState(3);
   const [flash, setFlash] = useState<Section | "confirm" | null>(null);
   const [railOpen, setRailOpen] = useState(true);
+  const [seenUpTo, setSeenUpTo] = useState(0);
   const [tab, setTab] = useState<"chat" | "plan">("chat");
   const [input, setInput] = useState("");
   const [done, setDone] = useState<string | null>(null);
@@ -931,7 +932,7 @@ export function AgenticAddAssetModal({
       <div className="relative z-10 shrink-0">
         {header(
           !narrow && (
-            <button aria-label="Collapse chat" onClick={() => setRailOpen(false)} className="rounded p-1 hover:bg-[color:var(--surface-soft)]">
+            <button aria-label="Collapse chat" onClick={() => { setSeenUpTo(msgs.length ? msgs[msgs.length - 1].id : 0); setRailOpen(false); }} className="rounded p-1 hover:bg-[color:var(--surface-soft)]">
               <PanelLeftClose size={16} />
             </button>
           ),
