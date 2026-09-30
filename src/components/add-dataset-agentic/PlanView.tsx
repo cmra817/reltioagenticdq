@@ -289,27 +289,29 @@ export function PlanView(p: Props) {
               </p>
             )}
             {checks.map((c) => checkRow(k, c))}
-            {addingOn === k ? (
-              <AddCheckInline
-                tableKey={k}
-                existing={checks}
-                onCancel={() => setAddingOn(null)}
-                onAdd={(check) => {
-                  onChange(addChecks(plan, k, [check]), `You added '${check.rule}' to ${tableName(k)}.`);
-                  setAddingOn(null);
-                }}
-                onCreate={() => openDialog({ kind: "rule", key: k })}
-              />
-            ) : (
+            <div className="relative mt-2 w-fit">
               <button
                 type="button"
-                onClick={() => setAddingOn(k)}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium"
+                aria-expanded={addingOn === k}
+                aria-haspopup="menu"
+                onClick={() => setAddingOn(addingOn === k ? null : k)}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium"
                 style={{ background: "rgba(67,134,250,0.08)", color: "var(--brand-blue)" }}
               >
                 <Plus size={14} /> Add check
               </button>
-            )}
+              {addingOn === k && (
+                <AddCheckInline
+                  tableKey={k}
+                  existing={checks}
+                  onAdd={(check) => {
+                    onChange(addChecks(plan, k, [check]), `You added '${check.rule}' to ${tableName(k)}.`);
+                    setAddingOn(null);
+                  }}
+                  onCreate={() => openDialog({ kind: "rule", key: k })}
+                />
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -684,13 +686,11 @@ function toggle<T>(s: Set<T>, v: T) {
 function AddCheckInline({
   tableKey,
   existing,
-  onCancel,
   onAdd,
   onCreate,
 }: {
   tableKey: string;
   existing: Check[];
-  onCancel: () => void;
   onAdd: (c: Check) => void;
   onCreate: () => void;
 }) {
@@ -704,7 +704,7 @@ function AddCheckInline({
     if (/primary key/i.test(r.name) && !key) return false;
     if (isTableLevel({ name: r.name }) && names.has(r.name.toLowerCase())) return false;
     return r.name.toLowerCase().includes(q.toLowerCase()) || r.dimension.toLowerCase().includes(q.toLowerCase());
-  });
+  }).slice(0, 3);
   const allCols = columnsOf(tableKey).filter((c) => c.includes(colQ.toLowerCase()));
 
   const pick = (r: Rule) => {
@@ -714,7 +714,11 @@ function AddCheckInline({
   };
 
   return (
-    <div className="mt-2 rounded-xl border bg-white p-3" style={{ borderColor: "var(--hairline)" }}>
+    <div
+      role="menu"
+      className="absolute left-0 top-[calc(100%+6px)] z-20 w-[390px] max-w-[min(390px,calc(100vw-5rem))] rounded-xl border bg-white p-3 shadow-lg"
+      style={{ borderColor: "var(--hairline)" }}
+    >
       {!rule ? (
         <>
           <div className="relative">
@@ -728,9 +732,9 @@ function AddCheckInline({
               style={{ borderColor: "var(--hairline)" }}
             />
           </div>
-          <div className="mt-2 max-h-[260px] overflow-y-auto">
+          <div className="mt-2">
             {lib.map((r) => (
-              <button key={r.id} type="button" onClick={() => pick(r)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[13px] hover:bg-[color:var(--surface-soft)]">
+              <button key={r.id} role="menuitem" type="button" onClick={() => pick(r)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[13px] hover:bg-[color:var(--surface-soft)]">
                 {r.creator.kind === "reltio" && <Lock size={12} style={{ color: "var(--ink-500)" }} />}
                 <span className="flex-1" style={{ color: "var(--ink-900)" }}>
                   {r.name}
@@ -744,12 +748,9 @@ function AddCheckInline({
               </p>
             )}
           </div>
-          <div className="mt-2 flex items-center justify-between border-t pt-2" style={{ borderColor: "var(--hairline)" }}>
+          <div className="mt-2 border-t pt-2" style={{ borderColor: "var(--hairline)" }}>
             <button type="button" onClick={onCreate} className="inline-flex items-center gap-1.5 text-[13px] font-medium" style={{ color: "var(--brand-blue)" }}>
-              <Plus size={14} /> Create a new rule
-            </button>
-            <button type="button" onClick={onCancel} className="h-8 rounded-full border px-3 text-[13px]" style={{ borderColor: "var(--hairline)" }}>
-              Cancel
+              <Plus size={14} /> Create new check
             </button>
           </div>
         </>
