@@ -130,11 +130,12 @@ export function AgenticAddAssetModal({
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardException) => null;
-    void onKey;
-    document.addEventListener("keydown", (e: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !dialogOpenRef.current && mode !== "manual") onOpenChange(false);
-    });
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onOpenChange, mode]);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onOpenChange]);
 
