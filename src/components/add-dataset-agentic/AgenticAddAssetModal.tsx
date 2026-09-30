@@ -719,9 +719,11 @@ export function AgenticAddAssetModal({
   // ---- First load: chat only ----
   if (mode === "chat" && msgs.length === 0) {
     return (
-      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
-        {header()}
-        <div className="flex flex-1 items-center justify-center px-6">
+      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
+        <Aurora />
+        <div className="relative z-10 shrink-0">{header()}</div>
+        <div className="relative z-10 flex flex-1 items-center justify-center px-6">
+
           <div className="w-full max-w-[680px]">
             <h1 className="mb-2 text-center text-[28px] font-semibold" style={{ color: "var(--ink-900)" }}>
               What data should we start watching?
