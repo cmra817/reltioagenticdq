@@ -383,7 +383,8 @@ function NewMenu() {
             onClick={() => {
               setOpen(false);
               setPendingDomain(selected);
-              setAgenticOpen(true);
+              // Any setup already in progress stays saved under Recent chats.
+              setup.openNew(selected);
             }}
             className={itemClass}
             style={{ color: "var(--ink-900)" }}
