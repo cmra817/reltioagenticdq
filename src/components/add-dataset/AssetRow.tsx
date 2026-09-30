@@ -3,13 +3,13 @@ import { Eye } from "lucide-react";
 import type { Asset, WarehouseType } from "./mock-warehouses";
 import { formatRows, relativeTime } from "./mock-warehouses";
 
-function CheckSquare({ checked }: { checked: boolean }) {
+function CheckSquare({ checked, muted }: { checked: boolean; muted?: boolean }) {
   return (
     <span
       className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border"
       style={{
-        background: checked ? "var(--brand-blue)" : "white",
-        borderColor: checked ? "var(--brand-blue)" : "var(--hairline)",
+        background: checked ? (muted ? "var(--ink-300)" : "var(--brand-blue)") : "white",
+        borderColor: checked ? (muted ? "var(--ink-300)" : "var(--brand-blue)") : "var(--hairline)",
       }}
     >
       {checked && (
