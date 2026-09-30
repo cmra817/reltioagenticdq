@@ -1,10 +1,11 @@
 import { SourceLogo, TableIcon, DatasetIcon } from "@/components/explore-screen";
 import { Eye } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Asset, WarehouseType } from "./mock-warehouses";
 import { formatRows, relativeTime } from "./mock-warehouses";
 
-function CheckSquare({ checked, muted }: { checked: boolean; muted?: boolean }) {
-  return (
+function CheckSquare({ checked, muted, label }: { checked: boolean; muted?: boolean; label?: string }) {
+  const box = (
     <span
       className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border"
       style={{
@@ -18,6 +19,17 @@ function CheckSquare({ checked, muted }: { checked: boolean; muted?: boolean }) 
         </svg>
       )}
     </span>
+  );
+  if (!label) return box;
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span tabIndex={-1} className="inline-flex">{box}</span>
+        </TooltipTrigger>
+        <TooltipContent side="top">{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -90,14 +102,6 @@ export function AssetRow({
         className="flex shrink-0 items-center gap-6 pt-1 text-[12px]"
         style={{ color: "var(--ink-500)" }}
       >
-        {locked && (
-          <span
-            className="whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium"
-            style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
-          >
-            Selected
-          </span>
-        )}
         <span className="tabular-nums whitespace-nowrap">{formatRows(asset.rows)} rows</span>
         <span className="hidden whitespace-nowrap @[640px]:inline">{relativeTime(asset.lastSyncedISO)}</span>
       </div>
