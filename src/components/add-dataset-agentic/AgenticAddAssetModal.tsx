@@ -350,7 +350,7 @@ export function AgenticAddAssetModal({
       const s = parseSchedule(answer) ?? RECOMMENDED_SCHEDULE;
       return { ...p, profiling: s, checks: s, linked: true };
     }
-    return { ...p, timeZone: parseTimeZone(answer) ?? RECOMMENDED_TZ };
+    return p;
   };
 
   const answerQuestion = (answer: string) => {
