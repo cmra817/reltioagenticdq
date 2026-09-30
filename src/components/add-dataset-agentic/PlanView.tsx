@@ -671,6 +671,7 @@ function AddCheckInline({
   onAdd: (c: Check) => void;
   onCreate: () => void;
 }) {
+  const [q, setQ] = useState("");
   const [rule, setRule] = useState<Rule | null>(null);
   const [cols, setCols] = useState<Set<string>>(new Set());
   const [colQ, setColQ] = useState("");
@@ -912,7 +913,6 @@ function useFocusTrap(ref: React.RefObject<HTMLDivElement | null>) {
 
 function AddTablesDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () => void; onDone: (add: string[], remove: string[]) => void }) {
   const [picked, setPicked] = useState<Set<string>>(new Set(plan.selected));
-  const [q, setQ] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   useFocusTrap(ref);
 
