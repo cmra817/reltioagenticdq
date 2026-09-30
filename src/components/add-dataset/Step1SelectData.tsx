@@ -346,6 +346,7 @@ export function Step1SelectData({
                     onToggle={onToggle}
                     pageSize={pageSize}
                     page={currentPage}
+                    lockedKeys={lockedKeys}
                   />
                 ) : (
                   <SearchBody
@@ -355,6 +356,7 @@ export function Step1SelectData({
                     onToggle={onToggle}
                     pageSize={pageSize}
                     page={currentPage}
+                    lockedKeys={lockedKeys}
                   />
                 )}
               </div>
@@ -418,6 +420,7 @@ function BrowseBody({
   pageSize,
   page,
   flashKeys,
+  lockedKeys,
 }: {
   activeSchema: { connId: string; schema: string };
   flashKeys?: Set<string>;
@@ -425,13 +428,15 @@ function BrowseBody({
   onToggle: (key: string) => void;
   pageSize: number;
   page: number;
+  lockedKeys?: Set<string>;
 }) {
   const conn = WAREHOUSES.find((c) => c.id === activeSchema.connId)!;
   const sch = conn.schemas.find((s) => s.name === activeSchema.schema)!;
   const totalRows = sch.assets.reduce((acc, a) => acc + a.rows, 0);
-  const selectedInSchema = sch.assets.filter((a) =>
-    selected.has(assetKey(conn.id, sch.name, a.name)),
-  ).length;
+  const selectedInSchema = sch.assets.filter((a) => {
+    const k = assetKey(conn.id, sch.name, a.name);
+    return selected.has(k) || !!lockedKeys?.has(k);
+  }).length;
   const start = (page - 1) * pageSize;
   const visible = sch.assets.slice(start, start + pageSize);
 
