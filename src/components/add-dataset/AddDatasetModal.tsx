@@ -172,6 +172,14 @@ export function AddDatasetModal({
   };
 
   return (
+    <>
+    {presentation === "shell" && (
+      <div
+        aria-hidden="true"
+        className="fixed right-0 top-0 z-[59] h-12 w-[50vw]"
+        style={{ background: "var(--canvas)" }}
+      />
+    )}
     <div
       className={
         presentation === "shell"
