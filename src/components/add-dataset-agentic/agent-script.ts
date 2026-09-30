@@ -6,6 +6,8 @@ export const EXAMPLES = [
   "Monitor dim_customers and fct_orders_daily in Databricks, daily at 6pm",
   "Add the Snowflake tables with customer data",
   "Watch everything in prod_analytics",
+  "Monitor all 50 tables across Snowflake and Databricks, daily at 2am ET",
+  "Watch every table across all connections, daily at 2am ET",
 ];
 
 export const UNSUPPORTED_WAREHOUSES = ["redshift", "postgres", "oracle", "synapse"];
