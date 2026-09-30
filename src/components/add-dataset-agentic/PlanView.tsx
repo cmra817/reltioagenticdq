@@ -145,7 +145,6 @@ export function PlanView(p: Props) {
   const [addingOn, setAddingOn] = useState<string | null>(null);
   const [showMore, setShowMore] = useState<Record<string, number>>({});
   const [query, setQuery] = useState("");
-  const [sel, setSel] = useState<Set<string>>(new Set());
   const [dialog, setDialog] = useState<null | { kind: "tables" } | { kind: "rule"; key: string; description?: string; source?: Rule; replaceId?: string }>(null);
   const [openSched, setOpenSched] = useState<"profiling" | "checks" | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -233,15 +232,8 @@ export function PlanView(p: Props) {
       <div key={k} id={`plan-row-${k}`} className="scroll-mt-4 border-t first:border-t-0" style={{ borderColor: "var(--hairline)" }}>
         <div
           className="group flex items-center gap-2 px-3 py-3 transition-colors duration-700 motion-reduce:transition-none"
-          style={{ background: flashed ? "rgba(67,134,250,0.10)" : sel.has(k) ? "rgba(67,134,250,0.04)" : undefined }}
+          style={{ background: flashed ? "rgba(67,134,250,0.10)" : undefined }}
         >
-          <input
-            type="checkbox"
-            aria-label={`Select ${tableName(k)}`}
-            checked={sel.has(k)}
-            onChange={() => setSel((s) => toggle(s, k))}
-            className="h-3.5 w-3.5 shrink-0 accent-[color:var(--brand-blue)]"
-          />
           <button
             type="button"
             aria-expanded={open}
