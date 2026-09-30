@@ -789,7 +789,7 @@ export function AgenticAddAssetModal({
   );
 
   const rail = (
-    <aside className="flex h-full min-w-0 flex-1 flex-col border-r bg-white" style={{ borderColor: "var(--hairline)", width: narrow ? "100%" : undefined }}>
+    <aside className="flex h-full min-w-0 flex-1 flex-col" style={{ width: narrow ? "100%" : undefined }}>
       {header(
         !narrow && (
           <button aria-label="Collapse chat" onClick={() => setRailOpen(false)} className="rounded p-1 hover:bg-[color:var(--surface-soft)]">
