@@ -719,7 +719,7 @@ export function AgenticAddAssetModal({
   // ---- First load: chat only ----
   if (mode === "chat" && msgs.length === 0) {
     return (
-      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
+      <div className="fixed inset-y-0 left-[260px] right-0 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
         <Aurora />
         <div className="relative z-10 shrink-0">{header()}</div>
         <div className="relative z-10 flex flex-1 items-center justify-center px-6">
@@ -758,7 +758,7 @@ export function AgenticAddAssetModal({
   // ---- Conversation before drafting ----
   if (mode === "chat") {
     return (
-      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
+      <div className="fixed inset-y-0 left-[260px] right-0 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
         <Aurora />
         <div className="relative z-10 shrink-0">{header()}</div>
         <div className="relative z-10 flex min-h-0 flex-1 flex-col">{chatBody}</div>
@@ -823,7 +823,7 @@ export function AgenticAddAssetModal({
   );
 
   return (
-    <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
+    <div className="fixed inset-y-0 left-[260px] right-0 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
 
       {narrow && (
         <div className="relative z-10 flex shrink-0 border-b bg-white" style={{ borderColor: "var(--hairline)" }}>
