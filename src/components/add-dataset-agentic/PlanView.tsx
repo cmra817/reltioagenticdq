@@ -862,14 +862,6 @@ function ScheduleRow({
                 <input type="time" disabled={disabled} value={value.time ?? "18:00"} onChange={(e) => set({ time: e.target.value })} className={field} style={{ borderColor: "var(--hairline)" }} />
               </label>
             )}
-            <label className="flex flex-col gap-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
-              Time zone
-              <select disabled={disabled} value={tz} onChange={(e) => set({}, e.target.value)} className={field} style={{ borderColor: "var(--hairline)" }}>
-                {TIME_ZONES.map((z) => (
-                  <option key={z}>{z}</option>
-                ))}
-              </select>
-            </label>
           </div>
         </div>
       )}
