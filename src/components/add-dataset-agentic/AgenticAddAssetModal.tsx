@@ -287,7 +287,7 @@ export function AgenticAddAssetModal({
       if (PROPOSAL_YES.test(t)) {
         setProposal(null);
         push({ role: "agent", text: "Setting it up now." });
-        return startDrafting(base, { schedule: !!base.profiling, tz: !!base.timeZone });
+        return startDrafting(base, { schedule: !!base.profiling });
       }
       if (/^change the schedule/.test(t))
         return push({ role: "agent", text: "How often should it run, and at what time? For example \"weekly on Monday at 7am\"." });
