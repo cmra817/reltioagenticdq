@@ -881,3 +881,25 @@ function RichText({ text }: { text: string }) {
     </>
   );
 }
+
+/** Same atmospheric background as the app shell / table detail page. */
+function Aurora() {
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "var(--gradient-aurora)" }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-40 right-0 h-[640px] w-[900px] rounded-full"
+        style={{
+          background:
+            "radial-gradient(closest-side, rgba(103,240,255,0.45), rgba(67,134,250,0.18) 55%, transparent 75%)",
+          filter: "blur(40px)",
+        }}
+      />
+    </>
+  );
+}
