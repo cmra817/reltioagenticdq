@@ -805,9 +805,10 @@ export function AgenticAddAssetModal({
   );
 
   return (
-    <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
+    <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
+      <Aurora />
       {narrow && (
-        <div className="flex shrink-0 border-b bg-white" style={{ borderColor: "var(--hairline)" }}>
+        <div className="relative z-10 flex shrink-0 border-b bg-white" style={{ borderColor: "var(--hairline)" }}>
           {(["chat", "plan"] as const).map((t) => (
             <button
               key={t}
@@ -820,7 +821,8 @@ export function AgenticAddAssetModal({
           ))}
         </div>
       )}
-      <div className="flex min-h-0 flex-1">
+      <div className="relative z-10 flex min-h-0 flex-1">
+
         {narrow ? (
           tab === "chat" ? rail : workspace
         ) : (
