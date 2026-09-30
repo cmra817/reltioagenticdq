@@ -131,6 +131,39 @@ export function AgenticAddAssetModal({
     }
   }, [open]);
 
+  // Reopening a saved setup restores the conversation and the plan as they were.
+  const snapshotRef = useRef<SetupSnapshot | null | undefined>(snapshot);
+  snapshotRef.current = snapshot;
+  const hydrated = useRef(false);
+  useEffect(() => {
+    if (!open) {
+      hydrated.current = false;
+      return;
+    }
+    if (hydrated.current) return;
+    hydrated.current = true;
+    const s = snapshotRef.current;
+    if (!s) return;
+    const restored = s.msgs as Msg[];
+    MID = Math.max(MID, ...restored.map((m) => m.id), 0);
+    setMode(s.mode);
+    setPlanRaw(s.plan as Plan);
+    setMsgs(restored);
+    setQueue(s.queue as Question[]);
+    setProposal((s.proposal as Plan | null) ?? null);
+    setFilled(s.filled);
+    setDone(s.done);
+    setTab(s.mode === "plan" ? "plan" : "chat");
+  }, [open]);
+
+  const persistRef = useRef(onPersist);
+  persistRef.current = onPersist;
+  useEffect(() => {
+    if (!open || !hydrated.current) return;
+    if (msgs.length === 0) return;
+    persistRef.current?.({ mode, plan, msgs, queue, proposal, filled, done });
+  }, [open, mode, plan, msgs, queue, proposal, filled, done]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs, thinking]);
