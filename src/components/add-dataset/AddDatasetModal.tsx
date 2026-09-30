@@ -98,15 +98,17 @@ export function AddDatasetModal({
     }
   }, [open]);
 
+  const cancel = onCancel ?? (() => onOpenChange(false));
+
   // Esc to close
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onOpenChange(false);
+      if (e.key === "Escape") cancel();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onOpenChange]);
+  }, [open, cancel]);
 
   if (!open) return null;
 
@@ -206,7 +208,7 @@ export function AddDatasetModal({
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => onOpenChange(false)}
+              onClick={cancel}
               className="h-10 rounded-full px-5 text-[14px] font-medium transition-colors hover:bg-[color:var(--surface-soft)]"
               style={{ color: "var(--ink-700)" }}
             >
