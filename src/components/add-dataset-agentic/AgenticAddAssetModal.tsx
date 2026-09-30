@@ -833,9 +833,9 @@ export function AgenticAddAssetModal({
               <button
                 aria-label="Open chat"
                 onClick={() => setRailOpen(true)}
-                className="flex w-10 shrink-0 items-start justify-center border-r bg-white pt-3"
-                style={{ borderColor: "var(--hairline)" }}
+                className="flex w-10 shrink-0 items-start justify-center pt-3"
               >
+
                 <PanelLeftOpen size={16} />
               </button>
             )}
