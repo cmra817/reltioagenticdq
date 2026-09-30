@@ -823,7 +823,7 @@ export function AgenticAddAssetModal({
       </div>
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">{chatBody}</div>
       <div className="relative z-10 px-4 pb-4">
-        {composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}
+        {composer("Change the plan, e.g. remove fct_orders_daily…")}
       </div>
     </aside>
   );
