@@ -29,6 +29,7 @@ export function AddDatasetModal({
   onComplete,
   presentation = "fullscreen",
   showChat = true,
+  onCancel,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,6 +39,8 @@ export function AddDatasetModal({
   presentation?: "fullscreen" | "shell";
   /** The agentic manual path uses the workflow without a second chat panel. */
   showChat?: boolean;
+  /** Overrides closing the flow entirely — e.g. back to the agentic chat home. */
+  onCancel?: () => void;
 }) {
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
