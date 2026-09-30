@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Loader2, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { ArrowUp, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { PlanView, hasKey, type PlanFilter, type Reveal, type RuleRequest } from "./PlanView";
 import { generateChecks, type Check } from "../add-dataset/mock-checks";
 import { AddDatasetModal, type AddDatasetCompletion } from "../add-dataset/AddDatasetModal";
@@ -103,7 +103,6 @@ export function AgenticAddAssetModal({
   const [filled, setFilled] = useState(3);
   const [flash, setFlash] = useState<Section | "confirm" | null>(null);
   const [railOpen, setRailOpen] = useState(true);
-  const [dismissedTurn, setDismissedTurn] = useState<number | null>(null);
   const [tab, setTab] = useState<"chat" | "plan">("chat");
   const [input, setInput] = useState("");
   const [done, setDone] = useState<string | null>(null);
