@@ -397,11 +397,11 @@ function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search tables across all connections"
-        className="w-full rounded-xl border bg-white pl-11 pr-4 text-[14px] outline-none transition-shadow focus:shadow-[0_0_0_3px_rgba(67,134,250,0.15)]"
+        className="w-full rounded-lg border bg-white pl-9 pr-4 text-[13px] outline-none transition-shadow focus:shadow-[0_0_0_3px_rgba(67,134,250,0.15)]"
         style={{
           borderColor: "var(--hairline)",
           color: "var(--ink-900)",
-          height: large ? 48 : 40,
+          height: large ? 38 : 40,
         }}
       />
     </div>
