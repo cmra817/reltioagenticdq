@@ -27,11 +27,17 @@ export function AddDatasetModal({
   onOpenChange,
   domainName,
   onComplete,
+  presentation = "fullscreen",
+  showChat = true,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   domainName?: string;
   onComplete?: (result: AddDatasetCompletion) => void;
+  /** Shell mode keeps the application navigation and top bar visible. */
+  presentation?: "fullscreen" | "shell";
+  /** The agentic manual path uses the workflow without a second chat panel. */
+  showChat?: boolean;
 }) {
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -159,16 +165,20 @@ export function AddDatasetModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex"
+      className={
+        presentation === "shell"
+          ? "fixed bottom-0 left-[260px] right-0 top-12 z-[60] flex border-l"
+          : "fixed inset-0 z-[60] flex"
+      }
       style={{ background: "var(--canvas)" }}
       role="dialog"
-      aria-modal="true"
+      aria-modal={presentation === "fullscreen" ? "true" : undefined}
       aria-label="Add data asset"
     >
       <div className="flex flex-1 flex-col overflow-hidden">
       {/* Header */}
       <header
-        className="shrink-0 border-b bg-white px-10 pt-8 pb-6"
+        className={`shrink-0 border-b bg-white ${presentation === "shell" ? "px-8 pb-4 pt-5" : "px-10 pb-6 pt-8"}`}
         style={{ borderColor: "var(--hairline)" }}
       >
         <div className="flex items-center justify-between">
@@ -230,7 +240,7 @@ export function AddDatasetModal({
             </button>
           </div>
         </div>
-        <div className="mt-6">
+        <div className={presentation === "shell" ? "mt-4" : "mt-6"}>
           <Stepper steps={STEPS} current={step} />
         </div>
       </header>
@@ -266,7 +276,7 @@ export function AddDatasetModal({
         </div>
       </div>
       </div>
-      {step === 0 && (
+      {showChat && step === 0 && (
         <WizardChatPanel
           context="select"
           onSelectAssets={(keys) =>
@@ -278,7 +288,7 @@ export function AddDatasetModal({
           }
         />
       )}
-      {step === 1 && (
+      {showChat && step === 1 && (
         <WizardChatPanel
           context="checks"
           assetSummary={Array.from(selected).map((key) => {
@@ -292,7 +302,7 @@ export function AddDatasetModal({
           onAddCheck={addCustomCheck}
         />
       )}
-      {step === 2 && <WizardChatPanel context="schedule" />}
+      {showChat && step === 2 && <WizardChatPanel context="schedule" />}
     </div>
   );
 }
