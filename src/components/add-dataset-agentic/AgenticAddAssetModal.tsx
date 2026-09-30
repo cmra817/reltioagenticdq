@@ -136,8 +136,6 @@ export function AgenticAddAssetModal({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onOpenChange, mode]);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onOpenChange]);
 
   const selectedSet = useMemo(() => new Set(plan.selected), [plan.selected]);
   const checkedSets = useMemo(() => {
