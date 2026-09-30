@@ -809,7 +809,7 @@ function ScheduleRow({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[14px] font-medium" style={{ color: "var(--ink-900)" }}>
-            {scheduleLabel(value, tz)}
+            {scheduleLabel(value)}
           </span>
           <span className="block text-[12px]" style={{ color: "var(--ink-500)" }}>
             {nextRun(value)}
