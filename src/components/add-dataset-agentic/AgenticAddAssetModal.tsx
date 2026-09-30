@@ -103,6 +103,7 @@ export function AgenticAddAssetModal({
   const [filled, setFilled] = useState(3);
   const [flash, setFlash] = useState<Section | "confirm" | null>(null);
   const [railOpen, setRailOpen] = useState(true);
+  const [dismissedTurn, setDismissedTurn] = useState<number | null>(null);
   const [tab, setTab] = useState<"chat" | "plan">("chat");
   const [input, setInput] = useState("");
   const [done, setDone] = useState<string | null>(null);
