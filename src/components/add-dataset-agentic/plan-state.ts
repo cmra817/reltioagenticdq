@@ -22,6 +22,8 @@ export const EMPTY_PLAN: Plan = {
   linked: true,
 };
 
+export const RECOMMENDED_SCHEDULE: ScheduleConfig = { ...DEFAULT_SCHEDULE, frequency: "daily", time: "18:00" };
+
 export function tableName(key: string) {
   const p = key.split("::");
   return p[2] ?? p[p.length - 1];
