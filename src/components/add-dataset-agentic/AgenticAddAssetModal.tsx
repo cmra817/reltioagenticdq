@@ -535,14 +535,12 @@ export function AgenticAddAssetModal({
         return chatChange(withTables(plan, keys), `Added ${keys.length} ${keys.length === 1 ? "table" : "tables"}: ${keys.map(tableName).join(", ")}.`, "select", { keys: new Set(keys) });
       }
       const sched = parseSchedule(t);
-      const tz = parseTimeZone(text);
-      if (sched || tz) {
+      if (sched) {
         const next: Plan = {
           ...plan,
           ...(sched ? (/check/.test(t) && !/profil/.test(t) ? { checks: sched, linked: false } : { profiling: sched, checks: plan.linked ? sched : plan.checks }) : {}),
-          ...(tz ? { timeZone: tz } : {}),
         };
-        return chatChange(next, `Schedule is now ${scheduleLabel(next.profiling, next.timeZone)}.`, "schedule");
+        return chatChange(next, `Schedule is now ${scheduleLabel(next.profiling)}.`, "schedule");
       }
       if (/which|what|missing|unused|stale/.test(t)) {
         return push({
