@@ -780,7 +780,6 @@ function AddCheckInline({
 function ScheduleRow({
   title,
   value,
-  tz,
   open,
   onToggle,
   onChange,
@@ -789,18 +788,17 @@ function ScheduleRow({
 }: {
   title: string;
   value: ScheduleConfig;
-  tz: string;
   open: boolean;
   onToggle: () => void;
-  onChange: (s: ScheduleConfig, tz: string, what: string) => void;
+  onChange: (s: ScheduleConfig, what: string) => void;
   linked?: boolean;
   onLink?: (on: boolean) => void;
 }) {
   const disabled = !!linked;
   const freqValue = value.frequency === "custom" && value.repeatUnit === "hours" ? "1h" : value.frequency;
-  const set = (patch: Partial<ScheduleConfig>, nextTz = tz) => {
+  const set = (patch: Partial<ScheduleConfig>) => {
     const s = { ...value, ...patch };
-    onChange(s, nextTz, scheduleLabel(s, nextTz).replace(/^(\w)/, (m) => m.toLowerCase()));
+    onChange(s, scheduleLabel(s).replace(/^(\w)/, (m) => m.toLowerCase()));
   };
   const field = "h-9 rounded-lg border bg-white px-2.5 text-[13px] disabled:opacity-50";
   return (
