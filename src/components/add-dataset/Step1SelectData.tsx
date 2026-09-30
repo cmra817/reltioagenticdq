@@ -34,12 +34,15 @@ export function Step1SelectData({
   onToggle,
   onClear,
   flashKeys,
+  lockedKeys,
 }: {
   selected: Set<string>;
   onToggle: (key: string) => void;
   onClear: () => void;
   /** Optional: rows to briefly tint; the view jumps to the first one's schema. */
   flashKeys?: Set<string>;
+  /** Already in the job: shown as checked and not clickable here. */
+  lockedKeys?: Set<string>;
 }) {
   const [activeSchema, setActiveSchema] = useState<ActiveSchema>(null);
   const [query, setQuery] = useState("");
@@ -343,6 +346,7 @@ export function Step1SelectData({
                     onToggle={onToggle}
                     pageSize={pageSize}
                     page={currentPage}
+                    lockedKeys={lockedKeys}
                   />
                 ) : (
                   <SearchBody
@@ -352,6 +356,7 @@ export function Step1SelectData({
                     onToggle={onToggle}
                     pageSize={pageSize}
                     page={currentPage}
+                    lockedKeys={lockedKeys}
                   />
                 )}
               </div>
@@ -415,6 +420,7 @@ function BrowseBody({
   pageSize,
   page,
   flashKeys,
+  lockedKeys,
 }: {
   activeSchema: { connId: string; schema: string };
   flashKeys?: Set<string>;
@@ -422,13 +428,15 @@ function BrowseBody({
   onToggle: (key: string) => void;
   pageSize: number;
   page: number;
+  lockedKeys?: Set<string>;
 }) {
   const conn = WAREHOUSES.find((c) => c.id === activeSchema.connId)!;
   const sch = conn.schemas.find((s) => s.name === activeSchema.schema)!;
   const totalRows = sch.assets.reduce((acc, a) => acc + a.rows, 0);
-  const selectedInSchema = sch.assets.filter((a) =>
-    selected.has(assetKey(conn.id, sch.name, a.name)),
-  ).length;
+  const selectedInSchema = sch.assets.filter((a) => {
+    const k = assetKey(conn.id, sch.name, a.name);
+    return selected.has(k) || !!lockedKeys?.has(k);
+  }).length;
   const start = (page - 1) * pageSize;
   const visible = sch.assets.slice(start, start + pageSize);
 
@@ -456,6 +464,7 @@ function BrowseBody({
               selected={selected.has(k)}
               onToggle={() => onToggle(k)}
               flash={flashKeys?.has(k)}
+              locked={lockedKeys?.has(k)}
             />
           );
         })}
@@ -471,6 +480,7 @@ function SearchBody({
   onToggle,
   pageSize,
   page,
+  lockedKeys,
 }: {
   query: string;
   activeSchema: ActiveSchema;
@@ -478,6 +488,7 @@ function SearchBody({
   onToggle: (key: string) => void;
   pageSize: number;
   page: number;
+  lockedKeys?: Set<string>;
 }) {
   const q = query.trim().toLowerCase();
   const flat: { conn: Connection; schema: string; asset: Asset }[] = [];
@@ -544,6 +555,7 @@ function SearchBody({
                     selected={selected.has(k)}
                     onToggle={() => onToggle(k)}
                     highlight={query}
+                    locked={lockedKeys?.has(k)}
                   />
                 );
               })}

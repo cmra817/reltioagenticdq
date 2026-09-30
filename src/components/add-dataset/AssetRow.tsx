@@ -3,13 +3,13 @@ import { Eye } from "lucide-react";
 import type { Asset, WarehouseType } from "./mock-warehouses";
 import { formatRows, relativeTime } from "./mock-warehouses";
 
-function CheckSquare({ checked }: { checked: boolean }) {
+function CheckSquare({ checked, muted }: { checked: boolean; muted?: boolean }) {
   return (
     <span
       className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border"
       style={{
-        background: checked ? "var(--brand-blue)" : "white",
-        borderColor: checked ? "var(--brand-blue)" : "var(--hairline)",
+        background: checked ? (muted ? "var(--ink-300)" : "var(--brand-blue)") : "white",
+        borderColor: checked ? (muted ? "var(--ink-300)" : "var(--brand-blue)") : "var(--hairline)",
       }}
     >
       {checked && (
@@ -30,6 +30,7 @@ export function AssetRow({
   onToggle,
   highlight,
   flash,
+  locked,
 }: {
   asset: Asset;
   schema: string;
@@ -39,16 +40,24 @@ export function AssetRow({
   onToggle: () => void;
   highlight?: string;
   flash?: boolean;
+  /** Already part of the job: shown as checked, not clickable here. */
+  locked?: boolean;
 }) {
   const isTable = asset.type === "table";
   return (
     <button
       type="button"
-      onClick={onToggle}
-      className="group flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-[color:var(--surface-soft)]"
-      style={{ background: flash ? "rgba(67,134,250,0.18)" : selected ? "rgba(67,134,250,0.06)" : undefined, transition: "background-color 600ms" }}
+      onClick={locked ? undefined : onToggle}
+      disabled={locked}
+      aria-disabled={locked || undefined}
+      className={`group flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors ${locked ? "cursor-default" : "hover:bg-[color:var(--surface-soft)]"}`}
+      style={{
+        background: flash ? "rgba(67,134,250,0.18)" : locked ? "var(--surface-soft)" : selected ? "rgba(67,134,250,0.06)" : undefined,
+        opacity: locked ? 0.7 : undefined,
+        transition: "background-color 600ms",
+      }}
     >
-      <CheckSquare checked={selected} />
+      <CheckSquare checked={locked || selected} muted={locked} />
       <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
         <SourceLogo source={warehouse} />
       </span>
@@ -81,6 +90,14 @@ export function AssetRow({
         className="flex shrink-0 items-center gap-6 pt-1 text-[12px]"
         style={{ color: "var(--ink-500)" }}
       >
+        {locked && (
+          <span
+            className="whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium"
+            style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
+          >
+            Selected
+          </span>
+        )}
         <span className="tabular-nums whitespace-nowrap">{formatRows(asset.rows)} rows</span>
         <span className="hidden whitespace-nowrap @[640px]:inline">{relativeTime(asset.lastSyncedISO)}</span>
       </div>
