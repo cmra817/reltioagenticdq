@@ -94,11 +94,6 @@ export const Q_SCHEDULE: Question = {
     { label: "Weekly on Monday" },
   ],
 };
-export const Q_TZ: Question = {
-  id: "tz",
-  text: "Which time zone should the schedule use?",
-  options: [{ label: "ET", recommended: true }, { label: "PT" }, { label: "UTC" }],
-};
 
 export const CONFIRM_WORDS = /^(go ahead|confirm|create( it)?|do it|ship it|yes,? create|finish|looks good,? create)/;
 
