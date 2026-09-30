@@ -320,5 +320,6 @@ export function AddDatasetModal({
       )}
       {showChat && step === 2 && <WizardChatPanel context="schedule" />}
     </div>
+    </>
   );
 }
