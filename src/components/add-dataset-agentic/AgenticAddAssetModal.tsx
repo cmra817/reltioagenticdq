@@ -825,29 +825,59 @@ export function AgenticAddAssetModal({
   const lastAgent = [...msgs].reverse().find((m) => m.role === "agent");
   const lastUser = [...msgs].reverse().find((m) => m.role === "user");
   const turnId = lastAgent?.id ?? null;
-  const showTurn = collapsed && turnId !== null && dismissedTurn !== turnId;
+  const showTurn = collapsed && !thinking && turnId !== null && dismissedTurn !== turnId;
+  const showAsk = collapsed && thinking && !!lastUser;
 
   const pill = (
     <div className="pointer-events-none absolute inset-x-0 bottom-[68px] z-30 flex justify-center px-6">
       <div className="pointer-events-auto w-full max-w-xl">
+        {showAsk && (
+          <div
+            className="mb-2 rounded-2xl border p-3 backdrop-blur-md"
+            style={{
+              background: "rgba(255,255,255,0.45)",
+              borderColor: "rgba(255,255,255,0.6)",
+              boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
+            }}
+          >
+            <p className="truncate text-[13px]" style={{ color: "var(--ink-700)" }}>
+              {lastUser!.text}
+            </p>
+          </div>
+        )}
         {showTurn && (
           <div
-            className="mb-2 rounded-2xl border bg-white/95 p-3 backdrop-blur"
-            style={{ borderColor: "var(--hairline)", boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
+            role="button"
+            tabIndex={0}
+            onClick={() => setRailOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setRailOpen(true);
+              }
+            }}
+            className="mb-2 cursor-pointer rounded-2xl border p-3 backdrop-blur-md transition-shadow hover:shadow-lg"
+            style={{
+              background: "rgba(255,255,255,0.82)",
+              borderColor: "var(--hairline)",
+              boxShadow: "0 12px 32px rgba(15,23,42,0.12)",
+            }}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                {lastUser && (
-                  <p className="mb-1.5 truncate text-[12px]" style={{ color: "var(--ink-500)" }}>
-                    {lastUser.text}
-                  </p>
-                )}
                 <div className="max-h-40 overflow-y-auto whitespace-pre-line text-[13px] leading-relaxed" style={{ color: "var(--ink-900)" }}>
                   <RichText text={lastAgent!.text} />
                   {(lastAgent!.undo || lastAgent!.showMe) && (
                     <span className="ml-2 inline-flex gap-2 text-[13px]">
                       {lastAgent!.undo && (
-                        <button className="underline" style={{ color: "var(--brand-blue)" }} onClick={undo}>
+                        <button
+                          className="underline"
+                          style={{ color: "var(--brand-blue)" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            undo();
+                          }}
+                        >
                           Undo
                         </button>
                       )}
@@ -855,7 +885,10 @@ export function AgenticAddAssetModal({
                         <button
                           className="underline"
                           style={{ color: "var(--brand-blue)" }}
-                          onClick={() => showMe(lastAgent!.showMe!, lastAgent!.showKeys, lastAgent!.filterLabel)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            showMe(lastAgent!.showMe!, lastAgent!.showKeys, lastAgent!.filterLabel);
+                          }}
                         >
                           Show me
                         </button>
@@ -864,7 +897,14 @@ export function AgenticAddAssetModal({
                   )}
                 </div>
               </div>
-              <button aria-label="Dismiss" onClick={() => setDismissedTurn(turnId)} className="shrink-0 rounded p-1 hover:bg-[color:var(--surface-soft)]">
+              <button
+                aria-label="Dismiss"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDismissedTurn(turnId);
+                }}
+                className="shrink-0 rounded p-1 hover:bg-[color:var(--surface-soft)]"
+              >
                 <X size={14} />
               </button>
             </div>
@@ -875,11 +915,11 @@ export function AgenticAddAssetModal({
             e.preventDefault();
             send();
           }}
-          className="flex items-end gap-2 rounded-2xl p-2 pl-3"
+          className="flex items-end gap-2 rounded-2xl p-2 pl-3 backdrop-blur-md"
           style={{
-            background: "#E3E3F2",
+            background: "rgba(227, 227, 242, 0.7)",
             border: "1px solid rgba(0, 0, 204, 0.14)",
-            boxShadow: "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.5)",
+            boxShadow: "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.35)",
           }}
         >
           <textarea
