@@ -29,6 +29,7 @@ export function AddDatasetModal({
   onComplete,
   presentation = "fullscreen",
   showChat = true,
+  onCancel,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,6 +39,8 @@ export function AddDatasetModal({
   presentation?: "fullscreen" | "shell";
   /** The agentic manual path uses the workflow without a second chat panel. */
   showChat?: boolean;
+  /** Overrides closing the flow entirely — e.g. back to the agentic chat home. */
+  onCancel?: () => void;
 }) {
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -95,15 +98,17 @@ export function AddDatasetModal({
     }
   }, [open]);
 
+  const cancel = onCancel ?? (() => onOpenChange(false));
+
   // Esc to close
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onOpenChange(false);
+      if (e.key === "Escape") cancel();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onOpenChange]);
+  }, [open, cancel]);
 
   if (!open) return null;
 
@@ -203,7 +208,7 @@ export function AddDatasetModal({
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => onOpenChange(false)}
+              onClick={cancel}
               className="h-10 rounded-full px-5 text-[14px] font-medium transition-colors hover:bg-[color:var(--surface-soft)]"
               style={{ color: "var(--ink-700)" }}
             >

@@ -130,10 +130,12 @@ export function AgenticAddAssetModal({
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !dialogOpenRef.current && onOpenChange(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !dialogOpenRef.current && mode !== "manual") onOpenChange(false);
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onOpenChange]);
+  }, [open, onOpenChange, mode]);
 
   const selectedSet = useMemo(() => new Set(plan.selected), [plan.selected]);
   const checkedSets = useMemo(() => {
@@ -772,6 +774,7 @@ export function AgenticAddAssetModal({
         onComplete={onComplete}
         presentation="shell"
         showChat={false}
+        onCancel={() => setMode("chat")}
       />
     );
   }
