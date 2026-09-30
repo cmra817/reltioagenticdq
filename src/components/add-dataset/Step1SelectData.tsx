@@ -385,7 +385,7 @@ function SearchInput({
   return (
     <div
       className="relative transition-all duration-200"
-      style={{ width: large ? 520 : "100%", maxWidth: large ? 520 : 640 }}
+      style={{ width: large ? 380 : "100%", maxWidth: large ? 380 : 640 }}
     >
       <Search
         size={16}
