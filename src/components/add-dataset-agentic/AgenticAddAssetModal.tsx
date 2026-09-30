@@ -804,16 +804,19 @@ export function AgenticAddAssetModal({
   );
 
   const rail = (
-    <aside className="flex h-full min-w-0 flex-1 flex-col" style={{ width: narrow ? "100%" : undefined }}>
-      {header(
-        !narrow && (
-          <button aria-label="Collapse chat" onClick={() => setRailOpen(false)} className="rounded p-1 hover:bg-[color:var(--surface-soft)]">
-            <PanelLeftClose size={16} />
-          </button>
-        ),
-      )}
-      {chatBody}
-      <div className="px-4 pb-4">
+    <aside className="relative flex h-full min-w-0 flex-1 flex-col overflow-clip" style={{ width: narrow ? "100%" : undefined }}>
+      <Aurora />
+      <div className="relative z-10 shrink-0">
+        {header(
+          !narrow && (
+            <button aria-label="Collapse chat" onClick={() => setRailOpen(false)} className="rounded p-1 hover:bg-[color:var(--surface-soft)]">
+              <PanelLeftClose size={16} />
+            </button>
+          ),
+        )}
+      </div>
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">{chatBody}</div>
+      <div className="relative z-10 px-4 pb-4">
         {composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}
       </div>
     </aside>
@@ -821,7 +824,7 @@ export function AgenticAddAssetModal({
 
   return (
     <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
-      <Aurora />
+
       {narrow && (
         <div className="relative z-10 flex shrink-0 border-b bg-white" style={{ borderColor: "var(--hairline)" }}>
           {(["chat", "plan"] as const).map((t) => (
