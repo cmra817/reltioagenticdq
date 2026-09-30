@@ -844,6 +844,33 @@ export function AgenticAddAssetModal({
             </p>
           </div>
         )}
+        {showReply && (
+          <button
+            type="button"
+            onClick={() => setRailOpen(true)}
+            className="mb-2 block w-full cursor-pointer rounded-2xl border p-3 text-left backdrop-blur-md"
+            style={{
+              background: "rgba(255,255,255,0.75)",
+              borderColor: "rgba(255,255,255,0.7)",
+              boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
+            }}
+          >
+            <div className="flex items-start gap-2">
+              <p className="max-h-20 flex-1 overflow-hidden text-[13px] leading-relaxed" style={{ color: "var(--ink-900)" }}>
+                {lastAgent!.text}
+              </p>
+              <span
+                role="button"
+                aria-label="Dismiss"
+                onClick={(e) => { e.stopPropagation(); setSeenUpTo(lastAgent!.id); }}
+                className="shrink-0 rounded p-0.5 hover:bg-[color:var(--surface-soft)]"
+                style={{ color: "var(--ink-500)" }}
+              >
+                <X size={13} />
+              </span>
+            </div>
+          </button>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
