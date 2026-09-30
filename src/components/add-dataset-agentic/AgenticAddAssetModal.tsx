@@ -297,14 +297,9 @@ export function AgenticAddAssetModal({
       let p = base;
       const changed: string[] = [];
       const sched = parseSchedule(text);
-      const tz = parseTimeZone(text);
       if (sched) {
         p = { ...p, profiling: sched, checks: sched };
         changed.push("schedule");
-      }
-      if (tz) {
-        p = { ...p, timeZone: tz };
-        changed.push("time zone");
       }
       const removing = /\b(remove|drop|delete|exclude|without)\b/.test(t);
       const schema = /schema|everything in|all of/.test(t) ? findSchema(t) : null;
