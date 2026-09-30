@@ -97,10 +97,6 @@ export function finalize(plan: Plan): { plan: Plan; defaults: string[] } {
     p = { ...p, checks: p.linked ? p.profiling : RECOMMENDED_SCHEDULE };
     defaults.push("DQ checks schedule: same as profiling");
   }
-  if (!p.timeZone) {
-    p = { ...p, timeZone: RECOMMENDED_TZ };
-    defaults.push("time zone: ET");
-  }
   return { plan: p, defaults };
 }
 
