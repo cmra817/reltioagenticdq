@@ -390,8 +390,6 @@ export function AgenticAddAssetModal({
     let p = found.length ? withTables(EMPTY_PLAN, found.map((f) => f.key)) : EMPTY_PLAN;
     const sched = parseSchedule(text);
     if (sched) p = { ...p, profiling: sched, checks: sched };
-    const tz = parseTimeZone(text);
-    if (tz) p = { ...p, timeZone: tz };
     setPlanRaw(p);
     // No questions about checks, schedule, or time zone — the plan uses the
     // recommended checks and schedule by default. Only ask when the tables
