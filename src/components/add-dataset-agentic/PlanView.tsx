@@ -1,3 +1,4 @@
+import { Step1SelectData } from "@/components/add-dataset/Step1SelectData";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Loader2, Lock, Plus, Search, Table2, X } from "lucide-react";
 import { DimensionBadge } from "../dq-dimensions";
@@ -948,93 +949,19 @@ function AddTablesDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () =>
         role="dialog"
         aria-modal="true"
         aria-label="Add tables"
-        className="relative z-10 flex h-full max-h-[760px] w-full max-w-[1000px] flex-col overflow-hidden rounded-2xl border bg-white animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none max-sm:max-h-none max-sm:rounded-none"
+        className="relative z-10 flex h-full max-h-[820px] w-full max-w-[1200px] flex-col overflow-hidden rounded-2xl border bg-white animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none max-sm:max-h-none max-sm:rounded-none"
         style={{ borderColor: "var(--hairline)", boxShadow: "0 24px 64px rgba(15,23,42,0.22)" }}
       >
         <div className="flex items-center gap-4 border-b px-6 py-4" style={{ borderColor: "var(--hairline)" }}>
-          <h2 className="shrink-0 text-[18px] font-semibold" style={{ color: "var(--ink-900)" }}>
+          <h2 className="flex-1 text-[18px] font-semibold" style={{ color: "var(--ink-900)" }}>
             Add tables
           </h2>
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-500)" }} />
-            <input
-              autoFocus
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search tables across all connections"
-              className="h-9 w-full rounded-full border pl-8 pr-3 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
-              style={{ borderColor: "var(--hairline)" }}
-            />
-          </div>
           <button type="button" aria-label="Close" onClick={onClose} className="rounded-full p-2 hover:bg-[color:var(--surface-soft)]">
             <X size={18} />
           </button>
         </div>
-        <div className="flex min-h-0 flex-1">
-          <div className="w-[220px] shrink-0 overflow-y-auto border-r p-4 max-sm:hidden" style={{ borderColor: "var(--hairline)" }}>
-            <div className={label} style={{ color: "var(--ink-500)" }}>
-              Connection
-            </div>
-            <select value={conn} onChange={(e) => { setConn(e.target.value); setSchemas(new Set()); }} className="mt-2 h-9 w-full rounded-lg border bg-white px-2 text-[13px]" style={{ borderColor: "var(--hairline)" }}>
-              <option value="all">All</option>
-              {whs.map((w) => (
-                <option key={w}>{w}</option>
-              ))}
-            </select>
-            <div className={`${label} mt-5`} style={{ color: "var(--ink-500)" }}>
-              Schema
-            </div>
-            <div className="mt-2 space-y-1.5">
-              {Array.from(schemaCounts.entries()).map(([s, n]) => (
-                <label key={s} className="flex items-center gap-2 text-[13px]" style={{ color: "var(--ink-700)" }}>
-                  <input type="checkbox" checked={schemas.has(s)} onChange={() => setSchemas((x) => toggle(x, s))} className="accent-[color:var(--brand-blue)]" />
-                  <span className="flex-1 truncate font-mono text-[12.5px]">{s}</span>
-                  <span className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-                    {n}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
-            {rows.map((a) => {
-              const on = picked.has(a.key);
-              const asset = assetOf(a.key).asset;
-              return (
-                <label
-                  key={a.key}
-                  className="flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5"
-                  style={{ borderColor: on ? "rgba(67,134,250,0.35)" : "var(--hairline)", background: on ? "rgba(67,134,250,0.05)" : "white" }}
-                >
-                  <input type="checkbox" checked={on} onChange={() => setPicked((s) => toggle(s, a.key))} className="h-4 w-4 accent-[color:var(--brand-blue)]" />
-                  <span className="inline-flex h-4 w-4 items-center justify-center">
-                    <SourceLogo source={a.warehouse} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-mono text-[13.5px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                      {a.name}
-                    </span>
-                    <span className="block truncate text-[12px]" style={{ color: "var(--ink-500)" }}>
-                      {a.warehouse} › {a.connection} › {a.schema}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-right text-[12px]" style={{ color: "var(--ink-500)" }}>
-                    {asset && (
-                      <>
-                        <span className="block">{formatRows(asset.rows)} rows</span>
-                        <span className="block">{relativeTime(asset.lastSyncedISO)}</span>
-                      </>
-                    )}
-                  </span>
-                </label>
-              );
-            })}
-            {!rows.length && (
-              <p className="p-4 text-[13px]" style={{ color: "var(--ink-500)" }}>
-                No tables match.
-              </p>
-            )}
-          </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <Step1SelectData selected={picked} onToggle={(k) => setPicked((s) => toggle(s, k))} onClear={() => setPicked(new Set())} />
         </div>
         <div className="flex items-center gap-3 border-t px-6 py-3" style={{ borderColor: "var(--hairline)" }}>
           <span className="text-[13px]" style={{ color: "var(--ink-900)" }}>
