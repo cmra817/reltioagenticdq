@@ -789,6 +789,7 @@ export function AgenticAddAssetModal({
 
   const rail = (
     <aside className="flex h-full min-w-0 flex-1 flex-col border-r bg-white" style={{ borderColor: "var(--hairline)", width: narrow ? "100%" : undefined }}>
+      {header}
       <div className="flex items-center justify-between px-4 pt-3 text-[12px] font-medium" style={{ color: "var(--ink-500)" }}>
         Assistant
         {!narrow && (
