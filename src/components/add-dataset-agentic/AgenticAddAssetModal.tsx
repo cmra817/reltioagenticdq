@@ -756,10 +756,12 @@ export function AgenticAddAssetModal({
   // ---- Conversation before drafting ----
   if (mode === "chat") {
     return (
-      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
-        {header()}
-        {chatBody}
-        <div className="mx-auto w-full max-w-[720px] px-5 pb-5">{composer("Answer, or tell me more…")}</div>
+      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
+        <Aurora />
+        <div className="relative z-10 shrink-0">{header()}</div>
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col">{chatBody}</div>
+        <div className="relative z-10 mx-auto w-full max-w-[720px] px-5 pb-5">{composer("Answer, or tell me more…")}</div>
+
       </div>
     );
   }
