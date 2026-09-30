@@ -11,7 +11,6 @@ export type Plan = {
   profiling: ScheduleConfig | null;
   checks: ScheduleConfig | null;
   linked: boolean;
-  timeZone: string | null;
 };
 
 export const EMPTY_PLAN: Plan = {
@@ -21,12 +20,7 @@ export const EMPTY_PLAN: Plan = {
   profiling: null,
   checks: null,
   linked: true,
-  timeZone: null,
 };
-
-export const RECOMMENDED_SCHEDULE: ScheduleConfig = { ...DEFAULT_SCHEDULE, frequency: "daily", time: "18:00" };
-export const RECOMMENDED_TZ = "ET";
-export const TIME_ZONES = ["ET", "CT", "MT", "PT", "UTC"];
 
 export function tableName(key: string) {
   const p = key.split("::");
