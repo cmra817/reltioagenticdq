@@ -220,10 +220,20 @@ function DomainPill() {
 
 function RecentChats() {
   const { threads } = useChatThreads();
+  const { sessions, resume } = useSetupSessions();
   // Threads come from localStorage, so only render after hydration to avoid SSR mismatch.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  if (!mounted || threads.length === 0) return null;
+  if (!mounted || (threads.length === 0 && sessions.length === 0)) return null;
+
+  const className =
+    "flex w-full items-center gap-2 truncate rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]";
+  const style = { color: "var(--ink-700)" };
+
+  const items = [
+    ...sessions.map((s) => ({ id: s.id, updatedAt: s.updatedAt, kind: "setup" as const, title: s.title })),
+    ...threads.map((t) => ({ id: t.id, updatedAt: t.updatedAt, kind: t.kind ?? "chat", title: t.title })),
+  ].sort((a, b) => b.updatedAt - a.updatedAt);
 
   return (
     <div className="mt-3 px-3">
@@ -234,40 +244,47 @@ function RecentChats() {
         Recent chats
       </div>
       <ul className="max-h-48 overflow-y-auto">
-        {threads.slice(0, 8).map((t) => {
-          const className =
-            "block truncate rounded-lg px-3 py-1.5 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]";
-          const style = { color: "var(--ink-700)" };
-          return (
-            <li key={t.id}>
-              {t.kind === "investigation" ? (
-                <Link
-                  to="/investigate/consistency"
-                  search={{ q: t.title, thread: t.id }}
-                  className={className}
-                  style={style}
-                  title={t.title}
-                >
-                  {t.title}
-                </Link>
-              ) : (
-                <Link
-                  to="/chat/$chatId"
-                  params={{ chatId: t.id }}
-                  className={className}
-                  style={style}
-                  title={t.title}
-                >
-                  {t.title}
-                </Link>
-              )}
-            </li>
-          );
-        })}
+        {items.slice(0, 8).map((t) => (
+          <li key={t.id}>
+            {t.kind === "setup" ? (
+              <button
+                type="button"
+                onClick={() => resume(t.id)}
+                className={className}
+                style={style}
+                title={t.title}
+              >
+                <DatabaseZap size={14} style={{ color: "var(--brand-blue)", flexShrink: 0 }} />
+                <span className="truncate">{t.title}</span>
+              </button>
+            ) : t.kind === "investigation" ? (
+              <Link
+                to="/investigate/consistency"
+                search={{ q: t.title, thread: t.id }}
+                className={className}
+                style={style}
+                title={t.title}
+              >
+                <span className="truncate">{t.title}</span>
+              </Link>
+            ) : (
+              <Link
+                to="/chat/$chatId"
+                params={{ chatId: t.id }}
+                className={className}
+                style={style}
+                title={t.title}
+              >
+                <span className="truncate">{t.title}</span>
+              </Link>
+            )}
+          </li>
+        ))}
       </ul>
     </div>
   );
 }
+
 
 function NewMenu() {
   const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
