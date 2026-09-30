@@ -691,7 +691,7 @@ export function AgenticAddAssetModal({
 
   const ring = (s: Section | "confirm") => (flash === s ? "0 0 0 3px rgba(67,134,250,0.35)" : "none");
 
-  const header = (
+  const header = (right?: React.ReactNode) => (
     <header className="flex h-14 shrink-0 items-center justify-between border-b bg-white px-5" style={{ borderColor: "var(--hairline)" }}>
       <div className="flex items-center gap-2 text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
         Add data asset
@@ -701,6 +701,7 @@ export function AgenticAddAssetModal({
           </span>
         )}
       </div>
+      {right}
     </header>
   );
 
@@ -708,7 +709,7 @@ export function AgenticAddAssetModal({
   if (mode === "chat" && msgs.length === 0) {
     return (
       <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
-        {header}
+        {header()}
         <div className="flex flex-1 items-center justify-center px-6">
           <div className="w-full max-w-[680px]">
             <h1 className="mb-2 text-center text-[28px] font-semibold" style={{ color: "var(--ink-900)" }}>
@@ -745,7 +746,7 @@ export function AgenticAddAssetModal({
   if (mode === "chat") {
     return (
       <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
-        {header}
+        {header()}
         {chatBody}
         <div className="mx-auto w-full max-w-[720px] px-5 pb-5">{composer("Answer, or tell me more…")}</div>
       </div>
@@ -789,15 +790,13 @@ export function AgenticAddAssetModal({
 
   const rail = (
     <aside className="flex h-full min-w-0 flex-1 flex-col border-r bg-white" style={{ borderColor: "var(--hairline)", width: narrow ? "100%" : undefined }}>
-      {header}
-      <div className="flex items-center justify-between px-4 pt-3 text-[12px] font-medium" style={{ color: "var(--ink-500)" }}>
-        Assistant
-        {!narrow && (
+      {header(
+        !narrow && (
           <button aria-label="Collapse chat" onClick={() => setRailOpen(false)} className="rounded p-1 hover:bg-[color:var(--surface-soft)]">
             <PanelLeftClose size={16} />
           </button>
-        )}
-      </div>
+        ),
+      )}
       {chatBody}
       <div className="px-4 pb-4">
         {composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}
