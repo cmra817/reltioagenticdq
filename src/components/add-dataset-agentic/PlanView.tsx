@@ -607,7 +607,6 @@ export function PlanView(p: Props) {
             if (parts.length) {
               onChange(next, `You ${parts.join(" and ")}.`);
               if (add.length) {
-                setOpenTables((s) => (next.selected.length <= 3 ? new Set([...s, ...add]) : s));
                 window.setTimeout(() => document.getElementById(`plan-row-${add[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
               }
             }
