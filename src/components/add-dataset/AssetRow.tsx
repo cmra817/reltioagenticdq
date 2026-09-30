@@ -69,7 +69,7 @@ export function AssetRow({
         transition: "background-color 600ms",
       }}
     >
-      <CheckSquare checked={locked || selected} muted={locked} />
+      <CheckSquare checked={locked || selected} muted={locked} label={locked ? "Selected" : undefined} />
       <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
         <SourceLogo source={warehouse} />
       </span>
