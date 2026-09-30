@@ -995,18 +995,7 @@ export function AgenticAddAssetModal({
           tab === "chat" ? rail : workspace
         ) : (
           <>
-            {railOpen ? (
-              rail
-            ) : (
-              <button
-                aria-label="Open chat"
-                onClick={() => setRailOpen(true)}
-                className="flex w-10 shrink-0 items-start justify-center pt-3"
-              >
-
-                <PanelLeftOpen size={16} />
-              </button>
-            )}
+            {railOpen && rail}
             {workspace}
           </>
         )}
