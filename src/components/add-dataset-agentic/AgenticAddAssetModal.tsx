@@ -707,7 +707,7 @@ export function AgenticAddAssetModal({
   // ---- First load: chat only ----
   if (mode === "chat" && msgs.length === 0) {
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: "var(--canvas)" }} role="dialog" aria-modal="true" aria-label="Add data asset">
+      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
         {header}
         <div className="flex flex-1 items-center justify-center px-6">
           <div className="w-full max-w-[680px]">
@@ -744,7 +744,7 @@ export function AgenticAddAssetModal({
   // ---- Conversation before drafting ----
   if (mode === "chat") {
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: "var(--canvas)" }} role="dialog" aria-modal="true" aria-label="Add data asset">
+      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
         {header}
         {chatBody}
         <div className="mx-auto w-full max-w-[720px] px-5 pb-5">{composer("Answer, or tell me more…")}</div>
@@ -793,7 +793,7 @@ export function AgenticAddAssetModal({
   );
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: "var(--canvas)" }} role="dialog" aria-modal="true" aria-label="Add data asset">
+    <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
       {header}
       {narrow && (
         <div className="flex shrink-0 border-b bg-white" style={{ borderColor: "var(--hairline)" }}>
