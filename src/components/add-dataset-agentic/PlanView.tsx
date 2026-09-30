@@ -896,14 +896,14 @@ function useFocusTrap(ref: React.RefObject<HTMLDivElement | null>) {
 }
 
 function AddTablesDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () => void; onDone: (add: string[], remove: string[]) => void }) {
-  const [picked, setPicked] = useState<Set<string>>(new Set(plan.selected));
+  const [picked, setPicked] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
   useFocusTrap(ref);
 
-  const orig = new Set(plan.selected);
-  const add = Array.from(picked).filter((k) => !orig.has(k));
-  const remove = plan.selected.filter((k) => !picked.has(k));
-  const dirty = add.length + remove.length > 0;
+  const locked = useMemo(() => new Set(plan.selected), [plan.selected]);
+  const add = Array.from(picked).filter((k) => !locked.has(k));
+  const remove: string[] = [];
+  const dirty = add.length > 0;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
