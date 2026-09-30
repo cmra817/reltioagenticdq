@@ -389,7 +389,7 @@ function SearchInput({
     >
       <Search
         size={16}
-        className="absolute left-4 top-1/2 -translate-y-1/2"
+        className="absolute left-3 top-1/2 -translate-y-1/2"
         style={{ color: "var(--ink-300)" }}
       />
       <input
