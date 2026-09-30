@@ -659,35 +659,46 @@ export function AgenticAddAssetModal({
         e.preventDefault();
         send();
       }}
-      className="relative rounded-2xl border bg-white p-2"
-      style={{ borderColor: "#E3E3F2" }}
+      className="flex flex-col items-start gap-2 rounded-2xl p-3"
+      style={{
+        background: "#E3E3F2",
+        boxSizing: "border-box",
+        minHeight: "112px",
+        border: "1px solid rgba(0, 0, 204, 0.14)",
+        boxShadow:
+          "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.5)",
+      }}
     >
-      <textarea
-        ref={inputRef}
-        autoFocus
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            send();
-          }
-        }}
-        rows={2}
-        placeholder={placeholder}
-        className="w-full resize-none bg-transparent px-2 py-1 pr-10 text-[14px] outline-none"
-        style={{ color: "var(--ink-900)" }}
-      />
-      <button
-        type="submit"
-        aria-label="Send"
-        className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-full text-white"
-        style={{ background: "var(--brand-blue)", opacity: input.trim() ? 1 : 0.5 }}
-      >
-        <ArrowUp size={16} />
-      </button>
+      <div className="flex w-full items-start gap-2">
+        <textarea
+          ref={inputRef}
+          autoFocus
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          }}
+          placeholder={placeholder}
+          className="min-h-[56px] flex-1 resize-none bg-transparent px-1 py-0.5 text-[13px] outline-none"
+          style={{ color: "var(--ink-900)" }}
+        />
+      </div>
+      <div className="flex w-full justify-end px-1 pb-1">
+        <button
+          type="submit"
+          aria-label="Send"
+          className="flex h-8 w-8 items-center justify-center rounded-full"
+          style={{ background: "var(--brand-blue)", color: "#fff" }}
+        >
+          <ArrowUp size={16} />
+        </button>
+      </div>
     </form>
   );
+
 
   const ring = (s: Section | "confirm") => (flash === s ? "0 0 0 3px rgba(67,134,250,0.35)" : "none");
 
@@ -708,9 +719,11 @@ export function AgenticAddAssetModal({
   // ---- First load: chat only ----
   if (mode === "chat" && msgs.length === 0) {
     return (
-      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
-        {header()}
-        <div className="flex flex-1 items-center justify-center px-6">
+      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
+        <Aurora />
+        <div className="relative z-10 shrink-0">{header()}</div>
+        <div className="relative z-10 flex flex-1 items-center justify-center px-6">
+
           <div className="w-full max-w-[680px]">
             <h1 className="mb-2 text-center text-[28px] font-semibold" style={{ color: "var(--ink-900)" }}>
               What data should we start watching?
@@ -745,10 +758,12 @@ export function AgenticAddAssetModal({
   // ---- Conversation before drafting ----
   if (mode === "chat") {
     return (
-      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
-        {header()}
-        {chatBody}
-        <div className="mx-auto w-full max-w-[720px] px-5 pb-5">{composer("Answer, or tell me more…")}</div>
+      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
+        <Aurora />
+        <div className="relative z-10 shrink-0">{header()}</div>
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col">{chatBody}</div>
+        <div className="relative z-10 mx-auto w-full max-w-[720px] px-5 pb-5">{composer("Answer, or tell me more…")}</div>
+
       </div>
     );
   }
@@ -757,7 +772,7 @@ export function AgenticAddAssetModal({
 
 
   const workspace = (
-    <div className={`flex min-h-0 min-w-0 flex-col overflow-hidden animate-in slide-in-from-right duration-300 motion-reduce:animate-none ${narrow ? "flex-1" : "w-[50vw] shrink-0"}`} style={{ background: "var(--canvas)" }}>
+    <div className={`flex min-h-0 min-w-0 flex-col overflow-hidden border-l animate-in slide-in-from-right duration-300 motion-reduce:animate-none ${narrow ? "flex-1" : "w-[50vw] shrink-0"}`} style={{ background: "#fff", borderColor: "var(--hairline)" }}>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <PlanView
           plan={plan}
@@ -789,25 +804,29 @@ export function AgenticAddAssetModal({
   );
 
   const rail = (
-    <aside className="flex h-full min-w-0 flex-1 flex-col border-r bg-white" style={{ borderColor: "var(--hairline)", width: narrow ? "100%" : undefined }}>
-      {header(
-        !narrow && (
-          <button aria-label="Collapse chat" onClick={() => setRailOpen(false)} className="rounded p-1 hover:bg-[color:var(--surface-soft)]">
-            <PanelLeftClose size={16} />
-          </button>
-        ),
-      )}
-      {chatBody}
-      <div className="px-4 pb-4">
+    <aside className="relative flex h-full min-w-0 flex-1 flex-col overflow-clip" style={{ width: narrow ? "100%" : undefined }}>
+      <Aurora />
+      <div className="relative z-10 shrink-0">
+        {header(
+          !narrow && (
+            <button aria-label="Collapse chat" onClick={() => setRailOpen(false)} className="rounded p-1 hover:bg-[color:var(--surface-soft)]">
+              <PanelLeftClose size={16} />
+            </button>
+          ),
+        )}
+      </div>
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">{chatBody}</div>
+      <div className="relative z-10 px-4 pb-4">
         {composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}
       </div>
     </aside>
   );
 
   return (
-    <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
+    <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col overflow-clip border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
+
       {narrow && (
-        <div className="flex shrink-0 border-b bg-white" style={{ borderColor: "var(--hairline)" }}>
+        <div className="relative z-10 flex shrink-0 border-b bg-white" style={{ borderColor: "var(--hairline)" }}>
           {(["chat", "plan"] as const).map((t) => (
             <button
               key={t}
@@ -820,7 +839,8 @@ export function AgenticAddAssetModal({
           ))}
         </div>
       )}
-      <div className="flex min-h-0 flex-1">
+      <div className="relative z-10 flex min-h-0 flex-1">
+
         {narrow ? (
           tab === "chat" ? rail : workspace
         ) : (
@@ -831,9 +851,9 @@ export function AgenticAddAssetModal({
               <button
                 aria-label="Open chat"
                 onClick={() => setRailOpen(true)}
-                className="flex w-10 shrink-0 items-start justify-center border-r bg-white pt-3"
-                style={{ borderColor: "var(--hairline)" }}
+                className="flex w-10 shrink-0 items-start justify-center pt-3"
               >
+
                 <PanelLeftOpen size={16} />
               </button>
             )}
@@ -861,6 +881,28 @@ function RichText({ text }: { text: string }) {
           <span key={i}>{p}</span>
         ),
       )}
+    </>
+  );
+}
+
+/** Same atmospheric background as the app shell / table detail page. */
+function Aurora() {
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "var(--gradient-aurora)" }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-40 right-0 h-[640px] w-[900px] rounded-full"
+        style={{
+          background:
+            "radial-gradient(closest-side, rgba(103,240,255,0.45), rgba(67,134,250,0.18) 55%, transparent 75%)",
+          filter: "blur(40px)",
+        }}
+      />
     </>
   );
 }
