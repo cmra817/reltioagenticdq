@@ -34,7 +34,6 @@ import {
   findSchema,
   findTables,
   parseSchedule,
-  parseTimeZone,
   type Question,
 } from "./agent-script";
 
