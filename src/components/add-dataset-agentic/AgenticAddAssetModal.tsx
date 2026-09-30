@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ArrowUp, Loader2, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { PlanView, hasKey, type PlanFilter, type Reveal, type RuleRequest } from "./PlanView";
 import { generateChecks, type Check } from "../add-dataset/mock-checks";
 import { AddDatasetModal, type AddDatasetCompletion } from "../add-dataset/AddDatasetModal";
