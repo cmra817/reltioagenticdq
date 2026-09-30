@@ -555,6 +555,7 @@ function SearchBody({
                     selected={selected.has(k)}
                     onToggle={() => onToggle(k)}
                     highlight={query}
+                    locked={lockedKeys?.has(k)}
                   />
                 );
               })}
