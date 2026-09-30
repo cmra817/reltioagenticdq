@@ -264,7 +264,7 @@ export function AgenticAddAssetModal({
     const schemas = Array.from(new Set(p.selected.map((k) => k.split("::")[1])));
     const schemaShown = schemas.slice(0, 4);
     const dims = dimensionsInUse(p);
-    const sched = scheduleLabel(p.profiling ?? RECOMMENDED_SCHEDULE, p.timeZone ?? RECOMMENDED_TZ);
+    const sched = scheduleLabel(p.profiling ?? RECOMMENDED_SCHEDULE);
     return (
       `Here's what I'd set up:\n` +
       `**Tables (${names.length})** ${shown.map((n) => `\`${n}\``).join(", ")}${names.length > shown.length ? ` + ${names.length - shown.length} more` : ""} — ${whs.join(", ")} · ${schemaShown.join(", ")}${schemas.length > schemaShown.length ? ` + ${schemas.length - schemaShown.length} more` : ""}\n` +
