@@ -291,10 +291,10 @@ function NewMenu() {
   const { runJob } = useNotifications();
   const { addAssets } = useCreatedAssets();
   const { createThread } = useChatThreads();
+  const setup = useSetupSessions();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [domainOpen, setDomainOpen] = useState(false);
-  const [agenticOpen, setAgenticOpen] = useState(false);
   const [datasetOpen, setDatasetOpen] = useState(false);
   const [pendingDomain, setPendingDomain] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
