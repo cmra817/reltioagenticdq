@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ArrowUp, Loader2, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { PlanView, hasKey, type PlanFilter, type Reveal, type RuleRequest } from "./PlanView";
 import { generateChecks, type Check } from "../add-dataset/mock-checks";
 import { AddDatasetModal, type AddDatasetCompletion } from "../add-dataset/AddDatasetModal";
@@ -103,6 +103,7 @@ export function AgenticAddAssetModal({
   const [filled, setFilled] = useState(3);
   const [flash, setFlash] = useState<Section | "confirm" | null>(null);
   const [railOpen, setRailOpen] = useState(true);
+  const [seenUpTo, setSeenUpTo] = useState(0);
   const [tab, setTab] = useState<"chat" | "plan">("chat");
   const [input, setInput] = useState("");
   const [done, setDone] = useState<string | null>(null);
@@ -822,7 +823,9 @@ export function AgenticAddAssetModal({
 
   const collapsed = !railOpen && !narrow;
   const lastUser = [...msgs].reverse().find((m) => m.role === "user");
+  const lastAgent = [...msgs].reverse().find((m) => m.role === "agent");
   const showAsk = collapsed && thinking && !!lastUser;
+  const showReply = collapsed && !thinking && !!lastAgent && lastAgent!.id > seenUpTo;
 
   const pill = (
     <div className="pointer-events-none absolute inset-x-0 bottom-[68px] z-30 flex justify-center px-6">
@@ -840,6 +843,33 @@ export function AgenticAddAssetModal({
               {lastUser!.text}
             </p>
           </div>
+        )}
+        {showReply && (
+          <button
+            type="button"
+            onClick={() => setRailOpen(true)}
+            className="mb-2 block w-full cursor-pointer rounded-2xl border p-3 text-left backdrop-blur-md"
+            style={{
+              background: "rgba(255,255,255,0.75)",
+              borderColor: "rgba(255,255,255,0.7)",
+              boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
+            }}
+          >
+            <div className="flex items-start gap-2">
+              <p className="max-h-20 flex-1 overflow-hidden text-[13px] leading-relaxed" style={{ color: "var(--ink-900)" }}>
+                {lastAgent!.text}
+              </p>
+              <span
+                role="button"
+                aria-label="Dismiss"
+                onClick={(e) => { e.stopPropagation(); setSeenUpTo(lastAgent!.id); }}
+                className="shrink-0 rounded p-0.5 hover:bg-[color:var(--surface-soft)]"
+                style={{ color: "var(--ink-500)" }}
+              >
+                <X size={13} />
+              </span>
+            </div>
+          </button>
         )}
         <form
           onSubmit={(e) => {
@@ -931,7 +961,7 @@ export function AgenticAddAssetModal({
       <div className="relative z-10 shrink-0">
         {header(
           !narrow && (
-            <button aria-label="Collapse chat" onClick={() => setRailOpen(false)} className="rounded p-1 hover:bg-[color:var(--surface-soft)]">
+            <button aria-label="Collapse chat" onClick={() => { setSeenUpTo(msgs.length ? msgs[msgs.length - 1].id : 0); setRailOpen(false); }} className="rounded p-1 hover:bg-[color:var(--surface-soft)]">
               <PanelLeftClose size={16} />
             </button>
           ),
