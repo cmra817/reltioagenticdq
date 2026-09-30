@@ -911,7 +911,7 @@ export function AgenticAddAssetModal({
   );
 
   const workspace = (
-    <div className={`relative flex min-h-0 min-w-0 flex-col overflow-hidden border-l animate-in slide-in-from-right duration-300 motion-reduce:animate-none ${narrow || !railOpen ? "flex-1" : "w-[50vw] shrink-0"}`} style={{ background: "#fff", borderColor: "var(--hairline)" }}>
+    <div className={`relative flex min-h-0 min-w-0 flex-col overflow-hidden border-l ${narrow || !railOpen ? "flex-1" : "w-[50vw] shrink-0"}`} style={{ background: "#fff", borderColor: "var(--hairline)" }}>
       {collapsed && (
         <div className="shrink-0 px-4 pt-3">
           <button
