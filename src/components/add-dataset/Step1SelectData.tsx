@@ -34,12 +34,15 @@ export function Step1SelectData({
   onToggle,
   onClear,
   flashKeys,
+  lockedKeys,
 }: {
   selected: Set<string>;
   onToggle: (key: string) => void;
   onClear: () => void;
   /** Optional: rows to briefly tint; the view jumps to the first one's schema. */
   flashKeys?: Set<string>;
+  /** Already in the job: shown as checked and not clickable here. */
+  lockedKeys?: Set<string>;
 }) {
   const [activeSchema, setActiveSchema] = useState<ActiveSchema>(null);
   const [query, setQuery] = useState("");
