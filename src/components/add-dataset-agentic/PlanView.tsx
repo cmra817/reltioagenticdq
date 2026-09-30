@@ -568,7 +568,6 @@ export function PlanView(p: Props) {
                   <ScheduleRow
                     title="DQ checks"
                     value={(plan.linked ? plan.profiling : plan.checks) ?? RECOMMENDED_SCHEDULE}
-                    tz={plan.timeZone ?? RECOMMENDED_TZ}
                     open={openSched === "checks"}
                     onToggle={() => setOpenSched(openSched === "checks" ? null : "checks")}
                     linked={plan.linked}
@@ -578,7 +577,7 @@ export function PlanView(p: Props) {
                         on ? "You set checks to run on the same schedule as profiling." : "You gave checks their own schedule.",
                       )
                     }
-                    onChange={(s, tz, what) => onChange({ ...plan, checks: s, linked: false, timeZone: tz }, `You changed checks to ${what}.`)}
+                    onChange={(s, what) => onChange({ ...plan, checks: s, linked: false }, `You changed checks to ${what}.`)}
                   />
                 )}
               </>
