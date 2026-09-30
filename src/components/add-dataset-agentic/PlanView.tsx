@@ -486,22 +486,6 @@ export function PlanView(p: Props) {
             </div>
           )}
 
-          {sel.size > 0 && (
-            <BulkBar
-              plan={plan}
-              sel={sel}
-              onClear={() => setSel(new Set())}
-              onChange={(next, line) => {
-                onChange(next, line);
-              }}
-              onRemoveTables={() => {
-                const ks = Array.from(sel);
-                onChange(withoutTables(plan, ks), `You removed ${ks.length} ${ks.length === 1 ? "table" : "tables"}.`);
-                setSel(new Set());
-              }}
-            />
-          )}
-
           <div className="mt-3 space-y-3">
             {stage < 1 ? (
               <div className="flex items-center gap-2 rounded-xl border bg-white px-4 py-5 text-[13px]" style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}>
