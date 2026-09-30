@@ -917,7 +917,7 @@ function AddTablesDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () =>
   }, [onClose]);
 
   return (
-    <div className="absolute inset-0 z-[40] flex items-center justify-center p-6 max-sm:fixed max-sm:p-0">
+    <div className="fixed inset-0 z-[40] flex items-center justify-center p-6 max-sm:p-0">
       <button type="button" tabIndex={-1} aria-label="Close" onClick={() => !dirty && onClose()} className="absolute inset-0 cursor-default" style={{ background: "rgba(15,23,42,0.35)" }} />
       <div
         ref={ref}
