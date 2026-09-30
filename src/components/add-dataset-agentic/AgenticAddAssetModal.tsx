@@ -260,13 +260,15 @@ export function AgenticAddAssetModal({
   /** State the plan in plain language and wait for a yes before drafting. */
   const proposeText = (p: Plan) => {
     const names = p.selected.map(tableName);
+    const shown = names.slice(0, 6);
     const whs = Array.from(new Set(p.selected.map((k) => assetOf(k).conn?.warehouse).filter(Boolean))) as string[];
     const schemas = Array.from(new Set(p.selected.map((k) => k.split("::")[1])));
+    const schemaShown = schemas.slice(0, 4);
     const dims = dimensionsInUse(p);
     const sched = scheduleLabel(p.profiling ?? RECOMMENDED_SCHEDULE, p.timeZone ?? RECOMMENDED_TZ);
     return (
       `Here's what I'd set up:\n` +
-      `**Tables (${names.length})** ${names.map((n) => `\`${n}\``).join(", ")} — ${whs.join(", ")} · ${schemas.join(", ")}\n` +
+      `**Tables (${names.length})** ${shown.map((n) => `\`${n}\``).join(", ")}${names.length > shown.length ? ` + ${names.length - shown.length} more` : ""} — ${whs.join(", ")} · ${schemaShown.join(", ")}${schemas.length > schemaShown.length ? ` + ${schemas.length - schemaShown.length} more` : ""}\n` +
       `**Checks** Recommended for each table — ${dims.join(", ")} (${checkTotal(p)} in total)\n` +
       `**Schedule** ${sched}${p.profiling ? "" : " (recommended)"}\n` +
       `Does that look right, or should I change something first?`

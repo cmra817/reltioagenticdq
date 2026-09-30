@@ -6,6 +6,8 @@ export const EXAMPLES = [
   "Monitor dim_customers and fct_orders_daily in Databricks, daily at 6pm",
   "Add the Snowflake tables with customer data",
   "Watch everything in prod_analytics",
+  "Monitor every table in Snowflake and Databricks, daily at 2am ET",
+  "Watch every table across all connections, daily at 2am ET",
 ];
 
 export const UNSUPPORTED_WAREHOUSES = ["redshift", "postgres", "oracle", "synapse"];
@@ -16,6 +18,12 @@ export function findTables(text: string): FlatAsset[] {
   if (byName.length) return byName;
   const schemas = Array.from(new Set(ALL_ASSETS.map((a) => a.schema))).filter((s) => t.includes(s.toLowerCase()));
   if (schemas.length) return ALL_ASSETS.filter((a) => schemas.includes(a.schema) && !a.name.startsWith("vw_"));
+  // Bulk cue ("all/every ... tables") plus named warehouses picks every table
+  // in those warehouses; with no warehouse named, all of them.
+  if (/all|every|everything|entire|whole/.test(t) && /tables?|connections?/.test(t)) {
+    const whs = ["snowflake", "databricks", "bigquery"].filter((w) => t.includes(w));
+    return ALL_ASSETS.filter((a) => !/^(vw|VW)_/.test(a.name) && (!whs.length || whs.includes(a.warehouse.toLowerCase())));
+  }
   if (/customer/.test(t)) {
     const wh = ["snowflake", "bigquery", "databricks"].find((w) => t.includes(w));
     return ALL_ASSETS.filter((a) => /customer|contact|account/.test(a.name) && (!wh || a.warehouse.toLowerCase() === wh)).slice(0, 4);
