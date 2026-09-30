@@ -703,7 +703,7 @@ export function AgenticAddAssetModal({
   const ring = (s: Section | "confirm") => (flash === s ? "0 0 0 3px rgba(67,134,250,0.35)" : "none");
 
   const header = (right?: React.ReactNode) => (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b px-5" style={{ borderColor: "var(--hairline)", background: "transparent" }}>
+    <header className="flex h-14 shrink-0 items-center justify-between px-5" style={{ background: "transparent" }}>
       <div className="flex items-center gap-2 text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
         Add data asset
         {domainName && (
