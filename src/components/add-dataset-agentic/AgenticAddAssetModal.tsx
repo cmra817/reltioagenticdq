@@ -227,8 +227,8 @@ export function AgenticAddAssetModal({
     }, ms);
   };
 
-  const startDrafting = (p: Plan, given: { schedule: boolean; tz: boolean } = { schedule: false, tz: false }) => {
-    const final = { ...p, timeZone: p.timeZone ?? RECOMMENDED_TZ, profiling: p.profiling ?? RECOMMENDED_SCHEDULE, checks: p.checks ?? p.profiling ?? RECOMMENDED_SCHEDULE };
+  const startDrafting = (p: Plan, given: { schedule: boolean } = { schedule: false }) => {
+    const final = { ...p, profiling: p.profiling ?? RECOMMENDED_SCHEDULE, checks: p.checks ?? p.profiling ?? RECOMMENDED_SCHEDULE };
     setPlanRaw(final);
     setMode("plan");
     setTab("plan");
@@ -239,8 +239,8 @@ export function AgenticAddAssetModal({
       const dims = dimensionsInUse(final).map((d) => d.toLowerCase());
       const dimText = dims.length > 1 ? `${dims.slice(0, -1).join(", ")} and ${dims[dims.length - 1]}` : dims[0] ?? "the recommended checks";
       const n = final.selected.length;
-      const defaulted = [!given.schedule && "schedule", !given.tz && "time zone"].filter(Boolean) as string[];
-      let text = `I'm monitoring ${n} ${n === 1 ? "table" : "tables"} in ${whs.join(" and ")} for ${dimText}, ${scheduleLabel(final.profiling, final.timeZone).replace(/^(\w)/, (m) => m.toLowerCase())}.`;
+      const defaulted = [!given.schedule && "schedule"].filter(Boolean) as string[];
+      let text = `I'm monitoring ${n} ${n === 1 ? "table" : "tables"} in ${whs.join(" and ")} for ${dimText}, ${scheduleLabel(final.profiling).replace(/^(\w)/, (m) => m.toLowerCase())}.`;
       if (defaulted.length) text += ` I used the recommended ${defaulted.join(" and ")}.`;
       const obs = observations(final);
       if (n > 10) text += `\nWith ${n} tables I'll stagger the runs a few minutes apart so they don't all hit the warehouse at once.`;
