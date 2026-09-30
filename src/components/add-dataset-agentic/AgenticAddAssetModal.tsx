@@ -701,30 +701,13 @@ export function AgenticAddAssetModal({
           </span>
         )}
       </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onOpenChange(false)}
-          className="h-9 rounded-full border px-4 text-[13px] font-medium"
-          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-        >
-          Cancel
-        </button>
-        <button
-          onClick={confirm}
-          disabled={!!done}
-          className="h-9 rounded-full px-4 text-[13px] font-medium text-white transition-shadow disabled:opacity-50"
-          style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
-        >
-          Complete setup
-        </button>
-      </div>
     </header>
   );
 
   // ---- First load: chat only ----
   if (mode === "chat" && msgs.length === 0) {
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: "var(--canvas)" }} role="dialog" aria-modal="true" aria-label="Add data asset">
+      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
         {header}
         <div className="flex flex-1 items-center justify-center px-6">
           <div className="w-full max-w-[680px]">
@@ -761,7 +744,7 @@ export function AgenticAddAssetModal({
   // ---- Conversation before drafting ----
   if (mode === "chat") {
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: "var(--canvas)" }} role="dialog" aria-modal="true" aria-label="Add data asset">
+      <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
         {header}
         {chatBody}
         <div className="mx-auto w-full max-w-[720px] px-5 pb-5">{composer("Answer, or tell me more…")}</div>
@@ -774,21 +757,33 @@ export function AgenticAddAssetModal({
 
   const workspace = (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden animate-in slide-in-from-right duration-300 motion-reduce:animate-none" style={{ background: "var(--canvas)" }}>
-      <PlanView
-        plan={plan}
-        stage={filled}
-        onChange={(next, line) => workspaceChange(next, line)}
-        flashKeys={rowFlash?.keys}
-        flashIds={rowFlash?.ids}
-        reveal={reveal}
-        ruleRequest={ruleRequest}
-        filter={filter}
-        onClearFilter={() => setFilter(null)}
-        onDialogChange={(o) => {
-          dialogOpenRef.current = o;
-        }}
-        pulseSchedule={flash === "schedule"}
-      />
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <PlanView
+          plan={plan}
+          stage={filled}
+          onChange={(next, line) => workspaceChange(next, line)}
+          flashKeys={rowFlash?.keys}
+          flashIds={rowFlash?.ids}
+          reveal={reveal}
+          ruleRequest={ruleRequest}
+          filter={filter}
+          onClearFilter={() => setFilter(null)}
+          onDialogChange={(o) => {
+            dialogOpenRef.current = o;
+          }}
+          pulseSchedule={flash === "schedule"}
+        />
+      </div>
+      <div className="flex shrink-0 items-center justify-end border-t bg-white px-5 py-3" style={{ borderColor: "var(--hairline)" }}>
+        <button
+          onClick={confirm}
+          disabled={!!done}
+          className="h-9 rounded-full px-4 text-[13px] font-medium text-white transition-shadow disabled:opacity-50"
+          style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
+        >
+          Complete setup
+        </button>
+      </div>
     </div>
   );
 
@@ -810,7 +805,7 @@ export function AgenticAddAssetModal({
   );
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: "var(--canvas)" }} role="dialog" aria-modal="true" aria-label="Add data asset">
+    <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
       {header}
       {narrow && (
         <div className="flex shrink-0 border-b bg-white" style={{ borderColor: "var(--hairline)" }}>
