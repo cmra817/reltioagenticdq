@@ -936,16 +936,17 @@ function AddTablesDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () =>
           </button>
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <Step1SelectData selected={picked} onToggle={(k) => setPicked((s) => toggle(s, k))} onClear={() => setPicked(new Set())} />
+          <Step1SelectData
+            selected={picked}
+            lockedKeys={locked}
+            onToggle={(k) => !locked.has(k) && setPicked((s) => toggle(s, k))}
+            onClear={() => setPicked(new Set())}
+          />
         </div>
         <div className="flex items-center gap-3 border-t px-6 py-3" style={{ borderColor: "var(--hairline)" }}>
           <span className="text-[13px]" style={{ color: "var(--ink-900)" }}>
-            <b>{picked.size}</b> in this job
-            {dirty && (
-              <span style={{ color: "var(--ink-500)" }}>
-                {" "}· +{add.length} −{remove.length}
-              </span>
-            )}
+            <b>{add.length}</b> {add.length === 1 ? "table" : "tables"} to add
+            <span style={{ color: "var(--ink-500)" }}> · {locked.size} already in this job</span>
           </span>
           <span className="hidden text-[12.5px] sm:inline" style={{ color: "var(--ink-500)" }}>
             Recommended checks are added to each new table.
@@ -954,8 +955,14 @@ function AddTablesDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () =>
             <button type="button" onClick={onClose} className="h-9 rounded-full border px-4 text-[13px]" style={{ borderColor: "var(--hairline)" }}>
               Cancel
             </button>
-            <button type="button" onClick={() => onDone(add, remove)} className="h-9 rounded-full px-5 text-[13px] font-medium text-white" style={{ background: "var(--brand-blue)" }}>
-              Done
+            <button
+              type="button"
+              disabled={!dirty}
+              onClick={() => onDone(add, remove)}
+              className="h-9 rounded-full px-5 text-[13px] font-medium text-white disabled:opacity-50"
+              style={{ background: "var(--brand-blue)" }}
+            >
+              Add tables
             </button>
           </div>
         </div>
