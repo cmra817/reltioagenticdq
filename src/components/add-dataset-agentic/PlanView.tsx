@@ -948,9 +948,6 @@ function AddTablesDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () =>
             <b>{add.length}</b> {add.length === 1 ? "table" : "tables"} to add
             <span style={{ color: "var(--ink-500)" }}> · {locked.size} already in this job</span>
           </span>
-          <span className="hidden text-[12.5px] sm:inline" style={{ color: "var(--ink-500)" }}>
-            Recommended checks are added to each new table.
-          </span>
           <div className="ml-auto flex gap-2">
             <button type="button" onClick={onClose} className="h-9 rounded-full border px-4 text-[13px]" style={{ borderColor: "var(--hairline)" }}>
               Cancel
