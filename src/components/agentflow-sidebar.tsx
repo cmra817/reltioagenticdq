@@ -438,14 +438,32 @@ function NewMenu() {
         }}
       />
       <AgenticAddAssetModal
-        open={agenticOpen}
+        key={setup.active?.id ?? "none"}
+        open={!!setup.active}
         onOpenChange={(o) => {
-          setAgenticOpen(o);
-          if (!o) setPendingDomain(null);
+          if (!o) {
+            setup.close();
+            setPendingDomain(null);
+          }
         }}
-        domainName={pendingDomain ?? selected}
+        domainName={setup.active?.domain || pendingDomain || selected}
+        snapshot={setup.active ? setup.getSession(setup.active.id)?.snapshot ?? null : null}
+        onPersist={(snapshot) => {
+          const a = setup.active;
+          if (!a) return;
+          const domain = a.domain || selected;
+          setup.saveSession({
+            id: a.id,
+            domain,
+            title: `Add asset: ${domain}`,
+            updatedAt: Date.now(),
+            snapshot,
+          });
+        }}
         onComplete={({ tables, checkCount, assets }) => {
-          completeConnection({ domain: pendingDomain ?? selected, tables, checkCount });
+          const domain = setup.active?.domain || pendingDomain || selected;
+          if (setup.active) setup.deleteSession(setup.active.id);
+          completeConnection({ domain, tables, checkCount });
           // Register the new assets so they appear in Explore with their checks + schedule.
           addAssets(assets);
           // Newly added datasets kick off profiling + DQ checks; notify on completion.
@@ -456,6 +474,7 @@ function NewMenu() {
           setPendingDomain(null);
         }}
       />
+
     </div>
   );
 }
