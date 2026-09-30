@@ -757,21 +757,33 @@ export function AgenticAddAssetModal({
 
   const workspace = (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden animate-in slide-in-from-right duration-300 motion-reduce:animate-none" style={{ background: "var(--canvas)" }}>
-      <PlanView
-        plan={plan}
-        stage={filled}
-        onChange={(next, line) => workspaceChange(next, line)}
-        flashKeys={rowFlash?.keys}
-        flashIds={rowFlash?.ids}
-        reveal={reveal}
-        ruleRequest={ruleRequest}
-        filter={filter}
-        onClearFilter={() => setFilter(null)}
-        onDialogChange={(o) => {
-          dialogOpenRef.current = o;
-        }}
-        pulseSchedule={flash === "schedule"}
-      />
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <PlanView
+          plan={plan}
+          stage={filled}
+          onChange={(next, line) => workspaceChange(next, line)}
+          flashKeys={rowFlash?.keys}
+          flashIds={rowFlash?.ids}
+          reveal={reveal}
+          ruleRequest={ruleRequest}
+          filter={filter}
+          onClearFilter={() => setFilter(null)}
+          onDialogChange={(o) => {
+            dialogOpenRef.current = o;
+          }}
+          pulseSchedule={flash === "schedule"}
+        />
+      </div>
+      <div className="flex shrink-0 items-center justify-end border-t bg-white px-5 py-3" style={{ borderColor: "var(--hairline)" }}>
+        <button
+          onClick={confirm}
+          disabled={!!done}
+          className="h-9 rounded-full px-4 text-[13px] font-medium text-white transition-shadow disabled:opacity-50"
+          style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
+        >
+          Complete setup
+        </button>
+      </div>
     </div>
   );
 
