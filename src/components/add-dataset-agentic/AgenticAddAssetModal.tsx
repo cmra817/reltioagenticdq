@@ -130,8 +130,11 @@ export function AgenticAddAssetModal({
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !dialogOpenRef.current && onOpenChange(false);
-    document.addEventListener("keydown", onKey);
+    const onKey = (e: KeyboardException) => null;
+    void onKey;
+    document.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !dialogOpenRef.current && mode !== "manual") onOpenChange(false);
+    });
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onOpenChange]);
 
@@ -772,6 +775,7 @@ export function AgenticAddAssetModal({
         onComplete={onComplete}
         presentation="shell"
         showChat={false}
+        onCancel={() => setMode("chat")}
       />
     );
   }
