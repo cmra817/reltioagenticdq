@@ -7,7 +7,6 @@ import {
   ALL_ASSETS,
   EMPTY_PLAN,
   RECOMMENDED_SCHEDULE,
-  RECOMMENDED_TZ,
   buildAssets,
   checkTotal,
   assetOf,
