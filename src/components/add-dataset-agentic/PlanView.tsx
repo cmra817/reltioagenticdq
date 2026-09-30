@@ -152,11 +152,10 @@ export function PlanView(p: Props) {
   const openerRef = useRef<HTMLElement | null>(null);
   const initRef = useRef(false);
 
-  // Default expansion once drafting has produced tables.
+  // Tables start collapsed; connection groups stay expanded so every table is visible.
   useEffect(() => {
     if (initRef.current || stage < 1 || plan.selected.length === 0) return;
     initRef.current = true;
-    if (plan.selected.length <= 3) setOpenTables(new Set(plan.selected));
   }, [stage, plan.selected]);
 
   useEffect(() => {
