@@ -40,6 +40,8 @@ import {
 
 
 type Section = "select" | "checks" | "schedule";
+import type { SetupSnapshot } from "./setup-sessions";
+
 type Msg = {
   id: number;
   role: "user" | "agent" | "note";
