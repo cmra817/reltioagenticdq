@@ -691,7 +691,7 @@ export function AgenticAddAssetModal({
 
   const ring = (s: Section | "confirm") => (flash === s ? "0 0 0 3px rgba(67,134,250,0.35)" : "none");
 
-  const header = (
+  const header = (right?: React.ReactNode) => (
     <header className="flex h-14 shrink-0 items-center justify-between border-b bg-white px-5" style={{ borderColor: "var(--hairline)" }}>
       <div className="flex items-center gap-2 text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
         Add data asset
@@ -701,6 +701,7 @@ export function AgenticAddAssetModal({
           </span>
         )}
       </div>
+      {right}
     </header>
   );
 
@@ -708,7 +709,7 @@ export function AgenticAddAssetModal({
   if (mode === "chat" && msgs.length === 0) {
     return (
       <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
-        {header}
+        {header()}
         <div className="flex flex-1 items-center justify-center px-6">
           <div className="w-full max-w-[680px]">
             <h1 className="mb-2 text-center text-[28px] font-semibold" style={{ color: "var(--ink-900)" }}>
@@ -745,7 +746,7 @@ export function AgenticAddAssetModal({
   if (mode === "chat") {
     return (
       <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
-        {header}
+        {header()}
         {chatBody}
         <div className="mx-auto w-full max-w-[720px] px-5 pb-5">{composer("Answer, or tell me more…")}</div>
       </div>
