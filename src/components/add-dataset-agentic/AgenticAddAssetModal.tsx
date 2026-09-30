@@ -823,7 +823,9 @@ export function AgenticAddAssetModal({
 
   const collapsed = !railOpen && !narrow;
   const lastUser = [...msgs].reverse().find((m) => m.role === "user");
+  const lastAgent = [...msgs].reverse().find((m) => m.role === "agent");
   const showAsk = collapsed && thinking && !!lastUser;
+  const showReply = collapsed && !thinking && !!lastAgent && lastAgent!.id > seenUpTo;
 
   const pill = (
     <div className="pointer-events-none absolute inset-x-0 bottom-[68px] z-30 flex justify-center px-6">
