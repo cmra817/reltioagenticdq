@@ -7,7 +7,6 @@ import {
   ALL_ASSETS,
   EMPTY_PLAN,
   RECOMMENDED_SCHEDULE,
-  RECOMMENDED_TZ,
   buildAssets,
   checkTotal,
   assetOf,
@@ -34,7 +33,6 @@ import {
   findSchema,
   findTables,
   parseSchedule,
-  parseTimeZone,
   type Question,
 } from "./agent-script";
 
@@ -228,8 +226,8 @@ export function AgenticAddAssetModal({
     }, ms);
   };
 
-  const startDrafting = (p: Plan, given: { schedule: boolean; tz: boolean } = { schedule: false, tz: false }) => {
-    const final = { ...p, timeZone: p.timeZone ?? RECOMMENDED_TZ, profiling: p.profiling ?? RECOMMENDED_SCHEDULE, checks: p.checks ?? p.profiling ?? RECOMMENDED_SCHEDULE };
+  const startDrafting = (p: Plan, given: { schedule: boolean } = { schedule: false }) => {
+    const final = { ...p, profiling: p.profiling ?? RECOMMENDED_SCHEDULE, checks: p.checks ?? p.profiling ?? RECOMMENDED_SCHEDULE };
     setPlanRaw(final);
     setMode("plan");
     setTab("plan");
@@ -240,8 +238,8 @@ export function AgenticAddAssetModal({
       const dims = dimensionsInUse(final).map((d) => d.toLowerCase());
       const dimText = dims.length > 1 ? `${dims.slice(0, -1).join(", ")} and ${dims[dims.length - 1]}` : dims[0] ?? "the recommended checks";
       const n = final.selected.length;
-      const defaulted = [!given.schedule && "schedule", !given.tz && "time zone"].filter(Boolean) as string[];
-      let text = `I'm monitoring ${n} ${n === 1 ? "table" : "tables"} in ${whs.join(" and ")} for ${dimText}, ${scheduleLabel(final.profiling, final.timeZone).replace(/^(\w)/, (m) => m.toLowerCase())}.`;
+      const defaulted = [!given.schedule && "schedule"].filter(Boolean) as string[];
+      let text = `I'm monitoring ${n} ${n === 1 ? "table" : "tables"} in ${whs.join(" and ")} for ${dimText}, ${scheduleLabel(final.profiling).replace(/^(\w)/, (m) => m.toLowerCase())}.`;
       if (defaulted.length) text += ` I used the recommended ${defaulted.join(" and ")}.`;
       const obs = observations(final);
       if (n > 10) text += `\nWith ${n} tables I'll stagger the runs a few minutes apart so they don't all hit the warehouse at once.`;
@@ -265,7 +263,7 @@ export function AgenticAddAssetModal({
     const schemas = Array.from(new Set(p.selected.map((k) => k.split("::")[1])));
     const schemaShown = schemas.slice(0, 4);
     const dims = dimensionsInUse(p);
-    const sched = scheduleLabel(p.profiling ?? RECOMMENDED_SCHEDULE, p.timeZone ?? RECOMMENDED_TZ);
+    const sched = scheduleLabel(p.profiling ?? RECOMMENDED_SCHEDULE);
     return (
       `Here's what I'd set up:\n` +
       `**Tables (${names.length})** ${shown.map((n) => `\`${n}\``).join(", ")}${names.length > shown.length ? ` + ${names.length - shown.length} more` : ""} — ${whs.join(", ")} · ${schemaShown.join(", ")}${schemas.length > schemaShown.length ? ` + ${schemas.length - schemaShown.length} more` : ""}\n` +
@@ -288,7 +286,7 @@ export function AgenticAddAssetModal({
       if (PROPOSAL_YES.test(t)) {
         setProposal(null);
         push({ role: "agent", text: "Setting it up now." });
-        return startDrafting(base, { schedule: !!base.profiling, tz: !!base.timeZone });
+        return startDrafting(base, { schedule: !!base.profiling });
       }
       if (/^change the schedule/.test(t))
         return push({ role: "agent", text: "How often should it run, and at what time? For example \"weekly on Monday at 7am\"." });
@@ -298,14 +296,9 @@ export function AgenticAddAssetModal({
       let p = base;
       const changed: string[] = [];
       const sched = parseSchedule(text);
-      const tz = parseTimeZone(text);
       if (sched) {
         p = { ...p, profiling: sched, checks: sched };
         changed.push("schedule");
-      }
-      if (tz) {
-        p = { ...p, timeZone: tz };
-        changed.push("time zone");
       }
       const removing = /\b(remove|drop|delete|exclude|without)\b/.test(t);
       const schema = /schema|everything in|all of/.test(t) ? findSchema(t) : null;
@@ -356,7 +349,7 @@ export function AgenticAddAssetModal({
       const s = parseSchedule(answer) ?? RECOMMENDED_SCHEDULE;
       return { ...p, profiling: s, checks: s, linked: true };
     }
-    return { ...p, timeZone: parseTimeZone(answer) ?? RECOMMENDED_TZ };
+    return p;
   };
 
   const answerQuestion = (answer: string) => {
@@ -391,8 +384,6 @@ export function AgenticAddAssetModal({
     let p = found.length ? withTables(EMPTY_PLAN, found.map((f) => f.key)) : EMPTY_PLAN;
     const sched = parseSchedule(text);
     if (sched) p = { ...p, profiling: sched, checks: sched };
-    const tz = parseTimeZone(text);
-    if (tz) p = { ...p, timeZone: tz };
     setPlanRaw(p);
     // No questions about checks, schedule, or time zone — the plan uses the
     // recommended checks and schedule by default. Only ask when the tables
@@ -543,14 +534,12 @@ export function AgenticAddAssetModal({
         return chatChange(withTables(plan, keys), `Added ${keys.length} ${keys.length === 1 ? "table" : "tables"}: ${keys.map(tableName).join(", ")}.`, "select", { keys: new Set(keys) });
       }
       const sched = parseSchedule(t);
-      const tz = parseTimeZone(text);
-      if (sched || tz) {
+      if (sched) {
         const next: Plan = {
           ...plan,
           ...(sched ? (/check/.test(t) && !/profil/.test(t) ? { checks: sched, linked: false } : { profiling: sched, checks: plan.linked ? sched : plan.checks }) : {}),
-          ...(tz ? { timeZone: tz } : {}),
         };
-        return chatChange(next, `Schedule is now ${scheduleLabel(next.profiling, next.timeZone)}.`, "schedule");
+        return chatChange(next, `Schedule is now ${scheduleLabel(next.profiling)}.`, "schedule");
       }
       if (/which|what|missing|unused|stale/.test(t)) {
         return push({

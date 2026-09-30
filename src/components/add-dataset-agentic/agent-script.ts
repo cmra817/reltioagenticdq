@@ -62,18 +62,8 @@ export function parseSchedule(text: string): ScheduleConfig | null {
   };
 }
 
-export function parseTimeZone(text: string): string | null {
-  const m = text.toUpperCase().match(/\b(ET|EST|EDT|CT|MT|PT|PST|PDT|UTC|GMT)\b/);
-  if (!m) return null;
-  const v = m[1];
-  if (v.startsWith("E")) return "ET";
-  if (v.startsWith("P")) return "PT";
-  if (v === "GMT") return "UTC";
-  return v;
-}
-
 export type Question = {
-  id: "tables" | "checks" | "schedule" | "tz";
+  id: "tables" | "checks" | "schedule";
   text: string;
   options: { label: string; recommended?: boolean }[];
 };
@@ -103,11 +93,6 @@ export const Q_SCHEDULE: Question = {
     { label: "Every 6 hours" },
     { label: "Weekly on Monday" },
   ],
-};
-export const Q_TZ: Question = {
-  id: "tz",
-  text: "Which time zone should the schedule use?",
-  options: [{ label: "ET", recommended: true }, { label: "PT" }, { label: "UTC" }],
 };
 
 export const CONFIRM_WORDS = /^(go ahead|confirm|create( it)?|do it|ship it|yes,? create|finish|looks good,? create)/;

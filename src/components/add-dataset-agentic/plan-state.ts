@@ -11,7 +11,6 @@ export type Plan = {
   profiling: ScheduleConfig | null;
   checks: ScheduleConfig | null;
   linked: boolean;
-  timeZone: string | null;
 };
 
 export const EMPTY_PLAN: Plan = {
@@ -21,12 +20,9 @@ export const EMPTY_PLAN: Plan = {
   profiling: null,
   checks: null,
   linked: true,
-  timeZone: null,
 };
 
 export const RECOMMENDED_SCHEDULE: ScheduleConfig = { ...DEFAULT_SCHEDULE, frequency: "daily", time: "18:00" };
-export const RECOMMENDED_TZ = "ET";
-export const TIME_ZONES = ["ET", "CT", "MT", "PT", "UTC"];
 
 export function tableName(key: string) {
   const p = key.split("::");
@@ -72,17 +68,15 @@ export function to12h(t?: string) {
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${ap}`;
 }
 
-export function scheduleLabel(s: ScheduleConfig | null, tz: string | null) {
+export function scheduleLabel(s: ScheduleConfig | null) {
   if (!s) return "Not set";
-  const base =
-    s.frequency === "weekly"
-      ? `Weekly on ${s.day ?? "Monday"}s at ${to12h(s.time)}`
-      : s.frequency === "daily"
-        ? `Daily at ${to12h(s.time)}`
-        : s.frequency === "custom" && s.repeatUnit === "hours"
-          ? s.repeatEvery === 1 ? "Every hour" : `Every ${s.repeatEvery} hours`
-          : frequencyLabel(s);
-  return tz ? `${base} ${tz}` : base;
+  return s.frequency === "weekly"
+    ? `Weekly on ${s.day ?? "Monday"}s at ${to12h(s.time)}`
+    : s.frequency === "daily"
+      ? `Daily at ${to12h(s.time)}`
+      : s.frequency === "custom" && s.repeatUnit === "hours"
+        ? s.repeatEvery === 1 ? "Every hour" : `Every ${s.repeatEvery} hours`
+        : frequencyLabel(s);
 }
 
 export function connectionSummary(plan: Plan) {
@@ -102,10 +96,6 @@ export function finalize(plan: Plan): { plan: Plan; defaults: string[] } {
   if (!p.checks) {
     p = { ...p, checks: p.linked ? p.profiling : RECOMMENDED_SCHEDULE };
     defaults.push("DQ checks schedule: same as profiling");
-  }
-  if (!p.timeZone) {
-    p = { ...p, timeZone: RECOMMENDED_TZ };
-    defaults.push("time zone: ET");
   }
   return { plan: p, defaults };
 }

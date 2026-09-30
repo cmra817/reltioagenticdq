@@ -11,8 +11,6 @@ import { DEFAULT_SCHEDULE, type ScheduleConfig } from "../add-dataset/Step3Sched
 import {
   ALL_ASSETS,
   RECOMMENDED_SCHEDULE,
-  RECOMMENDED_TZ,
-  TIME_ZONES,
   assetOf,
   keptChecks,
   scheduleLabel,
@@ -550,11 +548,10 @@ export function PlanView(p: Props) {
                 <ScheduleRow
                   title="Profiling"
                   value={plan.profiling ?? RECOMMENDED_SCHEDULE}
-                  tz={plan.timeZone ?? RECOMMENDED_TZ}
                   open={openSched === "profiling"}
                   onToggle={() => setOpenSched(openSched === "profiling" ? null : "profiling")}
-                  onChange={(s, tz, what) =>
-                    onChange({ ...plan, profiling: s, checks: plan.linked ? s : plan.checks, timeZone: tz }, `You changed profiling to ${what}.`)
+                  onChange={(s, what) =>
+                    onChange({ ...plan, profiling: s, checks: plan.linked ? s : plan.checks }, `You changed profiling to ${what}.`)
                   }
                 />
                 <div className="border-t" style={{ borderColor: "var(--hairline)" }} />
@@ -571,7 +568,6 @@ export function PlanView(p: Props) {
                   <ScheduleRow
                     title="DQ checks"
                     value={(plan.linked ? plan.profiling : plan.checks) ?? RECOMMENDED_SCHEDULE}
-                    tz={plan.timeZone ?? RECOMMENDED_TZ}
                     open={openSched === "checks"}
                     onToggle={() => setOpenSched(openSched === "checks" ? null : "checks")}
                     linked={plan.linked}
@@ -581,7 +577,7 @@ export function PlanView(p: Props) {
                         on ? "You set checks to run on the same schedule as profiling." : "You gave checks their own schedule.",
                       )
                     }
-                    onChange={(s, tz, what) => onChange({ ...plan, checks: s, linked: false, timeZone: tz }, `You changed checks to ${what}.`)}
+                    onChange={(s, what) => onChange({ ...plan, checks: s, linked: false }, `You changed checks to ${what}.`)}
                   />
                 )}
               </>
@@ -784,7 +780,6 @@ function AddCheckInline({
 function ScheduleRow({
   title,
   value,
-  tz,
   open,
   onToggle,
   onChange,
@@ -793,18 +788,17 @@ function ScheduleRow({
 }: {
   title: string;
   value: ScheduleConfig;
-  tz: string;
   open: boolean;
   onToggle: () => void;
-  onChange: (s: ScheduleConfig, tz: string, what: string) => void;
+  onChange: (s: ScheduleConfig, what: string) => void;
   linked?: boolean;
   onLink?: (on: boolean) => void;
 }) {
   const disabled = !!linked;
   const freqValue = value.frequency === "custom" && value.repeatUnit === "hours" ? "1h" : value.frequency;
-  const set = (patch: Partial<ScheduleConfig>, nextTz = tz) => {
+  const set = (patch: Partial<ScheduleConfig>) => {
     const s = { ...value, ...patch };
-    onChange(s, nextTz, scheduleLabel(s, nextTz).replace(/^(\w)/, (m) => m.toLowerCase()));
+    onChange(s, scheduleLabel(s).replace(/^(\w)/, (m) => m.toLowerCase()));
   };
   const field = "h-9 rounded-lg border bg-white px-2.5 text-[13px] disabled:opacity-50";
   return (
@@ -815,7 +809,7 @@ function ScheduleRow({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[14px] font-medium" style={{ color: "var(--ink-900)" }}>
-            {scheduleLabel(value, tz)}
+            {scheduleLabel(value)}
           </span>
           <span className="block text-[12px]" style={{ color: "var(--ink-500)" }}>
             {nextRun(value)}
@@ -868,14 +862,6 @@ function ScheduleRow({
                 <input type="time" disabled={disabled} value={value.time ?? "18:00"} onChange={(e) => set({ time: e.target.value })} className={field} style={{ borderColor: "var(--hairline)" }} />
               </label>
             )}
-            <label className="flex flex-col gap-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
-              Time zone
-              <select disabled={disabled} value={tz} onChange={(e) => set({}, e.target.value)} className={field} style={{ borderColor: "var(--hairline)" }}>
-                {TIME_ZONES.map((z) => (
-                  <option key={z}>{z}</option>
-                ))}
-              </select>
-            </label>
           </div>
         </div>
       )}
