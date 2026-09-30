@@ -11,8 +11,6 @@ import { DEFAULT_SCHEDULE, type ScheduleConfig } from "../add-dataset/Step3Sched
 import {
   ALL_ASSETS,
   RECOMMENDED_SCHEDULE,
-  RECOMMENDED_TZ,
-  TIME_ZONES,
   assetOf,
   keptChecks,
   scheduleLabel,
