@@ -548,11 +548,10 @@ export function PlanView(p: Props) {
                 <ScheduleRow
                   title="Profiling"
                   value={plan.profiling ?? RECOMMENDED_SCHEDULE}
-                  tz={plan.timeZone ?? RECOMMENDED_TZ}
                   open={openSched === "profiling"}
                   onToggle={() => setOpenSched(openSched === "profiling" ? null : "profiling")}
-                  onChange={(s, tz, what) =>
-                    onChange({ ...plan, profiling: s, checks: plan.linked ? s : plan.checks, timeZone: tz }, `You changed profiling to ${what}.`)
+                  onChange={(s, what) =>
+                    onChange({ ...plan, profiling: s, checks: plan.linked ? s : plan.checks }, `You changed profiling to ${what}.`)
                   }
                 />
                 <div className="border-t" style={{ borderColor: "var(--hairline)" }} />
