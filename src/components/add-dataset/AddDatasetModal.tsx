@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { Stepper } from "./Stepper";
 import { Step1SelectData } from "./Step1SelectData";
 import { Step2ApplyChecks } from "./Step2ApplyChecks";
@@ -43,6 +44,7 @@ export function AddDatasetModal({
   onCancel?: () => void;
 }) {
   const [step, setStep] = useState(0);
+  const navigate = useNavigate();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [profilingSchedule, setProfilingSchedule] = useState<ScheduleConfig>(DEFAULT_SCHEDULE);
   const [checksSchedule, setChecksSchedule] = useState<ScheduleConfig>(DEFAULT_SCHEDULE);
@@ -163,6 +165,7 @@ export function AddDatasetModal({
       }
       onComplete?.({ tables, checkCount, assets });
       onOpenChange(false);
+      navigate({ to: "/data-health" });
     } else {
       setStep((s) => s + 1);
     }
