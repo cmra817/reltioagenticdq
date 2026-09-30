@@ -17,7 +17,8 @@ import { AgenticAddAssetModal } from "./add-dataset-agentic/AgenticAddAssetModal
 import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
 import { newChatId, useChatThreads } from "./chat/chat-context";
-import { MessageSquarePlus } from "lucide-react";
+import { useSetupSessions } from "./add-dataset-agentic/setup-sessions";
+import { DatabaseZap, MessageSquarePlus } from "lucide-react";
 
 function NavItem({
   icon,
