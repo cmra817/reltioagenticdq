@@ -385,11 +385,11 @@ function SearchInput({
   return (
     <div
       className="relative transition-all duration-200"
-      style={{ width: large ? 520 : "100%", maxWidth: large ? 520 : 640 }}
+      style={{ width: large ? 380 : "100%", maxWidth: large ? 380 : 640 }}
     >
       <Search
         size={16}
-        className="absolute left-4 top-1/2 -translate-y-1/2"
+        className="absolute left-3 top-1/2 -translate-y-1/2"
         style={{ color: "var(--ink-300)" }}
       />
       <input
@@ -397,11 +397,11 @@ function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search tables across all connections"
-        className="w-full rounded-xl border bg-white pl-11 pr-4 text-[14px] outline-none transition-shadow focus:shadow-[0_0_0_3px_rgba(67,134,250,0.15)]"
+        className="w-full rounded-lg border bg-white pl-9 pr-4 text-[13px] outline-none transition-shadow focus:shadow-[0_0_0_3px_rgba(67,134,250,0.15)]"
         style={{
           borderColor: "var(--hairline)",
           color: "var(--ink-900)",
-          height: large ? 48 : 40,
+          height: large ? 38 : 40,
         }}
       />
     </div>
