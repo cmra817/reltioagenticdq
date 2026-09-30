@@ -756,7 +756,7 @@ export function AgenticAddAssetModal({
 
 
   const workspace = (
-    <div className="flex min-h-0 w-[50vw] min-w-0 shrink-0 flex-col overflow-hidden animate-in slide-in-from-right duration-300 motion-reduce:animate-none" style={{ background: "var(--canvas)" }}>
+    <div className={`flex min-h-0 min-w-0 flex-col overflow-hidden animate-in slide-in-from-right duration-300 motion-reduce:animate-none ${narrow ? "flex-1" : "w-[50vw] shrink-0"}`} style={{ background: "var(--canvas)" }}>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <PlanView
           plan={plan}
