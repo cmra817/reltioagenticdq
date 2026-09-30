@@ -101,7 +101,9 @@ export function AppShell(props: {
     <SidebarProvider>
       <DomainProvider>
         <ChatProvider>
-          <AppShellInner {...props} />
+          <SetupSessionProvider>
+            <AppShellInner {...props} />
+          </SetupSessionProvider>
         </ChatProvider>
       </DomainProvider>
     </SidebarProvider>
