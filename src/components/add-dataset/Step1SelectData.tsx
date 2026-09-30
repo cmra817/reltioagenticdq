@@ -464,6 +464,7 @@ function BrowseBody({
               selected={selected.has(k)}
               onToggle={() => onToggle(k)}
               flash={flashKeys?.has(k)}
+              locked={lockedKeys?.has(k)}
             />
           );
         })}
@@ -479,6 +480,7 @@ function SearchBody({
   onToggle,
   pageSize,
   page,
+  lockedKeys,
 }: {
   query: string;
   activeSchema: ActiveSchema;
@@ -486,6 +488,7 @@ function SearchBody({
   onToggle: (key: string) => void;
   pageSize: number;
   page: number;
+  lockedKeys?: Set<string>;
 }) {
   const q = query.trim().toLowerCase();
   const flat: { conn: Connection; schema: string; asset: Asset }[] = [];
