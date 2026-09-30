@@ -145,7 +145,6 @@ export function PlanView(p: Props) {
   const [addingOn, setAddingOn] = useState<string | null>(null);
   const [showMore, setShowMore] = useState<Record<string, number>>({});
   const [query, setQuery] = useState("");
-  const [sel, setSel] = useState<Set<string>>(new Set());
   const [dialog, setDialog] = useState<null | { kind: "tables" } | { kind: "rule"; key: string; description?: string; source?: Rule; replaceId?: string }>(null);
   const [openSched, setOpenSched] = useState<"profiling" | "checks" | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -233,15 +232,8 @@ export function PlanView(p: Props) {
       <div key={k} id={`plan-row-${k}`} className="scroll-mt-4 border-t first:border-t-0" style={{ borderColor: "var(--hairline)" }}>
         <div
           className="group flex items-center gap-2 px-3 py-3 transition-colors duration-700 motion-reduce:transition-none"
-          style={{ background: flashed ? "rgba(67,134,250,0.10)" : sel.has(k) ? "rgba(67,134,250,0.04)" : undefined }}
+          style={{ background: flashed ? "rgba(67,134,250,0.10)" : undefined }}
         >
-          <input
-            type="checkbox"
-            aria-label={`Select ${tableName(k)}`}
-            checked={sel.has(k)}
-            onChange={() => setSel((s) => toggle(s, k))}
-            className="h-3.5 w-3.5 shrink-0 accent-[color:var(--brand-blue)]"
-          />
           <button
             type="button"
             aria-expanded={open}
@@ -492,22 +484,6 @@ export function PlanView(p: Props) {
                 </button>
               </span>
             </div>
-          )}
-
-          {sel.size > 0 && (
-            <BulkBar
-              plan={plan}
-              sel={sel}
-              onClear={() => setSel(new Set())}
-              onChange={(next, line) => {
-                onChange(next, line);
-              }}
-              onRemoveTables={() => {
-                const ks = Array.from(sel);
-                onChange(withoutTables(plan, ks), `You removed ${ks.length} ${ks.length === 1 ? "table" : "tables"}.`);
-                setSel(new Set());
-              }}
-            />
           )}
 
           <div className="mt-3 space-y-3">
@@ -800,97 +776,6 @@ function AddCheckInline({
           </div>
         </>
       )}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ bulk bar */
-
-function BulkBar({
-  plan,
-  sel,
-  onClear,
-  onChange,
-  onRemoveTables,
-}: {
-  plan: Plan;
-  sel: Set<string>;
-  onClear: () => void;
-  onChange: (next: Plan, line: string) => void;
-  onRemoveTables: () => void;
-}) {
-  const [menu, setMenu] = useState<"add" | "remove" | null>(null);
-  const keys = Array.from(sel);
-  const present = Array.from(new Set(keys.flatMap((k) => keptChecks(plan, k).map((c) => c.rule))));
-
-  const bulkAdd = (r: Rule) => {
-    let next = plan;
-    let applied = 0;
-    for (const k of keys) {
-      const tl = isTableLevel({ name: r.name });
-      if (tl && keptChecks(next, k).some((c) => c.rule === r.name)) continue;
-      const cols = tl ? [] : suggestedColumns(r, k);
-      if (!tl && !cols.length) continue;
-      next = addChecks(next, k, [ruleToCheck(r, cols, k)]);
-      applied++;
-    }
-    const skipped = keys.length - applied;
-    onChange(next, `You added '${r.name}' to ${applied} ${applied === 1 ? "table" : "tables"}${skipped ? `, skipped ${skipped} where it doesn't fit` : ""}.`);
-    setMenu(null);
-  };
-  const bulkRemove = (name: string) => {
-    const checked = { ...plan.checked };
-    let n = 0;
-    for (const k of keys) {
-      const drop = new Set(keptChecks(plan, k).filter((c) => c.rule === name).map((c) => c.id));
-      if (drop.size) n++;
-      checked[k] = (checked[k] ?? []).filter((id) => !drop.has(id));
-    }
-    onChange({ ...plan, checked }, `You removed '${name}' from ${n} ${n === 1 ? "table" : "tables"}.`);
-    setMenu(null);
-  };
-
-  const btn = "rounded-full px-3 py-1 text-[13px] font-medium hover:bg-[color:var(--surface-soft)]";
-  return (
-    <div className="sticky top-2 z-10 mt-3 flex flex-wrap items-center gap-1 rounded-full border bg-white px-3 py-1.5 shadow-sm" style={{ borderColor: "var(--hairline)" }}>
-      <span className="mr-2 text-[13px] font-medium" style={{ color: "var(--ink-900)" }}>
-        {sel.size} selected
-      </span>
-      <div className="relative">
-        <button type="button" className={btn} style={{ color: "var(--brand-blue)" }} aria-expanded={menu === "add"} onClick={() => setMenu(menu === "add" ? null : "add")}>
-          Add a check
-        </button>
-        {menu === "add" && (
-          <div role="menu" className="absolute left-0 top-9 z-20 max-h-[280px] w-[280px] overflow-y-auto rounded-xl border bg-white p-1 shadow-lg" style={{ borderColor: "var(--hairline)" }}>
-            {MOCK_RULES.map((r) => (
-              <button key={r.id} role="menuitem" type="button" onClick={() => bulkAdd(r)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]">
-                <span className="flex-1">{r.name}</span>
-                <DimensionBadge label={r.dimension} size="sm" showLabel={false} />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="relative">
-        <button type="button" className={btn} style={{ color: "var(--brand-blue)" }} aria-expanded={menu === "remove"} disabled={!present.length} onClick={() => setMenu(menu === "remove" ? null : "remove")}>
-          Remove a check
-        </button>
-        {menu === "remove" && (
-          <div role="menu" className="absolute left-0 top-9 z-20 max-h-[280px] w-[260px] overflow-y-auto rounded-xl border bg-white p-1 shadow-lg" style={{ borderColor: "var(--hairline)" }}>
-            {present.map((n) => (
-              <button key={n} role="menuitem" type="button" onClick={() => bulkRemove(n)} className="block w-full rounded-lg px-2 py-1.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]">
-                {n}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <button type="button" className={btn} style={{ color: "var(--ink-900)" }} onClick={onRemoveTables}>
-        Remove tables
-      </button>
-      <button type="button" className={`${btn} ml-auto`} style={{ color: "var(--ink-500)" }} onClick={onClear}>
-        Clear
-      </button>
     </div>
   );
 }
