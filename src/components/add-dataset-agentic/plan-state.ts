@@ -68,17 +68,15 @@ export function to12h(t?: string) {
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${ap}`;
 }
 
-export function scheduleLabel(s: ScheduleConfig | null, tz: string | null) {
+export function scheduleLabel(s: ScheduleConfig | null) {
   if (!s) return "Not set";
-  const base =
-    s.frequency === "weekly"
-      ? `Weekly on ${s.day ?? "Monday"}s at ${to12h(s.time)}`
-      : s.frequency === "daily"
-        ? `Daily at ${to12h(s.time)}`
-        : s.frequency === "custom" && s.repeatUnit === "hours"
-          ? s.repeatEvery === 1 ? "Every hour" : `Every ${s.repeatEvery} hours`
-          : frequencyLabel(s);
-  return tz ? `${base} ${tz}` : base;
+  return s.frequency === "weekly"
+    ? `Weekly on ${s.day ?? "Monday"}s at ${to12h(s.time)}`
+    : s.frequency === "daily"
+      ? `Daily at ${to12h(s.time)}`
+      : s.frequency === "custom" && s.repeatUnit === "hours"
+        ? s.repeatEvery === 1 ? "Every hour" : `Every ${s.repeatEvery} hours`
+        : frequencyLabel(s);
 }
 
 export function connectionSummary(plan: Plan) {
