@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { PlanView, hasKey, type PlanFilter, type Reveal, type RuleRequest } from "./PlanView";
 import { generateChecks, type Check } from "../add-dataset/mock-checks";
-import type { AddDatasetCompletion } from "../add-dataset/AddDatasetModal";
+import { AddDatasetModal, type AddDatasetCompletion } from "../add-dataset/AddDatasetModal";
 import {
   ALL_ASSETS,
   EMPTY_PLAN,
@@ -86,7 +86,6 @@ export function AgenticAddAssetModal({
   const dialogOpenRef = useRef(false);
   const [rowFlash, setRowFlash] = useState<Flash>(null);
   const [cc, setCc] = useState<CreateFlow>(null);
-  const [manualStep, setManualStep] = useState(0);
   const [plan, setPlanRaw] = useState<Plan>(EMPTY_PLAN);
   const [history, setHistory] = useState<Plan[]>([]);
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -112,7 +111,6 @@ export function AgenticAddAssetModal({
       setFilter(null);
       setRowFlash(null);
       setCc(null);
-      setManualStep(0);
       setPlanRaw(EMPTY_PLAN);
       setHistory([]);
       setMsgs([]);
@@ -549,11 +547,6 @@ export function AgenticAddAssetModal({
 
   const openManual = () => {
     setMode("manual");
-    setManualStep(0);
-    setFilled(3);
-    setPlanRaw({ ...EMPTY_PLAN, profiling: RECOMMENDED_SCHEDULE, checks: RECOMMENDED_SCHEDULE, timeZone: RECOMMENDED_TZ });
-    setTab("plan");
-    push({ role: "note", text: "Setting it up step by step. Ask me anything along the way." });
   };
 
   const showMe = (s: Section, keys?: string[], filterLabel?: string) => {
@@ -770,6 +763,19 @@ export function AgenticAddAssetModal({
 
   // ---- Workspace ----
 
+  if (mode === "manual") {
+    return (
+      <AddDatasetModal
+        open
+        onOpenChange={onOpenChange}
+        domainName={domainName}
+        onComplete={onComplete}
+        presentation="shell"
+        showChat={false}
+      />
+    );
+  }
+
 
   const workspace = (
     <div className={`flex min-h-0 min-w-0 flex-col overflow-hidden border-l animate-in slide-in-from-right duration-300 motion-reduce:animate-none ${narrow ? "flex-1" : "w-[50vw] shrink-0"}`} style={{ background: "#fff", borderColor: "var(--hairline)" }}>
@@ -817,7 +823,7 @@ export function AgenticAddAssetModal({
       </div>
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">{chatBody}</div>
       <div className="relative z-10 px-4 pb-4">
-        {composer(mode === "manual" ? "Ask anything…" : "Change the plan, e.g. remove fct_orders_daily…")}
+        {composer("Change the plan, e.g. remove fct_orders_daily…")}
       </div>
     </aside>
   );
