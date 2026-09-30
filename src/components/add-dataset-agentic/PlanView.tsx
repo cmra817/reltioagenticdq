@@ -434,7 +434,7 @@ export function PlanView(p: Props) {
   const checksAll = plan.selected.reduce((n, k) => n + keptChecks(plan, k).length, 0);
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <div ref={scrollRef} className="@container min-h-0 flex-1 overflow-y-auto" aria-hidden={!!dialog || undefined}>
         <div className="mx-auto max-w-[980px] px-6 py-7 @[700px]:px-10">
           <h2 className="text-[24px] font-semibold" style={{ color: "var(--ink-900)" }}>
@@ -917,7 +917,7 @@ function AddTablesDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () =>
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[40] flex items-center justify-center p-6 max-sm:p-0">
+    <div className="absolute inset-0 z-[40] flex items-center justify-center p-6 max-sm:fixed max-sm:p-0">
       <button type="button" tabIndex={-1} aria-label="Close" onClick={() => !dirty && onClose()} className="absolute inset-0 cursor-default" style={{ background: "rgba(15,23,42,0.35)" }} />
       <div
         ref={ref}
