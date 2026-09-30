@@ -789,6 +789,7 @@ export function AgenticAddAssetModal({
 
   const rail = (
     <aside className="flex h-full min-w-0 flex-1 flex-col border-r bg-white" style={{ borderColor: "var(--hairline)", width: narrow ? "100%" : undefined }}>
+      {header}
       <div className="flex items-center justify-between px-4 pt-3 text-[12px] font-medium" style={{ color: "var(--ink-500)" }}>
         Assistant
         {!narrow && (
@@ -806,7 +807,6 @@ export function AgenticAddAssetModal({
 
   return (
     <div className="fixed bottom-0 left-[260px] right-0 top-12 z-40 flex flex-col border-l" style={{ background: "var(--canvas)", borderColor: "var(--hairline)" }} role="dialog" aria-label="Add data asset">
-      {header}
       {narrow && (
         <div className="flex shrink-0 border-b bg-white" style={{ borderColor: "var(--hairline)" }}>
           {(["chat", "plan"] as const).map((t) => (
