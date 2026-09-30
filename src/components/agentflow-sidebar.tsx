@@ -17,7 +17,8 @@ import { AgenticAddAssetModal } from "./add-dataset-agentic/AgenticAddAssetModal
 import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
 import { newChatId, useChatThreads } from "./chat/chat-context";
-import { MessageSquarePlus } from "lucide-react";
+import { useSetupSessions } from "./add-dataset-agentic/setup-sessions";
+import { DatabaseZap, MessageSquarePlus } from "lucide-react";
 
 function NavItem({
   icon,
@@ -219,10 +220,20 @@ function DomainPill() {
 
 function RecentChats() {
   const { threads } = useChatThreads();
+  const { sessions, resume } = useSetupSessions();
   // Threads come from localStorage, so only render after hydration to avoid SSR mismatch.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  if (!mounted || threads.length === 0) return null;
+  if (!mounted || (threads.length === 0 && sessions.length === 0)) return null;
+
+  const className =
+    "flex w-full items-center gap-2 truncate rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]";
+  const style = { color: "var(--ink-700)" };
+
+  const items = [
+    ...sessions.map((s) => ({ id: s.id, updatedAt: s.updatedAt, kind: "setup" as const, title: s.title })),
+    ...threads.map((t) => ({ id: t.id, updatedAt: t.updatedAt, kind: t.kind ?? "chat", title: t.title })),
+  ].sort((a, b) => b.updatedAt - a.updatedAt);
 
   return (
     <div className="mt-3 px-3">
@@ -233,50 +244,57 @@ function RecentChats() {
         Recent chats
       </div>
       <ul className="max-h-48 overflow-y-auto">
-        {threads.slice(0, 8).map((t) => {
-          const className =
-            "block truncate rounded-lg px-3 py-1.5 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]";
-          const style = { color: "var(--ink-700)" };
-          return (
-            <li key={t.id}>
-              {t.kind === "investigation" ? (
-                <Link
-                  to="/investigate/consistency"
-                  search={{ q: t.title, thread: t.id }}
-                  className={className}
-                  style={style}
-                  title={t.title}
-                >
-                  {t.title}
-                </Link>
-              ) : (
-                <Link
-                  to="/chat/$chatId"
-                  params={{ chatId: t.id }}
-                  className={className}
-                  style={style}
-                  title={t.title}
-                >
-                  {t.title}
-                </Link>
-              )}
-            </li>
-          );
-        })}
+        {items.slice(0, 8).map((t) => (
+          <li key={t.id}>
+            {t.kind === "setup" ? (
+              <button
+                type="button"
+                onClick={() => resume(t.id)}
+                className={className}
+                style={style}
+                title={t.title}
+              >
+                <DatabaseZap size={14} style={{ color: "var(--brand-blue)", flexShrink: 0 }} />
+                <span className="truncate">{t.title}</span>
+              </button>
+            ) : t.kind === "investigation" ? (
+              <Link
+                to="/investigate/consistency"
+                search={{ q: t.title, thread: t.id }}
+                className={className}
+                style={style}
+                title={t.title}
+              >
+                <span className="truncate">{t.title}</span>
+              </Link>
+            ) : (
+              <Link
+                to="/chat/$chatId"
+                params={{ chatId: t.id }}
+                className={className}
+                style={style}
+                title={t.title}
+              >
+                <span className="truncate">{t.title}</span>
+              </Link>
+            )}
+          </li>
+        ))}
       </ul>
     </div>
   );
 }
+
 
 function NewMenu() {
   const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
   const { runJob } = useNotifications();
   const { addAssets } = useCreatedAssets();
   const { createThread } = useChatThreads();
+  const setup = useSetupSessions();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [domainOpen, setDomainOpen] = useState(false);
-  const [agenticOpen, setAgenticOpen] = useState(false);
   const [datasetOpen, setDatasetOpen] = useState(false);
   const [pendingDomain, setPendingDomain] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -365,7 +383,8 @@ function NewMenu() {
             onClick={() => {
               setOpen(false);
               setPendingDomain(selected);
-              setAgenticOpen(true);
+              // Any setup already in progress stays saved under Recent chats.
+              setup.openNew(selected);
             }}
             className={itemClass}
             style={{ color: "var(--ink-900)" }}
@@ -419,14 +438,32 @@ function NewMenu() {
         }}
       />
       <AgenticAddAssetModal
-        open={agenticOpen}
+        key={setup.active?.id ?? "none"}
+        open={!!setup.active}
         onOpenChange={(o) => {
-          setAgenticOpen(o);
-          if (!o) setPendingDomain(null);
+          if (!o) {
+            setup.close();
+            setPendingDomain(null);
+          }
         }}
-        domainName={pendingDomain ?? selected}
+        domainName={setup.active?.domain || pendingDomain || selected}
+        snapshot={setup.active ? setup.getSession(setup.active.id)?.snapshot ?? null : null}
+        onPersist={(snapshot) => {
+          const a = setup.active;
+          if (!a) return;
+          const domain = a.domain || selected;
+          setup.saveSession({
+            id: a.id,
+            domain,
+            title: `Add asset: ${domain}`,
+            updatedAt: Date.now(),
+            snapshot,
+          });
+        }}
         onComplete={({ tables, checkCount, assets }) => {
-          completeConnection({ domain: pendingDomain ?? selected, tables, checkCount });
+          const domain = setup.active?.domain || pendingDomain || selected;
+          if (setup.active) setup.deleteSession(setup.active.id);
+          completeConnection({ domain, tables, checkCount });
           // Register the new assets so they appear in Explore with their checks + schedule.
           addAssets(assets);
           // Newly added datasets kick off profiling + DQ checks; notify on completion.
@@ -437,6 +474,7 @@ function NewMenu() {
           setPendingDomain(null);
         }}
       />
+
     </div>
   );
 }

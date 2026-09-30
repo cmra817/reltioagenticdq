@@ -5,6 +5,7 @@ import { SidebarProvider, useSidebarState } from "@/components/sidebar-context";
 import { DomainProvider } from "@/components/domain-context";
 import { DomainConnectedBanner } from "@/components/domain-connected-banner";
 import { ChatProvider } from "@/components/chat/chat-context";
+import { SetupSessionProvider } from "@/components/add-dataset-agentic/setup-sessions";
 import { DockComposer } from "@/components/chat/dock-composer";
 
 // A full-height slot on the far right of the page (above the topbar's row).
@@ -101,7 +102,9 @@ export function AppShell(props: {
     <SidebarProvider>
       <DomainProvider>
         <ChatProvider>
-          <AppShellInner {...props} />
+          <SetupSessionProvider>
+            <AppShellInner {...props} />
+          </SetupSessionProvider>
         </ChatProvider>
       </DomainProvider>
     </SidebarProvider>
