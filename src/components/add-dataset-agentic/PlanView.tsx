@@ -671,7 +671,6 @@ function AddCheckInline({
   onAdd: (c: Check) => void;
   onCreate: () => void;
 }) {
-  const [q, setQ] = useState("");
   const [rule, setRule] = useState<Rule | null>(null);
   const [cols, setCols] = useState<Set<string>>(new Set());
   const [colQ, setColQ] = useState("");
@@ -914,8 +913,6 @@ function useFocusTrap(ref: React.RefObject<HTMLDivElement | null>) {
 function AddTablesDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () => void; onDone: (add: string[], remove: string[]) => void }) {
   const [picked, setPicked] = useState<Set<string>>(new Set(plan.selected));
   const [q, setQ] = useState("");
-  const [conn, setConn] = useState("all");
-  const [schemas, setSchemas] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
   useFocusTrap(ref);
 
@@ -934,12 +931,6 @@ function AddTablesDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () =>
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
   }, [onClose]);
-
-  const pool = ALL_ASSETS.filter((a) => conn === "all" || a.warehouse === conn);
-  const schemaCounts = new Map<string, number>();
-  pool.forEach((a) => schemaCounts.set(a.schema, (schemaCounts.get(a.schema) ?? 0) + 1));
-  const rows = pool.filter((a) => (!schemas.size || schemas.has(a.schema)) && (!q || `${a.name} ${a.schema} ${a.connection}`.toLowerCase().includes(q.toLowerCase())));
-  const whs = Array.from(new Set(ALL_ASSETS.map((a) => a.warehouse))) as WarehouseType[];
 
   return (
     <div className="absolute inset-0 z-[40] flex items-center justify-center p-6 max-sm:fixed max-sm:p-0">
