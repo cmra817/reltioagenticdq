@@ -30,6 +30,7 @@ export function AssetRow({
   onToggle,
   highlight,
   flash,
+  locked,
 }: {
   asset: Asset;
   schema: string;
@@ -39,16 +40,24 @@ export function AssetRow({
   onToggle: () => void;
   highlight?: string;
   flash?: boolean;
+  /** Already part of the job: shown as checked, not clickable here. */
+  locked?: boolean;
 }) {
   const isTable = asset.type === "table";
   return (
     <button
       type="button"
-      onClick={onToggle}
-      className="group flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-[color:var(--surface-soft)]"
-      style={{ background: flash ? "rgba(67,134,250,0.18)" : selected ? "rgba(67,134,250,0.06)" : undefined, transition: "background-color 600ms" }}
+      onClick={locked ? undefined : onToggle}
+      disabled={locked}
+      aria-disabled={locked || undefined}
+      className={`group flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors ${locked ? "cursor-default" : "hover:bg-[color:var(--surface-soft)]"}`}
+      style={{
+        background: flash ? "rgba(67,134,250,0.18)" : locked ? "var(--surface-soft)" : selected ? "rgba(67,134,250,0.06)" : undefined,
+        opacity: locked ? 0.7 : undefined,
+        transition: "background-color 600ms",
+      }}
     >
-      <CheckSquare checked={selected} />
+      <CheckSquare checked={locked || selected} muted={locked} />
       <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
         <SourceLogo source={warehouse} />
       </span>
