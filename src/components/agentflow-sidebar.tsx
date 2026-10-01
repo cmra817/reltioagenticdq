@@ -369,20 +369,6 @@ function NewMenu() {
             onClick={() => {
               setOpen(false);
               setPendingDomain(selected);
-              setDatasetOpen(true);
-            }}
-            className={itemClass}
-            style={{ color: "var(--ink-900)" }}
-          >
-            <PlusIcon size={14} />
-            <span>Add new dataset</span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              setPendingDomain(selected);
               // Any setup already in progress stays saved under Recent chats.
               setup.openNew(selected);
             }}
