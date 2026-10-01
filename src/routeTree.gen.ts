@@ -9,30 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IncidentsRouteImport } from './routes/incidents'
-import { Route as ExploreRouteImport } from './routes/explore'
-import { Route as DqChecksRouteImport } from './routes/dq-checks'
-import { Route as DataHealthRouteImport } from './routes/data-health'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as InvestigateConsistencyRouteImport } from './routes/investigate.consistency'
-import { Route as InvestigateTopicRouteImport } from './routes/investigate.$topic'
-import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
-import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
+import { Route as DataHealthRouteImport } from './routes/data-health'
+import { Route as DqChecksRouteImport } from './routes/dq-checks'
+import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
+import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
+import { Route as InvestigateTopicRouteImport } from './routes/investigate.$topic'
+import { Route as InvestigateConsistencyRouteImport } from './routes/investigate.consistency'
 
-const IncidentsRoute = IncidentsRouteImport.update({
-  id: '/incidents',
-  path: '/incidents',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExploreRoute = ExploreRouteImport.update({
-  id: '/explore',
-  path: '/explore',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DqChecksRoute = DqChecksRouteImport.update({
-  id: '/dq-checks',
-  path: '/dq-checks',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DataHealthRoute = DataHealthRouteImport.update({
@@ -40,24 +30,24 @@ const DataHealthRoute = DataHealthRouteImport.update({
   path: '/data-health',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const DqChecksRoute = DqChecksRouteImport.update({
+  id: '/dq-checks',
+  path: '/dq-checks',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InvestigateConsistencyRoute = InvestigateConsistencyRouteImport.update({
-  id: '/investigate/consistency',
-  path: '/investigate/consistency',
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InvestigateTopicRoute = InvestigateTopicRouteImport.update({
-  id: '/investigate/$topic',
-  path: '/investigate/$topic',
+const IncidentsRoute = IncidentsRouteImport.update({
+  id: '/incidents',
+  path: '/incidents',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ChatChatIdRoute = ChatChatIdRouteImport.update({
-  id: '/chat/$chatId',
-  path: '/chat/$chatId',
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssetsAssetSlugRoute = AssetsAssetSlugRouteImport.update({
@@ -65,9 +55,19 @@ const AssetsAssetSlugRoute = AssetsAssetSlugRouteImport.update({
   path: '/assets/$assetSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
+const ChatChatIdRoute = ChatChatIdRouteImport.update({
+  id: '/chat/$chatId',
+  path: '/chat/$chatId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestigateTopicRoute = InvestigateTopicRouteImport.update({
+  id: '/investigate/$topic',
+  path: '/investigate/$topic',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestigateConsistencyRoute = InvestigateConsistencyRouteImport.update({
+  id: '/investigate/consistency',
+  path: '/investigate/consistency',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -162,25 +162,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/incidents': {
-      id: '/incidents'
-      path: '/incidents'
-      fullPath: '/incidents'
-      preLoaderRoute: typeof IncidentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/explore': {
-      id: '/explore'
-      path: '/explore'
-      fullPath: '/explore'
-      preLoaderRoute: typeof ExploreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dq-checks': {
-      id: '/dq-checks'
-      path: '/dq-checks'
-      fullPath: '/dq-checks'
-      preLoaderRoute: typeof DqChecksRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/data-health': {
@@ -190,32 +176,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DataHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/dq-checks': {
+      id: '/dq-checks'
+      path: '/dq-checks'
+      fullPath: '/dq-checks'
+      preLoaderRoute: typeof DqChecksRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/investigate/consistency': {
-      id: '/investigate/consistency'
-      path: '/investigate/consistency'
-      fullPath: '/investigate/consistency'
-      preLoaderRoute: typeof InvestigateConsistencyRouteImport
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/investigate/$topic': {
-      id: '/investigate/$topic'
-      path: '/investigate/$topic'
-      fullPath: '/investigate/$topic'
-      preLoaderRoute: typeof InvestigateTopicRouteImport
+    '/incidents': {
+      id: '/incidents'
+      path: '/incidents'
+      fullPath: '/incidents'
+      preLoaderRoute: typeof IncidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/chat/$chatId': {
-      id: '/chat/$chatId'
-      path: '/chat/$chatId'
-      fullPath: '/chat/$chatId'
-      preLoaderRoute: typeof ChatChatIdRouteImport
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assets/$assetSlug': {
@@ -225,11 +211,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssetsAssetSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
+    '/chat/$chatId': {
+      id: '/chat/$chatId'
+      path: '/chat/$chatId'
+      fullPath: '/chat/$chatId'
+      preLoaderRoute: typeof ChatChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/investigate/$topic': {
+      id: '/investigate/$topic'
+      path: '/investigate/$topic'
+      fullPath: '/investigate/$topic'
+      preLoaderRoute: typeof InvestigateTopicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/investigate/consistency': {
+      id: '/investigate/consistency'
+      path: '/investigate/consistency'
+      fullPath: '/investigate/consistency'
+      preLoaderRoute: typeof InvestigateConsistencyRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
