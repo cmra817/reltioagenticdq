@@ -9,30 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as DataHealthRouteImport } from './routes/data-health'
-import { Route as DqChecksRouteImport } from './routes/dq-checks'
-import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as IncidentsRouteImport } from './routes/incidents'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
-import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
-import { Route as InvestigateTopicRouteImport } from './routes/investigate.$topic'
+import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as DqChecksRouteImport } from './routes/dq-checks'
+import { Route as DataHealthRouteImport } from './routes/data-health'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as InvestigateConsistencyRouteImport } from './routes/investigate.consistency'
+import { Route as InvestigateTopicRouteImport } from './routes/investigate.$topic'
+import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
+import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DataHealthRoute = DataHealthRouteImport.update({
-  id: '/data-health',
-  path: '/data-health',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DqChecksRoute = DqChecksRouteImport.update({
-  id: '/dq-checks',
-  path: '/dq-checks',
+const IncidentsRoute = IncidentsRouteImport.update({
+  id: '/incidents',
+  path: '/incidents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -40,24 +30,24 @@ const ExploreRoute = ExploreRouteImport.update({
   path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IncidentsRoute = IncidentsRouteImport.update({
-  id: '/incidents',
-  path: '/incidents',
+const DqChecksRoute = DqChecksRouteImport.update({
+  id: '/dq-checks',
+  path: '/dq-checks',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
+const DataHealthRoute = DataHealthRouteImport.update({
+  id: '/data-health',
+  path: '/data-health',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AssetsAssetSlugRoute = AssetsAssetSlugRouteImport.update({
-  id: '/assets/$assetSlug',
-  path: '/assets/$assetSlug',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ChatChatIdRoute = ChatChatIdRouteImport.update({
-  id: '/chat/$chatId',
-  path: '/chat/$chatId',
+const InvestigateConsistencyRoute = InvestigateConsistencyRouteImport.update({
+  id: '/investigate/consistency',
+  path: '/investigate/consistency',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InvestigateTopicRoute = InvestigateTopicRouteImport.update({
@@ -65,9 +55,19 @@ const InvestigateTopicRoute = InvestigateTopicRouteImport.update({
   path: '/investigate/$topic',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InvestigateConsistencyRoute = InvestigateConsistencyRouteImport.update({
-  id: '/investigate/consistency',
-  path: '/investigate/consistency',
+const ChatChatIdRoute = ChatChatIdRouteImport.update({
+  id: '/chat/$chatId',
+  path: '/chat/$chatId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssetsAssetSlugRoute = AssetsAssetSlugRouteImport.update({
+  id: '/assets/$assetSlug',
+  path: '/assets/$assetSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -162,25 +162,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/data-health': {
-      id: '/data-health'
-      path: '/data-health'
-      fullPath: '/data-health'
-      preLoaderRoute: typeof DataHealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dq-checks': {
-      id: '/dq-checks'
-      path: '/dq-checks'
-      fullPath: '/dq-checks'
-      preLoaderRoute: typeof DqChecksRouteImport
+    '/incidents': {
+      id: '/incidents'
+      path: '/incidents'
+      fullPath: '/incidents'
+      preLoaderRoute: typeof IncidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -190,32 +176,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/incidents': {
-      id: '/incidents'
-      path: '/incidents'
-      fullPath: '/incidents'
-      preLoaderRoute: typeof IncidentsRouteImport
+    '/dq-checks': {
+      id: '/dq-checks'
+      path: '/dq-checks'
+      fullPath: '/dq-checks'
+      preLoaderRoute: typeof DqChecksRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
+    '/data-health': {
+      id: '/data-health'
+      path: '/data-health'
+      fullPath: '/data-health'
+      preLoaderRoute: typeof DataHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/assets/$assetSlug': {
-      id: '/assets/$assetSlug'
-      path: '/assets/$assetSlug'
-      fullPath: '/assets/$assetSlug'
-      preLoaderRoute: typeof AssetsAssetSlugRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/chat/$chatId': {
-      id: '/chat/$chatId'
-      path: '/chat/$chatId'
-      fullPath: '/chat/$chatId'
-      preLoaderRoute: typeof ChatChatIdRouteImport
+    '/investigate/consistency': {
+      id: '/investigate/consistency'
+      path: '/investigate/consistency'
+      fullPath: '/investigate/consistency'
+      preLoaderRoute: typeof InvestigateConsistencyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/investigate/$topic': {
@@ -225,11 +211,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvestigateTopicRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/investigate/consistency': {
-      id: '/investigate/consistency'
-      path: '/investigate/consistency'
-      fullPath: '/investigate/consistency'
-      preLoaderRoute: typeof InvestigateConsistencyRouteImport
+    '/chat/$chatId': {
+      id: '/chat/$chatId'
+      path: '/chat/$chatId'
+      fullPath: '/chat/$chatId'
+      preLoaderRoute: typeof ChatChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assets/$assetSlug': {
+      id: '/assets/$assetSlug'
+      path: '/assets/$assetSlug'
+      fullPath: '/assets/$assetSlug'
+      preLoaderRoute: typeof AssetsAssetSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
