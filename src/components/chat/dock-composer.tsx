@@ -2,11 +2,13 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { newChatId, titleFromText, useChatThreads } from "./chat-context";
+import { useDomainState } from "../domain-context";
 
 /** Docked prompt box shown at the bottom of every main page. */
 export function DockComposer() {
   const navigate = useNavigate();
   const { createThread } = useChatThreads();
+  const { selected } = useDomainState();
   const [value, setValue] = useState("");
 
   function start() {
@@ -15,7 +17,12 @@ export function DockComposer() {
     // Consistency questions open the scripted investigation thread — saved like any chat.
     if (/consisten/i.test(text)) {
       const investigationId = newChatId();
-      createThread({ id: investigationId, title: titleFromText(text), kind: "investigation" });
+      createThread({
+        id: investigationId,
+        title: titleFromText(text),
+        kind: "investigation",
+        domain: selected,
+      });
       setValue("");
       void navigate({
         to: "/investigate/consistency",
@@ -24,7 +31,7 @@ export function DockComposer() {
       return;
     }
     const id = newChatId();
-    createThread({ id });
+    createThread({ id, domain: selected });
     setValue("");
     void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: { q: text } });
   }

@@ -2,13 +2,11 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   AppsGridIcon,
-  BarsIcon,
   ChevronDownIcon,
-  CompassIcon,
   HealthIcon,
   PlusIcon,
+  SearchIcon,
   UserIcon,
-  
 } from "./brand-icons";
 import { useDomainState } from "./domain-context";
 import { CreateDomainDialog } from "./create-domain-dialog";
@@ -18,20 +16,29 @@ import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
 import { newChatId, useChatThreads } from "./chat/chat-context";
 import { useSetupSessions } from "./add-dataset-agentic/setup-sessions";
-import { DatabaseZap, MessageSquarePlus } from "lucide-react";
+import { Clock, ListChecks, MessageSquarePlus } from "lucide-react";
+import { DomainList } from "./sidebar/domain-list";
+import { PinnedChats, RecentChats } from "./sidebar/chat-lists";
+import { SearchDialog } from "./sidebar/search-dialog";
+
+export type SidebarNav = "data-health" | "scheduled" | "rules" | "explore" | "dq-checks";
 
 function NavItem({
   icon,
   label,
   active,
   to,
+  onClick,
+  hint,
 }: {
   icon: React.ReactNode;
   label: string;
   active?: boolean;
-  to?: "/" | "/data-health" | "/explore" | "/dq-checks";
+  to?: "/" | "/scheduled" | "/rules";
+  onClick?: () => void;
+  /** Small trailing text, e.g. a keyboard shortcut. */
+  hint?: string;
 }) {
-
   const className =
     "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[14px] leading-none transition-colors";
   const style: React.CSSProperties = {
@@ -42,17 +49,22 @@ function NavItem({
     <>
       <span style={{ color: active ? "var(--brand-blue)" : "var(--ink-500)" }}>{icon}</span>
       <span className="font-medium">{label}</span>
+      {hint && (
+        <span className="ml-auto text-[11px] font-normal" style={{ color: "var(--ink-300)" }}>
+          {hint}
+        </span>
+      )}
     </>
   );
   if (to) {
     return (
-      <Link to={to} className={className} style={style}>
+      <Link to={to} className={className} style={style} aria-current={active ? "page" : undefined}>
         {inner}
       </Link>
     );
   }
   return (
-    <button type="button" className={className} style={style}>
+    <button type="button" className={className} style={style} onClick={onClick}>
       {inner}
     </button>
   );
@@ -61,230 +73,6 @@ function NavItem({
 function SectionDivider() {
   return <div className="mx-3 my-2 h-px" style={{ background: "var(--hairline)" }} />;
 }
-
-function DomainPill() {
-  const { domains, selected, selectDomain, addDomain, connections } = useDomainState();
-  const [open, setOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [draft, setDraft] = useState("");
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDoc(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setCreating(false);
-        setDraft("");
-      }
-    }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [open]);
-
-  function handleSelect(name: string) {
-    selectDomain(name);
-    setOpen(false);
-    setCreating(false);
-    setDraft("");
-  }
-
-  function handleCreate() {
-    const name = draft.trim();
-    if (!name) return;
-    addDomain(name);
-    selectDomain(name);
-    setDraft("");
-    setCreating(false);
-    setOpen(false);
-  }
-
-  return (
-    <div className="relative" ref={wrapRef}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between rounded-full px-3 py-2 transition-colors hover:bg-[color:var(--surface-soft)] border-0 bg-black/0"
-        style={{ borderColor: "var(--hairline)" }}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <span className="text-[14px] font-medium" style={{ color: "var(--ink-900)" }}>
-          {selected}
-        </span>
-        <span style={{ color: "var(--ink-500)" }}>
-          <ChevronDownIcon
-            size={14}
-            className={`transition-transform ${open ? "rotate-180" : ""}`}
-          />
-        </span>
-      </button>
-
-      {open && (
-        <div
-          role="listbox"
-          className="absolute top-0 z-30 w-64 overflow-hidden rounded-xl border bg-white py-1"
-          style={{
-            left: "calc(100% + 8px)",
-            borderColor: "var(--hairline)",
-            boxShadow: "0 12px 32px rgba(15, 23, 42, 0.12)",
-          }}
-        >
-          <ul className="max-h-64 overflow-y-auto py-1">
-            {domains.map((d) => {
-              const isSel = d === selected;
-              const conn = connections[d];
-              return (
-                <li key={d}>
-                  <button
-                    type="button"
-                    onClick={() => handleSelect(d)}
-                    className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
-                    style={{ color: isSel ? "var(--brand-blue)" : "var(--ink-900)" }}
-                  >
-                    <span className="flex min-w-0 flex-col">
-                      <span className="truncate font-medium">{d}</span>
-                      {conn && (
-                        <span
-                          className="truncate text-[11px] font-normal"
-                          style={{ color: "var(--ink-500)" }}
-                        >
-                          {conn.tables.length} table{conn.tables.length === 1 ? "" : "s"} ·{" "}
-                          {conn.checkCount} check{conn.checkCount === 1 ? "" : "s"}
-                        </span>
-                      )}
-                    </span>
-                    {isSel && (
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="my-1 h-px" style={{ background: "var(--hairline)" }} />
-          {creating ? (
-            <div className="flex items-center gap-2 px-2 py-2">
-              <input
-                autoFocus
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleCreate();
-                  if (e.key === "Escape") {
-                    setCreating(false);
-                    setDraft("");
-                  }
-                }}
-                placeholder="Domain name"
-                className="flex-1 rounded-md border px-2 py-1 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
-                style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
-              />
-              <button
-                type="button"
-                onClick={handleCreate}
-                className="rounded-md px-2 py-1 text-[12px] font-medium text-white"
-                style={{ background: "var(--brand-blue)" }}
-              >
-                Add
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setCreating(true)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
-              style={{ color: "var(--ink-700)" }}
-            >
-              <PlusIcon size={14} />
-              <span className="font-medium">Create custom domain</span>
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RecentChats() {
-  const { threads } = useChatThreads();
-  const { sessions, resume } = useSetupSessions();
-  // Threads come from localStorage, so only render after hydration to avoid SSR mismatch.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  if (!mounted || (threads.length === 0 && sessions.length === 0)) return null;
-
-  const className =
-    "flex w-full items-center gap-2 truncate rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]";
-  const style = { color: "var(--ink-700)" };
-
-  const items = [
-    ...sessions.map((s) => ({ id: s.id, updatedAt: s.updatedAt, kind: "setup" as const, title: s.title })),
-    ...threads.map((t) => ({ id: t.id, updatedAt: t.updatedAt, kind: t.kind ?? "chat", title: t.title })),
-  ].sort((a, b) => b.updatedAt - a.updatedAt);
-
-  return (
-    <div className="mt-3 px-3">
-      <div
-        className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide"
-        style={{ color: "var(--ink-300)" }}
-      >
-        Recent chats
-      </div>
-      <ul className="max-h-48 overflow-y-auto">
-        {items.slice(0, 8).map((t) => (
-          <li key={t.id}>
-            {t.kind === "setup" ? (
-              <button
-                type="button"
-                onClick={() => resume(t.id)}
-                className={className}
-                style={style}
-                title={t.title}
-              >
-                <DatabaseZap size={14} style={{ color: "var(--brand-blue)", flexShrink: 0 }} />
-                <span className="truncate">{t.title}</span>
-              </button>
-            ) : t.kind === "investigation" ? (
-              <Link
-                to="/investigate/consistency"
-                search={{ q: t.title, thread: t.id }}
-                className={className}
-                style={style}
-                title={t.title}
-              >
-                <span className="truncate">{t.title}</span>
-              </Link>
-            ) : (
-              <Link
-                to="/chat/$chatId"
-                params={{ chatId: t.id }}
-                className={className}
-                style={style}
-                title={t.title}
-              >
-                <span className="truncate">{t.title}</span>
-              </Link>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 
 function NewMenu() {
   const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
@@ -354,7 +142,7 @@ function NewMenu() {
             onClick={() => {
               setOpen(false);
               const id = newChatId();
-              createThread({ id });
+              createThread({ id, domain: selected });
               void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: {} });
             }}
             className={itemClass}
@@ -465,11 +253,10 @@ function NewMenu() {
   );
 }
 
-export function AgentflowSidebar({
-  activeNav = "data-health",
-}: {
-  activeNav?: "data-health" | "explore" | "dq-checks";
-}) {
+export function AgentflowSidebar({ activeNav = "data-health" }: { activeNav?: SidebarNav }) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const iconProps = { size: 20, strokeWidth: 1.6 };
+
   return (
     <aside
       className="flex h-full w-[260px] shrink-0 flex-col"
@@ -480,34 +267,42 @@ export function AgentflowSidebar({
         <NewMenu />
       </div>
 
-      {/* primary actions */}
-      <nav className="mt-3 px-3">
+      {/* global destinations */}
+      <nav className="mt-3 px-3" aria-label="Primary">
+        <NavItem
+          icon={<SearchIcon />}
+          label="Search"
+          hint="⌘K"
+          onClick={() => setSearchOpen(true)}
+        />
         <NavItem
           icon={<HealthIcon />}
           label="Data health"
           to="/"
           active={activeNav === "data-health"}
         />
+        <NavItem
+          icon={<Clock {...iconProps} />}
+          label="Scheduled"
+          to="/scheduled"
+          active={activeNav === "scheduled"}
+        />
+        <NavItem
+          icon={<ListChecks {...iconProps} />}
+          label="Rules"
+          to="/rules"
+          active={activeNav === "rules"}
+        />
       </nav>
-
 
       <SectionDivider />
 
-      {/* domain selector pill */}
-      <div className="px-3">
-        <DomainPill />
+      {/* Pinned chats, domains, and recents scroll together; the footer stays put. */}
+      <div className="min-h-0 flex-1 overflow-y-auto pb-2">
+        <PinnedChats />
+        <DomainList activeNav={activeNav} />
+        <RecentChats />
       </div>
-
-      {/* secondary nav — scoped to selected domain */}
-      <nav className="mt-2 px-3 pl-6">
-        <NavItem icon={<CompassIcon />} label="Explore" to="/explore" active={activeNav === "explore"} />
-        <NavItem icon={<BarsIcon />} label="DQ checks" to="/dq-checks" active={activeNav === "dq-checks"} />
-      </nav>
-
-      <RecentChats />
-
-      {/* spacer */}
-      <div className="flex-1" />
 
       {/* footer block */}
       <div className="border-t px-3 py-3" style={{ borderColor: "var(--hairline)" }}>
@@ -539,6 +334,7 @@ export function AgentflowSidebar({
           <ChevronDownIcon size={16} className="text-[color:var(--ink-500)]" />
         </div>
       </div>
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </aside>
   );
 }

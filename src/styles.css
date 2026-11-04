@@ -92,6 +92,11 @@
   --brand-cyan: #67f0ff;
   --brand-red: #ff3621;         /* databricks */
 
+  /* Health status — used by domain dots and scores in the sidebar */
+  --status-good: #1f9d63;
+  --status-warn: #d98a06;
+  --status-bad: #d9382b;
+
   --shadow-card: 0 1px 2px rgba(14, 14, 37, 0.04), 0 8px 24px -12px rgba(67, 134, 250, 0.18);
   --shadow-input: 0 1px 2px rgba(14, 14, 37, 0.04), 0 12px 40px -16px rgba(67, 134, 250, 0.22);
   --gradient-aurora: radial-gradient(120% 80% at 100% 100%, rgba(103, 240, 255, 0.35) 0%, rgba(67, 134, 250, 0.18) 30%, rgba(251, 251, 255, 0) 65%);

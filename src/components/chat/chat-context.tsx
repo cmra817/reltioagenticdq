@@ -8,6 +8,10 @@ export type ChatThread = {
   messages: UIMessage[];
   /** Scripted surfaces (e.g. the consistency investigation) reopen on their own route. */
   kind?: "chat" | "investigation";
+  /** Pinned chats sit in their own sidebar section and are never trimmed from history. */
+  pinned?: boolean;
+  /** The domain the chat started in. It stays put even if the chat later moves focus. */
+  domain?: string;
 };
 
 const STORAGE_KEY = "agentflow.chat.threads.v1";
@@ -25,10 +29,15 @@ function readThreads(): ChatThread[] {
   }
 }
 
+const MAX_UNPINNED_THREADS = 40;
+
 function writeThreads(threads: ChatThread[]) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(threads.slice(0, 40)));
+    // Threads arrive newest-first. Keep every pinned chat; trim only the rest.
+    let unpinned = 0;
+    const kept = threads.filter((t) => t.pinned || ++unpinned <= MAX_UNPINNED_THREADS);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(kept));
   } catch {
     /* storage full or unavailable — history is best-effort */
   }
@@ -48,10 +57,16 @@ export function titleFromText(text: string) {
 type ChatContextValue = {
   threads: ChatThread[];
   getThread: (id: string) => ChatThread | undefined;
-  createThread: (opts?: { id?: string; title?: string; kind?: ChatThread["kind"] }) => ChatThread;
+  createThread: (opts?: {
+    id?: string;
+    title?: string;
+    kind?: ChatThread["kind"];
+    domain?: string;
+  }) => ChatThread;
   saveMessages: (id: string, messages: UIMessage[], kind?: ChatThread["kind"]) => void;
   renameThread: (id: string, title: string) => void;
   deleteThread: (id: string) => void;
+  togglePin: (id: string) => void;
 };
 
 const ChatContext = createContext<ChatContextValue | null>(null);
@@ -68,13 +83,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createThread = useCallback(
-    (opts?: { id?: string; title?: string; kind?: ChatThread["kind"] }) => {
+    (opts?: { id?: string; title?: string; kind?: ChatThread["kind"]; domain?: string }) => {
       const thread: ChatThread = {
         id: opts?.id ?? newChatId(),
         title: opts?.title ?? "New chat",
         updatedAt: Date.now(),
         messages: [],
         kind: opts?.kind ?? "chat",
+        domain: opts?.domain,
       };
       update((prev) => [thread, ...prev.filter((t) => t.id !== thread.id)]);
       return thread;
@@ -102,6 +118,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           updatedAt: Date.now(),
           messages,
           kind: existing?.kind ?? kind ?? "chat",
+          pinned: existing?.pinned,
+          domain: existing?.domain,
         };
         return [thread, ...prev.filter((t) => t.id !== id)];
       });
@@ -123,11 +141,27 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     [update],
   );
 
+  const togglePin = useCallback(
+    (id: string) => {
+      // Pinning must not bump a chat to the top of Recents, so updatedAt is left alone.
+      update((prev) => prev.map((t) => (t.id === id ? { ...t, pinned: !t.pinned } : t)));
+    },
+    [update],
+  );
+
   const getThread = useCallback((id: string) => threads.find((t) => t.id === id), [threads]);
 
   const value = useMemo(
-    () => ({ threads, getThread, createThread, saveMessages, renameThread, deleteThread }),
-    [threads, getThread, createThread, saveMessages, renameThread, deleteThread],
+    () => ({
+      threads,
+      getThread,
+      createThread,
+      saveMessages,
+      renameThread,
+      deleteThread,
+      togglePin,
+    }),
+    [threads, getThread, createThread, saveMessages, renameThread, deleteThread, togglePin],
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

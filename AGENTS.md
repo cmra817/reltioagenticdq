@@ -2,3 +2,6 @@
 
 - `AddDatasetModal` owns the shared three-step data-asset workflow and supports fullscreen or app-shell presentation, so regular and agentic entry points cannot drift.
 - `SetupSessionProvider` (add-dataset-agentic/setup-sessions) owns in-progress agentic setups in localStorage and their open/close state, so navigating away never loses a plan.
+- `DomainProvider` owns the selected domain and saves it to localStorage, applied after hydration so server and client render the same first frame. Domain health scores come from `healthFor`, which is a mock standing in for the metric layer; `statusForScore` is the single place that turns a score into good, warn, or bad.
+- A chat's `domain` tag is set when the chat is created and is never rewritten, so a chat that later moves focus does not hop between domains in the sidebar. Pinning only applies to chats (never dashboards) and does not change `updatedAt`.
+- The sidebar is three zones: global destinations (Search, Data health, Scheduled, Rules), a scrolling region (Pinned, Domains, Recents), and the footer. Domains sort by lowest health first so the ones that need attention are on top. `/scheduled` and `/rules` are placeholders until those screens are built.

@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ScheduledRouteImport } from './routes/scheduled'
+import { Route as RulesRouteImport } from './routes/rules'
 import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DqChecksRouteImport } from './routes/dq-checks'
@@ -20,6 +22,16 @@ import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
+const ScheduledRoute = ScheduledRouteImport.update({
+  id: '/scheduled',
+  path: '/scheduled',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RulesRoute = RulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IncidentsRoute = IncidentsRouteImport.update({
   id: '/incidents',
   path: '/incidents',
@@ -77,6 +89,8 @@ export interface FileRoutesByFullPath {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/rules': typeof RulesRoute
+  '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
@@ -89,6 +103,8 @@ export interface FileRoutesByTo {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/rules': typeof RulesRoute
+  '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
@@ -102,6 +118,8 @@ export interface FileRoutesById {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/rules': typeof RulesRoute
+  '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
@@ -116,6 +134,8 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/rules'
+    | '/scheduled'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
@@ -128,6 +148,8 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/rules'
+    | '/scheduled'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
@@ -140,6 +162,8 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/rules'
+    | '/scheduled'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
@@ -153,6 +177,8 @@ export interface RootRouteChildren {
   DqChecksRoute: typeof DqChecksRoute
   ExploreRoute: typeof ExploreRoute
   IncidentsRoute: typeof IncidentsRoute
+  RulesRoute: typeof RulesRoute
+  ScheduledRoute: typeof ScheduledRoute
   ApiChatRoute: typeof ApiChatRoute
   AssetsAssetSlugRoute: typeof AssetsAssetSlugRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
@@ -162,6 +188,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/scheduled': {
+      id: '/scheduled'
+      path: '/scheduled'
+      fullPath: '/scheduled'
+      preLoaderRoute: typeof ScheduledRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rules': {
+      id: '/rules'
+      path: '/rules'
+      fullPath: '/rules'
+      preLoaderRoute: typeof RulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/incidents': {
       id: '/incidents'
       path: '/incidents'
@@ -241,6 +281,8 @@ const rootRouteChildren: RootRouteChildren = {
   DqChecksRoute: DqChecksRoute,
   ExploreRoute: ExploreRoute,
   IncidentsRoute: IncidentsRoute,
+  RulesRoute: RulesRoute,
+  ScheduledRoute: ScheduledRoute,
   ApiChatRoute: ApiChatRoute,
   AssetsAssetSlugRoute: AssetsAssetSlugRoute,
   ChatChatIdRoute: ChatChatIdRoute,
