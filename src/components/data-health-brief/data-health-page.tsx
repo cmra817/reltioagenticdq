@@ -14,6 +14,7 @@ import {
   FloatingPrompt,
   useChatThread,
   type ChatThread,
+  type ChatTurn,
   StatTile,
 } from "@/components/workspace/primitives";
 import {
@@ -27,8 +28,27 @@ import {
 } from "@/lib/mock-ops";
 import { useSchedules, useRuns } from "@/lib/ops-store";
 import { useLocalStore } from "@/lib/use-local-store";
+import {
+  EMPTY_ANSWERS,
+  SETUP_PROMPT,
+  SETUP_QUESTIONS,
+  assetsLabel,
+  dashboardName,
+  hasAssets,
+  isYes,
+  missing,
+  parseAnswers,
+  summary,
+  type SetupAnswers,
+} from "./dashboard-setup";
 
-type CustomDashboard = { id: string; name: string; scope: string };
+type CustomDashboard = {
+  id: string;
+  name: string;
+  scope: string;
+  answers?: SetupAnswers;
+  turns?: ChatTurn[];
+};
 const CUSTOM_INIT: CustomDashboard[] = [];
 const CUSTOM_KEY = "agentflow.dashboards.custom.v1";
 
@@ -43,8 +63,7 @@ export function DataHealthPage() {
   const [custom, setCustom, ready] = useLocalStore<CustomDashboard[]>(CUSTOM_KEY, CUSTOM_INIT);
   const [active, setActive] = React.useState("mine");
   const [chatOpen, setChatOpen] = React.useState(true);
-  const [creating, setCreating] = React.useState(false);
-  const [draft, setDraft] = React.useState("");
+  const [setup, setSetup] = React.useState<{ key: number; prevId: string } | null>(null);
 
   const dashboards = React.useMemo<DashboardDef[]>(
     () => [
@@ -54,9 +73,15 @@ export function DataHealthPage() {
         id: c.id,
         name: c.name,
         scope: c.scope,
-        briefing: [
-          `A personal view of ${c.scope === ALL_DOMAINS ? "every domain" : c.scope}. Ask me to add or remove cards and I'll change it for you.`,
-        ],
+        turns: c.turns,
+        briefing: c.answers
+          ? [
+              `Watches ${assetsLabel(c.answers)}. Goal: ${c.answers.goal}.`,
+              `${c.answers.audience}. Refreshes ${c.answers.refresh?.toLowerCase()}.`,
+            ]
+          : [
+              `A personal view of ${c.scope === ALL_DOMAINS ? "every domain" : c.scope}. Ask me to add or remove cards and I'll change it for you.`,
+            ],
       })),
     ],
     [custom],
@@ -64,14 +89,14 @@ export function DataHealthPage() {
 
   const current = dashboards.find((d) => d.id === active) ?? MY_BRIEF;
 
-  function createDashboard() {
-    const name = draft.trim();
-    if (!name) return;
+  function createDashboard(answers: SetupAnswers, turns: ChatTurn[]) {
     const id = `dash-${Date.now()}`;
-    setCustom((prev) => [...prev, { id, name, scope: selected }]);
+    setCustom((prev) => [
+      ...prev,
+      { id, name: dashboardName(answers), scope: answers.domain ?? ALL_DOMAINS, answers, turns },
+    ]);
     setActive(id);
-    setDraft("");
-    setCreating(false);
+    setSetup(null);
   }
 
   return (
@@ -84,8 +109,12 @@ export function DataHealthPage() {
           <label className="flex min-w-0 flex-1 items-center gap-2">
             <span className="sr-only">Dashboard</span>
             <select
-              value={current.id}
-              onChange={(e) => setActive(e.target.value)}
+              value={setup ? "__new" : current.id}
+              onChange={(e) => {
+                if (e.target.value === "__new") return;
+                setSetup(null);
+                setActive(e.target.value);
+              }}
               className="min-w-0 max-w-96 flex-1 rounded-lg px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
               style={{
                 border: "1px solid var(--hairline)",
@@ -93,6 +122,7 @@ export function DataHealthPage() {
                 color: "var(--ink-900)",
               }}
             >
+              {setup && <option value="__new">New dashboard (setting up)</option>}
               {dashboards.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
@@ -101,35 +131,15 @@ export function DataHealthPage() {
               ))}
             </select>
           </label>
-          {creating ? (
-            <form
-              className="flex items-center gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                createDashboard();
-              }}
-            >
-              <input
-                autoFocus
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    setCreating(false);
-                    setDraft("");
-                  }
-                }}
-                aria-label="New dashboard name"
-                placeholder={`Name, scoped to ${selected}`}
-                className="w-52 rounded-md border px-2 py-1 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
-                style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
-              />
-              <PrimaryButton type="submit" disabled={!draft.trim()}>
-                Create
-              </PrimaryButton>
-            </form>
+          {setup ? (
+            <GhostButton onClick={() => { setActive(setup.prevId); setSetup(null); }}>
+              Cancel new dashboard
+            </GhostButton>
           ) : (
-            <GhostButton onClick={() => setCreating(true)} className="flex items-center gap-1.5">
+            <GhostButton
+              onClick={() => setSetup({ key: Date.now(), prevId: current.id })}
+              className="flex items-center gap-1.5"
+            >
               <Plus size={14} /> New dashboard
             </GhostButton>
           )}
@@ -137,7 +147,11 @@ export function DataHealthPage() {
         {!ready && <span className="sr-only">Loading dashboards</span>}
       </div>
 
-      <DashboardSplit key={current.id} dash={current} chatOpen={chatOpen} setChatOpen={setChatOpen} />
+      {setup ? (
+        <DashboardSetupSplit key={setup.key} onCreate={createDashboard} />
+      ) : (
+        <DashboardSplit key={current.id} dash={current} chatOpen={chatOpen} setChatOpen={setChatOpen} />
+      )}
     </div>
   );
 }
@@ -151,7 +165,7 @@ function DashboardSplit({
   chatOpen: boolean;
   setChatOpen: (open: boolean) => void;
 }) {
-  const thread = useChatThread((q) => dashboardReply(dash, q));
+  const thread = useChatThread((q) => dashboardReply(dash, q), dash.turns);
   return (
     <SplitWorkspace
       panelLabel={`${dash.name} stats`}
@@ -372,6 +386,123 @@ function GenericPanel({ dash, leading }: { dash: DashboardDef; leading?: React.R
           ))}
         </ul>
       </div>
+    </div>
+  );
+}
+
+function DashboardSetupSplit({
+  onCreate,
+}: {
+  onCreate: (answers: SetupAnswers, turns: ChatTurn[]) => void;
+}) {
+  const { domains } = useDomainState();
+  const [answers, setAnswers] = React.useState<SetupAnswers>(EMPTY_ANSWERS);
+  const answersRef = React.useRef(answers);
+  const stage = React.useRef<"ask" | "collect" | "confirm">("ask");
+  const threadRef = React.useRef<ChatThread | null>(null);
+
+  const reply = (q: string): string => {
+    if (stage.current === "ask") {
+      stage.current = "collect";
+      return SETUP_QUESTIONS;
+    }
+    if (stage.current === "confirm" && isYes(q)) {
+      const done = `Done. I built ${dashboardName(answersRef.current)}. It's selected above, with its stats on the right. Ask me to add or remove cards any time.`;
+      const prior = threadRef.current?.turns ?? [];
+      const seeded: ChatTurn[] = [
+        ...prior,
+        { id: prior.length, role: "user", text: q },
+        { id: prior.length + 1, role: "agent", text: done },
+      ];
+      onCreate(answersRef.current, seeded);
+      return done;
+    }
+    const next = parseAnswers(q, answersRef.current, domains);
+    answersRef.current = next;
+    setAnswers(next);
+    const gaps = missing(next);
+    if (gaps.length > 0) {
+      stage.current = "collect";
+      const got = [
+        hasAssets(next) ? `watching ${assetsLabel(next)}` : null,
+        next.goal ? `goal: ${next.goal.toLowerCase()}` : null,
+        next.audience ? next.audience.toLowerCase() : null,
+        next.refresh ? `refresh ${next.refresh.toLowerCase()}` : null,
+      ].filter(Boolean);
+      const lead = got.length ? `Got it — ${got.join(", ")}. ` : "I didn't catch that. ";
+      return `${lead}Still need:\n\n${gaps.map((g, i) => `${i + 1}. ${g}`).join("\n")}`;
+    }
+    stage.current = "confirm";
+    return summary(next);
+  };
+
+  const thread = useChatThread(reply);
+  threadRef.current = thread;
+
+  return (
+    <SplitWorkspace
+      panelLabel="New dashboard preview"
+      panelWidth="59vw"
+      center={
+        <ScopedChat
+          thread={thread}
+          scopeLabel="New dashboard"
+          placeholder="Reply…"
+          suggestions={[]}
+          reply={reply}
+          initialInput={SETUP_PROMPT}
+          header={
+            <section aria-label="New dashboard">
+              <h2 className="text-[20px] font-semibold" style={{ color: "var(--ink-900)" }}>
+                New dashboard
+              </h2>
+              <p className="mt-1 text-[13px]" style={{ color: "var(--ink-500)" }}>
+                Tell me what to watch and why. I'll ask for anything I need, then build it.
+              </p>
+            </section>
+          }
+        />
+      }
+      panel={<DashboardDraftPanel answers={answers} />}
+    />
+  );
+}
+
+function DashboardDraftPanel({ answers }: { answers: SetupAnswers }) {
+  const rows: { label: string; value: string | null }[] = [
+    { label: "Watches", value: hasAssets(answers) ? assetsLabel(answers) : null },
+    { label: "Goal", value: answers.goal },
+    { label: "For", value: answers.audience },
+    { label: "Refreshes", value: answers.refresh },
+  ];
+  return (
+    <div className="space-y-5 p-5">
+      <div>
+        <div className="text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
+          Your dashboard will appear here
+        </div>
+        <div className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-500)" }}>
+          It fills in as you answer in the chat.
+        </div>
+      </div>
+      <dl
+        className="divide-y rounded-xl border bg-white"
+        style={{ borderColor: "var(--hairline)" }}
+      >
+        {rows.map((r) => (
+          <div key={r.label} className="flex gap-4 px-3.5 py-3">
+            <dt className="w-24 shrink-0 text-[12.5px]" style={{ color: "var(--ink-500)" }}>
+              {r.label}
+            </dt>
+            <dd
+              className="text-[13.5px]"
+              style={{ color: r.value ? "var(--ink-900)" : "var(--ink-300)" }}
+            >
+              {r.value ?? "Not set yet"}
+            </dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
