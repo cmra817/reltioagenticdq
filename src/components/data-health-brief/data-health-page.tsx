@@ -41,6 +41,7 @@ export function DataHealthPage() {
   const { selected } = useDomainState();
   const [custom, setCustom, ready] = useLocalStore<CustomDashboard[]>(CUSTOM_KEY, CUSTOM_INIT);
   const [active, setActive] = React.useState("mine");
+  const [chatOpen, setChatOpen] = React.useState(true);
   const [creating, setCreating] = React.useState(false);
   const [draft, setDraft] = React.useState("");
 
