@@ -29,10 +29,10 @@ const CUSTOM_INIT: CustomDashboard[] = [];
 const CUSTOM_KEY = "agentflow.dashboards.custom.v1";
 
 /**
- * Data health: one page, a tab per dashboard. "My brief" is yours and always
- * first. Dashboards an admin shares appear as tabs on their own, so there is no
- * share link to hunt for. Each tab is the same pair: summary in chat on the
- * left, stats in the right panel.
+ * Data health: one page, a dashboard chosen from a dropdown. "My brief" is yours
+ * and always first. Dashboards an admin shares appear in the same list marked
+ * Shared, so there is no share link to hunt for. Each dashboard is the same
+ * pair: summary in chat on the left, stats in the right panel.
  */
 export function DataHealthPage() {
   const { selected } = useDomainState();
