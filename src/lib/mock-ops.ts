@@ -544,19 +544,11 @@ export const SHARED_DASHBOARDS: DashboardDef[] = [
 export const MY_BRIEF: DashboardDef = {
   id: "mine",
   name: "My brief",
-  scope: "Customer data",
-  briefing: [],
-  stats: [
-    { label: "Tables I own", value: "14" },
-    { label: "Findings today", value: "3", note: "2 new since yesterday" },
-    { label: "Checks passing", value: "94%", note: "+1 vs last week" },
-    { label: "Duplicate rate", value: "2.1%", note: "usual band 0.4–0.9%" },
-  ],
-  breakdown: [
-    { label: "customers_sfdc", score: 71 },
-    { label: "orders_fact", score: 78 },
-    { label: "cust_addresses", score: 82 },
-    { label: "payments", score: 96 },
+  scope: "Marketing contacts",
+  briefing: [
+    "78.4% of Marketing contacts are good records, down 1.7 points from last week. Your target is 90%.",
+    "Email is the biggest reason records fail: 41% of bad records have an invalid, missing or duplicate email, most of them from web_forms and partner_lists.",
+    "The quickest win is Email: fixing it alone turns about 14,200 bad records good.",
   ],
 };
 

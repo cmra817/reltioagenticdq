@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Plus, Users } from "lucide-react";
 import { statusForScore, useDomainState } from "@/components/domain-context";
-import { DataHealthScreen } from "./data-health-screen";
+import { RecordQualityPanel } from "./record-quality-panel";
 import {
   GhostButton,
   HealthPill,
@@ -125,19 +125,11 @@ export function DataHealthPage() {
         {!ready && <span className="sr-only">Loading dashboards</span>}
       </div>
 
-      {current.id === "mine" ? (
-        <SplitWorkspace
-          panelLabel={`${current.name} stats`}
-          center={<DataHealthScreen embedded />}
-          panel={<DashboardPanel dash={current} />}
-        />
-      ) : (
-        <SplitWorkspace
-          panelLabel={`${current.name} stats`}
-          center={<DashboardChat key={current.id} dash={current} />}
-          panel={<DashboardPanel dash={current} />}
-        />
-      )}
+      <SplitWorkspace
+        panelLabel={`${current.name} stats`}
+        center={<DashboardChat key={current.id} dash={current} />}
+        panel={<DashboardPanel dash={current} />}
+      />
     </div>
   );
 }
@@ -153,6 +145,7 @@ function DashboardChat({ dash }: { dash: DashboardDef }) {
         "Add a card for freshness",
       ]}
       reply={(q) => {
+        if (dash.id === "mine") return recordReply(q);
         if (/add|remove|change|hide|show/i.test(q)) {
           return "Done. I've changed your copy of this view. The shared version stays as the admin set it, so nobody else's changes.";
         }
@@ -235,7 +228,27 @@ function useScopeStats(dash: DashboardDef): DashboardStat[] {
   }, [dash, schedules, runs, domains, healthFor]);
 }
 
+function recordReply(q: string): string {
+  if (/source|where|worst/i.test(q)) {
+    return "partner_lists is the worst at 55% good, but it is small. web_forms is 71.4% good across 140,300 records, so it holds the most bad records (about 40,100).";
+  }
+  if (/fast|quick|90|win|fix/i.test(q)) {
+    return "Fix Email first: about 14,200 records fail on email alone, worth +2.9 points. Phone adds +2.4 and Role +1.9. Those three together get you from 78.4% to about 85.7%.";
+  }
+  if (/email/i.test(q)) {
+    return "Of the bad records, 41% fail on Email. Valid is the weakest check at 91.2%, ahead of Distinct at 94.8% and Complete at 96.4%.";
+  }
+  if (/trend|week|down|drop|change/i.test(q)) {
+    return "Good records climbed from 74.1% to 80.4% over the month, then slipped to 78.4% over the last week, right after a partner_lists import.";
+  }
+  return "Of 482,300 contacts, 378,100 are good (78.4%) and 104,200 are bad. Email and Phone cause most of the failures. Ask me about a source, an attribute, or the quickest way to reach 90%.";
+}
+
 function DashboardPanel({ dash }: { dash: DashboardDef }) {
+  return dash.id === "mine" ? <RecordQualityPanel /> : <GenericPanel dash={dash} />;
+}
+
+function GenericPanel({ dash }: { dash: DashboardDef }) {
   const { domains, healthFor } = useDomainState();
   const { schedules } = useSchedules();
   const stats = useScopeStats(dash);
