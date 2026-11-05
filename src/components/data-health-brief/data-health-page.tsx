@@ -10,6 +10,9 @@ import {
   SectionTitle,
   Sparkline,
   SplitWorkspace,
+  FloatingPrompt,
+  useChatThread,
+  type ChatThread,
   StatTile,
 } from "@/components/workspace/primitives";
 import {
@@ -134,19 +137,57 @@ export function DataHealthPage() {
         {!ready && <span className="sr-only">Loading dashboards</span>}
       </div>
 
-      <SplitWorkspace
-        panelLabel={`${current.name} stats`}
-        panelWidth="59vw"
-        center={<DashboardChat key={current.id} dash={current} />}
-        panel={<DashboardPanel dash={current} />}
-      />
+      <DashboardSplit key={current.id} dash={current} chatOpen={chatOpen} setChatOpen={setChatOpen} />
     </div>
   );
 }
 
-function DashboardChat({ dash }: { dash: DashboardDef }) {
+function DashboardSplit({
+  dash,
+  chatOpen,
+  setChatOpen,
+}: {
+  dash: DashboardDef;
+  chatOpen: boolean;
+  setChatOpen: (open: boolean) => void;
+}) {
+  const thread = useChatThread((q) => dashboardReply(dash, q));
+  return (
+    <SplitWorkspace
+      panelLabel={`${dash.name} stats`}
+      panelWidth="59vw"
+      collapsed={!chatOpen}
+      onToggle={() => setChatOpen(!chatOpen)}
+      center={<DashboardChat dash={dash} thread={thread} />}
+      panel={<DashboardPanel dash={dash} />}
+      floating={
+        <FloatingPrompt
+          thread={thread}
+          placeholder="Ask about this dashboard, or change it…"
+          onOpen={() => setChatOpen(true)}
+        />
+      }
+    />
+  );
+}
+
+function dashboardReply(dash: DashboardDef, q: string): string {
+  if (dash.id === "mine") return recordReply(q);
+  if (/add|remove|change|hide|show/i.test(q)) {
+    return "Done. I've changed your copy of this view. The shared version stays as the admin set it, so nobody else's changes.";
+  }
+  if (/first|worst|priority|attention/i.test(q)) {
+    return dash.scope === ALL_DOMAINS
+      ? "Supply Chain, then Finance. Supply Chain has two stale feeds; Finance has three failed checks since last night."
+      : "Start with the table at the top of the right panel. It has the most open findings and the lowest score.";
+  }
+  return "Compared with yesterday, one more check failed and two recovered. Nothing new broke outside the findings listed in the summary.";
+}
+
+function DashboardChat({ dash, thread }: { dash: DashboardDef; thread: ChatThread }) {
   return (
     <ScopedChat
+      thread={thread}
       scopeLabel={dash.scope}
       placeholder="Ask about this dashboard, or change it…"
       suggestions={[
@@ -154,18 +195,7 @@ function DashboardChat({ dash }: { dash: DashboardDef }) {
         "Which domain needs me first?",
         "Add a card for freshness",
       ]}
-      reply={(q) => {
-        if (dash.id === "mine") return recordReply(q);
-        if (/add|remove|change|hide|show/i.test(q)) {
-          return "Done. I've changed your copy of this view. The shared version stays as the admin set it, so nobody else's changes.";
-        }
-        if (/first|worst|priority|attention/i.test(q)) {
-          return dash.scope === ALL_DOMAINS
-            ? "Supply Chain, then Finance. Supply Chain has two stale feeds; Finance has three failed checks since last night."
-            : "Start with the table at the top of the right panel. It has the most open findings and the lowest score.";
-        }
-        return "Compared with yesterday, one more check failed and two recovered. Nothing new broke outside the findings listed in the summary.";
-      }}
+      reply={(q) => dashboardReply(dash, q)}
       header={
         <section aria-label="Summary">
           <h2 className="text-[20px] font-semibold" style={{ color: "var(--ink-900)" }}>

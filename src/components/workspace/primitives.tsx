@@ -1,5 +1,6 @@
 import * as React from "react";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, PanelLeft, X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { STATUS_LABEL, type HealthStatus } from "@/components/domain-context";
 import { RUN_STATUS_LABEL, type RunStatus } from "@/lib/mock-ops";
 
