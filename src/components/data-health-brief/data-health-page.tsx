@@ -396,16 +396,11 @@ function DashboardSetupSplit({
   onCreate: (answers: SetupAnswers, turns: ChatTurn[]) => void;
 }) {
   const { domains } = useDomainState();
-  const [answers, setAnswers] = React.useState<SetupAnswers>(EMPTY_ANSWERS);
-  const answersRef = React.useRef(answers);
-  const stage = React.useRef<"ask" | "collect" | "confirm">("ask");
+  const answersRef = React.useRef<SetupAnswers>(EMPTY_ANSWERS);
+  const stage = React.useRef<"collect" | "confirm">("collect");
   const threadRef = React.useRef<ChatThread | null>(null);
 
   const reply = (q: string): string => {
-    if (stage.current === "ask") {
-      stage.current = "collect";
-      return SETUP_QUESTIONS;
-    }
     if (stage.current === "confirm" && isYes(q)) {
       const done = `Done. I built ${dashboardName(answersRef.current)}. It's selected above, with its stats on the right. Ask me to add or remove cards any time.`;
       const prior = threadRef.current?.turns ?? [];
@@ -419,7 +414,6 @@ function DashboardSetupSplit({
     }
     const next = parseAnswers(q, answersRef.current, domains);
     answersRef.current = next;
-    setAnswers(next);
     const gaps = missing(next);
     if (gaps.length > 0) {
       stage.current = "collect";
@@ -436,73 +430,21 @@ function DashboardSetupSplit({
     return summary(next);
   };
 
-  const thread = useChatThread(reply);
+  const thread = useChatThread(reply, [
+    { id: 0, role: "user", text: SETUP_PROMPT },
+    { id: 1, role: "agent", text: SETUP_QUESTIONS },
+  ]);
   threadRef.current = thread;
 
   return (
-    <SplitWorkspace
-      panelLabel="New dashboard preview"
-      panelWidth="59vw"
-      center={
-        <ScopedChat
-          thread={thread}
-          scopeLabel="New dashboard"
-          placeholder="Reply…"
-          suggestions={[]}
-          reply={reply}
-          initialInput={SETUP_PROMPT}
-          header={
-            <section aria-label="New dashboard">
-              <h2 className="text-[20px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                New dashboard
-              </h2>
-              <p className="mt-1 text-[13px]" style={{ color: "var(--ink-500)" }}>
-                Tell me what to watch and why. I'll ask for anything I need, then build it.
-              </p>
-            </section>
-          }
-        />
-      }
-      panel={<DashboardDraftPanel answers={answers} />}
-    />
-  );
-}
-
-function DashboardDraftPanel({ answers }: { answers: SetupAnswers }) {
-  const rows: { label: string; value: string | null }[] = [
-    { label: "Watches", value: hasAssets(answers) ? assetsLabel(answers) : null },
-    { label: "Goal", value: answers.goal },
-    { label: "For", value: answers.audience },
-    { label: "Refreshes", value: answers.refresh },
-  ];
-  return (
-    <div className="space-y-5 p-5">
-      <div>
-        <div className="text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
-          Your dashboard will appear here
-        </div>
-        <div className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-500)" }}>
-          It fills in as you answer in the chat.
-        </div>
-      </div>
-      <dl
-        className="divide-y rounded-xl border bg-white"
-        style={{ borderColor: "var(--hairline)" }}
-      >
-        {rows.map((r) => (
-          <div key={r.label} className="flex gap-4 px-3.5 py-3">
-            <dt className="w-24 shrink-0 text-[12.5px]" style={{ color: "var(--ink-500)" }}>
-              {r.label}
-            </dt>
-            <dd
-              className="text-[13.5px]"
-              style={{ color: r.value ? "var(--ink-900)" : "var(--ink-300)" }}
-            >
-              {r.value ?? "Not set yet"}
-            </dd>
-          </div>
-        ))}
-      </dl>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <ScopedChat
+        thread={thread}
+        scopeLabel="New dashboard"
+        placeholder="Reply"
+        suggestions={[]}
+        reply={reply}
+      />
     </div>
   );
 }
