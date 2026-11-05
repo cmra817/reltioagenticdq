@@ -209,7 +209,7 @@ export function SplitWorkspace({
 }: {
   center: React.ReactNode;
   panel: React.ReactNode;
-  panelWidth?: number;
+  panelWidth?: number | string;
   panelLabel: string;
 }) {
   return (
@@ -220,7 +220,7 @@ export function SplitWorkspace({
         className="flex w-full shrink-0 flex-col border-t lg:min-h-0 lg:w-[var(--panel-w)] lg:overflow-y-auto lg:border-l lg:border-t-0"
         style={
           {
-            "--panel-w": `${panelWidth}px`,
+            "--panel-w": typeof panelWidth === "number" ? `${panelWidth}px` : panelWidth,
             borderColor: "var(--hairline)",
             background: "rgba(255,255,255,0.72)",
           } as React.CSSProperties
