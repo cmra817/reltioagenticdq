@@ -1,7 +1,7 @@
 import * as React from "react";
-import { ArrowLeft, Play } from "lucide-react";
+import { Play } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { GhostButton, PrimaryButton, RunPill, ScopedChat, SplitWorkspace, Tag } from "@/components/workspace/primitives";
+import { GhostButton, PrimaryButton, RunPill, Tag } from "@/components/workspace/primitives";
 import { PlanView } from "@/components/add-dataset-agentic/PlanView";
 import { planToSchedule, scheduleToPlan } from "@/components/add-dataset-agentic/plan-state";
 import { useRuns, useSchedules } from "@/lib/ops-store";
@@ -34,102 +34,77 @@ export function ScheduleView({ scheduleId }: { scheduleId: string }) {
   const history = runs.filter((r) => r.scheduleId === schedule.id);
   const running = history.some((r) => r.status === "running");
 
-  function reply(q: string): string {
-    if (/fail|why|wrong/i.test(q)) {
-      const bad = history.find((r) => r.status === "failed" || r.status === "attention");
-      return bad
-        ? `The latest problem was ${ago(bad.hoursAgo)}: ${bad.checksFailed} of ${bad.checksRun} checks failed. Open that run to see the findings and ask about any of them.`
-        : "This schedule hasn't failed recently.";
-    }
-    if (/cadence|often|time|when/i.test(q)) {
-      return `It repeats ${schedule!.repeats.toLowerCase()}. Change it under When will it run, or tell me what you want and I'll draft the change.`;
-    }
-    return `${schedule!.name} has run ${history.length} times in the history I keep. ${history.filter((r) => r.status === "passed").length} passed.`;
-  }
-
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="shrink-0 px-6 pt-4">
-        <button
-          type="button"
-          onClick={() => go({ tab: "schedules" })}
-          className="flex items-center gap-1.5 text-[13px]"
-          style={{ color: "var(--ink-500)" }}
-        >
-          <ArrowLeft size={14} /> Schedules
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        className="sticky top-0 z-10 flex h-12 items-center gap-2 border-b bg-white px-6 text-[13.5px]"
+        style={{ borderColor: "var(--hairline)" }}
+      >
+        <button type="button" onClick={() => go({ tab: "schedules" })} style={{ color: "var(--ink-500)" }} className="hover:underline">
+          Schedules
         </button>
+        <span style={{ color: "var(--ink-300)" }}>/</span>
+        <span className="truncate" style={{ color: "var(--ink-900)" }}>{schedule.name}</span>
       </div>
 
-      <SplitWorkspace
-        panelLabel="Schedule definition"
-        panelWidth="50vw"
-        center={
-          <ScopedChat
-            key={schedule.id}
-            scopeLabel="This schedule"
-            placeholder="Ask about this schedule…"
-            suggestions={["Why did the last run fail?", "How often does this run?"]}
-            reply={reply}
-            header={
-              <section aria-label="Run history">
-                <h1 className="text-[20px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                  {schedule.name}
-                </h1>
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  <Tag>{schedule.domain}</Tag>
-                  <Tag>{schedule.kind}</Tag>
-                  {!schedule.active && <Tag>Paused</Tag>}
-                </div>
-                <h2
-                  className="mb-2 mt-6 text-[13px] font-semibold"
-                  style={{ color: "var(--ink-900)" }}
-                >
-                  Run history
-                </h2>
-                {history.length === 0 ? (
-                  <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-                    This schedule hasn't run yet.
-                  </p>
-                ) : (
-                  <ul
-                    className="divide-y rounded-xl border bg-white"
-                    style={{ borderColor: "var(--hairline)" }}
-                  >
-                    {history.map((r) => (
-                      <li key={r.id}>
-                        <button
-                          type="button"
-                          onClick={() => go({ run: r.id })}
-                          className="flex w-full items-center gap-4 px-4 py-2.5 text-left hover:bg-[color:var(--surface-soft)]"
-                        >
-                          <span className="w-[120px] shrink-0">
-                            <RunPill status={r.status} />
-                          </span>
-                          <span
-                            className="min-w-0 flex-1 text-[13px]"
-                            style={{ color: "var(--ink-700)" }}
-                          >
-                            {r.status === "running"
-                              ? "In progress"
-                              : r.checksRun === 0
-                                ? "Profiled, no checks"
-                                : `${r.checksFailed} of ${r.checksRun} checks failed`}
-                          </span>
-                          <span className="text-[12.5px]" style={{ color: "var(--ink-300)" }}>
-                            {ago(r.hoursAgo)}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            }
-          />
-        }
-        panel={
-          <div className="relative flex h-full min-h-0 flex-col bg-white">
+      <div className="mx-auto max-w-[1240px] px-8 pb-16 pt-8">
+        <header className="flex flex-wrap items-start justify-between gap-4 border-b pb-6" style={{ borderColor: "var(--hairline)" }}>
+          <div className="min-w-0">
+            <h1 className="text-[26px] font-semibold" style={{ color: "var(--ink-900)" }}>
+              {schedule.name}
+            </h1>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[13.5px]" style={{ color: "var(--ink-500)" }}>
+              <Tag>{schedule.domain}</Tag>
+              <Tag>{schedule.kind}</Tag>
+              <span className="ml-1">Owner {schedule.owner} · {schedule.permissions} · Next run: {schedule.nextRun}</span>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-4">
+            <PrimaryButton onClick={() => startRun(schedule.id)} disabled={running} className="flex items-center gap-1.5">
+              <Play size={13} /> {running ? "Running…" : "Run now"}
+            </PrimaryButton>
+            <label className="flex items-center gap-2 text-[13.5px]" style={{ color: "var(--ink-900)" }}>
+              {schedule.active ? "Active" : "Paused"}
+              <Switch
+                checked={schedule.active}
+                onCheckedChange={(on) => update(schedule.id, { active: on, nextRun: on ? "Next scheduled time" : "Paused" })}
+                aria-label="Active"
+              />
+            </label>
+          </div>
+        </header>
+
+        <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+          <section aria-label="Run history">
+            <h2 className="mb-3 text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>
+              Run history
+            </h2>
+            {history.length === 0 ? (
+              <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>This schedule hasn't run yet.</p>
+            ) : (
+              <ul className="divide-y" style={{ borderColor: "var(--hairline)" }}>
+                {history.map((r) => (
+                  <li key={r.id} style={{ borderColor: "var(--hairline)" }}>
+                    <button
+                      type="button"
+                      onClick={() => go({ run: r.id })}
+                      className="flex w-full items-center gap-4 px-1 py-3 text-left hover:bg-[color:var(--surface-soft)]"
+                    >
+                      <span className="w-[110px] shrink-0"><RunPill status={r.status} /></span>
+                      <span className="min-w-0 flex-1 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                        {r.status === "running" ? "In progress" : r.checksRun === 0 ? "Profiled, no checks" : `${r.checksFailed} of ${r.checksRun} checks failed`}
+                      </span>
+                      <span className="text-[12.5px]" style={{ color: "var(--ink-300)" }}>{ago(r.hoursAgo)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section aria-label="Schedule definition" className="relative">
             <PlanView
+              bare
               plan={plan}
               stage={3}
               onChange={(next) => update(schedule.id, planToSchedule(next, schedule.kind))}
@@ -138,34 +113,10 @@ export function ScheduleView({ scheduleId }: { scheduleId: string }) {
               filter={null}
               onClearFilter={() => {}}
               onDialogChange={() => {}}
-              title={schedule.name}
-              subtitle={`Owner ${schedule.owner} · ${schedule.permissions}. Edit any part directly; changes apply from the next run.`}
-              headerActions={
-                <div className="flex shrink-0 items-center gap-3">
-                  <label className="flex items-center gap-2 text-[13.5px]" style={{ color: "var(--ink-900)" }}>
-                    <Switch
-                      checked={schedule.active}
-                      onCheckedChange={(on) =>
-                        update(schedule.id, { active: on, nextRun: on ? "Next scheduled time" : "Paused" })
-                      }
-                      aria-label="Active"
-                    />
-                    {schedule.active ? "Active" : "Paused"}
-                  </label>
-                  <PrimaryButton
-                    onClick={() => startRun(schedule.id)}
-                    disabled={running}
-                    className="flex items-center gap-1.5"
-                  >
-                    <Play size={13} /> {running ? "Running…" : "Run now"}
-                  </PrimaryButton>
-                </div>
-              }
             />
-          </div>
-        }
-      />
+          </section>
+        </div>
+      </div>
     </div>
   );
 }
-
