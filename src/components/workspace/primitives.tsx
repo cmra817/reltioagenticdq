@@ -488,13 +488,7 @@ export function ScopedChat({
             className="min-h-[44px] resize-none bg-transparent text-[13.5px] outline-none"
             style={{ color: "var(--ink-900)" }}
           />
-          <div className="flex items-center justify-between">
-            <span
-              className="rounded-full px-2 py-0.5 text-[11.5px]"
-              style={{ background: "var(--surface-soft)", color: "var(--ink-500)" }}
-            >
-              Scope: {scopeLabel}
-            </span>
+          <div className="flex items-center justify-end">
             <button
               type="submit"
               aria-label="Send"
