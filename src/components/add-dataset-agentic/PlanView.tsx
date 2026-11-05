@@ -1,3 +1,4 @@
+import type * as React from "react";
 import { Step1SelectData } from "@/components/add-dataset/Step1SelectData";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Loader2, Lock, Plus, Search, Table2, X } from "lucide-react";
@@ -129,6 +130,11 @@ type Props = {
   onClearFilter: () => void;
   onDialogChange: (open: boolean) => void;
   pulseSchedule?: boolean;
+  /** Heading override (defaults to "Your plan"). */
+  title?: React.ReactNode;
+  subtitle?: React.ReactNode;
+  /** Rendered on the heading row, right-aligned (e.g. Active toggle, Run now). */
+  headerActions?: React.ReactNode;
 };
 
 /* ------------------------------------------------------------------ view */
@@ -437,11 +443,14 @@ export function PlanView(p: Props) {
     <div className="flex min-h-0 flex-1 flex-col">
       <div ref={scrollRef} className="@container min-h-0 flex-1 overflow-y-auto" aria-hidden={!!dialog || undefined}>
         <div className="mx-auto max-w-[980px] px-6 py-7 @[700px]:px-10">
-          <h2 className="text-[24px] font-semibold" style={{ color: "var(--ink-900)" }}>
-            Your plan
-          </h2>
+          <div className="flex items-start justify-between gap-4">
+            <h2 className="text-[24px] font-semibold" style={{ color: "var(--ink-900)" }}>
+              {p.title ?? "Your plan"}
+            </h2>
+            {p.headerActions}
+          </div>
           <p className="mt-1 text-[14px]" style={{ color: "var(--ink-500)" }}>
-            Everything that will be set up. Edit any part directly.
+            {p.subtitle ?? "Everything that will be set up. Edit any part directly."}
           </p>
 
           {/* WHAT WILL RUN */}

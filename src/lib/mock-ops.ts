@@ -31,6 +31,8 @@ export type Schedule = {
   owner: string;
   /** Who can see and run it. */
   permissions: string;
+  /** Full editable plan (tables, checks, schedules) once edited inline. */
+  plan?: import("@/components/add-dataset-agentic/plan-state").Plan;
 };
 
 export type Finding = {
