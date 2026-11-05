@@ -322,7 +322,7 @@ export function FloatingPrompt({
   };
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex justify-start px-6">
-      <div className="pointer-events-auto w-full max-w-xl">
+      <div className="pointer-events-auto w-full max-w-md">
         {thinkingQ && (
           <div className="mb-2 rounded-2xl border p-3 backdrop-blur-md" style={{ ...glass, background: "rgba(255,255,255,0.55)" }} aria-live="polite">
             <p className="truncate text-[13px]" style={{ color: "var(--ink-700)" }}>{thinkingQ}</p>
