@@ -21,7 +21,14 @@ import { DomainList } from "./sidebar/domain-list";
 import { PinnedChats, RecentChats } from "./sidebar/chat-lists";
 import { SearchDialog } from "./sidebar/search-dialog";
 
-export type SidebarNav = "data-health" | "scheduled" | "rules" | "domain" | "explore" | "dq-checks";
+export type SidebarNav =
+  | "data-health"
+  | "scheduled"
+  | "rules"
+  | "domain"
+  | "explore"
+  | "dq-checks"
+  | "none";
 
 function NavItem({
   icon,
