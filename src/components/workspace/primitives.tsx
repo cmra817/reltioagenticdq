@@ -326,7 +326,7 @@ export function FloatingPrompt({
     boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
   };
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex justify-center px-6">
+    <div className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex justify-start px-6">
       <div className="pointer-events-auto w-full max-w-xl">
         {thinkingQ && (
           <div className="mb-2 rounded-2xl border p-3 backdrop-blur-md" style={{ ...glass, background: "rgba(255,255,255,0.55)" }} aria-live="polite">
