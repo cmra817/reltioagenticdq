@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ChevronDownIcon, PlusIcon } from "../brand-icons";
 import { STATUS_LABEL, statusForScore, useDomainState, type HealthStatus } from "../domain-context";
-import { DomainChats, SectionLabel } from "./chat-lists";
+import { SectionLabel } from "./chat-lists";
 
 /** Domains shown before "Show all". The selected domain is always shown. */
 const VISIBLE_LIMIT = 6;
@@ -28,7 +28,6 @@ export function DomainList({ activeNav }: { activeNav: string }) {
   const navigate = useNavigate();
   const { domains, selected, selectDomain, addDomain, healthFor } = useDomainState();
   const [showAll, setShowAll] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -51,13 +50,8 @@ export function DomainList({ activeNav }: { activeNav: string }) {
   const hiddenCount = sorted.length - visible.length;
 
   function onRowClick(name: string) {
-    if (name === selected && activeNav === "domain") {
-      setCollapsed((c) => !c);
-      return;
-    }
     // Opening a domain shows its home: briefing in chat, summary on the right.
     selectDomain(name);
-    setCollapsed(false);
     void navigate({ to: "/domain" });
   }
 
@@ -66,7 +60,6 @@ export function DomainList({ activeNav }: { activeNav: string }) {
     if (!name) return;
     addDomain(name);
     selectDomain(name);
-    setCollapsed(false);
     setDraft("");
     setCreating(false);
   }
@@ -80,13 +73,11 @@ export function DomainList({ activeNav }: { activeNav: string }) {
           const status = statusForScore(score);
           const isSel = name === selected;
           const current = isSel && activeNav === "domain";
-          const expanded = isSel && !collapsed;
           return (
             <li key={name}>
               <button
                 type="button"
                 onClick={() => onRowClick(name)}
-                aria-expanded={isSel ? expanded : undefined}
                 aria-current={current ? "page" : undefined}
                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] transition-colors hover:bg-[color:var(--surface-soft)]"
                 style={{
@@ -109,24 +100,7 @@ export function DomainList({ activeNav }: { activeNav: string }) {
                     {score}
                   </span>
                 )}
-                {isSel && (
-                  <span
-                    className="shrink-0 transition-transform"
-                    style={{
-                      color: "var(--ink-500)",
-                      transform: expanded ? "rotate(0deg)" : "rotate(-90deg)",
-                    }}
-                  >
-                    <ChevronDownIcon size={14} />
-                  </span>
-                )}
               </button>
-
-              {expanded && (
-                <div className="mb-1 mt-0.5 pl-4">
-                  <DomainChats domain={name} />
-                </div>
-              )}
             </li>
           );
         })}
