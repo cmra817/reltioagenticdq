@@ -135,6 +135,8 @@ type Props = {
   subtitle?: React.ReactNode;
   /** Rendered on the heading row, right-aligned (e.g. Active toggle, Run now). */
   headerActions?: React.ReactNode;
+  /** Render only the sections, sized to content (no heading, no own scroll). */
+  bare?: boolean;
 };
 
 /* ------------------------------------------------------------------ view */
@@ -440,9 +442,10 @@ export function PlanView(p: Props) {
   const checksAll = plan.selected.reduce((n, k) => n + keptChecks(plan, k).length, 0);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div ref={scrollRef} className="@container min-h-0 flex-1 overflow-y-auto" aria-hidden={!!dialog || undefined}>
-        <div className="mx-auto max-w-[980px] px-6 py-7 @[700px]:px-10">
+    <div className={p.bare ? "flex flex-col" : "flex min-h-0 flex-1 flex-col"}>
+      <div ref={scrollRef} className={p.bare ? "@container" : "@container min-h-0 flex-1 overflow-y-auto"} aria-hidden={!!dialog || undefined}>
+        <div className={p.bare ? "" : "mx-auto max-w-[980px] px-6 py-7 @[700px]:px-10"}>
+          {!p.bare && (<>
           <div className="flex items-start justify-between gap-4">
             <h2 className="text-[24px] font-semibold" style={{ color: "var(--ink-900)" }}>
               {p.title ?? "Your plan"}
@@ -452,9 +455,10 @@ export function PlanView(p: Props) {
           <p className="mt-1 text-[14px]" style={{ color: "var(--ink-500)" }}>
             {p.subtitle ?? "Everything that will be set up. Edit any part directly."}
           </p>
+          </>)}
 
           {/* WHAT WILL RUN */}
-          <div className="mt-8 flex items-center justify-between">
+          <div className={`${p.bare ? "" : "mt-8 "}flex items-center justify-between`}>
             <div className={label} style={{ color: "var(--ink-500)" }}>
               What will run
             </div>
