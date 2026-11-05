@@ -95,7 +95,7 @@ export function DataHealthPage() {
 
   function newDashboardChat() {
     const id = newChatId();
-    createThread({ id, title: "New dashboard", domain: selected });
+    createThread({ id, title: "Create new dashboard", domain: selected });
     void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: { q: SETUP_PROMPT } });
   }
 

@@ -33,7 +33,7 @@ export const Route = createFileRoute("/chat/$chatId")({
 
 function ChatPage() {
   return (
-    <AppShell hideDock>
+    <AppShell activeNav="none" hideDock>
       <ChatBody />
     </AppShell>
   );
