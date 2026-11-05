@@ -73,6 +73,7 @@ export function DataHealthPage() {
         name: c.name,
         scope: c.scope,
         turns: c.turns,
+        audience: c.answers?.audience ?? undefined,
         briefing: c.answers
           ? [
               `Watches ${assetsLabel(c.answers)}. Goal: ${c.answers.goal}.`,
@@ -350,7 +351,7 @@ function GenericPanel({ dash, leading }: { dash: DashboardDef; leading?: React.R
           </div>
         </div>
         <div className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-500)" }}>
-          {dash.sharedBy ? `Shared by ${dash.sharedBy}` : "Only you see this view"} · {dash.scope}
+          {dash.sharedBy ? `Shared by ${dash.sharedBy}` : dash.audience === "Shared with your team" ? "Shared with your team" : "Only you see this view"} · {dash.scope}
         </div>
       </div>
 

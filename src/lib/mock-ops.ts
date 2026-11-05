@@ -513,6 +513,7 @@ export type DashboardDef = {
   sharedBy?: string;
   briefing: string[];
   turns?: import("@/components/workspace/primitives").ChatTurn[];
+  audience?: string;
   stats?: DashboardStat[];
   breakdown?: { label: string; score: number }[];
 };
