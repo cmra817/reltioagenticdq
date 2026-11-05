@@ -111,6 +111,52 @@ export function nextRun(s: ScheduleConfig, now = new Date()) {
 
 const label = "text-[11px] font-semibold uppercase tracking-[0.08em]";
 
+/**
+ * One labelled group of the plan. In the app shell (bare) the heading sits inside
+ * a tinted panel, so each group reads as one block instead of a loose list.
+ */
+function SectionGroup({
+  bare,
+  title,
+  action,
+  headerClass,
+  children,
+}: {
+  bare?: boolean;
+  title: string;
+  action?: React.ReactNode;
+  headerClass?: string;
+  children: React.ReactNode;
+}) {
+  if (!bare) {
+    return (
+      <>
+        <div className={`flex items-center justify-between ${headerClass ?? ""}`}>
+          <div className={label} style={{ color: "var(--ink-500)" }}>
+            {title}
+          </div>
+          {action}
+        </div>
+        {children}
+      </>
+    );
+  }
+  return (
+    <section className="overflow-hidden rounded-2xl border" style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)" }}>
+      <div
+        className="flex min-h-[57px] items-center justify-between gap-3 border-b px-4 py-3"
+        style={{ borderColor: "var(--hairline)", background: "rgba(255,255,255,0.6)" }}
+      >
+        <div className={label} style={{ color: "var(--ink-500)" }}>
+          {title}
+        </div>
+        {action}
+      </div>
+      <div className="p-3">{children}</div>
+    </section>
+  );
+}
+
 /* ------------------------------------------------------------------ types */
 
 export type Reveal = { keys: string[]; nonce: number } | null;
@@ -443,7 +489,7 @@ export function PlanView(p: Props) {
 
   return (
     <div className={p.bare ? "flex flex-col" : "flex min-h-0 flex-1 flex-col"}>
-      <div ref={scrollRef} className={p.bare ? "@container" : "@container min-h-0 flex-1 overflow-y-auto"} aria-hidden={!!dialog || undefined}>
+        <div ref={scrollRef} className={p.bare ? "@container space-y-7" : "@container min-h-0 flex-1 overflow-y-auto"} aria-hidden={!!dialog || undefined}>
         <div className={p.bare ? "" : "mx-auto max-w-[980px] px-6 py-7 @[700px]:px-10"}>
           {!p.bare && (<>
           <div className="flex items-start justify-between gap-4">
@@ -458,22 +504,24 @@ export function PlanView(p: Props) {
           </>)}
 
           {/* WHAT WILL RUN */}
-          <div className={`${p.bare ? "" : "mt-8 "}flex items-center justify-between`}>
-            <div className={label} style={{ color: "var(--ink-500)" }}>
-              What will run
-            </div>
-            <button
-              type="button"
-              onClick={() => openDialog({ kind: "tables" })}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium"
-              style={{ background: "rgba(67,134,250,0.08)", color: "var(--brand-blue)" }}
-            >
-              <Plus size={14} /> Add tables
-            </button>
-          </div>
+          <SectionGroup
+            bare={p.bare}
+            title="What will run"
+            headerClass={p.bare ? undefined : "mt-8"}
+            action={
+              <button
+                type="button"
+                onClick={() => openDialog({ kind: "tables" })}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium"
+                style={{ background: "rgba(67,134,250,0.08)", color: "var(--brand-blue)" }}
+              >
+                <Plus size={14} /> Add tables
+              </button>
+            }
+          >
 
           {plan.selected.length > 3 && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className={`${p.bare ? "" : "mt-3 "}flex flex-wrap items-center gap-2`}>
               <div className="relative min-w-[220px] flex-1">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-500)" }} />
                 <input
@@ -487,7 +535,7 @@ export function PlanView(p: Props) {
             </div>
           )}
           {p.filter && (
-            <div className="mt-3">
+            <div className={p.bare ? "" : "mt-3"}>
               <span className="inline-flex items-center gap-1.5 rounded-full border bg-white py-1 pl-3 pr-1.5 text-[12.5px]" style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}>
                 {p.filter.label}
                 <button type="button" aria-label="Clear filter" onClick={p.onClearFilter} className="rounded-full p-0.5 hover:bg-[color:var(--surface-soft)]">
@@ -497,7 +545,7 @@ export function PlanView(p: Props) {
             </div>
           )}
 
-          <div className="mt-3 space-y-3">
+          <div className={`${p.bare ? "" : "mt-3 "}space-y-3`}>
             {stage < 1 ? (
               <div className="flex items-center gap-2 rounded-xl border bg-white px-4 py-5 text-[13px]" style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}>
                 <Loader2 size={14} className="animate-spin" /> Finding your tables…
@@ -520,7 +568,7 @@ export function PlanView(p: Props) {
                 const open = groupOpen(w);
                 const n = keys.reduce((s, k) => s + keptChecks(plan, k).length, 0);
                 return (
-                  <section key={w} className="overflow-hidden rounded-xl border bg-white animate-in fade-in slide-in-from-bottom-1 duration-300 motion-reduce:animate-none" style={{ borderColor: "var(--hairline)" }}>
+                  <section key={w} className="overflow-hidden rounded-xl border bg-white animate-in fade-in slide-in-from-bottom-1 duration-300 motion-reduce:animate-none" style={{ borderColor: "var(--hairline)", boxShadow: p.bare ? "var(--shadow-card)" : undefined }}>
                     <button
                       type="button"
                       aria-expanded={open}
@@ -546,12 +594,14 @@ export function PlanView(p: Props) {
               })
             )}
           </div>
+          </SectionGroup>
 
           {/* WHEN WILL IT RUN */}
-          <div className={`${label} mt-10`} style={{ color: "var(--ink-500)" }}>
-            When will it run
-          </div>
-          <div className="mt-3 overflow-hidden rounded-xl border bg-white" style={{ borderColor: "var(--hairline)", boxShadow: p.pulseSchedule ? "0 0 0 3px rgba(67,134,250,0.35)" : undefined }}>
+          <SectionGroup bare={p.bare} title="When will it run" headerClass={p.bare ? undefined : "mt-10"}>
+            <div
+              className={`${p.bare ? "" : "mt-3 "}overflow-hidden rounded-xl border bg-white`}
+              style={{ borderColor: "var(--hairline)", boxShadow: p.pulseSchedule ? "0 0 0 3px rgba(67,134,250,0.35)" : p.bare ? "var(--shadow-card)" : undefined }}
+            >
             {stage < 3 ? (
               <div className="flex items-center gap-2 px-4 py-5 text-[13px]" style={{ color: "var(--ink-500)" }}>
                 <Loader2 size={14} className="animate-spin" /> Working out the schedule…
@@ -596,6 +646,7 @@ export function PlanView(p: Props) {
               </>
             )}
           </div>
+          </SectionGroup>
           <div className="h-10" />
         </div>
       </div>
