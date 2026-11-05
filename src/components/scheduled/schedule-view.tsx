@@ -81,7 +81,7 @@ export function ScheduleView({ scheduleId }: { scheduleId: string }) {
             style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)" }}
           >
             <div
-              className="flex min-h-[46px] items-center justify-between gap-3 border-b px-4 py-3"
+              className="flex min-h-[57px] items-center justify-between gap-3 border-b px-4 py-3"
               style={{ borderColor: "var(--hairline)", background: "rgba(255,255,255,0.6)" }}
             >
               <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--ink-500)" }}>
