@@ -35,7 +35,7 @@ export function ScheduleView({ scheduleId }: { scheduleId: string }) {
   const running = history.some((r) => r.status === "running");
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div className="min-h-0 flex-1 overflow-y-auto bg-white">
       <div
         className="sticky top-0 z-10 flex h-12 items-center gap-2 border-b bg-white px-6 text-[13.5px]"
         style={{ borderColor: "var(--hairline)" }}
