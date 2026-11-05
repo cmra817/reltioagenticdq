@@ -1,5 +1,6 @@
 import * as React from "react";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, PanelLeft, X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { STATUS_LABEL, type HealthStatus } from "@/components/domain-context";
 import { RUN_STATUS_LABEL, type RunStatus } from "@/lib/mock-ops";
 
@@ -206,18 +207,32 @@ export function SplitWorkspace({
   panel,
   panelWidth = 400,
   panelLabel,
+  collapsed = false,
+  onToggle,
+  floating,
 }: {
   center: React.ReactNode;
   panel: React.ReactNode;
   panelWidth?: number | string;
   panelLabel: string;
+  /** Chat hidden: the panel fills the row and `floating` renders over it. */
+  collapsed?: boolean;
+  onToggle?: () => void;
+  floating?: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
-      <div className="flex min-h-[420px] min-w-0 flex-1 flex-col overflow-hidden">{center}</div>
+      {!collapsed && (
+        <div className="relative flex min-h-[420px] min-w-0 flex-1 flex-col overflow-hidden">
+          {onToggle && (
+            <PanelToggle label="Hide chat" onClick={onToggle} className="absolute right-3 top-3 z-10" />
+          )}
+          {center}
+        </div>
+      )}
       <aside
         aria-label={panelLabel}
-        className="flex w-full shrink-0 flex-col border-t lg:min-h-0 lg:w-[var(--panel-w)] lg:overflow-y-auto lg:border-l lg:border-t-0"
+        className={`relative flex w-full flex-col border-t lg:min-h-0 lg:border-t-0 ${collapsed ? "flex-1" : "shrink-0 lg:w-[var(--panel-w)] lg:border-l"}`}
         style={
           {
             "--panel-w": typeof panelWidth === "number" ? `${panelWidth}px` : panelWidth,
@@ -226,8 +241,134 @@ export function SplitWorkspace({
           } as React.CSSProperties
         }
       >
-        {panel}
+        <div className="flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
+          {collapsed && onToggle && (
+            <div className="shrink-0 px-4 pt-3">
+              <PanelToggle label="Show chat" onClick={onToggle} />
+            </div>
+          )}
+          {panel}
+          {collapsed && floating && <div className="h-28 shrink-0" />}
+        </div>
+        {collapsed && floating}
       </aside>
+    </div>
+  );
+}
+
+function PanelToggle({ label, onClick, className = "" }: { label: string; onClick: () => void; className?: string }) {
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={label}
+            onClick={onClick}
+            className={`flex h-7 w-7 items-center justify-center rounded-md hover:bg-[color:var(--surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand-blue)] ${className}`}
+            style={{ color: "var(--ink-700)" }}
+          >
+            <PanelLeft size={16} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+/** One chat thread that a docked chat and a floating prompt can share. */
+export function useChatThread(reply: (q: string) => string) {
+  const [turns, setTurns] = React.useState<ChatTurn[]>([]);
+  const replyRef = React.useRef(reply);
+  replyRef.current = reply;
+  const send = React.useCallback((q: string) => {
+    const text = q.trim();
+    if (!text) return;
+    const answer = replyRef.current(text);
+    setTurns((prev) => [
+      ...prev,
+      { id: prev.length * 2, role: "user", text },
+      { id: prev.length * 2 + 1, role: "agent", text: answer },
+    ]);
+  }, []);
+  return { turns, send };
+}
+export type ChatThread = ReturnType<typeof useChatThread>;
+
+/** Single-line prompt floating over the workspace while the chat is hidden. */
+export function FloatingPrompt({
+  thread,
+  placeholder,
+  onOpen,
+}: {
+  thread: ChatThread;
+  placeholder: string;
+  onOpen: () => void;
+}) {
+  const [input, setInput] = React.useState("");
+  const lastAgent = [...thread.turns].reverse().find((t) => t.role === "agent");
+  const [seenUpTo, setSeenUpTo] = React.useState(lastAgent?.id ?? -1);
+  const [thinkingQ, setThinkingQ] = React.useState<string | null>(null);
+  const showReply = !thinkingQ && !!lastAgent && lastAgent.id > seenUpTo;
+  const submit = () => {
+    const q = input.trim();
+    if (!q) return;
+    setInput("");
+    setThinkingQ(q);
+    window.setTimeout(() => {
+      thread.send(q);
+      setThinkingQ(null);
+    }, 700);
+  };
+  const glass = {
+    borderColor: "rgba(255,255,255,0.7)",
+    boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
+  };
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex justify-center px-6">
+      <div className="pointer-events-auto w-full max-w-xl">
+        {thinkingQ && (
+          <div className="mb-2 rounded-2xl border p-3 backdrop-blur-md" style={{ ...glass, background: "rgba(255,255,255,0.55)" }} aria-live="polite">
+            <p className="truncate text-[13px]" style={{ color: "var(--ink-700)" }}>{thinkingQ}</p>
+            <p className="mt-1 text-[12px]" style={{ color: "var(--ink-500)" }}>Thinking…</p>
+          </div>
+        )}
+        {showReply && (
+          <div className="mb-2 flex items-start gap-2 rounded-2xl border p-3 backdrop-blur-md" style={{ ...glass, background: "rgba(255,255,255,0.8)" }} aria-live="polite">
+            <button type="button" onClick={onOpen} className="max-h-24 flex-1 overflow-hidden text-left text-[13px] leading-relaxed" style={{ color: "var(--ink-900)" }}>
+              {lastAgent!.text}
+            </button>
+            <button type="button" aria-label="Dismiss" onClick={() => setSeenUpTo(lastAgent!.id)} className="shrink-0 rounded p-0.5 hover:bg-[color:var(--surface-soft)]" style={{ color: "var(--ink-500)" }}>
+              <X size={13} />
+            </button>
+          </div>
+        )}
+        <form
+          onSubmit={(e) => { e.preventDefault(); submit(); }}
+          className="flex items-center gap-2 rounded-2xl p-2 pl-3 backdrop-blur-md"
+          style={{
+            background: "rgba(227, 227, 242, 0.7)",
+            border: "1px solid rgba(0, 0, 204, 0.14)",
+            boxShadow: "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.35)",
+          }}
+        >
+          <input
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              if (lastAgent) setSeenUpTo(lastAgent.id);
+            }}
+            aria-label={placeholder}
+            placeholder={placeholder}
+            className="flex-1 bg-transparent py-1.5 text-[13px] outline-none"
+            style={{ color: "var(--ink-900)" }}
+          />
+          <button type="submit" aria-label="Send" disabled={!input.trim()} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full disabled:opacity-40" style={{ background: "var(--brand-blue)", color: "#fff" }}>
+            <ArrowUp size={16} />
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
@@ -246,7 +387,9 @@ export function ScopedChat({
   reply,
   header,
   ask,
+  thread,
 }: {
+  thread?: ChatThread;
   scopeLabel: string;
   placeholder: string;
   suggestions: string[];
@@ -254,22 +397,10 @@ export function ScopedChat({
   header?: React.ReactNode;
   ask?: { id: number; q: string } | null;
 }) {
-  const [turns, setTurns] = React.useState<ChatTurn[]>([]);
+  const own = useChatThread(reply);
+  const { turns, send } = thread ?? own;
   const [input, setInput] = React.useState("");
   const endRef = React.useRef<HTMLDivElement | null>(null);
-  const replyRef = React.useRef(reply);
-  replyRef.current = reply;
-
-  const send = React.useCallback((q: string) => {
-    const text = q.trim();
-    if (!text) return;
-    const answer = replyRef.current(text);
-    setTurns((prev) => [
-      ...prev,
-      { id: prev.length * 2, role: "user", text },
-      { id: prev.length * 2 + 1, role: "agent", text: answer },
-    ]);
-  }, []);
 
   const askId = ask?.id;
   const askText = ask?.q;
