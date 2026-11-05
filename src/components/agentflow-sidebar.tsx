@@ -259,7 +259,7 @@ export function AgentflowSidebar({ activeNav = "data-health" }: { activeNav?: Si
 
   return (
     <aside
-      className="flex h-full w-[260px] shrink-0 flex-col"
+      className="flex h-full w-[273px] shrink-0 flex-col"
       style={{ background: "transparent" }}
     >
       {/* new menu */}

@@ -127,6 +127,7 @@ export function DataHealthPage() {
 
       <SplitWorkspace
         panelLabel={`${current.name} stats`}
+        panelWidth="59vw"
         center={<DashboardChat key={current.id} dash={current} />}
         panel={<DashboardPanel dash={current} />}
       />

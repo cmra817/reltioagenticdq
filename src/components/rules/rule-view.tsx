@@ -45,7 +45,8 @@ export function RuleView({ ruleId }: { ruleId: string }) {
     if (/change|edit|loosen|tighten/i.test(q)) {
       return "Use Edit on the right. I'll test your change against the last run before you save, then show which schedules it touches.";
     }
-    return `${rule.name} is a ${rule.type.toLowerCase()} rule, ${rule.severity.toLowerCase()} severity, currently ${rule.status.toLowerCase()}. ${rule.description}`;
+    const r = rule!;
+    return `${r.name} is a ${r.type.toLowerCase()} rule, ${r.severity.toLowerCase()} severity, currently ${r.status.toLowerCase()}. ${r.description}`;
   }
 
   return (
