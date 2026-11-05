@@ -273,8 +273,8 @@ export function PanelToggle({ label, onClick, className = "" }: { label: string;
 }
 
 /** One chat thread that a docked chat and a floating prompt can share. */
-export function useChatThread(reply: (q: string) => string) {
-  const [turns, setTurns] = React.useState<ChatTurn[]>([]);
+export function useChatThread(reply: (q: string) => string, initialTurns?: ChatTurn[]) {
+  const [turns, setTurns] = React.useState<ChatTurn[]>(initialTurns ?? []);
   const replyRef = React.useRef(reply);
   replyRef.current = reply;
   const send = React.useCallback((q: string) => {
@@ -383,8 +383,11 @@ export function ScopedChat({
   header,
   ask,
   thread,
+  initialInput,
 }: {
   thread?: ChatThread;
+  /** Prefills the prompt box and focuses it with the cursor at the end. */
+  initialInput?: string;
   scopeLabel: string;
   placeholder: string;
   suggestions: string[];
@@ -394,8 +397,17 @@ export function ScopedChat({
 }) {
   const own = useChatThread(reply);
   const { turns, send } = thread ?? own;
-  const [input, setInput] = React.useState("");
+  const [input, setInput] = React.useState(initialInput ?? "");
   const endRef = React.useRef<HTMLDivElement | null>(null);
+  const inputRef = React.useRef<HTMLTextAreaElement | null>(null);
+  React.useEffect(() => {
+    const el = inputRef.current;
+    if (!initialInput || !el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+    // Only on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const askId = ask?.id;
   const askText = ask?.q;
@@ -468,6 +480,7 @@ export function ScopedChat({
           style={{ borderColor: "var(--hairline)", boxShadow: "0 12px 32px rgba(15,23,42,0.08)" }}
         >
           <textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -477,7 +490,7 @@ export function ScopedChat({
                 setInput("");
               }
             }}
-            rows={2}
+            rows={initialInput ? 3 : 2}
             aria-label={placeholder}
             placeholder={placeholder}
             className="min-h-[44px] resize-none bg-transparent text-[13.5px] outline-none"
