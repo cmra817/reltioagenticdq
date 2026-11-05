@@ -1,4 +1,6 @@
 import * as React from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { newChatId, useChatThreads } from "@/components/chat/chat-context";
 import { Plus, Users } from "lucide-react";
 import { statusForScore, useDomainState } from "@/components/domain-context";
 import { RecordQualityPanel } from "./record-quality-panel";
@@ -63,6 +65,8 @@ export function DataHealthPage() {
   const [active, setActive] = React.useState("mine");
   const [chatOpen, setChatOpen] = React.useState(true);
   const [setup, setSetup] = React.useState<{ key: number; prevId: string } | null>(null);
+  const navigate = useNavigate();
+  const { createThread } = useChatThreads();
 
   const dashboards = React.useMemo<DashboardDef[]>(
     () => [
@@ -88,6 +92,12 @@ export function DataHealthPage() {
   );
 
   const current = dashboards.find((d) => d.id === active) ?? MY_BRIEF;
+
+  function newDashboardChat() {
+    const id = newChatId();
+    createThread({ id, title: "New dashboard", domain: selected });
+    void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: { q: SETUP_PROMPT } });
+  }
 
   function createDashboard(answers: SetupAnswers, turns: ChatTurn[]) {
     const id = `dash-${Date.now()}`;
@@ -131,18 +141,9 @@ export function DataHealthPage() {
               ))}
             </select>
           </label>
-          {setup ? (
-            <GhostButton onClick={() => { setActive(setup.prevId); setSetup(null); }}>
-              Cancel new dashboard
-            </GhostButton>
-          ) : (
-            <GhostButton
-              onClick={() => setSetup({ key: Date.now(), prevId: current.id })}
-              className="flex items-center gap-1.5"
-            >
-              <Plus size={14} /> New dashboard
-            </GhostButton>
-          )}
+          <GhostButton onClick={newDashboardChat} className="flex items-center gap-1.5">
+            <Plus size={14} /> New dashboard
+          </GhostButton>
         </div>
         {!ready && <span className="sr-only">Loading dashboards</span>}
       </div>
