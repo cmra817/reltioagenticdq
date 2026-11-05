@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { DatabaseZap, Pin, PinOff } from "lucide-react";
+import { AlertTriangle, DatabaseZap, Pin, PinOff } from "lucide-react";
 import { useChatThreads, type ChatThread } from "../chat/chat-context";
 import { useSetupSessions } from "../add-dataset-agentic/setup-sessions";
+import { useUnreadRunAlerts } from "@/lib/ops-store";
 
 const ROW_CLASS =
   "flex min-w-0 flex-1 items-center gap-2 truncate rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]";
@@ -110,11 +111,20 @@ export function PinnedChats() {
 export function RecentChats() {
   const { threads } = useChatThreads();
   const { sessions, resume } = useSetupSessions();
+  const { alerts, schedules } = useUnreadRunAlerts();
   const mounted = useMounted();
   const recent = threads.filter((t) => !t.pinned);
-  if (!mounted || (recent.length === 0 && sessions.length === 0)) return null;
+  if (!mounted || (recent.length === 0 && sessions.length === 0 && alerts.length === 0))
+    return null;
 
   const items = [
+    // Only runs that failed or need attention surface here, and only until opened.
+    ...alerts.map((r) => ({
+      kind: "run" as const,
+      id: r.id,
+      updatedAt: Date.now() - r.hoursAgo * 3_600_000,
+      name: schedules.find((s) => s.id === r.scheduleId)?.name ?? "Schedule run",
+    })),
     ...sessions.map((s) => ({
       kind: "setup" as const,
       id: s.id,
@@ -134,7 +144,21 @@ export function RecentChats() {
       <SectionLabel>Recents</SectionLabel>
       <ul>
         {items.slice(0, 8).map((item) =>
-          item.kind === "setup" ? (
+          item.kind === "run" ? (
+            <li key={item.id} className="flex items-center">
+              <Link
+                to="/scheduled"
+                search={{ run: item.id }}
+                className={ROW_CLASS}
+                style={ROW_STYLE}
+                title={`Needs a look: ${item.name}`}
+              >
+                <AlertTriangle size={14} style={{ color: "var(--status-warn)", flexShrink: 0 }} />
+                <span className="truncate">{item.name}</span>
+                <span className="sr-only"> run needs attention</span>
+              </Link>
+            </li>
+          ) : item.kind === "setup" ? (
             <li key={item.id} className="flex items-center">
               <button
                 type="button"

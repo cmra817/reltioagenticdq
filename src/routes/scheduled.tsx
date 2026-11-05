@@ -1,8 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { PlaceholderScreen } from "@/components/placeholder-screen";
+import { ScheduledScreen } from "@/components/scheduled/scheduled-screen";
+import type { ScheduledSearch } from "@/components/scheduled/nav";
 
 export const Route = createFileRoute("/scheduled")({
+  validateSearch: (search: Record<string, unknown>): ScheduledSearch => ({
+    tab: search.tab === "runs" || search.tab === "schedules" ? search.tab : undefined,
+    schedule: typeof search.schedule === "string" ? search.schedule : undefined,
+    run: typeof search.run === "string" ? search.run : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Scheduled — Data Quality" },
@@ -21,26 +27,10 @@ export const Route = createFileRoute("/scheduled")({
 });
 
 function ScheduledPage() {
+  const search = Route.useSearch();
   return (
-    <AppShell activeNav="scheduled">
-      <PlaceholderScreen
-        title="Scheduled"
-        summary="Every profiling and data quality check schedule, and what happened each time it ran."
-        planned={[
-          {
-            heading: "Schedules",
-            body: "One card per schedule, showing its tables and checks, cadence, latest run status, and next run.",
-          },
-          {
-            heading: "Runs",
-            body: "A feed of every execution across schedules, with filters for domain and status.",
-          },
-          {
-            heading: "Run view",
-            body: "The agent's summary of one run, with results beside it and a chat scoped to that run.",
-          },
-        ]}
-      />
+    <AppShell activeNav="scheduled" hideDock>
+      <ScheduledScreen search={search} />
     </AppShell>
   );
 }
