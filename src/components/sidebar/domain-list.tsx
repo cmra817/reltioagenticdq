@@ -1,6 +1,6 @@
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { BarsIcon, ChevronDownIcon, CompassIcon, PlusIcon } from "../brand-icons";
+import { ChevronDownIcon, PlusIcon } from "../brand-icons";
 import { STATUS_LABEL, statusForScore, useDomainState, type HealthStatus } from "../domain-context";
 import { DomainChats, SectionLabel } from "./chat-lists";
 
@@ -24,33 +24,8 @@ function HealthDot({ status }: { status: HealthStatus }) {
   );
 }
 
-function ScopedLink({
-  to,
-  icon,
-  label,
-  active,
-}: {
-  to: "/explore" | "/dq-checks";
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-}) {
-  return (
-    <Link
-      to={to}
-      className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]"
-      style={{
-        color: active ? "var(--brand-blue)" : "var(--ink-700)",
-        background: active ? "var(--surface-soft)" : "transparent",
-      }}
-    >
-      <span style={{ color: active ? "var(--brand-blue)" : "var(--ink-500)" }}>{icon}</span>
-      <span className="font-medium">{label}</span>
-    </Link>
-  );
-}
-
 export function DomainList({ activeNav }: { activeNav: string }) {
+  const navigate = useNavigate();
   const { domains, selected, selectDomain, addDomain, healthFor } = useDomainState();
   const [showAll, setShowAll] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -76,12 +51,14 @@ export function DomainList({ activeNav }: { activeNav: string }) {
   const hiddenCount = sorted.length - visible.length;
 
   function onRowClick(name: string) {
-    if (name === selected) {
+    if (name === selected && activeNav === "domain") {
       setCollapsed((c) => !c);
       return;
     }
+    // Opening a domain shows its home: briefing in chat, summary on the right.
     selectDomain(name);
     setCollapsed(false);
+    void navigate({ to: "/domain" });
   }
 
   function handleCreate() {
@@ -102,6 +79,7 @@ export function DomainList({ activeNav }: { activeNav: string }) {
           const score = healthFor(name);
           const status = statusForScore(score);
           const isSel = name === selected;
+          const current = isSel && activeNav === "domain";
           const expanded = isSel && !collapsed;
           return (
             <li key={name}>
@@ -109,7 +87,7 @@ export function DomainList({ activeNav }: { activeNav: string }) {
                 type="button"
                 onClick={() => onRowClick(name)}
                 aria-expanded={isSel ? expanded : undefined}
-                aria-current={isSel ? "true" : undefined}
+                aria-current={current ? "page" : undefined}
                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[14px] transition-colors hover:bg-[color:var(--surface-soft)]"
                 style={{
                   color: isSel ? "var(--ink-900)" : "var(--ink-700)",
@@ -146,18 +124,6 @@ export function DomainList({ activeNav }: { activeNav: string }) {
 
               {expanded && (
                 <div className="mb-1 mt-0.5 pl-4">
-                  <ScopedLink
-                    to="/explore"
-                    icon={<CompassIcon size={16} />}
-                    label="Explore"
-                    active={activeNav === "explore"}
-                  />
-                  <ScopedLink
-                    to="/dq-checks"
-                    icon={<BarsIcon size={16} />}
-                    label="DQ checks"
-                    active={activeNav === "dq-checks"}
-                  />
                   <DomainChats domain={name} />
                 </div>
               )}

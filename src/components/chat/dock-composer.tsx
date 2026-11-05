@@ -3,12 +3,14 @@ import { useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { newChatId, titleFromText, useChatThreads } from "./chat-context";
 import { useDomainState } from "../domain-context";
+import { ALL_DOMAINS } from "@/lib/mock-ops";
 
 /** Docked prompt box shown at the bottom of every main page. */
 export function DockComposer() {
   const navigate = useNavigate();
   const { createThread } = useChatThreads();
-  const { selected } = useDomainState();
+  const { domains, selected, allDomains, setAllDomains, selectDomain } = useDomainState();
+  const scopeDomain = allDomains ? undefined : selected;
   const [value, setValue] = useState("");
 
   function start() {
@@ -21,7 +23,7 @@ export function DockComposer() {
         id: investigationId,
         title: titleFromText(text),
         kind: "investigation",
-        domain: selected,
+        domain: scopeDomain,
       });
       setValue("");
       void navigate({
@@ -31,7 +33,7 @@ export function DockComposer() {
       return;
     }
     const id = newChatId();
-    createThread({ id, domain: selected });
+    createThread({ id, domain: scopeDomain });
     setValue("");
     void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: { q: text } });
   }
@@ -46,20 +48,44 @@ export function DockComposer() {
           start();
         }}
       >
-        <textarea
-          rows={1}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              start();
-            }
-          }}
-          placeholder="Ask about your data…"
-          className="max-h-32 flex-1 resize-none bg-transparent py-2 text-[14px] outline-none"
-          style={{ color: "var(--ink-900)" }}
-        />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <textarea
+            rows={1}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                start();
+              }
+            }}
+            placeholder="Ask about your data…"
+            className="max-h-32 flex-1 resize-none bg-transparent py-2 text-[14px] outline-none"
+            style={{ color: "var(--ink-900)" }}
+          />
+          <label
+            className="mb-1 flex items-center gap-1.5 text-[12px]"
+            style={{ color: "var(--ink-500)" }}
+          >
+            <span>Scope</span>
+            <select
+              value={allDomains ? ALL_DOMAINS : selected}
+              onChange={(e) =>
+                e.target.value === ALL_DOMAINS ? setAllDomains(true) : selectDomain(e.target.value)
+              }
+              aria-label="Chat scope"
+              className="rounded-md px-1.5 py-0.5 text-[12px] font-medium"
+              style={{ background: "var(--surface-soft)", color: "var(--ink-700)" }}
+            >
+              <option value={ALL_DOMAINS}>All domains</option>
+              {domains.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <button
           type="submit"
           disabled={!value.trim()}

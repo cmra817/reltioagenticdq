@@ -85,6 +85,7 @@ export function SearchDialog({ open, onOpenChange }: Props) {
                 onSelect={() => {
                   selectDomain(d);
                   close();
+                  void navigate({ to: "/domain" });
                 }}
               >
                 <span>{d}</span>

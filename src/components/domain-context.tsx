@@ -13,6 +13,9 @@ type DomainContextValue = {
   domains: string[];
   selected: string;
   selectDomain: (name: string) => void;
+  /** True when the agent is scoped to every domain instead of the selected one. */
+  allDomains: boolean;
+  setAllDomains: (value: boolean) => void;
   addDomain: (name: string) => void;
   /** Connection details keyed by domain name. */
   connections: Record<string, ConnectedDomain>;
@@ -77,6 +80,7 @@ export function DomainProvider({ children }: { children: ReactNode }) {
   // Start from the default so server and first client render match; the saved
   // choice is applied right after hydration.
   const [selected, setSelected] = useState<string>(DEFAULT_SELECTED);
+  const [allDomains, setAllDomains] = useState(false);
   const [connections, setConnections] = useState<Record<string, ConnectedDomain>>({});
   const [justConnected, setJustConnected] = useState<ConnectedDomain | null>(null);
 
@@ -106,6 +110,7 @@ export function DomainProvider({ children }: { children: ReactNode }) {
   const selectDomain = useCallback(
     (name: string) => {
       setSelected(name);
+      setAllDomains(false);
       persistSelected(name);
     },
     [persistSelected],
@@ -124,6 +129,7 @@ export function DomainProvider({ children }: { children: ReactNode }) {
       };
       setConnections((c) => ({ ...c, [trimmed]: record }));
       setSelected(trimmed);
+      setAllDomains(false);
       persistSelected(trimmed);
       setJustConnected(record);
     },
@@ -140,6 +146,8 @@ export function DomainProvider({ children }: { children: ReactNode }) {
         domains,
         selected,
         selectDomain,
+        allDomains,
+        setAllDomains,
         addDomain,
         connections,
         justConnected,
