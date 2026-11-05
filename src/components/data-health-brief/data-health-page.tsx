@@ -5,7 +5,6 @@ import { RecordQualityPanel } from "./record-quality-panel";
 import {
   GhostButton,
   HealthPill,
-  PrimaryButton,
   ScopedChat,
   SectionTitle,
   Sparkline,
