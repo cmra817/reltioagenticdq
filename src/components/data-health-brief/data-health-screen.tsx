@@ -49,7 +49,7 @@ const CHIPS_TODAY = [
   "What's happening with the duplicates?",
 ];
 
-export function DataHealthScreen() {
+export function DataHealthScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const navigate = useNavigate();
   const [hydrated, setHydrated] = React.useState(false);
   const [config, setConfig] = React.useState<StoredConfig>(DEFAULT_CONFIG);
@@ -198,6 +198,8 @@ export function DataHealthScreen() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      {!embedded && (
+        <>
       {/* header */}
       <div className="mx-auto flex w-full max-w-[900px] shrink-0 items-center gap-3 px-6 pb-3 pt-4">
         <h1 className="text-[17px] font-semibold" style={{ color: "var(--ink-900)" }}>
@@ -214,6 +216,8 @@ export function DataHealthScreen() {
           </button>
         </div>
       </div>
+        </>
+      )}
 
       {/* one scroll: dashboard lives in the conversation, folds to a sticky bar */}
       <div className="mx-auto min-h-0 w-full max-w-[900px] flex-1 overflow-y-auto px-6 pt-1">
@@ -244,7 +248,7 @@ export function DataHealthScreen() {
           </div>
         ) : (
           <div className="pb-2">
-            {level === "full" && (
+            {level === "full" && !embedded && (
               <Scorecard
                 dims={dims}
                 extras={extras}
@@ -254,9 +258,10 @@ export function DataHealthScreen() {
                 onAsk={ask}
               />
             )}
-            {level === "full" && <div className="my-5 h-px" style={{ background: "var(--hairline)" }} />}
+            {level === "full" && !embedded && <div className="my-5 h-px" style={{ background: "var(--hairline)" }} />}
             {healthy ? <HealthyBrief onAsk={ask} onPin={addPin} /> : <TodayBrief onAsk={ask} onPin={addPin} />}
 
+            {!embedded && (
             <div
               className="mt-3 flex items-center gap-2 py-2"
               style={{ borderTop: "1px solid var(--hairline)" }}
@@ -284,6 +289,7 @@ export function DataHealthScreen() {
                 Updated 6:00am · next run 6:00am tomorrow
               </span>
             </div>
+            )}
           </div>
         )}
 

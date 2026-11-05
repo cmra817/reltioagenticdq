@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { DataHealthScreen } from "@/components/data-health-brief/data-health-screen";
+import { DataHealthPage as DataHealthView } from "@/components/data-health-brief/data-health-page";
 
 export const Route = createFileRoute("/data-health")({
   head: () => ({
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/data-health")({
 function DataHealthPage() {
   return (
     <AppShell activeNav="data-health" hideDock>
-      <DataHealthScreen />
+      <DataHealthView />
     </AppShell>
   );
 }
