@@ -9,7 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ScheduledRouteImport } from './routes/scheduled'
+import { Route as RulesRouteImport } from './routes/rules'
 import { Route as IncidentsRouteImport } from './routes/incidents'
+import { Route as DomainRouteImport } from './routes/domain'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DqChecksRouteImport } from './routes/dq-checks'
 import { Route as DataHealthRouteImport } from './routes/data-health'
@@ -20,9 +23,24 @@ import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
+const ScheduledRoute = ScheduledRouteImport.update({
+  id: '/scheduled',
+  path: '/scheduled',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RulesRoute = RulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IncidentsRoute = IncidentsRouteImport.update({
   id: '/incidents',
   path: '/incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DomainRoute = DomainRouteImport.update({
+  id: '/domain',
+  path: '/domain',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -77,6 +95,9 @@ export interface FileRoutesByFullPath {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/domain': typeof DomainRoute
+  '/rules': typeof RulesRoute
+  '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
@@ -89,6 +110,9 @@ export interface FileRoutesByTo {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/domain': typeof DomainRoute
+  '/rules': typeof RulesRoute
+  '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
@@ -102,6 +126,9 @@ export interface FileRoutesById {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/domain': typeof DomainRoute
+  '/rules': typeof RulesRoute
+  '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
@@ -116,6 +143,9 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/domain'
+    | '/rules'
+    | '/scheduled'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
@@ -128,6 +158,9 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/domain'
+    | '/rules'
+    | '/scheduled'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
@@ -140,6 +173,9 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/domain'
+    | '/rules'
+    | '/scheduled'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
@@ -153,6 +189,9 @@ export interface RootRouteChildren {
   DqChecksRoute: typeof DqChecksRoute
   ExploreRoute: typeof ExploreRoute
   IncidentsRoute: typeof IncidentsRoute
+  DomainRoute: typeof DomainRoute
+  RulesRoute: typeof RulesRoute
+  ScheduledRoute: typeof ScheduledRoute
   ApiChatRoute: typeof ApiChatRoute
   AssetsAssetSlugRoute: typeof AssetsAssetSlugRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
@@ -162,11 +201,32 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/scheduled': {
+      id: '/scheduled'
+      path: '/scheduled'
+      fullPath: '/scheduled'
+      preLoaderRoute: typeof ScheduledRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rules': {
+      id: '/rules'
+      path: '/rules'
+      fullPath: '/rules'
+      preLoaderRoute: typeof RulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/incidents': {
       id: '/incidents'
       path: '/incidents'
       fullPath: '/incidents'
       preLoaderRoute: typeof IncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/domain': {
+      id: '/domain'
+      path: '/domain'
+      fullPath: '/domain'
+      preLoaderRoute: typeof DomainRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -241,6 +301,9 @@ const rootRouteChildren: RootRouteChildren = {
   DqChecksRoute: DqChecksRoute,
   ExploreRoute: ExploreRoute,
   IncidentsRoute: IncidentsRoute,
+  DomainRoute: DomainRoute,
+  RulesRoute: RulesRoute,
+  ScheduledRoute: ScheduledRoute,
   ApiChatRoute: ApiChatRoute,
   AssetsAssetSlugRoute: AssetsAssetSlugRoute,
   ChatChatIdRoute: ChatChatIdRoute,

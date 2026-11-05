@@ -1,5 +1,5 @@
 import * as React from "react";
-import { AgentflowSidebar } from "@/components/agentflow-sidebar";
+import { AgentflowSidebar, type SidebarNav } from "@/components/agentflow-sidebar";
 import { AgentflowTopbar } from "@/components/agentflow-topbar";
 import { SidebarProvider, useSidebarState } from "@/components/sidebar-context";
 import { DomainProvider } from "@/components/domain-context";
@@ -26,7 +26,7 @@ function AppShellInner({
   panelFullHeight,
 }: {
   children: React.ReactNode;
-  activeNav?: "data-health" | "explore" | "dq-checks";
+  activeNav?: SidebarNav;
   activeTab?: "Agents" | "Unstructured" | "Quality";
   hideDock?: boolean;
   panelFullHeight?: boolean;
@@ -93,7 +93,7 @@ function AppShellInner({
 
 export function AppShell(props: {
   children: React.ReactNode;
-  activeNav?: "data-health" | "explore" | "dq-checks";
+  activeNav?: SidebarNav;
   activeTab?: "Agents" | "Unstructured" | "Quality";
   hideDock?: boolean;
   panelFullHeight?: boolean;
