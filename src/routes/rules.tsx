@@ -1,8 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { PlaceholderScreen } from "@/components/placeholder-screen";
+import { RulesScreen } from "@/components/rules/rules-screen";
+import type { RulesSearch } from "@/components/rules/nav";
 
 export const Route = createFileRoute("/rules")({
+  validateSearch: (search: Record<string, unknown>): RulesSearch => ({
+    rule: typeof search.rule === "string" ? search.rule : undefined,
+    new: search.new === true || search.new === "true" ? true : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Rules — Data Quality" },
@@ -21,26 +26,10 @@ export const Route = createFileRoute("/rules")({
 });
 
 function RulesPage() {
+  const search = Route.useSearch();
   return (
-    <AppShell activeNav="rules">
-      <PlaceholderScreen
-        title="Rules"
-        summary="A shared library of data quality rules. Each domain applies them as checks on its own tables."
-        planned={[
-          {
-            heading: "Rule library",
-            body: "A list of rules with type, severity, owner, and where each one is used.",
-          },
-          {
-            heading: "Create and edit by chat",
-            body: "Describe a rule in plain words; the agent drafts it, tests it on real data, and you save it.",
-          },
-          {
-            heading: "Versions and impact check",
-            body: "Every save is a new version, and you see which checks a change affects before it applies.",
-          },
-        ]}
-      />
+    <AppShell activeNav="rules" hideDock>
+      <RulesScreen search={search} />
     </AppShell>
   );
 }
