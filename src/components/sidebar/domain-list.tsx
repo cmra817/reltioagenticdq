@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ChevronDownIcon, PlusIcon } from "../brand-icons";
+import { PlusIcon } from "../brand-icons";
 import { STATUS_LABEL, statusForScore, useDomainState, type HealthStatus } from "../domain-context";
 import { SectionLabel } from "./chat-lists";
 
