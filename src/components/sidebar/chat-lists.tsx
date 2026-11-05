@@ -180,34 +180,4 @@ export function RecentChats() {
   );
 }
 
-const DOMAIN_CHAT_LIMIT = 5;
 
-/** A domain's complete chat history, shown under the domain when it is selected. */
-export function DomainChats({ domain }: { domain: string }) {
-  const { threads } = useChatThreads();
-  const mounted = useMounted();
-  const [showAll, setShowAll] = useState(false);
-  const mine = threads.filter((t) => t.domain === domain);
-  if (!mounted || mine.length === 0) return null;
-  const visible = showAll ? mine : mine.slice(0, DOMAIN_CHAT_LIMIT);
-  const hidden = mine.length - visible.length;
-  return (
-    <div className="mt-1">
-      <ul>
-        {visible.map((t) => (
-          <ThreadRow key={t.id} thread={t} />
-        ))}
-      </ul>
-      {(hidden > 0 || showAll) && mine.length > DOMAIN_CHAT_LIMIT && (
-        <button
-          type="button"
-          onClick={() => setShowAll((v) => !v)}
-          className="px-3 py-1 text-[12px] hover:underline"
-          style={{ color: "var(--ink-500)" }}
-        >
-          {showAll ? "Show fewer" : `Show ${hidden} more`}
-        </button>
-      )}
-    </div>
-  );
-}
