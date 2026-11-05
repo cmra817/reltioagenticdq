@@ -597,7 +597,7 @@ export function PlanView(p: Props) {
           </SectionGroup>
 
           {/* WHEN WILL IT RUN */}
-          <SectionGroup bare={p.bare} title="When will it run">
+          <SectionGroup bare={p.bare} title="When will it run" headerClass={p.bare ? undefined : "mt-10"}>
             <div
               className={`${p.bare ? "" : "mt-3 "}overflow-hidden rounded-xl border bg-white`}
               style={{ borderColor: "var(--hairline)", boxShadow: p.pulseSchedule ? "0 0 0 3px rgba(67,134,250,0.35)" : p.bare ? "var(--shadow-card)" : undefined }}
