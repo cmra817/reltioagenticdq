@@ -144,7 +144,7 @@ function SectionGroup({
   return (
     <section className="overflow-hidden rounded-2xl border" style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)" }}>
       <div
-        className="flex items-center justify-between gap-3 border-b px-4 py-3"
+        className="flex min-h-[46px] items-center justify-between gap-3 border-b px-4 py-3"
         style={{ borderColor: "var(--hairline)", background: "rgba(255,255,255,0.6)" }}
       >
         <div className={label} style={{ color: "var(--ink-500)" }}>
