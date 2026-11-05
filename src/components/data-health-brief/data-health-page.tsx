@@ -11,7 +11,6 @@ import {
   Sparkline,
   SplitWorkspace,
   StatTile,
-  Tabs,
 } from "@/components/workspace/primitives";
 import {
   ALL_DOMAINS,
@@ -30,10 +29,10 @@ const CUSTOM_INIT: CustomDashboard[] = [];
 const CUSTOM_KEY = "agentflow.dashboards.custom.v1";
 
 /**
- * Data health: one page, a tab per dashboard. "My brief" is yours and always
- * first. Dashboards an admin shares appear as tabs on their own, so there is no
- * share link to hunt for. Each tab is the same pair: summary in chat on the
- * left, stats in the right panel.
+ * Data health: one page, a dashboard chosen from a dropdown. "My brief" is yours
+ * and always first. Dashboards an admin shares appear in the same list marked
+ * Shared, so there is no share link to hunt for. Each dashboard is the same
+ * pair: summary in chat on the left, stats in the right panel.
  */
 export function DataHealthPage() {
   const { selected } = useDomainState();
@@ -77,18 +76,28 @@ export function DataHealthPage() {
           <h1 className="text-[17px] font-semibold" style={{ color: "var(--ink-900)" }}>
             Data health
           </h1>
-          <div className="min-w-0 flex-1">
-            <Tabs
-              label="Dashboards"
+          <label className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="shrink-0 text-[12px]" style={{ color: "var(--ink-500)" }}>
+              Dashboard
+            </span>
+            <select
               value={current.id}
-              onChange={setActive}
-              tabs={dashboards.map((d) => ({
-                id: d.id,
-                label: d.name,
-                hint: d.sharedBy ? "Shared" : undefined,
-              }))}
-            />
-          </div>
+              onChange={(e) => setActive(e.target.value)}
+              className="min-w-0 max-w-96 flex-1 rounded-lg px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
+              style={{
+                border: "1px solid var(--hairline)",
+                background: "#fff",
+                color: "var(--ink-900)",
+              }}
+            >
+              {dashboards.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                  {d.sharedBy ? " — Shared" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
           {creating ? (
             <form
               className="flex items-center gap-2"
