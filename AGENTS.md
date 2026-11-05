@@ -9,3 +9,4 @@
 - Sub-views of Scheduled and Rules (schedule, run, rule, new rule) are search params on `/scheduled` and `/rules`, not separate routes. `/domain?table=` is the domain home, and opening a table keeps the same chat and swaps the right panel.
 - Editing a rule that schedules use always goes through the impact check (everywhere, save as new, or some schedules). Only runs that failed or need attention, and have not been opened, reach Recents.
 - Explore and DQ checks are no longer under domains in the sidebar; the domain page's Tables and Checks tabs replace them. The old pages remain reachable from search (Cmd/Ctrl+K).
+- The schedule detail panel reuses `PlanView` with `scheduleToPlan`/`planToSchedule` adapters and edits inline (no edit dialog), so schedules and the add-asset plan never drift.

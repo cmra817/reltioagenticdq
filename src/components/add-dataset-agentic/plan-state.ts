@@ -206,3 +206,53 @@ export function observations(plan: Plan): { text: string; keys: string[] }[] {
     out.push({ text: `I couldn't find a primary key on ${noKey.map(tableName).join(", ")}, so there's no uniqueness check there.`, keys: noKey });
   return out.slice(0, 2);
 }
+
+/* ---------------------------------------------- schedule <-> plan adapters */
+
+function parseRepeats(r: string): ScheduleConfig {
+  const base = { ...DEFAULT_SCHEDULE };
+  const t = r.match(/(\d{1,2}):(\d{2})\s*(am|pm)/i);
+  let time = base.time;
+  if (t) {
+    let h = Number(t[1]) % 12;
+    if (t[3].toLowerCase() === "pm") h += 12;
+    time = `${String(h).padStart(2, "0")}:${t[2]}`;
+  }
+  if (/every hour/i.test(r)) return { ...base, frequency: "custom", repeatEvery: 1, repeatUnit: "hours" };
+  if (/every 6 hours/i.test(r)) return { ...base, frequency: "6h" };
+  if (/every 12 hours/i.test(r)) return { ...base, frequency: "12h" };
+  const n = r.match(/every (\d+) (hours|days|weeks)/i);
+  if (n) return { ...base, frequency: "custom", repeatEvery: Number(n[1]), repeatUnit: n[2].toLowerCase() as ScheduleConfig["repeatUnit"] };
+  const d = r.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)s?/i);
+  if (d) return { ...base, frequency: "weekly", day: d[1][0].toUpperCase() + d[1].slice(1).toLowerCase(), time };
+  return { ...base, frequency: "daily", time };
+}
+
+function keyForName(name: string): string {
+  const hit = ALL_ASSETS.find((a) => a.name === name);
+  if (hit) return hit.key;
+  const sum = [...name].reduce((n, c) => n + c.charCodeAt(0), 0);
+  const conn = WAREHOUSES[sum % WAREHOUSES.length];
+  return assetKey(conn.id, conn.schemas[0]?.name ?? "default", name);
+}
+
+/** The plan a schedule runs — stored plan if edited, otherwise derived from its definition. */
+export function scheduleToPlan(s: { tables: string[]; ruleIds: string[]; repeats: string; plan?: Plan }): Plan {
+  if (s.plan) return s.plan;
+  const sched = parseRepeats(s.repeats);
+  const keys = s.tables.map(keyForName);
+  const checked: Record<string, string[]> = {};
+  for (const k of keys) checked[k] = s.ruleIds.length ? generateChecks(tableName(k)).map((c) => c.id) : [];
+  return { selected: keys, checked, customChecks: {}, profiling: sched, checks: sched, linked: true };
+}
+
+/** Fields of a schedule derived from its plan. */
+export function planToSchedule(plan: Plan, kind: string) {
+  const checks = checkTotal(plan);
+  return {
+    plan,
+    tables: plan.selected.map(tableName),
+    repeats: scheduleLabel(plan.checks ?? plan.profiling),
+    kind: (checks === 0 ? "Profiling" : kind === "Profiling" ? "Profiling + checks" : kind) as never,
+  };
+}
