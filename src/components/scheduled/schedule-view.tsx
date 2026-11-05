@@ -1,31 +1,12 @@
 import * as React from "react";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Pencil, Play } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ArrowLeft, Play } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useDomainState } from "@/components/domain-context";
-import {
-  GhostButton,
-  PrimaryButton,
-  RunPill,
-  ScopedChat,
-  SectionTitle,
-  SplitWorkspace,
-  Tag,
-} from "@/components/workspace/primitives";
-import { REPEAT_PRESETS, tablesFor, type Schedule } from "@/lib/mock-ops";
-import { useRules, useRuns, useSchedules } from "@/lib/ops-store";
+import { GhostButton, PrimaryButton, RunPill, ScopedChat, SplitWorkspace, Tag } from "@/components/workspace/primitives";
+import { PlanView } from "@/components/add-dataset-agentic/PlanView";
+import { planToSchedule, scheduleToPlan } from "@/components/add-dataset-agentic/plan-state";
+import { useRuns, useSchedules } from "@/lib/ops-store";
 import { ago } from "./format";
 import { useScheduledNav } from "./nav";
-
-const PERMISSIONS = ["Only you", "Everyone can view", "Domain team can view and run"];
 
 /**
  * One schedule: run history in the center (with a chat scoped to the schedule),
@@ -35,7 +16,6 @@ export function ScheduleView({ scheduleId }: { scheduleId: string }) {
   const go = useScheduledNav();
   const { schedules, update } = useSchedules();
   const { runs, startRun } = useRuns(schedules);
-  const { rules } = useRules();
 
   const schedule = schedules.find((s) => s.id === scheduleId);
   const plan = React.useMemo(() => (schedule ? scheduleToPlan(schedule) : null), [schedule]);
@@ -53,7 +33,6 @@ export function ScheduleView({ scheduleId }: { scheduleId: string }) {
   if (!plan) return null;
   const history = runs.filter((r) => r.scheduleId === schedule.id);
   const running = history.some((r) => r.status === "running");
-  const ruleName = (id: string) => rules.find((r) => r.id === id)?.name ?? "Deleted rule";
 
   function reply(q: string): string {
     if (/fail|why|wrong/i.test(q)) {
