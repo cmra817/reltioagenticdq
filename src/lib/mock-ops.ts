@@ -512,6 +512,7 @@ export type DashboardDef = {
   scope: string;
   sharedBy?: string;
   briefing: string[];
+  turns?: import("@/components/workspace/primitives").ChatTurn[];
   stats?: DashboardStat[];
   breakdown?: { label: string; score: number }[];
 };
