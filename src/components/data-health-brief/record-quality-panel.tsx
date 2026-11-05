@@ -290,12 +290,15 @@ function SourceTable() {
 }
 
 /** Right panel for "My brief": how good the Marketing contact records are, and why the rest aren't. */
-export function RecordQualityPanel() {
+export function RecordQualityPanel({ leading }: { leading?: React.ReactNode }) {
   return (
     <div className="space-y-6 p-5">
       <div>
-        <div className="text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
-          Marketing contacts
+        <div className="flex items-center gap-2">
+          {leading}
+          <div className="text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
+            Marketing contacts
+          </div>
         </div>
         <div className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-500)" }}>
           {RQ.entity} records in {RQ.domain} · updated {RQ.updated}
