@@ -81,9 +81,7 @@ export function DataHealthPage() {
             Data health
           </h1>
           <label className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="shrink-0 text-[12px]" style={{ color: "var(--ink-500)" }}>
-              Dashboard
-            </span>
+            <span className="sr-only">Dashboard</span>
             <select
               value={current.id}
               onChange={(e) => setActive(e.target.value)}
