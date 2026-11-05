@@ -521,7 +521,7 @@ export function PlanView(p: Props) {
           >
 
           {plan.selected.length > 3 && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className={`${p.bare ? "" : "mt-3 "}flex flex-wrap items-center gap-2`}>
               <div className="relative min-w-[220px] flex-1">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--ink-500)" }} />
                 <input
@@ -535,7 +535,7 @@ export function PlanView(p: Props) {
             </div>
           )}
           {p.filter && (
-            <div className="mt-3">
+            <div className={p.bare ? "" : "mt-3"}>
               <span className="inline-flex items-center gap-1.5 rounded-full border bg-white py-1 pl-3 pr-1.5 text-[12.5px]" style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}>
                 {p.filter.label}
                 <button type="button" aria-label="Clear filter" onClick={p.onClearFilter} className="rounded-full p-0.5 hover:bg-[color:var(--surface-soft)]">
