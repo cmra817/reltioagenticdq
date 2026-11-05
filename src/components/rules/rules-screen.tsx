@@ -2,14 +2,13 @@ import * as React from "react";
 import { Plus, Search } from "lucide-react";
 import { GhostButton, PrimaryButton, Tabs, Tag } from "@/components/workspace/primitives";
 import { ME, RULE_TYPES, type Rule, type RuleScope, type RuleType } from "@/lib/mock-ops";
-import { useRules } from "@/lib/ops-store";
-import { RuleAuthoring } from "./rule-authoring";
+import { todayLabel, useRules } from "@/lib/ops-store";
 import { useRulesNav, type RulesSearch } from "./nav";
-import { RuleView } from "./rule-view";
+import { RuleWorkspace } from "./rule-workspace";
 
 export function RulesScreen({ search }: { search: RulesSearch }) {
-  if (search.new) return <RuleAuthoring />;
-  if (search.rule) return <RuleView ruleId={search.rule} />;
+  if (search.new) return <RuleWorkspace key="new" />;
+  if (search.rule) return <RuleWorkspace key={search.rule} ruleId={search.rule} />;
   return <RulesHome />;
 }
 
@@ -21,7 +20,8 @@ const TAB_SCOPE: Record<"yours" | "team" | "templates", RuleScope> = {
 
 function RulesHome() {
   const go = useRulesNav();
-  const { rules, usedBy, addRule } = useRules();
+  const { rules, usedBy, addRule, writeRule } = useRules();
+  const [confirmId, setConfirmId] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<"yours" | "team" | "templates">("yours");
   const [type, setType] = React.useState<"all" | RuleType>("all");
   const [query, setQuery] = React.useState("");
@@ -34,6 +34,25 @@ function RulesHome() {
     );
 
   const count = (scope: RuleScope) => rules.filter((r) => r.scope === scope).length;
+
+  function duplicate(r: Rule) {
+    const copy: Rule = {
+      ...r,
+      id: `r-${Date.now()}`,
+      name: `${r.name} (copy)`,
+      scope: "Yours",
+      owner: ME,
+      status: "Draft",
+      versions: [{ v: 1, author: ME, at: todayLabel(), note: `Duplicated from ${r.name}` }],
+    };
+    addRule(copy);
+    go({ rule: copy.id });
+  }
+
+  function setStatus(r: Rule, status: Rule["status"]) {
+    writeRule({ ...r, status });
+    setConfirmId(null);
+  }
 
   function startFromTemplate(t: Rule) {
     const copy: Rule = {
@@ -124,7 +143,7 @@ function RulesHome() {
             className="mt-4 overflow-x-auto rounded-xl border bg-white"
             style={{ borderColor: "var(--hairline)" }}
           >
-            <table className="w-full min-w-[720px] text-left text-[13.5px]">
+            <table className="w-full min-w-[900px] text-left text-[13.5px]">
               <thead>
                 <tr
                   style={{ color: "var(--ink-300)" }}
@@ -136,7 +155,9 @@ function RulesHome() {
                   <th className="px-3 py-2.5 font-semibold">Owner</th>
                   <th className="px-3 py-2.5 font-semibold">Status</th>
                   <th className="px-3 py-2.5 font-semibold">Used in</th>
-                  {tab === "templates" && <th className="px-3 py-2.5" />}
+                  <th className="px-3 py-2.5 text-right font-semibold">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: "var(--hairline)" }}>
@@ -165,13 +186,49 @@ function RulesHome() {
                           ? "Not used yet"
                           : `${used} ${used === 1 ? "schedule" : "schedules"}`}
                       </td>
-                      {tab === "templates" && (
-                        <td className="px-3 py-2.5 text-right">
+                      <td className="px-3 py-2.5 text-right">
+                        {tab === "templates" ? (
                           <GhostButton onClick={() => startFromTemplate(r)}>
                             Use template
                           </GhostButton>
-                        </td>
-                      )}
+                        ) : confirmId === r.id ? (
+                          <span className="inline-flex flex-wrap items-center justify-end gap-2 text-[12.5px]">
+                            <span style={{ color: "var(--ink-700)" }}>
+                              Used in {used} {used === 1 ? "schedule" : "schedules"}. Disable?
+                            </span>
+                            <GhostButton onClick={() => setStatus(r, "Disabled")}>
+                              Disable
+                            </GhostButton>
+                            <GhostButton onClick={() => setConfirmId(null)}>Cancel</GhostButton>
+                          </span>
+                        ) : (
+                          <span className="inline-flex gap-2">
+                            <GhostButton
+                              onClick={() => duplicate(r)}
+                              aria-label={`Duplicate ${r.name}`}
+                            >
+                              Duplicate
+                            </GhostButton>
+                            {r.status === "Active" ? (
+                              <GhostButton
+                                aria-label={`Disable ${r.name}`}
+                                onClick={() =>
+                                  used > 0 ? setConfirmId(r.id) : setStatus(r, "Disabled")
+                                }
+                              >
+                                Disable
+                              </GhostButton>
+                            ) : (
+                              <GhostButton
+                                aria-label={`${r.status === "Draft" ? "Activate" : "Enable"} ${r.name}`}
+                                onClick={() => setStatus(r, "Active")}
+                              >
+                                {r.status === "Draft" ? "Activate" : "Enable"}
+                              </GhostButton>
+                            )}
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
