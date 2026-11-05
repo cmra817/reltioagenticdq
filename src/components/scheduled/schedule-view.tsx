@@ -75,31 +75,47 @@ export function ScheduleView({ scheduleId }: { scheduleId: string }) {
         </header>
 
         <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-          <section aria-label="Run history">
-            <h2 className="mb-3 text-[14px] font-semibold" style={{ color: "var(--ink-900)" }}>
-              Run history
-            </h2>
-            {history.length === 0 ? (
-              <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>This schedule hasn't run yet.</p>
-            ) : (
-              <ul className="divide-y" style={{ borderColor: "var(--hairline)" }}>
-                {history.map((r) => (
-                  <li key={r.id} style={{ borderColor: "var(--hairline)" }}>
-                    <button
-                      type="button"
-                      onClick={() => go({ run: r.id })}
-                      className="flex w-full items-center gap-4 px-1 py-3 text-left hover:bg-[color:var(--surface-soft)]"
-                    >
-                      <span className="w-[110px] shrink-0"><RunPill status={r.status} /></span>
-                      <span className="min-w-0 flex-1 text-[13px]" style={{ color: "var(--ink-700)" }}>
-                        {r.status === "running" ? "In progress" : r.checksRun === 0 ? "Profiled, no checks" : `${r.checksFailed} of ${r.checksRun} checks failed`}
-                      </span>
-                      <span className="text-[12.5px]" style={{ color: "var(--ink-300)" }}>{ago(r.hoursAgo)}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+          <section
+            aria-label="Run history"
+            className="overflow-hidden rounded-2xl border"
+            style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)" }}
+          >
+            <div
+              className="flex items-center justify-between gap-3 border-b px-4 py-3"
+              style={{ borderColor: "var(--hairline)", background: "rgba(255,255,255,0.6)" }}
+            >
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--ink-500)" }}>
+                Run history
+              </h2>
+            </div>
+            <div className="p-3">
+              {history.length === 0 ? (
+                <p className="px-1 py-4 text-[13.5px]" style={{ color: "var(--ink-500)" }}>
+                  This schedule hasn't run yet.
+                </p>
+              ) : (
+                <ul
+                  className="divide-y overflow-hidden rounded-xl border bg-white"
+                  style={{ borderColor: "var(--hairline)", boxShadow: "var(--shadow-card)" }}
+                >
+                  {history.map((r) => (
+                    <li key={r.id} style={{ borderColor: "var(--hairline)" }}>
+                      <button
+                        type="button"
+                        onClick={() => go({ run: r.id })}
+                        className="flex w-full items-center gap-4 px-3 py-3 text-left hover:bg-[color:var(--surface-soft)]"
+                      >
+                        <span className="w-[110px] shrink-0"><RunPill status={r.status} /></span>
+                        <span className="min-w-0 flex-1 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                          {r.status === "running" ? "In progress" : r.checksRun === 0 ? "Profiled, no checks" : `${r.checksFailed} of ${r.checksRun} checks failed`}
+                        </span>
+                        <span className="text-[12.5px]" style={{ color: "var(--ink-300)" }}>{ago(r.hoursAgo)}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </section>
 
           <section aria-label="Schedule definition" className="relative">
