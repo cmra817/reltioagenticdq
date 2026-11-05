@@ -242,11 +242,6 @@ export function SplitWorkspace({
         }
       >
         <div className="flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
-          {collapsed && onToggle && (
-            <div className="shrink-0 px-4 pt-3">
-              <PanelToggle label="Show chat" onClick={onToggle} />
-            </div>
-          )}
           {panel}
           {collapsed && floating && <div className="h-28 shrink-0" />}
         </div>
@@ -256,7 +251,7 @@ export function SplitWorkspace({
   );
 }
 
-function PanelToggle({ label, onClick, className = "" }: { label: string; onClick: () => void; className?: string }) {
+export function PanelToggle({ label, onClick, className = "" }: { label: string; onClick: () => void; className?: string }) {
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>

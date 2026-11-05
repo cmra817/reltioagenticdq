@@ -10,6 +10,7 @@ import {
   SectionTitle,
   Sparkline,
   SplitWorkspace,
+  PanelToggle,
   FloatingPrompt,
   useChatThread,
   type ChatThread,
@@ -158,7 +159,14 @@ function DashboardSplit({
       collapsed={!chatOpen}
       onToggle={() => setChatOpen(!chatOpen)}
       center={<DashboardChat dash={dash} thread={thread} />}
-      panel={<DashboardPanel dash={dash} />}
+      panel={
+        <DashboardPanel
+          dash={dash}
+          leading={
+            chatOpen ? null : <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
+          }
+        />
+      }
       floating={
         <FloatingPrompt
           thread={thread}
@@ -283,11 +291,21 @@ function recordReply(q: string): string {
   return "Of 482,300 contacts, 378,100 are good (78.4%) and 104,200 are bad. Email and Phone cause most of the failures. Ask me about a source, an attribute, or the quickest way to reach 90%.";
 }
 
-function DashboardPanel({ dash }: { dash: DashboardDef }) {
-  return dash.id === "mine" ? <RecordQualityPanel /> : <GenericPanel dash={dash} />;
+function DashboardPanel({
+  dash,
+  leading,
+}: {
+  dash: DashboardDef;
+  leading?: React.ReactNode;
+}) {
+  return dash.id === "mine" ? (
+    <RecordQualityPanel leading={leading} />
+  ) : (
+    <GenericPanel dash={dash} leading={leading} />
+  );
 }
 
-function GenericPanel({ dash }: { dash: DashboardDef }) {
+function GenericPanel({ dash, leading }: { dash: DashboardDef; leading?: React.ReactNode }) {
   const { domains, healthFor } = useDomainState();
   const { schedules } = useSchedules();
   const stats = useScopeStats(dash);
@@ -312,8 +330,11 @@ function GenericPanel({ dash }: { dash: DashboardDef }) {
   return (
     <div className="space-y-6 p-5">
       <div>
-        <div className="text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
-          {dash.name}
+        <div className="flex items-center gap-2">
+          {leading}
+          <div className="text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
+            {dash.name}
+          </div>
         </div>
         <div className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-500)" }}>
           {dash.sharedBy ? `Shared by ${dash.sharedBy}` : "Only you see this view"} · {dash.scope}
