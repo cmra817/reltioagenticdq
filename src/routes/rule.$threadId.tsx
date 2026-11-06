@@ -3,9 +3,6 @@ import { AppShell } from "@/components/app-shell";
 import { RuleThreadScreen } from "@/components/rules/rule-thread-screen";
 
 export const Route = createFileRoute("/rule/$threadId")({
-  validateSearch: (search: Record<string, unknown>): { chat?: boolean } => ({
-    chat: search.chat === true || search.chat === "1" || search.chat === "true" ? true : undefined,
-  }),
   head: () => ({
     meta: [
       { title: "New rule — Data Quality" },
@@ -27,10 +24,9 @@ export const Route = createFileRoute("/rule/$threadId")({
 
 function RuleThreadPage() {
   const { threadId } = Route.useParams();
-  const { chat } = Route.useSearch();
   return (
     <AppShell activeNav="none" hideDock>
-      <RuleThreadScreen threadId={threadId} chat={chat} />
+      <RuleThreadScreen threadId={threadId} />
     </AppShell>
   );
 }

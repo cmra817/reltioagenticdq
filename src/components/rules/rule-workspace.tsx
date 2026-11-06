@@ -63,14 +63,11 @@ type PanelTab = "insights" | "edit" | "history";
 export function RuleWorkspace({
   threadId,
   ruleId,
-  showChat,
   initial,
 }: {
   threadId: string;
   /** Set when the thread was opened from an existing rule in the table. */
   ruleId?: string;
-  /** Open an existing rule with its conversation showing (from Recents). Otherwise the page comes first. */
-  showChat?: boolean;
   initial?: RuleThreadState;
 }) {
   const { renameThread, getThread, createThread } = useChatThreads();
@@ -85,7 +82,7 @@ export function RuleWorkspace({
   const draftRef = React.useRef<Rule | null>(null);
   draftRef.current = draft;
   const [flash, setFlash] = React.useState<EditableKey[]>([]);
-  const [chatOpen, setChatOpen] = React.useState(!ruleId || !!showChat);
+  const [chatOpen, setChatOpen] = React.useState(true);
   const [tab, setTab] = React.useState<PanelTab>(ruleId ? "insights" : "edit");
   const [step, setStep] = React.useState<"edit" | "impact">("edit");
   const [mode, setMode] = React.useState<ImpactMode>("everywhere");
@@ -317,7 +314,7 @@ export function RuleWorkspace({
               <div className="mx-auto w-full max-w-[960px] flex-1 space-y-5 p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2">
-                    {!chatOpen && (turnCount > 0 || isNew) && (
+                    {!chatOpen && (
                       <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
                     )}
                     <Tabs

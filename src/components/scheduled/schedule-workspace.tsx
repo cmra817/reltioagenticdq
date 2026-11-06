@@ -70,15 +70,12 @@ export function ScheduleWorkspace({
   threadId,
   scheduleId,
   initialRun,
-  showChat,
   initial,
 }: {
   threadId: string;
   scheduleId: string;
   /** A run to bring into focus, e.g. from a failed-run alert. */
   initialRun?: string;
-  /** Open with the conversation showing (from Recents). Otherwise the page comes first. */
-  showChat?: boolean;
   initial?: ScheduleThreadState;
 }) {
   const { getThread, createThread } = useChatThreads();
@@ -107,7 +104,7 @@ export function ScheduleWorkspace({
     .filter((r): r is Rule => !!r);
   const running = history.some((r) => r.status === "running");
 
-  const [chatOpen, setChatOpen] = React.useState(!!showChat);
+  const [chatOpen, setChatOpen] = React.useState(true);
   const [tab, setTab] = React.useState<PanelTab>(initialRun ? "runs" : "insights");
   const [runId, setRunId] = React.useState<string | undefined>(initialRun);
   const openRunRecord = runId ? history.find((r) => r.id === runId) : undefined;

@@ -8,20 +8,11 @@ import {
 } from "./schedule-workspace";
 
 /**
- * A schedule opens as its page: nothing is said until you select a run or an
- * item, or type. A saved conversation comes back as it was. `chat` (from
- * Recents) opens it with the conversation showing; `run` (from a failed-run
- * alert) brings that run into focus and asks about it.
+ * A schedule opens with its page on the right and its conversation on the left
+ * (empty until you ask; a saved conversation comes back as it was). `run` (from
+ * a failed-run alert) brings that run into focus and asks about it.
  */
-export function ScheduleThreadScreen({
-  threadId,
-  run,
-  chat,
-}: {
-  threadId: string;
-  run?: string;
-  chat?: boolean;
-}) {
+export function ScheduleThreadScreen({ threadId, run }: { threadId: string; run?: string }) {
   const [threads, , threadsReady] = useLocalStore(SCHEDULE_THREADS_KEY, SCHEDULE_THREADS_INIT);
   const { schedules, ready } = useSchedules();
   const scheduleId = scheduleIdFromThread(threadId);
@@ -42,7 +33,6 @@ export function ScheduleThreadScreen({
       threadId={threadId}
       scheduleId={scheduleId}
       initialRun={run}
-      showChat={!!chat}
       initial={threads[threadId]}
     />
   );

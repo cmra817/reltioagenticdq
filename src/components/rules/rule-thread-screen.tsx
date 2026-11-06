@@ -4,12 +4,11 @@ import { ruleIdFromThread } from "./open-rule";
 import { RULE_THREADS_INIT, RULE_THREADS_KEY, RuleWorkspace } from "./rule-workspace";
 
 /**
- * A rule thread: either "New rule" (chat first, starts empty) or an existing
- * rule opened from the table (the rule's page first, nothing said until you
- * ask). Waits for saved state so a reopened thread comes back as it was;
- * `chat` (from Recents) opens it with the conversation showing.
+ * A rule thread: either "New rule" (starts empty) or an existing rule opened
+ * from the table (its page on the right, its conversation on the left, empty
+ * until you ask). Waits for saved state so a reopened thread comes back as it was.
  */
-export function RuleThreadScreen({ threadId, chat }: { threadId: string; chat?: boolean }) {
+export function RuleThreadScreen({ threadId }: { threadId: string }) {
   const [threads, , ready] = useLocalStore(RULE_THREADS_KEY, RULE_THREADS_INIT);
   const { rules, ready: rulesReady } = useRules();
   if (!ready) return <div className="flex-1" />;
@@ -26,7 +25,6 @@ export function RuleThreadScreen({ threadId, chat }: { threadId: string; chat?: 
       key={threadId}
       threadId={threadId}
       ruleId={rule ? ruleId : viewing}
-      showChat={!!chat}
       initial={stored}
     />
   );
