@@ -2,6 +2,8 @@ import * as React from "react";
 import { useChatThreads } from "@/components/chat/chat-context";
 import { useDomainState } from "@/components/domain-context";
 import {
+  FloatingPrompt,
+  PanelToggle,
   ScopedChat,
   SplitWorkspace,
   useChatThread,
@@ -66,6 +68,7 @@ function DashboardThread({
   answersRef.current = answers;
   const [dashId, setDashId] = React.useState<string | undefined>(initial?.dashId);
   const threadRef = React.useRef<ChatThread | null>(null);
+  const [chatOpen, setChatOpen] = React.useState(true);
 
   const entry = dashId ? custom.find((c) => c.id === dashId) : undefined;
   const dash = entry ? customToDashboard(entry) : undefined;
@@ -127,6 +130,15 @@ function DashboardThread({
       <SplitWorkspace
         panelLabel={dash ? `${dash.name} stats` : "Dashboard"}
         panelWidth="59vw"
+        collapsed={!!dash && !chatOpen}
+        onToggle={dash ? () => setChatOpen(!chatOpen) : undefined}
+        floating={
+          <FloatingPrompt
+            thread={thread}
+            placeholder="Ask about this dashboard, or change it…"
+            onOpen={() => setChatOpen(true)}
+          />
+        }
         center={
           <ScopedChat
             thread={thread}
@@ -136,7 +148,18 @@ function DashboardThread({
             reply={reply}
           />
         }
-        panel={dash ? <DashboardPanel dash={dash} /> : undefined}
+        panel={
+          dash ? (
+            <DashboardPanel
+              dash={dash}
+              leading={
+                chatOpen ? null : (
+                  <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
+                )
+              }
+            />
+          ) : undefined
+        }
       />
     </div>
   );

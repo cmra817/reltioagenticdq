@@ -2,7 +2,9 @@ import * as React from "react";
 import { useChatThreads } from "@/components/chat/chat-context";
 import { useLocalStore } from "@/lib/use-local-store";
 import {
+  FloatingPrompt,
   GhostButton,
+  PanelToggle,
   PrimaryButton,
   ScopedChat,
   SectionTitle,
@@ -80,6 +82,7 @@ export function RuleWorkspace({
   const draftRef = React.useRef<Rule | null>(null);
   draftRef.current = draft;
   const [flash, setFlash] = React.useState<EditableKey[]>([]);
+  const [chatOpen, setChatOpen] = React.useState(true);
   const [tab, setTab] = React.useState<PanelTab>(ruleId ? "insights" : "edit");
   const [step, setStep] = React.useState<"edit" | "impact">("edit");
   const [mode, setMode] = React.useState<ImpactMode>("everywhere");
@@ -268,7 +271,16 @@ export function RuleWorkspace({
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <SplitWorkspace
         panelLabel="Rule"
-        panelWidth="50vw"
+        panelWidth="59vw"
+        collapsed={!!draft && !chatOpen}
+        onToggle={draft ? () => setChatOpen(!chatOpen) : undefined}
+        floating={
+          <FloatingPrompt
+            thread={thread}
+            placeholder="Ask about this rule, or tell me what to change…"
+            onOpen={() => setChatOpen(true)}
+          />
+        }
         center={
           <ScopedChat
             thread={thread}
@@ -285,22 +297,27 @@ export function RuleWorkspace({
         panel={
           !draft ? undefined : (
             <div className="flex min-h-full flex-col">
-              <div className="flex-1 space-y-5 p-5">
+              <div className="mx-auto w-full max-w-[960px] flex-1 space-y-5 p-5">
                 <div className="flex items-center justify-between gap-3">
-                  <Tabs
-                    label="Rule sections"
-                    value={tab}
-                    onChange={setTab}
-                    tabs={
-                      isNew
-                        ? [{ id: "edit" as const, label: "Edit" }]
-                        : [
-                            { id: "insights" as const, label: "Insights" },
-                            { id: "edit" as const, label: "Edit" },
-                            { id: "history" as const, label: "History" },
-                          ]
-                    }
-                  />
+                  <div className="flex min-w-0 items-center gap-2">
+                    {!chatOpen && (
+                      <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
+                    )}
+                    <Tabs
+                      label="Rule sections"
+                      value={tab}
+                      onChange={setTab}
+                      tabs={
+                        isNew
+                          ? [{ id: "edit" as const, label: "Edit" }]
+                          : [
+                              { id: "insights" as const, label: "Insights" },
+                              { id: "edit" as const, label: "Edit" },
+                              { id: "history" as const, label: "History" },
+                            ]
+                      }
+                    />
+                  </div>
                   <div className="flex items-center gap-1.5">
                     <Tag>{isNew ? "Not saved yet" : (saved?.status ?? draft.status)}</Tag>
                   </div>
