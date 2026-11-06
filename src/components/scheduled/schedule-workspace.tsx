@@ -21,7 +21,7 @@ import { useRules, useRuns, useSchedules } from "@/lib/ops-store";
 import { useLocalStore } from "@/lib/use-local-store";
 import { ago } from "./format";
 import { RunDetail, RunsList, ScheduleInsightsView } from "./schedule-panels";
-import { buildScheduleInsights, matchRule, runNarrative } from "./schedule-insights";
+import { buildScheduleInsights, matchRule, runNarrative, runPrompt } from "./schedule-insights";
 
 /** What a schedule thread remembers, so it can be reopened from Recents. */
 export type ScheduleThreadState = { turns: ChatTurn[] };
@@ -120,8 +120,13 @@ export function ScheduleWorkspace({
     return `Done. It now runs ${patch.repeats.toLowerCase()}. The Plan on the right shows the new timing.`;
   }
 
+  /** The run whose opening question is being sent, so the answer is about that run. */
+  const askedRun = React.useRef<string | undefined>(undefined);
+
   function reply(q: string): string {
     if (!schedule) return "One moment while this schedule loads.";
+    const asked = askedRun.current ? history.find((r) => r.id === askedRun.current) : undefined;
+    if (asked && q === runPrompt(asked)) return runNarrative(asked, schedule);
     const lastFailed = insights.history.find(
       (r) => r.status === "failed" || r.status === "attention",
     );
@@ -220,15 +225,22 @@ export function ScheduleWorkspace({
 
   const thread = useChatThread(reply, initial?.turns);
 
+  /**
+   * Opening a run, from anywhere, sends the question for the person and the agent
+   * answers it; the run's results open in the panel at the same time.
+   */
   function openRun(id: string) {
     setRunId(id);
     setTab("runs");
     markViewed(id);
     const run = history.find((r) => r.id === id);
     if (!run) return;
-    const text = runNarrative(run, schedule);
-    const lastAgent = [...thread.turns].reverse().find((t) => t.role === "agent");
-    if (lastAgent?.text !== text) thread.say(text);
+    const prompt = runPrompt(run);
+    const lastUser = [...thread.turns].reverse().find((t) => t.role === "user");
+    // The latest question is already about this run (or the thread opened with it): don't repeat it.
+    if (lastUser?.text === prompt) return;
+    askedRun.current = id;
+    thread.send(prompt);
   }
 
   // A run asked for in the link (from a failed-run alert) comes into focus once.

@@ -86,9 +86,21 @@ export function runNarrative(run: Run, schedule: Schedule | undefined): string {
   return narrativeFor(run, schedule).join("\n\n");
 }
 
+const STATUS_WORD: Record<Run["status"], string> = {
+  passed: "passed",
+  failed: "failed",
+  attention: "needs-attention",
+  running: "running",
+};
+
+/** The question sent for the person whenever a run is opened, from anywhere. */
+export function runPrompt(run: Run): string {
+  return `Tell me more about the ${STATUS_WORD[run.status]} run ${ago(run.hoursAgo)}.`;
+}
+
 export function runOpeningTurns(run: Run, schedule: Schedule | undefined): ChatTurn[] {
   return [
-    { id: 0, role: "user", text: `What happened in the run ${ago(run.hoursAgo)}?` },
+    { id: 0, role: "user", text: runPrompt(run) },
     { id: 1, role: "agent", text: runNarrative(run, schedule) },
   ];
 }
