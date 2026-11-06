@@ -35,6 +35,7 @@ import {
   summary,
   type SetupAnswers,
 } from "./dashboard-setup";
+import type { ChatReply } from "@/components/workspace/chat-visuals";
 import { discussPrompt, parseViewId, topicFrom } from "./dashboard-topics";
 
 /** What a dashboard thread remembers, so it can be reopened from Recents. */
@@ -177,7 +178,7 @@ function DashboardThread({
   const entry = dashId ? custom.find((c) => c.id === dashId) : undefined;
   const dash = entry ? customToDashboard(entry) : undefined;
 
-  function reply(q: string): string {
+  function reply(q: string): ChatReply {
     if (dash) return dashboardReply(dash, q);
 
     const current = answersRef.current;

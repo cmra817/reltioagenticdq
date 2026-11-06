@@ -1,5 +1,13 @@
-import { ALL_DOMAINS, type DashboardDef } from "@/lib/mock-ops";
-import { BY_SOURCE, FAILURE_SHARE, NEAR_MISSES, RQ, RQ_BAD } from "@/lib/record-quality";
+import { ALL_DOMAINS, trendFor, type DashboardDef } from "@/lib/mock-ops";
+import type { ChatReply, ChatVisual } from "@/components/workspace/chat-visuals";
+import {
+  BY_SOURCE,
+  FAILURE_SHARE,
+  GOOD_TREND,
+  NEAR_MISSES,
+  RQ,
+  RQ_BAD,
+} from "@/lib/record-quality";
 
 /* A dashboard's chat is one conversation per dashboard per day. */
 
@@ -49,50 +57,175 @@ export function recordReply(q: string): string {
 }
 
 const n = (v: number) => v.toLocaleString("en-US");
+const ask = (topic: string) => discussPrompt(topic);
 
-function answerMine(topic: string): string {
+const trendVisual = (): ChatVisual => ({
+  kind: "trend",
+  title: "Good records, last 30 days",
+  values: GOOD_TREND,
+  startLabel: "30 days ago",
+  endLabel: "Today",
+  target: RQ.targetPct,
+});
+
+const failureBars = (): ChatVisual => ({
+  kind: "bars",
+  title: "Share of bad records that fail on each attribute",
+  rows: FAILURE_SHARE.map((f) => ({
+    label: f.attribute,
+    value: f.pct,
+    display: `${f.pct}% · ${n(Math.round((RQ_BAD * f.pct) / 100))}`,
+    ask: ask(`Why records fail on ${f.attribute}`),
+  })),
+  max: 100,
+});
+
+const winBars = (): ChatVisual => ({
+  kind: "bars",
+  title: "Bad records that turn good if you fix one attribute",
+  rows: NEAR_MISSES.map((m) => ({
+    label: `Fix ${m.attribute}`,
+    value: m.records,
+    display: `+${n(m.records)} good`,
+    ask: ask(`Fix ${m.attribute}`),
+  })),
+});
+
+const sourceBars = (title: string, bad: boolean): ChatVisual => ({
+  kind: "bars",
+  title,
+  rows: [...BY_SOURCE]
+    .map((s) => ({
+      label: s.source,
+      value: bad ? Math.round(s.records * (1 - s.goodPct / 100)) : s.goodPct,
+      display: bad
+        ? `${n(Math.round(s.records * (1 - s.goodPct / 100)))} bad`
+        : `${s.goodPct}% good`,
+      ask: ask(`Source: ${s.source}`),
+    }))
+    .sort((a, b) => (bad ? b.value - a.value : a.value - b.value)),
+  max: bad ? undefined : 100,
+});
+
+function answerMine(topic: string): ChatReply {
   const fail = /^Why records fail on (.+)$/.exec(topic);
   if (fail) {
     const row = FAILURE_SHARE.find((f) => f.attribute === fail[1]);
-    if (!row || row.attribute === "Email") return recordReply("email");
+    if (!row || row.attribute === "Email") {
+      return {
+        text: `${recordReply("email")} Here is where the bad records sit by source.`,
+        visual: sourceBars("Bad records by source", true),
+      };
+    }
     const fix = NEAR_MISSES.find((m) => m.attribute === row.attribute);
-    return `${row.attribute} is why ${row.pct}% of bad records fail, about ${n(Math.round((RQ_BAD * row.pct) / 100))} records.${
-      fix
-        ? ` About ${n(fix.records)} of them fail on ${row.attribute} alone, so fixing it turns those good.`
-        : ""
-    }`;
+    return {
+      text: `${row.attribute} is why ${row.pct}% of bad records fail, about ${n(Math.round((RQ_BAD * row.pct) / 100))} records.${
+        fix
+          ? ` About ${n(fix.records)} of them fail on ${row.attribute} alone, so fixing it turns those good.`
+          : ""
+      }`,
+      visual: {
+        kind: "stats",
+        title: row.attribute,
+        items: [
+          { label: "Of bad records", value: `${row.pct}%` },
+          { label: "Records", value: n(Math.round((RQ_BAD * row.pct) / 100)) },
+          ...(fix
+            ? [{ label: "Fixed alone", value: `+${n(fix.records)}`, note: "turn good" }]
+            : []),
+        ],
+      },
+    };
   }
   const fix = /^Fix (.+)$/.exec(topic);
   if (fix) {
     const m = NEAR_MISSES.find((x) => x.attribute === fix[1]);
-    return m
-      ? `Fixing ${m.attribute} turns about ${n(m.records)} bad records good, worth +${((m.records / RQ.total) * 100).toFixed(1)} points toward your ${RQ.targetPct}% target.`
-      : recordReply("fix");
+    if (!m) return { text: recordReply("fix"), visual: winBars() };
+    const pts = +((m.records / RQ.total) * 100).toFixed(1);
+    return {
+      text: `Fixing ${m.attribute} turns about ${n(m.records)} bad records good, worth +${pts} points toward your ${RQ.targetPct}% target.`,
+      visual: {
+        kind: "stats",
+        title: `If you fix ${m.attribute}`,
+        items: [
+          { label: "Records turn good", value: n(m.records) },
+          { label: "Good records", value: `${RQ.goodPct}% → ${+(RQ.goodPct + pts).toFixed(1)}%` },
+          {
+            label: "Still to target",
+            value: `${+(RQ.targetPct - RQ.goodPct - pts).toFixed(1)} pts`,
+          },
+        ],
+      },
+    };
   }
   const src = /^Source: (.+)$/.exec(topic);
   if (src) {
     const s = BY_SOURCE.find((x) => x.source === src[1]);
-    return s
-      ? `${s.source} is ${s.goodPct}% good across ${n(s.records)} records. Its steward is ${s.steward}. Your target is ${RQ.targetPct}%.`
-      : recordReply("source");
+    return {
+      text: s
+        ? `${s.source} is ${s.goodPct}% good across ${n(s.records)} records. Its steward is ${s.steward}. Your target is ${RQ.targetPct}%.`
+        : recordReply("source"),
+      visual: sourceBars("Good records by source", false),
+    };
   }
   if (/attribute and check/i.test(topic)) {
-    return "Valid is the weakest check at 91.2%, ahead of Distinct at 94.8% and Complete at 96.4%. Email and Phone fail most often.";
+    return {
+      text: "Valid is the weakest check at 91.2%, ahead of Distinct at 94.8% and Complete at 96.4%. Email and Phone fail most often.",
+      visual: {
+        kind: "bars",
+        title: "Pass rate by check",
+        rows: [
+          { label: "Valid", value: 91.2, display: "91.2%" },
+          { label: "Distinct", value: 94.8, display: "94.8%" },
+          { label: "Complete", value: 96.4, display: "96.4%" },
+        ],
+        max: 100,
+      },
+    };
   }
-  if (/30 days/i.test(topic)) return recordReply("trend");
-  if (/good and bad/i.test(topic)) return recordReply("");
-  return recordReply(topic);
+  if (/30 days/i.test(topic)) return { text: recordReply("trend"), visual: trendVisual() };
+  if (/good and bad/i.test(topic)) {
+    return {
+      text: recordReply(""),
+      visual: {
+        kind: "stats",
+        items: [
+          {
+            label: "Good records",
+            value: `${RQ.goodPct}%`,
+            note: `${n(RQ.total - RQ_BAD)} of ${n(RQ.total)}`,
+          },
+          { label: "Bad records", value: `${+(100 - RQ.goodPct).toFixed(1)}%`, note: n(RQ_BAD) },
+          {
+            label: "Target",
+            value: `${RQ.targetPct}%`,
+            note: `${+(RQ.targetPct - RQ.goodPct).toFixed(1)} pts to go`,
+          },
+        ],
+      },
+    };
+  }
+  return { text: recordReply(topic) };
 }
 
-/** Answers a "Let's discuss: …" question about one thing on a dashboard. */
-export function answerTopic(dash: DashboardDef, topic: string): string {
+/** Answers a "Let's discuss: …" question about one thing on a dashboard, with a chart that explains it. */
+export function answerTopic(dash: DashboardDef, topic: string): ChatReply {
   if (dash.id === "mine") {
     const i = dash.briefing.indexOf(topic);
-    if (i === 0) return recordReply("trend");
-    if (i === 1) return recordReply("email");
-    if (i === 2) return recordReply("fix");
+    if (i === 0) return { text: recordReply("trend"), visual: trendVisual() };
+    if (i === 1) return { text: recordReply("email"), visual: failureBars() };
+    if (i === 2) return { text: recordReply("fix"), visual: winBars() };
     return answerMine(topic);
   }
   const where = dash.scope === ALL_DOMAINS ? "across your domains" : `in ${dash.scope}`;
-  return `On ${topic}: compared with yesterday, one more check failed and two recovered ${where}. Nothing new broke outside the findings in today's brief. Want me to list the failing checks?`;
+  return {
+    text: `On ${topic}: compared with yesterday, one more check failed and two recovered ${where}. Nothing new broke outside the findings in today's brief. Want me to list the failing checks?`,
+    visual: {
+      kind: "trend",
+      title: `${dash.name}, last 14 days`,
+      values: trendFor(85, `${dash.id}|${topic}`),
+      startLabel: "14 days ago",
+      endLabel: "Today",
+    },
+  };
 }

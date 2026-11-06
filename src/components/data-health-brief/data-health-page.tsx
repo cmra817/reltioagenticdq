@@ -25,6 +25,7 @@ import {
 } from "@/lib/mock-ops";
 import { useSchedules, useRuns } from "@/lib/ops-store";
 import { useLocalStore } from "@/lib/use-local-store";
+import type { ChatReply } from "@/components/workspace/chat-visuals";
 import { AskItem, AskProvider, useAsk } from "./ask";
 import { answerTopic, discussPrompt, recordReply, topicFrom } from "./dashboard-topics";
 import { useOpenDashboard } from "./open-dashboard";
@@ -215,7 +216,7 @@ function DailyBrief({ dash }: { dash: DashboardDef }) {
   );
 }
 
-export function dashboardReply(dash: DashboardDef, q: string): string {
+export function dashboardReply(dash: DashboardDef, q: string): ChatReply {
   const topic = topicFrom(q);
   if (topic) return answerTopic(dash, topic);
   if (dash.id === "mine") return recordReply(q);

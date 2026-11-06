@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ChatVisualView, type ChatReply, type ChatVisual } from "./chat-visuals";
 import { ArrowUp, PanelLeft, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { STATUS_LABEL, type HealthStatus } from "@/components/domain-context";
@@ -288,7 +289,7 @@ export function PanelToggle({
 }
 
 /** One chat thread that a docked chat and a floating prompt can share. */
-export function useChatThread(reply: (q: string) => string, initialTurns?: ChatTurn[]) {
+export function useChatThread(reply: (q: string) => ChatReply, initialTurns?: ChatTurn[]) {
   const [turns, setTurns] = React.useState<ChatTurn[]>(initialTurns ?? []);
   const replyRef = React.useRef(reply);
   replyRef.current = reply;
@@ -296,10 +297,11 @@ export function useChatThread(reply: (q: string) => string, initialTurns?: ChatT
     const text = q.trim();
     if (!text) return;
     const answer = replyRef.current(text);
+    const { text: body, visual } = typeof answer === "string" ? { text: answer } : answer;
     setTurns((prev) => [
       ...prev,
       { id: prev.length, role: "user", text },
-      { id: prev.length + 1, role: "agent", text: answer },
+      { id: prev.length + 1, role: "agent", text: body, ...(visual ? { visual } : {}) },
     ]);
   }, []);
   /** Adds an agent message that answers nothing the person asked, e.g. "Saved". */
@@ -340,7 +342,7 @@ export function FloatingPrompt({
     boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
   };
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex justify-start px-6">
+    <div className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex justify-center px-6">
       <div className="pointer-events-auto w-full max-w-md">
         {thinkingQ && (
           <div
@@ -420,7 +422,13 @@ export function FloatingPrompt({
   );
 }
 
-export type ChatTurn = { id: number; role: "user" | "agent"; text: string };
+export type ChatTurn = {
+  id: number;
+  role: "user" | "agent";
+  text: string;
+  /** A chart the agent put under its answer. */
+  visual?: ChatVisual;
+};
 
 /**
  * A chat scoped to what is on screen (a run, a rule, a domain). Nothing shows
@@ -443,7 +451,7 @@ export function ScopedChat({
   scopeLabel: string;
   placeholder: string;
   suggestions: string[];
-  reply: (question: string) => string;
+  reply: (question: string) => ChatReply;
   header?: React.ReactNode;
   ask?: { id: number; q: string } | null;
 }) {
@@ -481,7 +489,10 @@ export function ScopedChat({
           {turns.length > 0 && (
             <ul className="mt-5 space-y-3" aria-live="polite">
               {turns.map((t) => (
-                <li key={t.id} className={t.role === "user" ? "flex justify-end" : "flex"}>
+                <li
+                  key={t.id}
+                  className={t.role === "user" ? "flex justify-end" : "flex flex-col gap-2"}
+                >
                   <div
                     className="max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed"
                     style={
@@ -496,6 +507,11 @@ export function ScopedChat({
                   >
                     {t.text}
                   </div>
+                  {t.visual && (
+                    <div className="w-full max-w-[88%]">
+                      <ChatVisualView visual={t.visual} onAsk={send} />
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
