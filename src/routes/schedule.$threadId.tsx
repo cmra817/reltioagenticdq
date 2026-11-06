@@ -3,8 +3,9 @@ import { AppShell } from "@/components/app-shell";
 import { ScheduleThreadScreen } from "@/components/scheduled/schedule-thread-screen";
 
 export const Route = createFileRoute("/schedule/$threadId")({
-  validateSearch: (search: Record<string, unknown>): { run?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { run?: string; chat?: boolean } => ({
     run: typeof search.run === "string" ? search.run : undefined,
+    chat: search.chat === true || search.chat === "1" || search.chat === "true" ? true : undefined,
   }),
   head: () => ({
     meta: [
@@ -25,10 +26,10 @@ export const Route = createFileRoute("/schedule/$threadId")({
 
 function ScheduleThreadPage() {
   const { threadId } = Route.useParams();
-  const { run } = Route.useSearch();
+  const { run, chat } = Route.useSearch();
   return (
     <AppShell activeNav="none" hideDock>
-      <ScheduleThreadScreen threadId={threadId} run={run} />
+      <ScheduleThreadScreen threadId={threadId} run={run} chat={chat} />
     </AppShell>
   );
 }

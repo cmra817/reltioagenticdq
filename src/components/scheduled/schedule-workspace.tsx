@@ -70,12 +70,15 @@ export function ScheduleWorkspace({
   threadId,
   scheduleId,
   initialRun,
+  showChat,
   initial,
 }: {
   threadId: string;
   scheduleId: string;
   /** A run to bring into focus, e.g. from a failed-run alert. */
   initialRun?: string;
+  /** Open with the conversation showing (from Recents). Otherwise the page comes first. */
+  showChat?: boolean;
   initial?: ScheduleThreadState;
 }) {
   const { getThread, createThread } = useChatThreads();
@@ -104,7 +107,7 @@ export function ScheduleWorkspace({
     .filter((r): r is Rule => !!r);
   const running = history.some((r) => r.status === "running");
 
-  const [chatOpen, setChatOpen] = React.useState(true);
+  const [chatOpen, setChatOpen] = React.useState(!!showChat);
   const [tab, setTab] = React.useState<PanelTab>(initialRun ? "runs" : "insights");
   const [runId, setRunId] = React.useState<string | undefined>(initialRun);
   const openRunRecord = runId ? history.find((r) => r.id === runId) : undefined;
@@ -254,17 +257,23 @@ export function ScheduleWorkspace({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialRun, history]);
 
-  // The thread shows up in Recents once it has been opened.
+  // The page is just a page until a conversation starts: the first question
+  // (a run or item selected, or typed) opens the chat and puts the thread in Recents.
+  const turnCount = thread.turns.length;
+  const prevTurns = React.useRef(turnCount);
   React.useEffect(() => {
+    if (prevTurns.current === 0 && turnCount > 0) setChatOpen(true);
+    prevTurns.current = turnCount;
+  }, [turnCount]);
+
+  React.useEffect(() => {
+    if (turnCount === 0) return;
     if (schedule && !getThread(threadId)) {
       createThread({ id: threadId, title: schedule.name, kind: "schedule" });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schedule?.id, threadId]);
-
-  React.useEffect(() => {
     setThreads((prev) => ({ ...prev, [threadId]: { turns: thread.turns } }));
-  }, [threadId, thread.turns, setThreads]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schedule?.id, threadId, thread.turns, setThreads]);
 
   if (ready && !schedule) {
     return (
@@ -312,7 +321,9 @@ export function ScheduleWorkspace({
             <div className="mx-auto w-full max-w-[960px] flex-1 space-y-5 p-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2">
-                  {!chatOpen && <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />}
+                  {!chatOpen && turnCount > 0 && (
+                    <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
+                  )}
                   <Tabs
                     label="Schedule sections"
                     value={tab}

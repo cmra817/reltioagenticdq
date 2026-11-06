@@ -66,7 +66,7 @@ function ThreadLink({ thread, children }: { thread: ChatThread; children: React.
       <Link
         to="/schedule/$threadId"
         params={{ threadId: thread.id }}
-        search={{}}
+        search={{ chat: true }}
         className={ROW_CLASS}
         style={ROW_STYLE}
         activeProps={ACTIVE_PROPS}

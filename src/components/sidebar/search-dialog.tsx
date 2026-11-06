@@ -52,7 +52,11 @@ export function SearchDialog({ open, onOpenChange }: Props) {
     } else if (t.kind === "dashboard") {
       void navigate({ to: "/dashboard/$threadId", params: { threadId: t.id } });
     } else if (t.kind === "schedule") {
-      void navigate({ to: "/schedule/$threadId", params: { threadId: t.id }, search: {} });
+      void navigate({
+        to: "/schedule/$threadId",
+        params: { threadId: t.id },
+        search: { chat: true },
+      });
     } else if (t.kind === "rule") {
       void navigate({ to: "/rule/$threadId", params: { threadId: t.id } });
     } else {

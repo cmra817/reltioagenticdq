@@ -1,5 +1,4 @@
 import { narrativeFor, type Rule, type Run, type Schedule } from "@/lib/mock-ops";
-import type { ChatTurn } from "@/components/workspace/primitives";
 import { ago } from "./format";
 
 export type FailingItem = {
@@ -19,8 +18,6 @@ export type ScheduleInsights = {
   /** The five table and rule pairs with the most failing rows across the history. */
   failing: FailingItem[];
 };
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 export function buildScheduleInsights(
   runs: Run[],
@@ -56,31 +53,6 @@ export function buildScheduleInsights(
   };
 }
 
-/** The agent's opening message: an overview of the schedule itself, not of any one run. */
-export function scheduleSummary(
-  schedule: Schedule,
-  ins: ScheduleInsights,
-  ruleCount = schedule.ruleIds.length,
-): string {
-  const shown = schedule.tables.slice(0, 3).join(", ");
-  const more = schedule.tables.length > 3 ? ` and ${schedule.tables.length - 3} more` : "";
-  const what = `${schedule.name} runs ${schedule.repeats.toLowerCase()} on ${plural(schedule.tables.length, "table")} (${shown}${more}) with ${plural(ruleCount, "rule")}.`;
-  const next = schedule.active ? `Next run: ${schedule.nextRun}.` : "It is paused right now.";
-  if (ins.history.length === 0) return `${what} ${next} It hasn't run yet.`;
-  const passed = ins.history.filter((r) => r.status === "passed").length;
-  const top = ins.failing[0];
-  return `${what} ${next}\n\nSo far ${passed} of its ${plural(ins.history.length, "run")} passed.${
-    top ? ` Most failures come from ${top.label}.` : ""
-  }\n\nThe right panel has Insights, the Plan, and every Run. Select a run or ask me about one, and I can also run it now, pause it, change when it runs, or add a rule.`;
-}
-
-export function openingTurns(schedule: Schedule, ins: ScheduleInsights): ChatTurn[] {
-  return [
-    { id: 0, role: "user", text: `Show me how "${schedule.name}" is doing.` },
-    { id: 1, role: "agent", text: scheduleSummary(schedule, ins) },
-  ];
-}
-
 /** What the agent says when a run is opened: the stored account of what happened. */
 export function runNarrative(run: Run, schedule: Schedule | undefined): string {
   return narrativeFor(run, schedule).join("\n\n");
@@ -96,13 +68,6 @@ const STATUS_WORD: Record<Run["status"], string> = {
 /** The question sent for the person whenever a run is opened, from anywhere. */
 export function runPrompt(run: Run): string {
   return `Tell me more about the ${STATUS_WORD[run.status]} run ${ago(run.hoursAgo)}.`;
-}
-
-export function runOpeningTurns(run: Run, schedule: Schedule | undefined): ChatTurn[] {
-  return [
-    { id: 0, role: "user", text: runPrompt(run) },
-    { id: 1, role: "agent", text: runNarrative(run, schedule) },
-  ];
 }
 
 /** Which rule in the library a message refers to, by the words it shares with the rule's name. */
