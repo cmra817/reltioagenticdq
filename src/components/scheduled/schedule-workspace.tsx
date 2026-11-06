@@ -25,7 +25,7 @@ import { buildScheduleInsights, matchRule, runNarrative } from "./schedule-insig
 
 /** What a schedule thread remembers, so it can be reopened from Recents. */
 export type ScheduleThreadState = { turns: ChatTurn[] };
-export const SCHEDULE_THREADS_KEY = "agentflow.schedule-threads.v1";
+export const SCHEDULE_THREADS_KEY = "agentflow.schedule-threads.v2";
 export const SCHEDULE_THREADS_INIT: Record<string, ScheduleThreadState> = {};
 
 type PanelTab = "insights" | "plan" | "runs";

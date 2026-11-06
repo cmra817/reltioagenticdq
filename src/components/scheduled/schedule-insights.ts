@@ -56,26 +56,22 @@ export function buildScheduleInsights(
   };
 }
 
-function runLine(r: Run): string {
-  if (r.status === "running") return "in progress";
-  if (r.checksRun === 0) return "it profiled the tables, with no checks";
-  if (r.checksFailed === 0) return `all ${r.checksRun} checks passed`;
-  const top = r.findings[0];
-  return `${r.checksFailed} of ${r.checksRun} checks failed${
-    top ? `, the biggest being "${top.title}" on ${top.table}` : ""
-  }`;
-}
-
-/** The agent's opening message when a schedule is opened. */
+/** The agent's opening message: an overview of the schedule itself, not of any one run. */
 export function scheduleSummary(
   schedule: Schedule,
   ins: ScheduleInsights,
   ruleCount = schedule.ruleIds.length,
 ): string {
-  const lead = `${schedule.name} runs ${schedule.repeats.toLowerCase()} on ${plural(schedule.tables.length, "table")} with ${plural(ruleCount, "rule")}.`;
+  const shown = schedule.tables.slice(0, 3).join(", ");
+  const more = schedule.tables.length > 3 ? ` and ${schedule.tables.length - 3} more` : "";
+  const what = `${schedule.name} runs ${schedule.repeats.toLowerCase()} on ${plural(schedule.tables.length, "table")} (${shown}${more}) with ${plural(ruleCount, "rule")}.`;
   const next = schedule.active ? `Next run: ${schedule.nextRun}.` : "It is paused right now.";
-  if (!ins.lastRun) return `${lead} ${next} It hasn't run yet.`;
-  return `${lead} ${next} The last run was ${ago(ins.lastRun.hoursAgo)}: ${runLine(ins.lastRun)}.\n\nThe right panel has Insights, the Plan, and every Run. Ask me to run it now, pause it, change when it runs, or add a rule.`;
+  if (ins.history.length === 0) return `${what} ${next} It hasn't run yet.`;
+  const passed = ins.history.filter((r) => r.status === "passed").length;
+  const top = ins.failing[0];
+  return `${what} ${next}\n\nSo far ${passed} of its ${plural(ins.history.length, "run")} passed.${
+    top ? ` Most failures come from ${top.label}.` : ""
+  }\n\nThe right panel has Insights, the Plan, and every Run. Select a run or ask me about one, and I can also run it now, pause it, change when it runs, or add a rule.`;
 }
 
 export function openingTurns(schedule: Schedule, ins: ScheduleInsights): ChatTurn[] {
