@@ -9,8 +9,6 @@ import {
   HealthPill,
   SectionTitle,
   Sparkline,
-  FloatingPrompt,
-  type ChatThread,
   type ChatTurn,
   StatTile,
 } from "@/components/workspace/primitives";
@@ -27,8 +25,9 @@ import { useSchedules, useRuns } from "@/lib/ops-store";
 import { useLocalStore } from "@/lib/use-local-store";
 import type { ChatReply } from "@/components/workspace/chat-visuals";
 import { AskItem, AskProvider, useAsk } from "./ask";
-import { answerTopic, discussPrompt, recordReply, topicFrom } from "./dashboard-topics";
-import { useOpenDashboard } from "./open-dashboard";
+import { answerTopic, recordReply, topicFrom } from "./dashboard-topics";
+import { DashboardThreadScreen } from "./dashboard-thread-screen";
+import { dashboardViewId } from "./dashboard-topics";
 import { assetsLabel, type SetupAnswers } from "./dashboard-setup";
 
 export type CustomDashboard = {
@@ -65,17 +64,16 @@ export function customToDashboard(c: CustomDashboard): DashboardDef {
  * and always first. Dashboards an admin shares appear in the same list marked
  * Shared, so there is no share link to hunt for.
  *
- * The page is fixed: nothing is generated when it loads except the daily brief
- * at the top, which was written this morning. Selecting a brief line, card or
- * chart opens that dashboard's chat for the day with a question about it
- * already sent. Typing in the floating prompt opens the same chat.
+ * Every dashboard is the same screen: today's conversation on the left, the
+ * dashboard on the right. The conversation starts each day with that day's
+ * brief, so nothing is generated when the page loads except the brief, and
+ * selecting a brief line, card or chart asks about it in the same chat.
  */
 export function DataHealthPage() {
   const [custom, , ready] = useLocalStore<CustomDashboard[]>(CUSTOM_KEY, CUSTOM_INIT);
   const [active, setActive] = React.useState("mine");
   const navigate = useNavigate();
   const { createThread } = useChatThreads();
-  const openDashboard = useOpenDashboard();
 
   const dashboards = React.useMemo<DashboardDef[]>(
     () => [MY_BRIEF, ...SHARED_DASHBOARDS, ...custom.map(customToDashboard)],
@@ -88,18 +86,8 @@ export function DataHealthPage() {
   function newDashboardChat() {
     const id = newChatId();
     createThread({ id, title: "New dashboard", kind: "dashboard" });
-    void navigate({ to: "/dashboard/$threadId", params: { threadId: id }, search: {} });
+    void navigate({ to: "/dashboard/$threadId", params: { threadId: id } });
   }
-
-  // The floating prompt on a page has no conversation yet: sending opens today's chat.
-  const prompt = React.useMemo<ChatThread>(
-    () => ({
-      turns: [],
-      send: (q: string) => openDashboard(current, q),
-      say: () => undefined,
-    }),
-    [openDashboard, current],
-  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -137,30 +125,14 @@ export function DataHealthPage() {
         {!ready && <span className="sr-only">Loading dashboards</span>}
       </div>
 
-      <div className="relative min-h-0 flex-1">
-        <div className="h-full overflow-y-auto pb-24">
-          <div className="mx-auto w-full max-w-[960px]">
-            <DashboardBody
-              key={current.id}
-              dash={current}
-              onAsk={(topic) => openDashboard(current, discussPrompt(topic))}
-            />
-          </div>
-        </div>
-        <FloatingPrompt
-          thread={prompt}
-          placeholder="Ask about this dashboard, or change it…"
-          onOpen={() => openDashboard(current)}
-        />
-      </div>
+      <DashboardThreadScreen key={current.id} threadId={dashboardViewId(current.id)} />
     </div>
   );
 }
 
 /**
- * The dashboard itself: today's brief at the top, then the stats. The same
- * body is the page and the right panel of its chat, so what you select is what
- * the chat is about. `focus` marks the item being discussed.
+ * The dashboard itself, as the right panel of its chat. `focus` marks the
+ * card or chart being discussed.
  */
 export function DashboardBody({
   dash,
@@ -175,44 +147,8 @@ export function DashboardBody({
 }) {
   return (
     <AskProvider value={{ onAsk, focus }}>
-      <DashboardPanel dash={dash} leading={leading} top={<DailyBrief dash={dash} />} />
+      <DashboardPanel dash={dash} leading={leading} />
     </AskProvider>
-  );
-}
-
-/** Three to five lines written each morning. Each line is selectable like any card. */
-function DailyBrief({ dash }: { dash: DashboardDef }) {
-  const { onAsk } = useAsk();
-  return (
-    <section aria-label="Today's brief">
-      <div className="flex items-baseline justify-between gap-3">
-        <SectionTitle>Today's brief</SectionTitle>
-        <span className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-          Generated today, 6:00am
-        </span>
-      </div>
-      <ul
-        className="space-y-0.5 rounded-xl border bg-white p-1.5"
-        style={{ borderColor: "var(--hairline)" }}
-      >
-        {dash.briefing.map((line) => (
-          <li key={line}>
-            <AskItem
-              topic={line}
-              className="rounded-lg px-2.5 py-2 text-[14px] leading-relaxed"
-              style={{ color: "var(--ink-700)" }}
-            >
-              {line}
-            </AskItem>
-          </li>
-        ))}
-      </ul>
-      {onAsk && (
-        <p className="mt-1.5 text-[12px]" style={{ color: "var(--ink-300)" }}>
-          Select a line, card or chart to discuss it in chat.
-        </p>
-      )}
-    </section>
   );
 }
 
@@ -275,28 +211,18 @@ function useScopeStats(dash: DashboardDef): DashboardStat[] {
 export function DashboardPanel({
   dash,
   leading,
-  top,
 }: {
   dash: DashboardDef;
   leading?: React.ReactNode;
-  top?: React.ReactNode;
 }) {
   return dash.id === "mine" ? (
-    <RecordQualityPanel leading={leading} top={top} />
+    <RecordQualityPanel leading={leading} />
   ) : (
-    <GenericPanel dash={dash} leading={leading} top={top} />
+    <GenericPanel dash={dash} leading={leading} />
   );
 }
 
-function GenericPanel({
-  dash,
-  leading,
-  top,
-}: {
-  dash: DashboardDef;
-  leading?: React.ReactNode;
-  top?: React.ReactNode;
-}) {
+function GenericPanel({ dash, leading }: { dash: DashboardDef; leading?: React.ReactNode }) {
   const { onAsk, focus } = useAsk();
   const { domains, healthFor } = useDomainState();
   const { schedules } = useSchedules();
@@ -337,8 +263,6 @@ function GenericPanel({
           · {dash.scope}
         </div>
       </div>
-
-      {top}
 
       <div className="grid grid-cols-2 gap-3">
         {stats.map((s) => (

@@ -1,5 +1,4 @@
 import * as React from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { useChatThreads } from "@/components/chat/chat-context";
 import { useDomainState } from "@/components/domain-context";
 import {
@@ -12,6 +11,7 @@ import {
   type ChatTurn,
 } from "@/components/workspace/primitives";
 import { ALL_DOMAINS, MY_BRIEF, SHARED_DASHBOARDS, type DashboardDef } from "@/lib/mock-ops";
+import { todayLabel } from "@/lib/ops-store";
 import { useLocalStore } from "@/lib/use-local-store";
 import {
   CUSTOM_INIT,
@@ -48,7 +48,7 @@ const THREADS_INIT: Record<string, DashboardThreadState> = {};
  * a dashboard's conversation for one day. Waits for saved state so a reopened
  * thread comes back as it was.
  */
-export function DashboardThreadScreen({ threadId, ask }: { threadId: string; ask?: string }) {
+export function DashboardThreadScreen({ threadId }: { threadId: string }) {
   const [threads, , ready] = useLocalStore(THREADS_KEY, THREADS_INIT);
   const [custom, , customReady] = useLocalStore<CustomDashboard[]>(CUSTOM_KEY, CUSTOM_INIT);
   if (!ready || !customReady) return <div className="flex-1" />;
@@ -69,46 +69,66 @@ export function DashboardThreadScreen({ threadId, ask }: { threadId: string; ask
       threadId={threadId}
       dash={dash}
       initial={threads[threadId]}
-      ask={ask}
     />
   );
 }
 
+/** The day's first message: that day's brief, each line selectable. */
+function briefTurn(dash: DashboardDef): ChatTurn {
+  return {
+    id: 0,
+    role: "agent",
+    text: `Good morning. Here's today's brief for ${dash.name}.`,
+    visual: {
+      kind: "brief",
+      title: "Today's brief",
+      stamp: "Generated today, 6:00am",
+      lines: dash.briefing.map((text) => ({ text, ask: discussPrompt(text) })),
+    },
+  };
+}
+
 /**
- * One conversation per dashboard per day. The dashboard, brief included, is the
- * right panel; whatever was selected is highlighted there. A selection or a
- * typed question from the page arrives as `ask` and is sent once.
+ * One conversation per dashboard per day, always beside the dashboard. It opens
+ * with that day's brief; selecting a brief line, card or chart asks about it
+ * here, and whatever was selected is highlighted on the dashboard. The thread
+ * joins Recents with the first question.
  */
 function DashboardViewThread({
   threadId,
   dash,
   initial,
-  ask,
 }: {
   threadId: string;
   dash: DashboardDef;
   initial?: DashboardThreadState;
-  ask?: string;
 }) {
-  const navigate = useNavigate();
+  const { getThread, createThread } = useChatThreads();
   const [, setThreads] = useLocalStore(THREADS_KEY, THREADS_INIT);
   const [chatOpen, setChatOpen] = React.useState(true);
-  const thread = useChatThread((q) => dashboardReply(dash, q), initial?.turns ?? []);
+  const saved = initial?.turns ?? [];
+  const startTurns =
+    saved[0]?.visual?.kind === "brief"
+      ? saved
+      : [briefTurn(dash), ...saved.map((t, i) => ({ ...t, id: i + 1 }))];
+  const thread = useChatThread((q) => dashboardReply(dash, q), startTurns);
 
-  const sent = React.useRef(false);
+  const asked = thread.turns.some((t) => t.role === "user");
   React.useEffect(() => {
-    if (!ask || sent.current) return;
-    sent.current = true;
-    thread.send(ask);
-    void navigate({ to: "/dashboard/$threadId", params: { threadId }, search: {}, replace: true });
-  }, [ask, thread, navigate, threadId]);
-
-  React.useEffect(() => {
+    if (!asked) return;
+    if (!getThread(threadId)) {
+      createThread({
+        id: threadId,
+        title: `${dash.name} · ${todayLabel()}`,
+        kind: "dashboard",
+      });
+    }
     setThreads((prev) => ({
       ...prev,
       [threadId]: { turns: thread.turns, answers: EMPTY_ANSWERS, dashId: dash.id },
     }));
-  }, [threadId, thread.turns, dash.id, setThreads]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asked, threadId, thread.turns, dash.id, setThreads]);
 
   const lastAsked = [...thread.turns].reverse().find((t) => t.role === "user");
   const focus = lastAsked ? (topicFrom(lastAsked.text) ?? null) : null;

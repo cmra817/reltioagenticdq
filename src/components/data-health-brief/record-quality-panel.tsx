@@ -315,14 +315,7 @@ function SourceTable() {
 }
 
 /** Right panel for "My brief": how good the Marketing contact records are, and why the rest aren't. */
-export function RecordQualityPanel({
-  leading,
-  top,
-}: {
-  leading?: React.ReactNode;
-  /** Rendered under the title, above the charts: the daily brief. */
-  top?: React.ReactNode;
-}) {
+export function RecordQualityPanel({ leading }: { leading?: React.ReactNode }) {
   return (
     <div className="space-y-6 p-5">
       <div>
@@ -344,8 +337,6 @@ export function RecordQualityPanel({
           </p>
         </details>
       </div>
-
-      {top}
 
       <Headline />
 

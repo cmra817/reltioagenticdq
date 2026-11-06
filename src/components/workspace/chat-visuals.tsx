@@ -24,6 +24,13 @@ export type ChatVisual =
       target?: number;
     }
   | {
+      /** The day's brief: lines to select, each sending its own question. */
+      kind: "brief";
+      title: string;
+      stamp: string;
+      lines: { text: string; ask: string }[];
+    }
+  | {
       kind: "stats";
       title?: string;
       items: { label: string; value: string; note?: string }[];
@@ -49,6 +56,39 @@ export function ChatVisualView({
   visual: ChatVisual;
   onAsk?: (question: string) => void;
 }) {
+  if (visual.kind === "brief") {
+    return (
+      <div className="rounded-xl border bg-white p-1.5" style={frame}>
+        <div className="flex items-baseline justify-between gap-3 px-2.5 pb-1 pt-2">
+          <span className="text-[12.5px] font-semibold" style={{ color: "var(--ink-900)" }}>
+            {visual.title}
+          </span>
+          <span className="text-[11.5px]" style={{ color: "var(--ink-500)" }}>
+            {visual.stamp}
+          </span>
+        </div>
+        <ul className="space-y-0.5">
+          {visual.lines.map((l) => (
+            <li key={l.text}>
+              <button
+                type="button"
+                onClick={() => onAsk?.(l.ask)}
+                title="Discuss this"
+                className="block w-full rounded-lg px-2.5 py-2 text-left text-[13.5px] leading-relaxed hover:bg-[color:var(--surface-soft)] focus-visible:outline-2 focus-visible:outline-[color:var(--brand-blue)]"
+                style={{ color: "var(--ink-700)" }}
+              >
+                {l.text}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <p className="px-2.5 pb-1.5 pt-1 text-[12px]" style={{ color: "var(--ink-300)" }}>
+          Select a line, or a card or chart on the right, to discuss it.
+        </p>
+      </div>
+    );
+  }
+
   if (visual.kind === "stats") {
     return (
       <div className="rounded-xl border bg-white p-3" style={frame}>
