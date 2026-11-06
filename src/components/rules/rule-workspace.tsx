@@ -63,14 +63,17 @@ type PanelTab = "insights" | "edit" | "history";
 export function RuleWorkspace({
   threadId,
   ruleId,
+  showChat,
   initial,
 }: {
   threadId: string;
   /** Set when the thread was opened from an existing rule in the table. */
   ruleId?: string;
+  /** Open an existing rule with its conversation showing (from Recents). Otherwise the page comes first. */
+  showChat?: boolean;
   initial?: RuleThreadState;
 }) {
-  const { renameThread } = useChatThreads();
+  const { renameThread, getThread, createThread } = useChatThreads();
   const openRule = useOpenRule();
   const { rules, ready, usedBy, addRule, applyEdit } = useRules();
   const [, setThreads] = useLocalStore(RULE_THREADS_KEY, RULE_THREADS_INIT);
@@ -78,11 +81,11 @@ export function RuleWorkspace({
   const isNew = !savedId;
   const saved = savedId ? rules.find((r) => r.id === savedId) : undefined;
 
-  const [draft, setDraft] = React.useState<Rule | null>(initial?.draft ?? null);
+  const [draft, setDraft] = React.useState<Rule | null>(initial?.draft ?? saved ?? null);
   const draftRef = React.useRef<Rule | null>(null);
   draftRef.current = draft;
   const [flash, setFlash] = React.useState<EditableKey[]>([]);
-  const [chatOpen, setChatOpen] = React.useState(true);
+  const [chatOpen, setChatOpen] = React.useState(!ruleId || !!showChat);
   const [tab, setTab] = React.useState<PanelTab>(ruleId ? "insights" : "edit");
   const [step, setStep] = React.useState<"edit" | "impact">("edit");
   const [mode, setMode] = React.useState<ImpactMode>("everywhere");
@@ -158,20 +161,34 @@ export function RuleWorkspace({
     reply,
     initial?.turns ??
       (ruleId
-        ? undefined
+        ? []
         : [
             { id: 0, role: "user", text: START_PROMPT },
             { id: 1, role: "agent", text: START_QUESTION },
           ]),
   );
 
+  // An opened rule is just a page until a conversation starts: the first question
+  // (typed, or an item selected) opens the chat and puts the thread in Recents.
+  const turnCount = thread.turns.length;
+  const prevTurns = React.useRef(turnCount);
+  React.useEffect(() => {
+    if (prevTurns.current === 0 && turnCount > 0) setChatOpen(true);
+    prevTurns.current = turnCount;
+  }, [turnCount]);
+
   // Keep the thread so it can be reopened from Recents. An opened rule always
   // reloads from the saved rule, so only a new rule's draft is kept.
   React.useEffect(() => {
+    if (ruleId && turnCount === 0) return;
+    if (ruleId && saved && !getThread(threadId)) {
+      createThread({ id: threadId, title: saved.name, kind: "rule" });
+    }
     setThreads((prev) => ({
       ...prev,
       [threadId]: { turns: thread.turns, draft: ruleId ? null : draft, savedId },
     }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadId, ruleId, thread.turns, draft, savedId, setThreads]);
 
   function saveNew(status: Rule["status"]) {
@@ -300,7 +317,7 @@ export function RuleWorkspace({
               <div className="mx-auto w-full max-w-[960px] flex-1 space-y-5 p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2">
-                    {!chatOpen && (
+                    {!chatOpen && (turnCount > 0 || isNew) && (
                       <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
                     )}
                     <Tabs

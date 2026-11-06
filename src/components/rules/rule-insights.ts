@@ -1,5 +1,4 @@
 import { clamp, hash, type Rule, type RuleType, type Schedule } from "@/lib/mock-ops";
-import type { ChatTurn } from "@/components/workspace/primitives";
 
 /** One table a schedule checks with this rule, and the columns the rule looks at. */
 export type CoverageItem = {
@@ -124,25 +123,6 @@ export function causeFor(type: RuleType): string {
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const pct = (n: number) => (n < 0.01 ? "<0.01%" : `${n.toFixed(2)}%`);
 
-/** The agent's opening message when a rule is opened. */
-export function openingSummary(rule: Rule, ins: RuleInsights): string {
-  const lead = `${rule.name} is a ${rule.type.toLowerCase()} rule with ${rule.severity.toLowerCase()} severity.`;
-  if (!ins.applied) {
-    return `${lead} No schedule applies it yet, so there is no history to show. The right panel has its settings under Edit, and I can test it on sample data if you ask.`;
-  }
-  const delta = +(ins.passRate - ins.lastWeekRate).toFixed(1);
-  const trend =
-    delta === 0
-      ? "unchanged from last week"
-      : `${delta > 0 ? "up" : "down"} ${Math.abs(delta)} points from last week`;
-  const top = ins.failing[0];
-  return `${lead} It passes ${ins.passRate}% of the time across ${plural(ins.tableCount, "table")} in ${plural(ins.scheduleCount, "schedule")}, ${trend}.${
-    top
-      ? ` It fails most on ${top.label}: ${top.failedRows.toLocaleString()} rows (${pct(top.pct)}).`
-      : ""
-  }\n\nInsights are on the right. Open Edit to change its settings, or tell me what to change here.`;
-}
-
 /** Answers "why does it fail?" from the insights. */
 export function whyFailing(rule: Rule, ins: RuleInsights): string {
   const top = ins.failing[0];
@@ -162,12 +142,4 @@ export function coverageText(ins: RuleInsights): string {
   if (!ins.applied) return "No schedule applies this rule yet, so changing it affects nothing.";
   const names = [...new Set(ins.coverage.map((c) => c.scheduleName))];
   return `It covers ${plural(ins.tableCount, "table")} and ${plural(ins.columnCount, "column")}, through ${names.join(", ")}. When you save a change I'll ask whether to update all of them, some, or save a new rule.`;
-}
-
-/** First two turns of a rule thread: the request is already sent and the agent has answered. */
-export function openingTurns(rule: Rule, ins: RuleInsights): ChatTurn[] {
-  return [
-    { id: 0, role: "user", text: `Show me how "${rule.name}" is doing.` },
-    { id: 1, role: "agent", text: openingSummary(rule, ins) },
-  ];
 }

@@ -52,6 +52,7 @@ function ThreadLink({ thread, children }: { thread: ChatThread; children: React.
       <Link
         to="/rule/$threadId"
         params={{ threadId: thread.id }}
+        search={{ chat: true }}
         className={ROW_CLASS}
         style={ROW_STYLE}
         activeProps={ACTIVE_PROPS}

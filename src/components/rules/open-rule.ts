@@ -1,6 +1,5 @@
 import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useChatThreads } from "@/components/chat/chat-context";
 
 const VIEW_PREFIX = "rule-view-";
 
@@ -11,16 +10,20 @@ export function ruleIdFromThread(threadId: string): string | undefined {
   return threadId.startsWith(VIEW_PREFIX) ? threadId.slice(VIEW_PREFIX.length) : undefined;
 }
 
-/** Opens a rule as a chat thread, reusing its thread when one already exists. */
+/**
+ * Opens a rule as its page. The page comes first; the thread (and its place in
+ * Recents) is made when the first question is asked.
+ */
 export function useOpenRule() {
   const navigate = useNavigate();
-  const { getThread, createThread } = useChatThreads();
   return React.useCallback(
     (rule: { id: string; name: string }) => {
-      const id = ruleThreadId(rule.id);
-      if (!getThread(id)) createThread({ id, title: rule.name, kind: "rule" });
-      void navigate({ to: "/rule/$threadId", params: { threadId: id } });
+      void navigate({
+        to: "/rule/$threadId",
+        params: { threadId: ruleThreadId(rule.id) },
+        search: {},
+      });
     },
-    [getThread, createThread, navigate],
+    [navigate],
   );
 }

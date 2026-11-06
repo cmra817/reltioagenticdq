@@ -58,7 +58,7 @@ export function SearchDialog({ open, onOpenChange }: Props) {
         search: { chat: true },
       });
     } else if (t.kind === "rule") {
-      void navigate({ to: "/rule/$threadId", params: { threadId: t.id } });
+      void navigate({ to: "/rule/$threadId", params: { threadId: t.id }, search: { chat: true } });
     } else {
       void navigate({ to: "/chat/$chatId", params: { chatId: t.id }, search: {} });
     }
