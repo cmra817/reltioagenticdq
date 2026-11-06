@@ -49,6 +49,8 @@ export function SearchDialog({ open, onOpenChange }: Props) {
     close();
     if (t.kind === "investigation") {
       void navigate({ to: "/investigate/consistency", search: { q: t.title, thread: t.id } });
+    } else if (t.kind === "rule") {
+      void navigate({ to: "/rule/$threadId", params: { threadId: t.id } });
     } else {
       void navigate({ to: "/chat/$chatId", params: { chatId: t.id }, search: {} });
     }

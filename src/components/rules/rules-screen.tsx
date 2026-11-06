@@ -3,11 +3,12 @@ import { Plus, Search } from "lucide-react";
 import { GhostButton, PrimaryButton, Tabs, Tag } from "@/components/workspace/primitives";
 import { ME, RULE_TYPES, type Rule, type RuleScope, type RuleType } from "@/lib/mock-ops";
 import { todayLabel, useRules } from "@/lib/ops-store";
+import { useNavigate } from "@tanstack/react-router";
+import { newChatId, useChatThreads } from "@/components/chat/chat-context";
 import { useRulesNav, type RulesSearch } from "./nav";
 import { RuleWorkspace } from "./rule-workspace";
 
 export function RulesScreen({ search }: { search: RulesSearch }) {
-  if (search.new) return <RuleWorkspace key="new" />;
   if (search.rule) return <RuleWorkspace key={search.rule} ruleId={search.rule} />;
   return <RulesHome />;
 }
@@ -20,6 +21,8 @@ const TAB_SCOPE: Record<"yours" | "team" | "templates", RuleScope> = {
 
 function RulesHome() {
   const go = useRulesNav();
+  const navigate = useNavigate();
+  const { createThread } = useChatThreads();
   const { rules, usedBy, addRule, writeRule } = useRules();
   const [confirmId, setConfirmId] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<"yours" | "team" | "templates">("yours");
@@ -34,6 +37,13 @@ function RulesHome() {
     );
 
   const count = (scope: RuleScope) => rules.filter((r) => r.scope === scope).length;
+
+  /** A new rule is a new chat thread: create it, open it, and the starter message is already sent. */
+  function newRule() {
+    const id = newChatId();
+    createThread({ id, title: "New rule", kind: "rule" });
+    void navigate({ to: "/rule/$threadId", params: { threadId: id } });
+  }
 
   function duplicate(r: Rule) {
     const copy: Rule = {
@@ -74,10 +84,7 @@ function RulesHome() {
           <h1 className="text-[22px] font-semibold" style={{ color: "var(--ink-900)" }}>
             Rules
           </h1>
-          <PrimaryButton
-            onClick={() => go({ new: true })}
-            className="ml-auto flex items-center gap-1.5"
-          >
+          <PrimaryButton onClick={newRule} className="ml-auto flex items-center gap-1.5">
             <Plus size={14} /> New rule
           </PrimaryButton>
         </div>

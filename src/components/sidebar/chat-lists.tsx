@@ -27,6 +27,11 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+const ACTIVE_PROPS = {
+  "aria-current": "page" as const,
+  style: { background: "var(--surface-soft)", color: "var(--ink-900)", fontWeight: 600 },
+};
+
 function ThreadLink({ thread, children }: { thread: ChatThread; children: React.ReactNode }) {
   if (thread.kind === "investigation") {
     return (
@@ -41,12 +46,27 @@ function ThreadLink({ thread, children }: { thread: ChatThread; children: React.
       </Link>
     );
   }
+  if (thread.kind === "rule") {
+    return (
+      <Link
+        to="/rule/$threadId"
+        params={{ threadId: thread.id }}
+        className={ROW_CLASS}
+        style={ROW_STYLE}
+        activeProps={ACTIVE_PROPS}
+        title={thread.title}
+      >
+        {children}
+      </Link>
+    );
+  }
   return (
     <Link
       to="/chat/$chatId"
       params={{ chatId: thread.id }}
       className={ROW_CLASS}
       style={ROW_STYLE}
+      activeProps={ACTIVE_PROPS}
       title={thread.title}
     >
       {children}
@@ -179,5 +199,3 @@ export function RecentChats() {
     </div>
   );
 }
-
-

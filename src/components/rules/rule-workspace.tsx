@@ -1,5 +1,7 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
+import { useChatThreads } from "@/components/chat/chat-context";
+import { useLocalStore } from "@/lib/use-local-store";
 import { ArrowLeft } from "lucide-react";
 import {
   GhostButton,
@@ -10,6 +12,7 @@ import {
   Tabs,
   Tag,
   useChatThread,
+  type ChatTurn,
 } from "@/components/workspace/primitives";
 import {
   ME,
@@ -38,19 +41,37 @@ const inputStyle: React.CSSProperties = {
   color: "var(--ink-900)",
 };
 
+/** What a rule thread remembers, so it can be reopened from Recents. */
+export type RuleThreadState = { turns: ChatTurn[]; draft: Rule | null; savedId?: string };
+export const RULE_THREADS_KEY = "agentflow.rule-threads.v1";
+export const RULE_THREADS_INIT: Record<string, RuleThreadState> = {};
+
 /**
  * One screen for creating and editing a rule. The chat is where you say what
  * you want; the right panel is the editor, always editable. Typing in either
  * keeps the other in step, and fields the chat just changed are highlighted.
- * With no ruleId it starts a new rule: the starter message is already sent.
+ * With a threadId it is a chat thread of its own (opened from "New rule"):
+ * the starter message is already sent and the panel appears only once a rule
+ * has been drafted. With a ruleId it is an existing rule opened from the table.
  */
-export function RuleWorkspace({ ruleId }: { ruleId?: string }) {
+export function RuleWorkspace({
+  ruleId,
+  threadId,
+  initial,
+}: {
+  ruleId?: string;
+  threadId?: string;
+  initial?: RuleThreadState;
+}) {
   const go = useRulesNav();
+  const { renameThread } = useChatThreads();
   const { rules, ready, usedBy, addRule, applyEdit } = useRules();
-  const isNew = !ruleId;
-  const saved = ruleId ? rules.find((r) => r.id === ruleId) : undefined;
+  const [, setThreads] = useLocalStore(RULE_THREADS_KEY, RULE_THREADS_INIT);
+  const [savedId, setSavedId] = React.useState<string | undefined>(initial?.savedId ?? ruleId);
+  const isNew = !savedId;
+  const saved = savedId ? rules.find((r) => r.id === savedId) : undefined;
 
-  const [draft, setDraft] = React.useState<Rule | null>(null);
+  const [draft, setDraft] = React.useState<Rule | null>(initial?.draft ?? null);
   const draftRef = React.useRef<Rule | null>(null);
   draftRef.current = draft;
   const [flash, setFlash] = React.useState<EditableKey[]>([]);
@@ -85,6 +106,7 @@ export function RuleWorkspace({ ruleId }: { ruleId?: string }) {
       if (!isNew) return "One moment while this rule loads.";
       const d = draftFrom(q);
       setDraft(d);
+      if (threadId) renameThread(threadId, d.name);
       setFlash(["name", "description", "type", "severity", "threshold"]);
       return `I drafted "${d.name}" as a ${d.type.toLowerCase()} rule. ${describeTest(testRule(d), d.threshold)}\n\nIt's on the right. Edit anything there, or tell me what to change, like "make it high severity" or "allow 2% to fail".`;
     }
@@ -108,13 +130,20 @@ export function RuleWorkspace({ ruleId }: { ruleId?: string }) {
 
   const thread = useChatThread(
     reply,
-    isNew
-      ? [
-          { id: 0, role: "user", text: START_PROMPT },
-          { id: 1, role: "agent", text: START_QUESTION },
-        ]
-      : undefined,
+    initial?.turns ??
+      (threadId
+        ? [
+            { id: 0, role: "user", text: START_PROMPT },
+            { id: 1, role: "agent", text: START_QUESTION },
+          ]
+        : undefined),
   );
+
+  // Keep the thread so it can be reopened from Recents.
+  React.useEffect(() => {
+    if (!threadId) return;
+    setThreads((prev) => ({ ...prev, [threadId]: { turns: thread.turns, draft, savedId } }));
+  }, [threadId, thread.turns, draft, savedId, setThreads]);
 
   function saveNew(status: Rule["status"]) {
     if (!draft) return;
@@ -124,7 +153,14 @@ export function RuleWorkspace({ ruleId }: { ruleId?: string }) {
       versions: [{ v: 1, author: ME, at: todayLabel(), note: "Created in chat" }],
     };
     addRule(rule);
-    go({ rule: rule.id });
+    if (threadId) {
+      setSavedId(rule.id);
+      setDraft(rule);
+      renameThread(threadId, rule.name);
+      thread.say(
+        `Saved "${rule.name}"${status === "Active" ? " and turned it on" : " as a draft"}. You can keep refining it here, and you'll find it in Rules.`,
+      );
+    } else go({ rule: rule.id });
   }
 
   function save() {
@@ -189,16 +225,18 @@ export function RuleWorkspace({ ruleId }: { ruleId?: string }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="shrink-0 px-6 pt-4">
-        <button
-          type="button"
-          onClick={() => go({})}
-          className="flex items-center gap-1.5 text-[13px]"
-          style={{ color: "var(--ink-500)" }}
-        >
-          <ArrowLeft size={14} /> Rules
-        </button>
-      </div>
+      {!threadId && (
+        <div className="shrink-0 px-6 pt-4">
+          <button
+            type="button"
+            onClick={() => go({})}
+            className="flex items-center gap-1.5 text-[13px]"
+            style={{ color: "var(--ink-500)" }}
+          >
+            <ArrowLeft size={14} /> Rules
+          </button>
+        </div>
+      )}
       <SplitWorkspace
         panelLabel="Rule editor"
         panelWidth="50vw"
@@ -224,173 +262,178 @@ export function RuleWorkspace({ ruleId }: { ruleId?: string }) {
           />
         }
         panel={
-          <div className="flex min-h-full flex-col">
-            <div className="flex-1 space-y-5 p-5">
-              {!draft ? (
-                <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-                  {isNew
-                    ? "Your rule appears here once you describe it. You can then edit every field."
-                    : "Loading…"}
-                </p>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between gap-3">
-                    <Tabs
-                      label="Rule sections"
-                      value={tab}
-                      onChange={setTab}
-                      tabs={[
-                        { id: "editor", label: "Editor" },
-                        ...(isNew ? [] : [{ id: "history" as const, label: "History" }]),
-                      ]}
-                    />
-                    <div className="flex items-center gap-1.5">
-                      <Tag>{isNew ? "Not saved yet" : (saved?.status ?? draft.status)}</Tag>
-                      {!isNew && saved && (
-                        <Tag>{saved.scope === "Template" ? "Template" : saved.owner}</Tag>
-                      )}
+          !draft ? undefined : (
+            <div className="flex min-h-full flex-col">
+              <div className="flex-1 space-y-5 p-5">
+                {!draft ? (
+                  <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
+                    {isNew
+                      ? "Your rule appears here once you describe it. You can then edit every field."
+                      : "Loading…"}
+                  </p>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between gap-3">
+                      <Tabs
+                        label="Rule sections"
+                        value={tab}
+                        onChange={setTab}
+                        tabs={[
+                          { id: "editor", label: "Editor" },
+                          ...(isNew ? [] : [{ id: "history" as const, label: "History" }]),
+                        ]}
+                      />
+                      <div className="flex items-center gap-1.5">
+                        <Tag>{isNew ? "Not saved yet" : (saved?.status ?? draft.status)}</Tag>
+                        {!isNew && saved && (
+                          <Tag>{saved.scope === "Template" ? "Template" : saved.owner}</Tag>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {tab === "history" && saved ? (
-                    <ol
-                      className="divide-y rounded-xl border bg-white"
-                      style={{ borderColor: "var(--hairline)" }}
-                    >
-                      {saved.versions.map((v) => (
-                        <li key={v.v} className="flex items-baseline gap-3 px-4 py-2.5 text-[13px]">
-                          <span
-                            className="w-8 shrink-0 font-medium tabular-nums"
-                            style={{ color: "var(--ink-900)" }}
-                          >
-                            v{v.v}
-                          </span>
-                          <span className="min-w-0 flex-1" style={{ color: "var(--ink-700)" }}>
-                            {v.note}
-                          </span>
-                          <span
-                            className="shrink-0 text-[12px]"
-                            style={{ color: "var(--ink-300)" }}
-                          >
-                            {v.author} · {v.at}
-                          </span>
-                        </li>
-                      ))}
-                    </ol>
-                  ) : (
-                    <Editor
-                      draft={draft}
-                      saved={isNew ? undefined : saved}
-                      flash={flash}
-                      readOnly={readOnly}
-                      onPatch={patch}
-                    />
-                  )}
-
-                  {tab === "editor" && (
-                    <div>
-                      <SectionTitle>Tested on real data</SectionTitle>
-                      <div
-                        className="rounded-xl border bg-white p-3.5 text-[13.5px]"
-                        style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                    {tab === "history" && saved ? (
+                      <ol
+                        className="divide-y rounded-xl border bg-white"
+                        style={{ borderColor: "var(--hairline)" }}
                       >
-                        {describeTest(testRule(draft), draft.threshold)}
+                        {saved.versions.map((v) => (
+                          <li
+                            key={v.v}
+                            className="flex items-baseline gap-3 px-4 py-2.5 text-[13px]"
+                          >
+                            <span
+                              className="w-8 shrink-0 font-medium tabular-nums"
+                              style={{ color: "var(--ink-900)" }}
+                            >
+                              v{v.v}
+                            </span>
+                            <span className="min-w-0 flex-1" style={{ color: "var(--ink-700)" }}>
+                              {v.note}
+                            </span>
+                            <span
+                              className="shrink-0 text-[12px]"
+                              style={{ color: "var(--ink-300)" }}
+                            >
+                              {v.author} · {v.at}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <Editor
+                        draft={draft}
+                        saved={isNew ? undefined : saved}
+                        flash={flash}
+                        readOnly={readOnly}
+                        onPatch={patch}
+                      />
+                    )}
+
+                    {tab === "editor" && (
+                      <div>
+                        <SectionTitle>Tested on real data</SectionTitle>
+                        <div
+                          className="rounded-xl border bg-white p-3.5 text-[13.5px]"
+                          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                        >
+                          {describeTest(testRule(draft), draft.threshold)}
+                        </div>
+                      </div>
+                    )}
+
+                    {tab === "editor" && !isNew && saved && (
+                      <div>
+                        <SectionTitle>Where it's used</SectionTitle>
+                        {used.length === 0 ? (
+                          <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
+                            No schedule applies this rule yet.
+                          </p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {used.map((s) => (
+                              <li key={s.id} className="text-[13.5px]">
+                                <Link
+                                  to="/scheduled"
+                                  search={{ schedule: s.id }}
+                                  className="underline"
+                                  style={{ color: "var(--brand-blue)" }}
+                                >
+                                  {s.name}
+                                </Link>
+                                <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+                                  {s.domain} · {s.tables.join(", ")}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {draft && tab === "editor" && (
+                <div
+                  className="sticky bottom-0 border-t bg-white/95 p-4 backdrop-blur"
+                  style={{ borderColor: "var(--hairline)" }}
+                >
+                  {readOnly ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[13px]" style={{ color: "var(--ink-500)" }}>
+                        Templates can't be edited.
+                      </span>
+                      <PrimaryButton onClick={makeCopy}>Make my own copy</PrimaryButton>
+                    </div>
+                  ) : isNew ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[13px]" style={{ color: "var(--ink-500)" }}>
+                        Not saved yet
+                      </span>
+                      <div className="flex gap-2">
+                        <GhostButton onClick={() => saveNew("Draft")} disabled={!draft.name.trim()}>
+                          Save as draft
+                        </GhostButton>
+                        <PrimaryButton
+                          onClick={() => saveNew("Active")}
+                          disabled={!draft.name.trim()}
+                        >
+                          Save rule
+                        </PrimaryButton>
+                      </div>
+                    </div>
+                  ) : step === "impact" ? (
+                    <ImpactChoice
+                      used={used.map((s) => ({ id: s.id, name: s.name }))}
+                      changes={changes}
+                      mode={mode}
+                      onMode={setMode}
+                      updateIds={updateIds ?? []}
+                      onUpdateIds={setUpdateIds}
+                      onBack={() => setStep("edit")}
+                      onSave={() => commit(mode)}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[13px]" style={{ color: "var(--ink-500)" }}>
+                        {dirty
+                          ? `Unsaved changes: ${changes.map((k) => FIELD_LABEL[k]).join(", ")}`
+                          : "No changes"}
+                      </span>
+                      <div className="flex gap-2">
+                        <GhostButton disabled={!dirty} onClick={() => saved && setDraft(saved)}>
+                          Discard
+                        </GhostButton>
+                        <PrimaryButton onClick={save} disabled={!dirty || !draft.name.trim()}>
+                          Save
+                        </PrimaryButton>
                       </div>
                     </div>
                   )}
-
-                  {tab === "editor" && !isNew && saved && (
-                    <div>
-                      <SectionTitle>Where it's used</SectionTitle>
-                      {used.length === 0 ? (
-                        <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-                          No schedule applies this rule yet.
-                        </p>
-                      ) : (
-                        <ul className="space-y-2">
-                          {used.map((s) => (
-                            <li key={s.id} className="text-[13.5px]">
-                              <Link
-                                to="/scheduled"
-                                search={{ schedule: s.id }}
-                                className="underline"
-                                style={{ color: "var(--brand-blue)" }}
-                              >
-                                {s.name}
-                              </Link>
-                              <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-                                {s.domain} · {s.tables.join(", ")}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                </>
+                </div>
               )}
             </div>
-
-            {draft && tab === "editor" && (
-              <div
-                className="sticky bottom-0 border-t bg-white/95 p-4 backdrop-blur"
-                style={{ borderColor: "var(--hairline)" }}
-              >
-                {readOnly ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-[13px]" style={{ color: "var(--ink-500)" }}>
-                      Templates can't be edited.
-                    </span>
-                    <PrimaryButton onClick={makeCopy}>Make my own copy</PrimaryButton>
-                  </div>
-                ) : isNew ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-[13px]" style={{ color: "var(--ink-500)" }}>
-                      Not saved yet
-                    </span>
-                    <div className="flex gap-2">
-                      <GhostButton onClick={() => saveNew("Draft")} disabled={!draft.name.trim()}>
-                        Save as draft
-                      </GhostButton>
-                      <PrimaryButton
-                        onClick={() => saveNew("Active")}
-                        disabled={!draft.name.trim()}
-                      >
-                        Save rule
-                      </PrimaryButton>
-                    </div>
-                  </div>
-                ) : step === "impact" ? (
-                  <ImpactChoice
-                    used={used.map((s) => ({ id: s.id, name: s.name }))}
-                    changes={changes}
-                    mode={mode}
-                    onMode={setMode}
-                    updateIds={updateIds ?? []}
-                    onUpdateIds={setUpdateIds}
-                    onBack={() => setStep("edit")}
-                    onSave={() => commit(mode)}
-                  />
-                ) : (
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-[13px]" style={{ color: "var(--ink-500)" }}>
-                      {dirty
-                        ? `Unsaved changes: ${changes.map((k) => FIELD_LABEL[k]).join(", ")}`
-                        : "No changes"}
-                    </span>
-                    <div className="flex gap-2">
-                      <GhostButton disabled={!dirty} onClick={() => saved && setDraft(saved)}>
-                        Discard
-                      </GhostButton>
-                      <PrimaryButton onClick={save} disabled={!dirty || !draft.name.trim()}>
-                        Save
-                      </PrimaryButton>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          )
         }
       />
     </div>

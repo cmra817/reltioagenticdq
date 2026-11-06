@@ -20,6 +20,7 @@ import { Route as ScheduledRouteImport } from './routes/scheduled'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
 import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
+import { Route as RuleThreadIdRouteImport } from './routes/rule.$threadId'
 import { Route as InvestigateTopicRouteImport } from './routes/investigate.$topic'
 import { Route as InvestigateConsistencyRouteImport } from './routes/investigate.consistency'
 
@@ -78,6 +79,11 @@ const ChatChatIdRoute = ChatChatIdRouteImport.update({
   path: '/chat/$chatId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RuleThreadIdRoute = RuleThreadIdRouteImport.update({
+  id: '/rule/$threadId',
+  path: '/rule/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InvestigateTopicRoute = InvestigateTopicRouteImport.update({
   id: '/investigate/$topic',
   path: '/investigate/$topic',
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/rule/$threadId': typeof RuleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/rule/$threadId': typeof RuleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/rule/$threadId': typeof RuleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/rule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/rule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
   id:
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/rule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
   fileRoutesById: FileRoutesById
@@ -195,6 +207,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   AssetsAssetSlugRoute: typeof AssetsAssetSlugRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
+  RuleThreadIdRoute: typeof RuleThreadIdRoute
   InvestigateTopicRoute: typeof InvestigateTopicRoute
   InvestigateConsistencyRoute: typeof InvestigateConsistencyRoute
 }
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rule/$threadId': {
+      id: '/rule/$threadId'
+      path: '/rule/$threadId'
+      fullPath: '/rule/$threadId'
+      preLoaderRoute: typeof RuleThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/investigate/$topic': {
       id: '/investigate/$topic'
       path: '/investigate/$topic'
@@ -307,6 +327,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   AssetsAssetSlugRoute: AssetsAssetSlugRoute,
   ChatChatIdRoute: ChatChatIdRoute,
+  RuleThreadIdRoute: RuleThreadIdRoute,
   InvestigateTopicRoute: InvestigateTopicRoute,
   InvestigateConsistencyRoute: InvestigateConsistencyRoute,
 }
