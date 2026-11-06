@@ -3,6 +3,9 @@ import { AppShell } from "@/components/app-shell";
 import { DashboardThreadScreen } from "@/components/data-health-brief/dashboard-thread-screen";
 
 export const Route = createFileRoute("/dashboard/$threadId")({
+  validateSearch: (search: Record<string, unknown>): { ask?: string } => ({
+    ask: typeof search.ask === "string" ? search.ask : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "New dashboard — Data Quality" },
@@ -24,9 +27,10 @@ export const Route = createFileRoute("/dashboard/$threadId")({
 
 function DashboardThreadPage() {
   const { threadId } = Route.useParams();
+  const { ask } = Route.useSearch();
   return (
     <AppShell activeNav="none" hideDock>
-      <DashboardThreadScreen threadId={threadId} />
+      <DashboardThreadScreen threadId={threadId} ask={ask} />
     </AppShell>
   );
 }

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { SectionTitle } from "@/components/workspace/primitives";
+import { AskItem } from "./ask";
 import {
   ATTRIBUTE_GRID,
   BAD_SHARE_NOTE,
@@ -15,8 +16,17 @@ import {
 
 const n = (v: number) => v.toLocaleString("en-US");
 
-function Card({ children, label }: { children: React.ReactNode; label?: string }) {
-  return (
+function Card({
+  children,
+  label,
+  topic,
+}: {
+  children: React.ReactNode;
+  label?: string;
+  /** When set, the whole card can be selected to discuss it in chat. */
+  topic?: string;
+}) {
+  const box = (
     <div
       className="rounded-xl border bg-white p-3.5"
       style={{ borderColor: "var(--hairline)" }}
@@ -26,6 +36,13 @@ function Card({ children, label }: { children: React.ReactNode; label?: string }
       {children}
     </div>
   );
+  return topic ? (
+    <AskItem topic={topic} className="rounded-xl">
+      {box}
+    </AskItem>
+  ) : (
+    box
+  );
 }
 
 /** Good vs bad as one split bar, with the target marked on it. */
@@ -33,7 +50,7 @@ function Headline() {
   const bad = 100 - RQ.goodPct;
   const delta = +(RQ.goodPct - RQ.lastWeekGoodPct).toFixed(1);
   return (
-    <Card label="Good and bad records">
+    <Card label="Good and bad records" topic="Good and bad records">
       <div className="flex items-end justify-between gap-4">
         <div>
           <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
@@ -97,25 +114,30 @@ function FailureBars() {
     <Card label="Why records fail">
       <ul className="space-y-2">
         {FAILURE_SHARE.map((f) => (
-          <li key={f.attribute} className="flex items-center gap-3 text-[13px]">
-            <span className="w-[76px] shrink-0" style={{ color: "var(--ink-700)" }}>
-              {f.attribute}
-            </span>
-            <span
-              className="h-2.5 flex-1 overflow-hidden rounded-full"
-              style={{ background: "var(--surface-soft)" }}
+          <li key={f.attribute}>
+            <AskItem
+              topic={`Why records fail on ${f.attribute}`}
+              className="flex items-center gap-3 rounded-lg px-1.5 py-1 text-[13px]"
             >
+              <span className="w-[76px] shrink-0" style={{ color: "var(--ink-700)" }}>
+                {f.attribute}
+              </span>
               <span
-                className="block h-full rounded-full"
-                style={{ width: `${f.pct}%`, background: "var(--brand-blue)" }}
-              />
-            </span>
-            <span
-              className="w-[88px] shrink-0 text-right tabular-nums"
-              style={{ color: "var(--ink-900)" }}
-            >
-              {f.pct}% · {n(Math.round((RQ_BAD * f.pct) / 100))}
-            </span>
+                className="h-2.5 flex-1 overflow-hidden rounded-full"
+                style={{ background: "var(--surface-soft)" }}
+              >
+                <span
+                  className="block h-full rounded-full"
+                  style={{ width: `${f.pct}%`, background: "var(--brand-blue)" }}
+                />
+              </span>
+              <span
+                className="w-[88px] shrink-0 text-right tabular-nums"
+                style={{ color: "var(--ink-900)" }}
+              >
+                {f.pct}% · {n(Math.round((RQ_BAD * f.pct) / 100))}
+              </span>
+            </AskItem>
           </li>
         ))}
       </ul>
@@ -134,7 +156,7 @@ function shade(rate: number): string {
 
 function AttributeGrid() {
   return (
-    <Card label="Pass rate by attribute and check">
+    <Card label="Pass rate by attribute and check" topic="Pass rate by attribute and check">
       <table className="w-full text-[13px]">
         <thead>
           <tr className="text-[11px] uppercase tracking-wide" style={{ color: "var(--ink-300)" }}>
@@ -190,7 +212,7 @@ function TrendChart() {
   const y = (v: number) => h - 6 - ((v - lo) / (hi - lo)) * (h - 12);
   const pts = GOOD_TREND.map((v, i) => `${(i / (GOOD_TREND.length - 1)) * w},${y(v)}`).join(" ");
   return (
-    <Card label="Good records, last 30 days">
+    <Card label="Good records, last 30 days" topic="Good records over the last 30 days">
       <svg
         viewBox={`0 0 ${w} ${h}`}
         className="h-24 w-full"
@@ -235,15 +257,16 @@ function NearMisses() {
       </p>
       <ul className="mt-2.5 divide-y" style={{ borderColor: "var(--hairline)" }}>
         {NEAR_MISSES.map((m) => (
-          <li
-            key={m.attribute}
-            className="flex items-center justify-between py-1.5 text-[13px]"
-            style={{ borderColor: "var(--hairline)" }}
-          >
-            <span style={{ color: "var(--ink-700)" }}>Fix {m.attribute}</span>
-            <span className="tabular-nums" style={{ color: "var(--ink-900)" }}>
-              +{n(m.records)} good ({((m.records / RQ.total) * 100).toFixed(1)} pts)
-            </span>
+          <li key={m.attribute} style={{ borderColor: "var(--hairline)" }}>
+            <AskItem
+              topic={`Fix ${m.attribute}`}
+              className="flex items-center justify-between rounded-lg px-1.5 py-1.5 text-[13px]"
+            >
+              <span style={{ color: "var(--ink-700)" }}>Fix {m.attribute}</span>
+              <span className="tabular-nums" style={{ color: "var(--ink-900)" }}>
+                +{n(m.records)} good ({((m.records / RQ.total) * 100).toFixed(1)} pts)
+              </span>
+            </AskItem>
           </li>
         ))}
       </ul>
@@ -257,31 +280,33 @@ function SourceTable() {
     <Card label="Good records by source">
       <ul className="space-y-2.5">
         {rows.map((r) => (
-          <li key={r.source} className="text-[13px]">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="font-medium" style={{ color: "var(--ink-900)" }}>
-                {r.source}
-              </span>
-              <span className="tabular-nums" style={{ color: "var(--ink-900)" }}>
-                {r.goodPct}% good
-              </span>
-            </div>
-            <div
-              className="mt-1 h-2 overflow-hidden rounded-full"
-              style={{ background: "var(--surface-soft)" }}
-            >
+          <li key={r.source}>
+            <AskItem topic={`Source: ${r.source}`} className="rounded-lg px-1.5 py-1 text-[13px]">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="font-medium" style={{ color: "var(--ink-900)" }}>
+                  {r.source}
+                </span>
+                <span className="tabular-nums" style={{ color: "var(--ink-900)" }}>
+                  {r.goodPct}% good
+                </span>
+              </div>
               <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${r.goodPct}%`,
-                  background:
-                    r.goodPct >= RQ.targetPct ? "var(--status-good)" : "var(--brand-blue)",
-                }}
-              />
-            </div>
-            <div className="mt-0.5 text-[11.5px]" style={{ color: "var(--ink-500)" }}>
-              {n(r.records)} records · steward: {r.steward}
-            </div>
+                className="mt-1 h-2 overflow-hidden rounded-full"
+                style={{ background: "var(--surface-soft)" }}
+              >
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${r.goodPct}%`,
+                    background:
+                      r.goodPct >= RQ.targetPct ? "var(--status-good)" : "var(--brand-blue)",
+                  }}
+                />
+              </div>
+              <div className="mt-0.5 text-[11.5px]" style={{ color: "var(--ink-500)" }}>
+                {n(r.records)} records · steward: {r.steward}
+              </div>
+            </AskItem>
           </li>
         ))}
       </ul>
@@ -290,7 +315,14 @@ function SourceTable() {
 }
 
 /** Right panel for "My brief": how good the Marketing contact records are, and why the rest aren't. */
-export function RecordQualityPanel({ leading }: { leading?: React.ReactNode }) {
+export function RecordQualityPanel({
+  leading,
+  top,
+}: {
+  leading?: React.ReactNode;
+  /** Rendered under the title, above the charts: the daily brief. */
+  top?: React.ReactNode;
+}) {
   return (
     <div className="space-y-6 p-5">
       <div>
@@ -312,6 +344,8 @@ export function RecordQualityPanel({ leading }: { leading?: React.ReactNode }) {
           </p>
         </details>
       </div>
+
+      {top}
 
       <Headline />
 

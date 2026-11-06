@@ -1,19 +1,15 @@
 import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { newChatId, useChatThreads } from "@/components/chat/chat-context";
-import { Plus, Users } from "lucide-react";
+import { Plus } from "lucide-react";
 import { statusForScore, useDomainState } from "@/components/domain-context";
 import { RecordQualityPanel } from "./record-quality-panel";
 import {
   GhostButton,
   HealthPill,
-  ScopedChat,
   SectionTitle,
   Sparkline,
-  SplitWorkspace,
-  PanelToggle,
   FloatingPrompt,
-  useChatThread,
   type ChatThread,
   type ChatTurn,
   StatTile,
@@ -29,6 +25,9 @@ import {
 } from "@/lib/mock-ops";
 import { useSchedules, useRuns } from "@/lib/ops-store";
 import { useLocalStore } from "@/lib/use-local-store";
+import { AskItem, AskProvider, useAsk } from "./ask";
+import { answerTopic, discussPrompt, recordReply, topicFrom } from "./dashboard-topics";
+import { useOpenDashboard } from "./open-dashboard";
 import { assetsLabel, type SetupAnswers } from "./dashboard-setup";
 
 export type CustomDashboard = {
@@ -63,16 +62,19 @@ export function customToDashboard(c: CustomDashboard): DashboardDef {
 /**
  * Data health: one page, a dashboard chosen from a dropdown. "My brief" is yours
  * and always first. Dashboards an admin shares appear in the same list marked
- * Shared, so there is no share link to hunt for. Each dashboard is the same
- * pair: summary in chat on the left, stats in the right panel.
+ * Shared, so there is no share link to hunt for.
+ *
+ * The page is fixed: nothing is generated when it loads except the daily brief
+ * at the top, which was written this morning. Selecting a brief line, card or
+ * chart opens that dashboard's chat for the day with a question about it
+ * already sent. Typing in the floating prompt opens the same chat.
  */
 export function DataHealthPage() {
-  const { selected } = useDomainState();
   const [custom, , ready] = useLocalStore<CustomDashboard[]>(CUSTOM_KEY, CUSTOM_INIT);
   const [active, setActive] = React.useState("mine");
-  const [chatOpen, setChatOpen] = React.useState(true);
   const navigate = useNavigate();
   const { createThread } = useChatThreads();
+  const openDashboard = useOpenDashboard();
 
   const dashboards = React.useMemo<DashboardDef[]>(
     () => [MY_BRIEF, ...SHARED_DASHBOARDS, ...custom.map(customToDashboard)],
@@ -85,8 +87,18 @@ export function DataHealthPage() {
   function newDashboardChat() {
     const id = newChatId();
     createThread({ id, title: "New dashboard", kind: "dashboard" });
-    void navigate({ to: "/dashboard/$threadId", params: { threadId: id } });
+    void navigate({ to: "/dashboard/$threadId", params: { threadId: id }, search: {} });
   }
+
+  // The floating prompt on a page has no conversation yet: sending opens today's chat.
+  const prompt = React.useMemo<ChatThread>(
+    () => ({
+      turns: [],
+      send: (q: string) => openDashboard(current, q),
+      say: () => undefined,
+    }),
+    [openDashboard, current],
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -124,53 +136,88 @@ export function DataHealthPage() {
         {!ready && <span className="sr-only">Loading dashboards</span>}
       </div>
 
-      <DashboardSplit
-        key={current.id}
-        dash={current}
-        chatOpen={chatOpen}
-        setChatOpen={setChatOpen}
-      />
+      <div className="relative min-h-0 flex-1">
+        <div className="h-full overflow-y-auto pb-24">
+          <div className="mx-auto w-full max-w-[960px]">
+            <DashboardBody
+              key={current.id}
+              dash={current}
+              onAsk={(topic) => openDashboard(current, discussPrompt(topic))}
+            />
+          </div>
+        </div>
+        <FloatingPrompt
+          thread={prompt}
+          placeholder="Ask about this dashboard, or change it…"
+          onOpen={() => openDashboard(current)}
+        />
+      </div>
     </div>
   );
 }
 
-function DashboardSplit({
+/**
+ * The dashboard itself: today's brief at the top, then the stats. The same
+ * body is the page and the right panel of its chat, so what you select is what
+ * the chat is about. `focus` marks the item being discussed.
+ */
+export function DashboardBody({
   dash,
-  chatOpen,
-  setChatOpen,
+  onAsk,
+  focus,
+  leading,
 }: {
   dash: DashboardDef;
-  chatOpen: boolean;
-  setChatOpen: (open: boolean) => void;
+  onAsk?: (topic: string) => void;
+  focus?: string | null;
+  leading?: React.ReactNode;
 }) {
-  const thread = useChatThread((q) => dashboardReply(dash, q), dash.turns);
   return (
-    <SplitWorkspace
-      panelLabel={`${dash.name} stats`}
-      panelWidth="59vw"
-      collapsed={!chatOpen}
-      onToggle={() => setChatOpen(!chatOpen)}
-      center={<DashboardChat dash={dash} thread={thread} />}
-      panel={
-        <DashboardPanel
-          dash={dash}
-          leading={
-            chatOpen ? null : <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
-          }
-        />
-      }
-      floating={
-        <FloatingPrompt
-          thread={thread}
-          placeholder="Ask about this dashboard, or change it…"
-          onOpen={() => setChatOpen(true)}
-        />
-      }
-    />
+    <AskProvider value={{ onAsk, focus }}>
+      <DashboardPanel dash={dash} leading={leading} top={<DailyBrief dash={dash} />} />
+    </AskProvider>
+  );
+}
+
+/** Three to five lines written each morning. Each line is selectable like any card. */
+function DailyBrief({ dash }: { dash: DashboardDef }) {
+  const { onAsk } = useAsk();
+  return (
+    <section aria-label="Today's brief">
+      <div className="flex items-baseline justify-between gap-3">
+        <SectionTitle>Today's brief</SectionTitle>
+        <span className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+          Generated today, 6:00am
+        </span>
+      </div>
+      <ul
+        className="space-y-0.5 rounded-xl border bg-white p-1.5"
+        style={{ borderColor: "var(--hairline)" }}
+      >
+        {dash.briefing.map((line) => (
+          <li key={line}>
+            <AskItem
+              topic={line}
+              className="rounded-lg px-2.5 py-2 text-[14px] leading-relaxed"
+              style={{ color: "var(--ink-700)" }}
+            >
+              {line}
+            </AskItem>
+          </li>
+        ))}
+      </ul>
+      {onAsk && (
+        <p className="mt-1.5 text-[12px]" style={{ color: "var(--ink-300)" }}>
+          Select a line, card or chart to discuss it in chat.
+        </p>
+      )}
+    </section>
   );
 }
 
 export function dashboardReply(dash: DashboardDef, q: string): string {
+  const topic = topicFrom(q);
+  if (topic) return answerTopic(dash, topic);
   if (dash.id === "mine") return recordReply(q);
   if (/add|remove|change|hide|show/i.test(q)) {
     return "Done. I've changed your copy of this view. The shared version stays as the admin set it, so nobody else's changes.";
@@ -181,49 +228,6 @@ export function dashboardReply(dash: DashboardDef, q: string): string {
       : "Start with the table at the top of the right panel. It has the most open findings and the lowest score.";
   }
   return "Compared with yesterday, one more check failed and two recovered. Nothing new broke outside the findings listed in the summary.";
-}
-
-function DashboardChat({ dash, thread }: { dash: DashboardDef; thread: ChatThread }) {
-  return (
-    <ScopedChat
-      thread={thread}
-      scopeLabel={dash.scope}
-      placeholder="Ask about this dashboard, or change it…"
-      suggestions={[
-        "What changed since yesterday?",
-        "Which domain needs me first?",
-        "Add a card for freshness",
-      ]}
-      reply={(q) => dashboardReply(dash, q)}
-      header={
-        <section aria-label="Summary">
-          <h2 className="text-[20px] font-semibold" style={{ color: "var(--ink-900)" }}>
-            {dash.name}
-          </h2>
-          {dash.sharedBy && (
-            <p
-              className="mt-1 flex items-center gap-1.5 text-[12.5px]"
-              style={{ color: "var(--ink-500)" }}
-            >
-              <Users size={13} /> Shared by {dash.sharedBy}. It appears here for everyone with
-              access.
-            </p>
-          )}
-          <ul className="mt-4 space-y-2.5">
-            {dash.briefing.map((b) => (
-              <li
-                key={b}
-                className="text-[14px] leading-relaxed"
-                style={{ color: "var(--ink-700)" }}
-              >
-                {b}
-              </li>
-            ))}
-          </ul>
-        </section>
-      }
-    />
-  );
 }
 
 function useScopeStats(dash: DashboardDef): DashboardStat[] {
@@ -267,37 +271,32 @@ function useScopeStats(dash: DashboardDef): DashboardStat[] {
   }, [dash, schedules, runs, domains, healthFor]);
 }
 
-function recordReply(q: string): string {
-  if (/source|where|worst/i.test(q)) {
-    return "partner_lists is the worst at 55% good, but it is small. web_forms is 71.4% good across 140,300 records, so it holds the most bad records (about 40,100).";
-  }
-  if (/fast|quick|90|win|fix/i.test(q)) {
-    return "Fix Email first: about 14,200 records fail on email alone, worth +2.9 points. Phone adds +2.4 and Role +1.9. Those three together get you from 78.4% to about 85.7%.";
-  }
-  if (/email/i.test(q)) {
-    return "Of the bad records, 41% fail on Email. Valid is the weakest check at 91.2%, ahead of Distinct at 94.8% and Complete at 96.4%.";
-  }
-  if (/trend|week|down|drop|change/i.test(q)) {
-    return "Good records climbed from 74.1% to 80.4% over the month, then slipped to 78.4% over the last week, right after a partner_lists import.";
-  }
-  return "Of 482,300 contacts, 378,100 are good (78.4%) and 104,200 are bad. Email and Phone cause most of the failures. Ask me about a source, an attribute, or the quickest way to reach 90%.";
-}
-
 export function DashboardPanel({
   dash,
   leading,
+  top,
 }: {
   dash: DashboardDef;
   leading?: React.ReactNode;
+  top?: React.ReactNode;
 }) {
   return dash.id === "mine" ? (
-    <RecordQualityPanel leading={leading} />
+    <RecordQualityPanel leading={leading} top={top} />
   ) : (
-    <GenericPanel dash={dash} leading={leading} />
+    <GenericPanel dash={dash} leading={leading} top={top} />
   );
 }
 
-function GenericPanel({ dash, leading }: { dash: DashboardDef; leading?: React.ReactNode }) {
+function GenericPanel({
+  dash,
+  leading,
+  top,
+}: {
+  dash: DashboardDef;
+  leading?: React.ReactNode;
+  top?: React.ReactNode;
+}) {
+  const { onAsk, focus } = useAsk();
   const { domains, healthFor } = useDomainState();
   const { schedules } = useSchedules();
   const stats = useScopeStats(dash);
@@ -338,17 +337,31 @@ function GenericPanel({ dash, leading }: { dash: DashboardDef; leading?: React.R
         </div>
       </div>
 
+      {top}
+
       <div className="grid grid-cols-2 gap-3">
         {stats.map((s) => (
-          <StatTile key={s.label} label={s.label} value={s.value} note={s.note} />
+          <StatTile
+            key={s.label}
+            label={s.label}
+            value={s.value}
+            note={s.note}
+            onClick={onAsk ? () => onAsk(s.label) : undefined}
+            pressed={onAsk ? focus === s.label : undefined}
+          />
         ))}
       </div>
 
       <div>
         <SectionTitle>Last 14 days</SectionTitle>
-        <div className="rounded-xl border bg-white p-3" style={{ borderColor: "var(--hairline)" }}>
-          <Sparkline values={trend} label={`${dash.name} health`} />
-        </div>
+        <AskItem topic="Last 14 days" className="rounded-xl">
+          <div
+            className="rounded-xl border bg-white p-3"
+            style={{ borderColor: "var(--hairline)" }}
+          >
+            <Sparkline values={trend} label={`${dash.name} health`} />
+          </div>
+        </AskItem>
       </div>
 
       <div>
@@ -360,11 +373,16 @@ function GenericPanel({ dash, leading }: { dash: DashboardDef; leading?: React.R
           style={{ borderColor: "var(--hairline)" }}
         >
           {breakdown.map((r) => (
-            <li key={r.label} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
-              <span className="truncate text-[13.5px]" style={{ color: "var(--ink-900)" }}>
-                {r.label}
-              </span>
-              <HealthPill score={r.score} status={statusForScore(r.score)} />
+            <li key={r.label}>
+              <AskItem
+                topic={r.label}
+                className="flex items-center justify-between gap-3 px-3.5 py-2.5"
+              >
+                <span className="truncate text-[13.5px]" style={{ color: "var(--ink-900)" }}>
+                  {r.label}
+                </span>
+                <HealthPill score={r.score} status={statusForScore(r.score)} />
+              </AskItem>
             </li>
           ))}
         </ul>

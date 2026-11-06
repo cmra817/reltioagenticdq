@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useChatThreads } from "@/components/chat/chat-context";
 import { useDomainState } from "@/components/domain-context";
 import {
@@ -10,11 +11,12 @@ import {
   type ChatThread,
   type ChatTurn,
 } from "@/components/workspace/primitives";
-import { ALL_DOMAINS } from "@/lib/mock-ops";
+import { ALL_DOMAINS, MY_BRIEF, SHARED_DASHBOARDS, type DashboardDef } from "@/lib/mock-ops";
 import { useLocalStore } from "@/lib/use-local-store";
 import {
   CUSTOM_INIT,
   CUSTOM_KEY,
+  DashboardBody,
   DashboardPanel,
   customToDashboard,
   dashboardReply,
@@ -33,17 +35,119 @@ import {
   summary,
   type SetupAnswers,
 } from "./dashboard-setup";
+import { discussPrompt, parseViewId, topicFrom } from "./dashboard-topics";
 
 /** What a dashboard thread remembers, so it can be reopened from Recents. */
 type DashboardThreadState = { turns: ChatTurn[]; answers: SetupAnswers; dashId?: string };
 const THREADS_KEY = "agentflow.dashboard-threads.v1";
 const THREADS_INIT: Record<string, DashboardThreadState> = {};
 
-/** A "New dashboard" chat thread. Waits for saved state so a reopened thread comes back as it was. */
-export function DashboardThreadScreen({ threadId }: { threadId: string }) {
+/**
+ * A dashboard chat thread: either "New dashboard" (the build conversation) or
+ * a dashboard's conversation for one day. Waits for saved state so a reopened
+ * thread comes back as it was.
+ */
+export function DashboardThreadScreen({ threadId, ask }: { threadId: string; ask?: string }) {
   const [threads, , ready] = useLocalStore(THREADS_KEY, THREADS_INIT);
-  if (!ready) return <div className="flex-1" />;
-  return <DashboardThread key={threadId} threadId={threadId} initial={threads[threadId]} />;
+  const [custom, , customReady] = useLocalStore<CustomDashboard[]>(CUSTOM_KEY, CUSTOM_INIT);
+  if (!ready || !customReady) return <div className="flex-1" />;
+
+  const view = parseViewId(threadId);
+  if (!view)
+    return <DashboardThread key={threadId} threadId={threadId} initial={threads[threadId]} />;
+
+  const dash: DashboardDef | undefined = [
+    MY_BRIEF,
+    ...SHARED_DASHBOARDS,
+    ...custom.map(customToDashboard),
+  ].find((d) => d.id === view.dashId);
+  if (!dash) return <div className="flex-1" />;
+  return (
+    <DashboardViewThread
+      key={threadId}
+      threadId={threadId}
+      dash={dash}
+      initial={threads[threadId]}
+      ask={ask}
+    />
+  );
+}
+
+/**
+ * One conversation per dashboard per day. The dashboard, brief included, is the
+ * right panel; whatever was selected is highlighted there. A selection or a
+ * typed question from the page arrives as `ask` and is sent once.
+ */
+function DashboardViewThread({
+  threadId,
+  dash,
+  initial,
+  ask,
+}: {
+  threadId: string;
+  dash: DashboardDef;
+  initial?: DashboardThreadState;
+  ask?: string;
+}) {
+  const navigate = useNavigate();
+  const [, setThreads] = useLocalStore(THREADS_KEY, THREADS_INIT);
+  const [chatOpen, setChatOpen] = React.useState(true);
+  const thread = useChatThread((q) => dashboardReply(dash, q), initial?.turns ?? []);
+
+  const sent = React.useRef(false);
+  React.useEffect(() => {
+    if (!ask || sent.current) return;
+    sent.current = true;
+    thread.send(ask);
+    void navigate({ to: "/dashboard/$threadId", params: { threadId }, search: {}, replace: true });
+  }, [ask, thread, navigate, threadId]);
+
+  React.useEffect(() => {
+    setThreads((prev) => ({
+      ...prev,
+      [threadId]: { turns: thread.turns, answers: EMPTY_ANSWERS, dashId: dash.id },
+    }));
+  }, [threadId, thread.turns, dash.id, setThreads]);
+
+  const lastAsked = [...thread.turns].reverse().find((t) => t.role === "user");
+  const focus = lastAsked ? (topicFrom(lastAsked.text) ?? null) : null;
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <SplitWorkspace
+        panelLabel={`${dash.name} dashboard`}
+        panelWidth="59vw"
+        collapsed={!chatOpen}
+        onToggle={() => setChatOpen(!chatOpen)}
+        floating={
+          <FloatingPrompt
+            thread={thread}
+            placeholder="Ask about this dashboard, or change it…"
+            onOpen={() => setChatOpen(true)}
+          />
+        }
+        center={
+          <ScopedChat
+            thread={thread}
+            scopeLabel={dash.name}
+            placeholder="Ask about this dashboard, or change it…"
+            suggestions={["What changed since yesterday?", "Add a card for freshness"]}
+            reply={(q) => dashboardReply(dash, q)}
+          />
+        }
+        panel={
+          <DashboardBody
+            dash={dash}
+            focus={focus}
+            onAsk={(topic) => thread.send(discussPrompt(topic))}
+            leading={
+              chatOpen ? null : <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
+            }
+          />
+        }
+      />
+    </div>
+  );
 }
 
 /**
