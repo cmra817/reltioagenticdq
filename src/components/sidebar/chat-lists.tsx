@@ -60,6 +60,20 @@ function ThreadLink({ thread, children }: { thread: ChatThread; children: React.
       </Link>
     );
   }
+  if (thread.kind === "dashboard") {
+    return (
+      <Link
+        to="/dashboard/$threadId"
+        params={{ threadId: thread.id }}
+        className={ROW_CLASS}
+        style={ROW_STYLE}
+        activeProps={ACTIVE_PROPS}
+        title={thread.title}
+      >
+        {children}
+      </Link>
+    );
+  }
   return (
     <Link
       to="/chat/$chatId"

@@ -7,7 +7,7 @@ export type ChatThread = {
   updatedAt: number;
   messages: UIMessage[];
   /** Scripted surfaces (e.g. the consistency investigation) reopen on their own route. */
-  kind?: "chat" | "investigation" | "rule";
+  kind?: "chat" | "investigation" | "rule" | "dashboard";
   /** Pinned chats sit in their own sidebar section and are never trimmed from history. */
   pinned?: boolean;
   /** The domain the chat started in. It stays put even if the chat later moves focus. */
@@ -104,14 +104,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         const existing = prev.find((t) => t.id === id);
         const firstUser = messages.find((m) => m.role === "user");
         const derived = firstUser
-          ? titleFromText(
-              firstUser.parts
-                .map((p) => (p.type === "text" ? p.text : ""))
-                .join(" "),
-            )
+          ? titleFromText(firstUser.parts.map((p) => (p.type === "text" ? p.text : "")).join(" "))
           : undefined;
         const title =
-          existing && existing.title !== "New chat" ? existing.title : derived ?? "New chat";
+          existing && existing.title !== "New chat" ? existing.title : (derived ?? "New chat");
         const thread: ChatThread = {
           id,
           title,

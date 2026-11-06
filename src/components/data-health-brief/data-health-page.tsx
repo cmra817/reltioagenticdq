@@ -29,29 +29,36 @@ import {
 } from "@/lib/mock-ops";
 import { useSchedules, useRuns } from "@/lib/ops-store";
 import { useLocalStore } from "@/lib/use-local-store";
-import {
-  EMPTY_ANSWERS,
-  SETUP_PROMPT,
-  SETUP_QUESTIONS,
-  assetsLabel,
-  dashboardName,
-  hasAssets,
-  isYes,
-  missing,
-  parseAnswers,
-  summary,
-  type SetupAnswers,
-} from "./dashboard-setup";
+import { assetsLabel, type SetupAnswers } from "./dashboard-setup";
 
-type CustomDashboard = {
+export type CustomDashboard = {
   id: string;
   name: string;
   scope: string;
   answers?: SetupAnswers;
   turns?: ChatTurn[];
 };
-const CUSTOM_INIT: CustomDashboard[] = [];
-const CUSTOM_KEY = "agentflow.dashboards.custom.v1";
+export const CUSTOM_INIT: CustomDashboard[] = [];
+export const CUSTOM_KEY = "agentflow.dashboards.custom.v1";
+
+/** A dashboard built in a "New dashboard" chat, as the shape the panels draw. */
+export function customToDashboard(c: CustomDashboard): DashboardDef {
+  return {
+    id: c.id,
+    name: c.name,
+    scope: c.scope,
+    turns: c.turns,
+    audience: c.answers?.audience ?? undefined,
+    briefing: c.answers
+      ? [
+          `Watches ${assetsLabel(c.answers)}. Goal: ${c.answers.goal}.`,
+          `${c.answers.audience}. Refreshes ${c.answers.refresh?.toLowerCase()}.`,
+        ]
+      : [
+          `A personal view of ${c.scope === ALL_DOMAINS ? "every domain" : c.scope}. Ask me to add or remove cards and I'll change it for you.`,
+        ],
+  };
+}
 
 /**
  * Data health: one page, a dashboard chosen from a dropdown. "My brief" is yours
@@ -61,52 +68,24 @@ const CUSTOM_KEY = "agentflow.dashboards.custom.v1";
  */
 export function DataHealthPage() {
   const { selected } = useDomainState();
-  const [custom, setCustom, ready] = useLocalStore<CustomDashboard[]>(CUSTOM_KEY, CUSTOM_INIT);
+  const [custom, , ready] = useLocalStore<CustomDashboard[]>(CUSTOM_KEY, CUSTOM_INIT);
   const [active, setActive] = React.useState("mine");
   const [chatOpen, setChatOpen] = React.useState(true);
-  const [setup, setSetup] = React.useState<{ key: number; prevId: string } | null>(null);
   const navigate = useNavigate();
   const { createThread } = useChatThreads();
 
   const dashboards = React.useMemo<DashboardDef[]>(
-    () => [
-      MY_BRIEF,
-      ...SHARED_DASHBOARDS,
-      ...custom.map((c) => ({
-        id: c.id,
-        name: c.name,
-        scope: c.scope,
-        turns: c.turns,
-        audience: c.answers?.audience ?? undefined,
-        briefing: c.answers
-          ? [
-              `Watches ${assetsLabel(c.answers)}. Goal: ${c.answers.goal}.`,
-              `${c.answers.audience}. Refreshes ${c.answers.refresh?.toLowerCase()}.`,
-            ]
-          : [
-              `A personal view of ${c.scope === ALL_DOMAINS ? "every domain" : c.scope}. Ask me to add or remove cards and I'll change it for you.`,
-            ],
-      })),
-    ],
+    () => [MY_BRIEF, ...SHARED_DASHBOARDS, ...custom.map(customToDashboard)],
     [custom],
   );
 
   const current = dashboards.find((d) => d.id === active) ?? MY_BRIEF;
 
+  /** A new dashboard is a new chat thread: create it, open it, and the starter message is already sent. */
   function newDashboardChat() {
     const id = newChatId();
-    createThread({ id, title: "Create new dashboard", domain: selected });
-    void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: { q: SETUP_PROMPT } });
-  }
-
-  function createDashboard(answers: SetupAnswers, turns: ChatTurn[]) {
-    const id = `dash-${Date.now()}`;
-    setCustom((prev) => [
-      ...prev,
-      { id, name: dashboardName(answers), scope: answers.domain ?? ALL_DOMAINS, answers, turns },
-    ]);
-    setActive(id);
-    setSetup(null);
+    createThread({ id, title: "New dashboard", kind: "dashboard" });
+    void navigate({ to: "/dashboard/$threadId", params: { threadId: id } });
   }
 
   return (
@@ -119,10 +98,8 @@ export function DataHealthPage() {
           <label className="flex min-w-0 flex-1 items-center gap-2">
             <span className="sr-only">Dashboard</span>
             <select
-              value={setup ? "__new" : current.id}
+              value={current.id}
               onChange={(e) => {
-                if (e.target.value === "__new") return;
-                setSetup(null);
                 setActive(e.target.value);
               }}
               className="min-w-0 max-w-96 flex-1 rounded-lg px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
@@ -132,7 +109,6 @@ export function DataHealthPage() {
                 color: "var(--ink-900)",
               }}
             >
-              {setup && <option value="__new">New dashboard (setting up)</option>}
               {dashboards.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
@@ -148,11 +124,12 @@ export function DataHealthPage() {
         {!ready && <span className="sr-only">Loading dashboards</span>}
       </div>
 
-      {setup ? (
-        <DashboardSetupSplit key={setup.key} onCreate={createDashboard} />
-      ) : (
-        <DashboardSplit key={current.id} dash={current} chatOpen={chatOpen} setChatOpen={setChatOpen} />
-      )}
+      <DashboardSplit
+        key={current.id}
+        dash={current}
+        chatOpen={chatOpen}
+        setChatOpen={setChatOpen}
+      />
     </div>
   );
 }
@@ -193,7 +170,7 @@ function DashboardSplit({
   );
 }
 
-function dashboardReply(dash: DashboardDef, q: string): string {
+export function dashboardReply(dash: DashboardDef, q: string): string {
   if (dash.id === "mine") return recordReply(q);
   if (/add|remove|change|hide|show/i.test(q)) {
     return "Done. I've changed your copy of this view. The shared version stays as the admin set it, so nobody else's changes.";
@@ -306,7 +283,7 @@ function recordReply(q: string): string {
   return "Of 482,300 contacts, 378,100 are good (78.4%) and 104,200 are bad. Email and Phone cause most of the failures. Ask me about a source, an attribute, or the quickest way to reach 90%.";
 }
 
-function DashboardPanel({
+export function DashboardPanel({
   dash,
   leading,
 }: {
@@ -352,7 +329,12 @@ function GenericPanel({ dash, leading }: { dash: DashboardDef; leading?: React.R
           </div>
         </div>
         <div className="mt-0.5 text-[12.5px]" style={{ color: "var(--ink-500)" }}>
-          {dash.sharedBy ? `Shared by ${dash.sharedBy}` : dash.audience === "Shared with your team" ? "Shared with your team" : "Only you see this view"} · {dash.scope}
+          {dash.sharedBy
+            ? `Shared by ${dash.sharedBy}`
+            : dash.audience === "Shared with your team"
+              ? "Shared with your team"
+              : "Only you see this view"}{" "}
+          · {dash.scope}
         </div>
       </div>
 
@@ -387,65 +369,6 @@ function GenericPanel({ dash, leading }: { dash: DashboardDef; leading?: React.R
           ))}
         </ul>
       </div>
-    </div>
-  );
-}
-
-function DashboardSetupSplit({
-  onCreate,
-}: {
-  onCreate: (answers: SetupAnswers, turns: ChatTurn[]) => void;
-}) {
-  const { domains } = useDomainState();
-  const answersRef = React.useRef<SetupAnswers>(EMPTY_ANSWERS);
-  const stage = React.useRef<"collect" | "confirm">("collect");
-  const threadRef = React.useRef<ChatThread | null>(null);
-
-  const reply = (q: string): string => {
-    if (stage.current === "confirm" && isYes(q)) {
-      const done = `Done. I built ${dashboardName(answersRef.current)}. It's selected above, with its stats on the right. Ask me to add or remove cards any time.`;
-      const prior = threadRef.current?.turns ?? [];
-      const seeded: ChatTurn[] = [
-        ...prior,
-        { id: prior.length, role: "user", text: q },
-        { id: prior.length + 1, role: "agent", text: done },
-      ];
-      onCreate(answersRef.current, seeded);
-      return done;
-    }
-    const next = parseAnswers(q, answersRef.current, domains);
-    answersRef.current = next;
-    const gaps = missing(next);
-    if (gaps.length > 0) {
-      stage.current = "collect";
-      const got = [
-        hasAssets(next) ? `watching ${assetsLabel(next)}` : null,
-        next.goal ? `goal: ${next.goal.toLowerCase()}` : null,
-        next.audience ? next.audience.toLowerCase() : null,
-        next.refresh ? `refresh ${next.refresh.toLowerCase()}` : null,
-      ].filter(Boolean);
-      const lead = got.length ? `Got it — ${got.join(", ")}. ` : "I didn't catch that. ";
-      return `${lead}Still need:\n\n${gaps.map((g, i) => `${i + 1}. ${g}`).join("\n")}`;
-    }
-    stage.current = "confirm";
-    return summary(next);
-  };
-
-  const thread = useChatThread(reply, [
-    { id: 0, role: "user", text: SETUP_PROMPT },
-    { id: 1, role: "agent", text: SETUP_QUESTIONS },
-  ]);
-  threadRef.current = thread;
-
-  return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <ScopedChat
-        thread={thread}
-        scopeLabel="New dashboard"
-        placeholder="Reply"
-        suggestions={[]}
-        reply={reply}
-      />
     </div>
   );
 }

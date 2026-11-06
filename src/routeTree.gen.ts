@@ -20,6 +20,7 @@ import { Route as ScheduledRouteImport } from './routes/scheduled'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
 import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
+import { Route as DashboardThreadIdRouteImport } from './routes/dashboard.$threadId'
 import { Route as RuleThreadIdRouteImport } from './routes/rule.$threadId'
 import { Route as InvestigateTopicRouteImport } from './routes/investigate.$topic'
 import { Route as InvestigateConsistencyRouteImport } from './routes/investigate.consistency'
@@ -79,6 +80,11 @@ const ChatChatIdRoute = ChatChatIdRouteImport.update({
   path: '/chat/$chatId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardThreadIdRoute = DashboardThreadIdRouteImport.update({
+  id: '/dashboard/$threadId',
+  path: '/dashboard/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RuleThreadIdRoute = RuleThreadIdRouteImport.update({
   id: '/rule/$threadId',
   path: '/rule/$threadId',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/dashboard/$threadId': typeof DashboardThreadIdRoute
   '/rule/$threadId': typeof RuleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/dashboard/$threadId': typeof DashboardThreadIdRoute
   '/rule/$threadId': typeof RuleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/dashboard/$threadId': typeof DashboardThreadIdRoute
   '/rule/$threadId': typeof RuleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/dashboard/$threadId'
     | '/rule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/dashboard/$threadId'
     | '/rule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/dashboard/$threadId'
     | '/rule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
@@ -207,6 +219,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   AssetsAssetSlugRoute: typeof AssetsAssetSlugRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
+  DashboardThreadIdRoute: typeof DashboardThreadIdRoute
   RuleThreadIdRoute: typeof RuleThreadIdRoute
   InvestigateTopicRoute: typeof InvestigateTopicRoute
   InvestigateConsistencyRoute: typeof InvestigateConsistencyRoute
@@ -291,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/$threadId': {
+      id: '/dashboard/$threadId'
+      path: '/dashboard/$threadId'
+      fullPath: '/dashboard/$threadId'
+      preLoaderRoute: typeof DashboardThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rule/$threadId': {
       id: '/rule/$threadId'
       path: '/rule/$threadId'
@@ -327,6 +347,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   AssetsAssetSlugRoute: AssetsAssetSlugRoute,
   ChatChatIdRoute: ChatChatIdRoute,
+  DashboardThreadIdRoute: DashboardThreadIdRoute,
   RuleThreadIdRoute: RuleThreadIdRoute,
   InvestigateTopicRoute: InvestigateTopicRoute,
   InvestigateConsistencyRoute: InvestigateConsistencyRoute,
