@@ -1,16 +1,4 @@
-import * as React from "react";
-import { useNavigate } from "@tanstack/react-router";
-
+/** Search params the Rules page accepts. `rule` is an old link format that now opens that rule's chat thread. */
 export type RulesSearch = {
   rule?: string;
 };
-
-export function useRulesNav() {
-  const navigate = useNavigate();
-  return React.useCallback(
-    (search: RulesSearch) => {
-      void navigate({ to: "/rules", search });
-    },
-    [navigate],
-  );
-}

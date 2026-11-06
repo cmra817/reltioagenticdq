@@ -1,8 +1,6 @@
 import * as React from "react";
-import { Link } from "@tanstack/react-router";
 import { useChatThreads } from "@/components/chat/chat-context";
 import { useLocalStore } from "@/lib/use-local-store";
-import { ArrowLeft } from "lucide-react";
 import {
   GhostButton,
   PrimaryButton,
@@ -23,7 +21,7 @@ import {
   type Severity,
 } from "@/lib/mock-ops";
 import { todayLabel, useRules, type ImpactMode } from "@/lib/ops-store";
-import { useRulesNav } from "./nav";
+import { useOpenRule } from "./open-rule";
 import {
   FIELD_LABEL,
   START_PROMPT,
@@ -33,6 +31,8 @@ import {
   draftFrom,
   type EditableKey,
 } from "./rule-chat";
+import { buildInsights, coverageText, passRateText, whyFailing } from "./rule-insights";
+import { RuleInsightsView } from "./rule-insights-view";
 import { describeTest, testRule } from "./rule-test";
 
 const inputStyle: React.CSSProperties = {
@@ -41,30 +41,35 @@ const inputStyle: React.CSSProperties = {
   color: "var(--ink-900)",
 };
 
+const STATUSES: Rule["status"][] = ["Draft", "Active", "Disabled"];
+
 /** What a rule thread remembers, so it can be reopened from Recents. */
 export type RuleThreadState = { turns: ChatTurn[]; draft: Rule | null; savedId?: string };
 export const RULE_THREADS_KEY = "agentflow.rule-threads.v1";
 export const RULE_THREADS_INIT: Record<string, RuleThreadState> = {};
 
+type PanelTab = "insights" | "edit" | "history";
+
 /**
- * One screen for creating and editing a rule. The chat is where you say what
- * you want; the right panel is the editor, always editable. Typing in either
- * keeps the other in step, and fields the chat just changed are highlighted.
- * With a threadId it is a chat thread of its own (opened from "New rule"):
- * the starter message is already sent and the panel appears only once a rule
- * has been drafted. With a ruleId it is an existing rule opened from the table.
+ * A chat thread about one rule. The chat is where you say what you want; the
+ * right panel holds the rule. It starts empty for a new rule (no panel until
+ * the agent has drafted one) and opens straight onto Insights for an existing
+ * rule, with Edit (always editable) and History beside it. Typing in either
+ * the chat or the editor keeps the other in step, and fields the chat just
+ * changed are highlighted.
  */
 export function RuleWorkspace({
-  ruleId,
   threadId,
+  ruleId,
   initial,
 }: {
+  threadId: string;
+  /** Set when the thread was opened from an existing rule in the table. */
   ruleId?: string;
-  threadId?: string;
   initial?: RuleThreadState;
 }) {
-  const go = useRulesNav();
   const { renameThread } = useChatThreads();
+  const openRule = useOpenRule();
   const { rules, ready, usedBy, addRule, applyEdit } = useRules();
   const [, setThreads] = useLocalStore(RULE_THREADS_KEY, RULE_THREADS_INIT);
   const [savedId, setSavedId] = React.useState<string | undefined>(initial?.savedId ?? ruleId);
@@ -75,7 +80,7 @@ export function RuleWorkspace({
   const draftRef = React.useRef<Rule | null>(null);
   draftRef.current = draft;
   const [flash, setFlash] = React.useState<EditableKey[]>([]);
-  const [tab, setTab] = React.useState<"editor" | "history">("editor");
+  const [tab, setTab] = React.useState<PanelTab>(ruleId ? "insights" : "edit");
   const [step, setStep] = React.useState<"edit" | "impact">("edit");
   const [mode, setMode] = React.useState<ImpactMode>("everywhere");
   const [updateIds, setUpdateIds] = React.useState<string[] | null>(null);
@@ -92,12 +97,29 @@ export function RuleWorkspace({
   }, [flash]);
 
   const used = saved ? usedBy(saved.id) : [];
+  const insights = React.useMemo(() => (saved ? buildInsights(saved, used) : null), [saved, used]);
   const readOnly = saved?.scope === "Template";
   const dirty = isNew ? draft !== null : !!draft && !!saved && changedKeys(saved, draft).length > 0;
   const changes = draft && saved ? changedKeys(saved, draft) : [];
+  const owners = React.useMemo(
+    () => [...new Set([ME, ...rules.map((r) => r.owner), draft?.owner ?? ME])],
+    [rules, draft?.owner],
+  );
 
   function patch(p: Partial<Pick<Rule, EditableKey>>) {
     setDraft((d) => (d ? { ...d, ...p } : d));
+  }
+
+  /** Answers questions about how the rule is doing, and brings Insights forward. */
+  function answerInsight(rule: Rule, ins: NonNullable<typeof insights>, q: string): string | null {
+    let text: string | null = null;
+    if (/\bwhy\b.*\bfail/i.test(q)) text = whyFailing(rule, ins);
+    else if (/pass(es)? rate|how often|how (is|does) it (do|perform)|trend/i.test(q))
+      text = passRateText(ins);
+    else if (/where|cover|applied|used|schedule|impact|which tables?/i.test(q))
+      text = coverageText(ins);
+    if (text) setTab("insights");
+    return text;
   }
 
   function reply(q: string): string {
@@ -110,40 +132,44 @@ export function RuleWorkspace({
       setFlash(["name", "description", "type", "severity", "threshold"]);
       return `I drafted "${d.name}" as a ${d.type.toLowerCase()} rule. ${describeTest(testRule(d), d.threshold)}\n\nIt's on the right. Edit anything there, or tell me what to change, like "make it high severity" or "allow 2% to fail".`;
     }
+    const insight = saved && insights ? answerInsight(saved, insights, q) : null;
     if (readOnly) {
-      return "This is a template, so it can't be changed. Use Make my own copy on the right, then edit the copy.";
+      return (
+        insight ??
+        "This is a template, so it can't be changed. Use Make my own copy on the right, then edit the copy."
+      );
     }
     const edit = applyChatEdit(cur, q);
     if (edit) {
       setDraft(edit.draft);
       setFlash(edit.changed);
+      setTab("edit");
       return `${edit.message} ${describeTest(testRule(edit.draft), edit.draft.threshold)}`;
     }
+    if (insight) return insight;
     if (/test|fail|rows|run it/i.test(q)) return describeTest(testRule(cur), cur.threshold);
-    if (/where|used|schedule|impact/i.test(q)) {
-      return used.length === 0
-        ? "No schedule applies this rule yet, so changing it affects nothing."
-        : `It's used in ${used.map((s) => s.name).join(", ")}. When you save a change I'll ask whether to update all of them, some, or save a new rule.`;
-    }
     return 'I didn\'t change anything. Try "make it high severity", "allow 2% to fail", "only check active customers", "call it …", or edit the fields on the right.';
   }
 
   const thread = useChatThread(
     reply,
     initial?.turns ??
-      (threadId
-        ? [
+      (ruleId
+        ? undefined
+        : [
             { id: 0, role: "user", text: START_PROMPT },
             { id: 1, role: "agent", text: START_QUESTION },
-          ]
-        : undefined),
+          ]),
   );
 
-  // Keep the thread so it can be reopened from Recents.
+  // Keep the thread so it can be reopened from Recents. An opened rule always
+  // reloads from the saved rule, so only a new rule's draft is kept.
   React.useEffect(() => {
-    if (!threadId) return;
-    setThreads((prev) => ({ ...prev, [threadId]: { turns: thread.turns, draft, savedId } }));
-  }, [threadId, thread.turns, draft, savedId, setThreads]);
+    setThreads((prev) => ({
+      ...prev,
+      [threadId]: { turns: thread.turns, draft: ruleId ? null : draft, savedId },
+    }));
+  }, [threadId, ruleId, thread.turns, draft, savedId, setThreads]);
 
   function saveNew(status: Rule["status"]) {
     if (!draft) return;
@@ -153,18 +179,18 @@ export function RuleWorkspace({
       versions: [{ v: 1, author: ME, at: todayLabel(), note: "Created in chat" }],
     };
     addRule(rule);
-    if (threadId) {
-      setSavedId(rule.id);
-      setDraft(rule);
-      renameThread(threadId, rule.name);
-      thread.say(
-        `Saved "${rule.name}"${status === "Active" ? " and turned it on" : " as a draft"}. You can keep refining it here, and you'll find it in Rules.`,
-      );
-    } else go({ rule: rule.id });
+    setSavedId(rule.id);
+    setDraft(rule);
+    renameThread(threadId, rule.name);
+    thread.say(
+      `Saved "${rule.name}"${status === "Active" ? " and turned it on" : " as a draft"}. You can keep refining it here, and you'll find it in Rules.`,
+    );
   }
 
   function save() {
-    if (used.length > 0) {
+    // Handing a rule to someone else changes nothing for the schedules that use it.
+    const reaches = changes.some((k) => k !== "owner");
+    if (used.length > 0 && reaches) {
       setUpdateIds(used.map((s) => s.id));
       setMode("everywhere");
       setStep("impact");
@@ -182,7 +208,21 @@ export function RuleWorkspace({
       updateIds: selected === "some" ? (updateIds ?? []) : used.map((s) => s.id),
     });
     setStep("edit");
-    if (id !== saved.id) go({ rule: id });
+    if (id !== saved.id) {
+      // "Save as a new rule": the original stays as it was, and the copy opens in its own thread.
+      const name = draft.name === saved.name ? `${draft.name} (copy)` : draft.name;
+      setDraft(saved);
+      openRule({ id, name });
+      return;
+    }
+    if (draft.name !== saved.name) renameThread(threadId, draft.name);
+    thread.say(
+      selected === "some"
+        ? "Saved. The schedules you ticked use the new version; the rest keep the previous one."
+        : used.length > 0 && changes.some((k) => k !== "owner")
+          ? `Saved. ${used.length === 1 ? "The schedule that uses it gets" : "Every schedule that uses it gets"} the new version from its next run.`
+          : "Saved.",
+    );
   }
 
   function makeCopy() {
@@ -198,15 +238,14 @@ export function RuleWorkspace({
       ],
     };
     addRule(copy);
-    go({ rule: copy.id });
+    openRule(copy);
   }
 
   if (!isNew && ready && !saved) {
     return (
       <div className="p-8">
-        <GhostButton onClick={() => go({})}>Back to rules</GhostButton>
-        <p className="mt-4 text-[14px]" style={{ color: "var(--ink-500)" }}>
-          This rule isn't available.
+        <p className="text-[14px]" style={{ color: "var(--ink-500)" }}>
+          This rule isn't available. Choose another from Rules.
         </p>
       </div>
     );
@@ -214,166 +253,107 @@ export function RuleWorkspace({
 
   const suggestions = !draft
     ? []
-    : readOnly
-      ? ["Where is it used?"]
-      : [
-          "Make it high severity",
-          "Allow 2% to fail",
-          "Only check active customers",
-          "Where is it used?",
-        ];
+    : isNew
+      ? []
+      : readOnly
+        ? ["Where is it used?", "How often does it pass?"]
+        : [
+            "Why does it fail?",
+            "Where is it applied?",
+            "Make it high severity",
+            "Allow 2% to fail",
+          ];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      {!threadId && (
-        <div className="shrink-0 px-6 pt-4">
-          <button
-            type="button"
-            onClick={() => go({})}
-            className="flex items-center gap-1.5 text-[13px]"
-            style={{ color: "var(--ink-500)" }}
-          >
-            <ArrowLeft size={14} /> Rules
-          </button>
-        </div>
-      )}
       <SplitWorkspace
-        panelLabel="Rule editor"
+        panelLabel="Rule"
         panelWidth="50vw"
         center={
           <ScopedChat
             thread={thread}
             scopeLabel={isNew ? "New rule" : (saved?.name ?? "Rule")}
-            placeholder={isNew ? "Describe what should be true…" : "Tell me what to change…"}
+            placeholder={
+              isNew
+                ? "Describe what should be true…"
+                : "Ask about this rule, or tell me what to change…"
+            }
             suggestions={suggestions}
             reply={reply}
-            header={
-              isNew ? undefined : (
-                <section aria-label="Rule">
-                  <h1 className="text-[20px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                    {saved?.name}
-                  </h1>
-                  <p className="mt-1 text-[13px]" style={{ color: "var(--ink-500)" }}>
-                    Edit on the right, or tell me what to change here. Both stay in step.
-                  </p>
-                </section>
-              )
-            }
           />
         }
         panel={
           !draft ? undefined : (
             <div className="flex min-h-full flex-col">
               <div className="flex-1 space-y-5 p-5">
-                {!draft ? (
-                  <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-                    {isNew
-                      ? "Your rule appears here once you describe it. You can then edit every field."
-                      : "Loading…"}
-                  </p>
+                <div className="flex items-center justify-between gap-3">
+                  <Tabs
+                    label="Rule sections"
+                    value={tab}
+                    onChange={setTab}
+                    tabs={
+                      isNew
+                        ? [{ id: "edit" as const, label: "Edit" }]
+                        : [
+                            { id: "insights" as const, label: "Insights" },
+                            { id: "edit" as const, label: "Edit" },
+                            { id: "history" as const, label: "History" },
+                          ]
+                    }
+                  />
+                  <div className="flex items-center gap-1.5">
+                    <Tag>{isNew ? "Not saved yet" : (saved?.status ?? draft.status)}</Tag>
+                  </div>
+                </div>
+
+                {tab === "insights" && saved && insights ? (
+                  <RuleInsightsView rule={saved} insights={insights} onAsk={thread.send} />
+                ) : tab === "history" && saved ? (
+                  <ol
+                    className="divide-y rounded-xl border bg-white"
+                    style={{ borderColor: "var(--hairline)" }}
+                  >
+                    {saved.versions.map((v) => (
+                      <li key={v.v} className="flex items-baseline gap-3 px-4 py-2.5 text-[13px]">
+                        <span
+                          className="w-8 shrink-0 font-medium tabular-nums"
+                          style={{ color: "var(--ink-900)" }}
+                        >
+                          v{v.v}
+                        </span>
+                        <span className="min-w-0 flex-1" style={{ color: "var(--ink-700)" }}>
+                          {v.note}
+                        </span>
+                        <span className="shrink-0 text-[12px]" style={{ color: "var(--ink-300)" }}>
+                          {v.author} · {v.at}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
                 ) : (
                   <>
-                    <div className="flex items-center justify-between gap-3">
-                      <Tabs
-                        label="Rule sections"
-                        value={tab}
-                        onChange={setTab}
-                        tabs={[
-                          { id: "editor", label: "Editor" },
-                          ...(isNew ? [] : [{ id: "history" as const, label: "History" }]),
-                        ]}
-                      />
-                      <div className="flex items-center gap-1.5">
-                        <Tag>{isNew ? "Not saved yet" : (saved?.status ?? draft.status)}</Tag>
-                        {!isNew && saved && (
-                          <Tag>{saved.scope === "Template" ? "Template" : saved.owner}</Tag>
-                        )}
+                    <Editor
+                      draft={draft}
+                      saved={isNew ? undefined : saved}
+                      flash={flash}
+                      readOnly={readOnly}
+                      owners={owners}
+                      onPatch={patch}
+                    />
+                    <div>
+                      <SectionTitle>Tested on real data</SectionTitle>
+                      <div
+                        className="rounded-xl border bg-white p-3.5 text-[13.5px]"
+                        style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                      >
+                        {describeTest(testRule(draft), draft.threshold)}
                       </div>
                     </div>
-
-                    {tab === "history" && saved ? (
-                      <ol
-                        className="divide-y rounded-xl border bg-white"
-                        style={{ borderColor: "var(--hairline)" }}
-                      >
-                        {saved.versions.map((v) => (
-                          <li
-                            key={v.v}
-                            className="flex items-baseline gap-3 px-4 py-2.5 text-[13px]"
-                          >
-                            <span
-                              className="w-8 shrink-0 font-medium tabular-nums"
-                              style={{ color: "var(--ink-900)" }}
-                            >
-                              v{v.v}
-                            </span>
-                            <span className="min-w-0 flex-1" style={{ color: "var(--ink-700)" }}>
-                              {v.note}
-                            </span>
-                            <span
-                              className="shrink-0 text-[12px]"
-                              style={{ color: "var(--ink-300)" }}
-                            >
-                              {v.author} · {v.at}
-                            </span>
-                          </li>
-                        ))}
-                      </ol>
-                    ) : (
-                      <Editor
-                        draft={draft}
-                        saved={isNew ? undefined : saved}
-                        flash={flash}
-                        readOnly={readOnly}
-                        onPatch={patch}
-                      />
-                    )}
-
-                    {tab === "editor" && (
-                      <div>
-                        <SectionTitle>Tested on real data</SectionTitle>
-                        <div
-                          className="rounded-xl border bg-white p-3.5 text-[13.5px]"
-                          style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                        >
-                          {describeTest(testRule(draft), draft.threshold)}
-                        </div>
-                      </div>
-                    )}
-
-                    {tab === "editor" && !isNew && saved && (
-                      <div>
-                        <SectionTitle>Where it's used</SectionTitle>
-                        {used.length === 0 ? (
-                          <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-                            No schedule applies this rule yet.
-                          </p>
-                        ) : (
-                          <ul className="space-y-2">
-                            {used.map((s) => (
-                              <li key={s.id} className="text-[13.5px]">
-                                <Link
-                                  to="/scheduled"
-                                  search={{ schedule: s.id }}
-                                  className="underline"
-                                  style={{ color: "var(--brand-blue)" }}
-                                >
-                                  {s.name}
-                                </Link>
-                                <div className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-                                  {s.domain} · {s.tables.join(", ")}
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    )}
                   </>
                 )}
               </div>
 
-              {draft && tab === "editor" && (
+              {tab === "edit" && (
                 <div
                   className="sticky bottom-0 border-t bg-white/95 p-4 backdrop-blur"
                   style={{ borderColor: "var(--hairline)" }}
@@ -476,108 +456,181 @@ function Editor({
   saved,
   flash,
   readOnly,
+  owners,
   onPatch,
 }: {
   draft: Rule;
   saved?: Rule;
   flash: EditableKey[];
   readOnly: boolean;
+  owners: string[];
   onPatch: (p: Partial<Pick<Rule, EditableKey>>) => void;
 }) {
   const was = (k: EditableKey): string | undefined =>
     saved && saved[k] !== draft[k] ? String(saved[k]) : undefined;
+  const created = saved?.versions[saved.versions.length - 1];
   return (
-    <div className="space-y-4">
-      <FieldBox label="Name" flashing={flash.includes("name")} was={was("name")}>
-        <input
-          value={draft.name}
-          readOnly={readOnly}
-          onChange={(e) => onPatch({ name: e.target.value })}
-          className="w-full rounded-lg px-3 py-2 font-semibold"
-          style={inputStyle}
-        />
-      </FieldBox>
+    <div className="space-y-5">
+      {saved && (
+        <dl
+          className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl border bg-white p-3.5 text-[13px]"
+          style={{ borderColor: "var(--hairline)" }}
+        >
+          <div>
+            <dt style={{ color: "var(--ink-500)" }}>Created by</dt>
+            <dd className="font-medium" style={{ color: "var(--ink-900)" }}>
+              {created ? created.author : saved.owner}
+            </dd>
+          </div>
+          <div>
+            <dt style={{ color: "var(--ink-500)" }}>Created</dt>
+            <dd className="font-medium" style={{ color: "var(--ink-900)" }}>
+              {created ? created.at : "Unknown"}
+            </dd>
+          </div>
+          <div>
+            <dt style={{ color: "var(--ink-500)" }}>Last changed</dt>
+            <dd className="font-medium" style={{ color: "var(--ink-900)" }}>
+              {saved.versions[0]
+                ? `${saved.versions[0].at} by ${saved.versions[0].author}`
+                : "Never"}
+            </dd>
+          </div>
+          <div>
+            <dt style={{ color: "var(--ink-500)" }}>Library</dt>
+            <dd className="font-medium" style={{ color: "var(--ink-900)" }}>
+              {saved.scope === "Template" ? "Template" : saved.scope === "Team" ? "Team" : "Yours"}
+            </dd>
+          </div>
+        </dl>
+      )}
 
-      <FieldBox
-        label="What should be true?"
-        flashing={flash.includes("description")}
-        was={was("description")}
-      >
-        <textarea
-          value={draft.description}
-          readOnly={readOnly}
-          onChange={(e) => onPatch({ description: e.target.value })}
-          rows={3}
-          className="w-full rounded-lg px-3 py-2"
-          style={inputStyle}
-        />
-      </FieldBox>
+      <div className="space-y-4">
+        <FieldBox label="Name" flashing={flash.includes("name")} was={was("name")}>
+          <input
+            value={draft.name}
+            readOnly={readOnly}
+            onChange={(e) => onPatch({ name: e.target.value })}
+            className="w-full rounded-lg px-3 py-2 font-semibold"
+            style={inputStyle}
+          />
+        </FieldBox>
 
-      <div className="grid grid-cols-2 gap-3">
-        <FieldBox label="Type" flashing={flash.includes("type")} was={was("type")}>
-          <select
-            value={draft.type}
-            disabled={readOnly}
-            onChange={(e) => onPatch({ type: e.target.value as RuleType })}
+        <FieldBox
+          label="What should be true?"
+          flashing={flash.includes("description")}
+          was={was("description")}
+        >
+          <textarea
+            value={draft.description}
+            readOnly={readOnly}
+            onChange={(e) => onPatch({ description: e.target.value })}
+            rows={3}
             className="w-full rounded-lg px-3 py-2"
             style={inputStyle}
-          >
-            {RULE_TYPES.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
+          />
         </FieldBox>
-        <FieldBox label="Severity" flashing={flash.includes("severity")} was={was("severity")}>
-          <select
-            value={draft.severity}
-            disabled={readOnly}
-            onChange={(e) => onPatch({ severity: e.target.value as Severity })}
-            className="w-full rounded-lg px-3 py-2"
-            style={inputStyle}
-          >
-            {SEVERITIES.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
-        </FieldBox>
+
+        <div className="grid grid-cols-2 gap-3">
+          <FieldBox label="DQ dimension" flashing={flash.includes("type")} was={was("type")}>
+            <select
+              value={draft.type}
+              disabled={readOnly}
+              onChange={(e) => onPatch({ type: e.target.value as RuleType })}
+              className="w-full rounded-lg px-3 py-2"
+              style={inputStyle}
+            >
+              {RULE_TYPES.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </FieldBox>
+          <FieldBox label="Severity" flashing={flash.includes("severity")} was={was("severity")}>
+            <select
+              value={draft.severity}
+              disabled={readOnly}
+              onChange={(e) => onPatch({ severity: e.target.value as Severity })}
+              className="w-full rounded-lg px-3 py-2"
+              style={inputStyle}
+            >
+              {SEVERITIES.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+          </FieldBox>
+        </div>
+
+        {saved && (
+          <div className="grid grid-cols-2 gap-3">
+            <FieldBox label="Status" flashing={flash.includes("status")} was={was("status")}>
+              <select
+                value={draft.status}
+                disabled={readOnly}
+                onChange={(e) => onPatch({ status: e.target.value as Rule["status"] })}
+                className="w-full rounded-lg px-3 py-2"
+                style={inputStyle}
+              >
+                {STATUSES.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
+            </FieldBox>
+            <FieldBox label="Owner" flashing={flash.includes("owner")} was={was("owner")}>
+              <select
+                value={draft.owner}
+                disabled={readOnly}
+                onChange={(e) => onPatch({ owner: e.target.value })}
+                className="w-full rounded-lg px-3 py-2"
+                style={inputStyle}
+              >
+                {owners.map((o) => (
+                  <option key={o}>{o}</option>
+                ))}
+              </select>
+            </FieldBox>
+          </div>
+        )}
       </div>
 
-      <FieldBox
-        label="Rows allowed to fail (%)"
-        flashing={flash.includes("threshold")}
-        was={was("threshold")}
-      >
-        <input
-          type="number"
-          min={0}
-          max={100}
-          step={0.1}
-          value={draft.threshold}
-          readOnly={readOnly}
-          onChange={(e) => onPatch({ threshold: Math.max(0, Number(e.target.value) || 0) })}
-          className="w-32 rounded-lg px-3 py-2"
-          style={inputStyle}
-        />
-      </FieldBox>
+      <div className="space-y-4">
+        <SectionTitle>Parameters</SectionTitle>
+        <FieldBox
+          label="Rows allowed to fail (%)"
+          flashing={flash.includes("threshold")}
+          was={was("threshold")}
+        >
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step={0.1}
+            value={draft.threshold}
+            readOnly={readOnly}
+            onChange={(e) => onPatch({ threshold: Math.max(0, Number(e.target.value) || 0) })}
+            className="w-32 rounded-lg px-3 py-2"
+            style={inputStyle}
+          />
+        </FieldBox>
 
-      <FieldBox
-        label="Only check rows where"
-        flashing={flash.includes("appliesWhen")}
-        was={was("appliesWhen")}
-      >
-        <input
-          value={draft.appliesWhen}
-          readOnly={readOnly}
-          onChange={(e) => onPatch({ appliesWhen: e.target.value })}
-          placeholder="Leave empty to check every row"
-          className="w-full rounded-lg px-3 py-2"
-          style={inputStyle}
-        />
-      </FieldBox>
+        <FieldBox
+          label="Only check rows where"
+          flashing={flash.includes("appliesWhen")}
+          was={was("appliesWhen")}
+        >
+          <input
+            value={draft.appliesWhen}
+            readOnly={readOnly}
+            onChange={(e) => onPatch({ appliesWhen: e.target.value })}
+            placeholder="Leave empty to check every row"
+            className="w-full rounded-lg px-3 py-2"
+            style={inputStyle}
+          />
+        </FieldBox>
 
-      <p className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-        Rules are generic. You choose the tables and columns when you add this rule to a schedule.
-      </p>
+        <p className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+          Rules are generic. You choose the tables and columns when you add this rule to a schedule.
+        </p>
+      </div>
     </div>
   );
 }

@@ -12,15 +12,19 @@ export type EditableKey =
   | "type"
   | "severity"
   | "threshold"
-  | "appliesWhen";
+  | "appliesWhen"
+  | "status"
+  | "owner";
 
 export const FIELD_LABEL: Record<EditableKey, string> = {
   name: "name",
   description: "definition",
-  type: "type",
+  type: "DQ dimension",
   severity: "severity",
   threshold: "rows allowed to fail",
   appliesWhen: "conditions",
+  status: "status",
+  owner: "owner",
 };
 
 const KEYS = Object.keys(FIELD_LABEL) as EditableKey[];
@@ -138,7 +142,17 @@ export function applyChatEdit(draft: Rule, text: string): ChatEdit | null {
   if (type && /type|make it|treat|switch/i.test(t) && !rename && type !== next.type) {
     next.type = type;
     mark("type");
-    notes.push(`Changed the type to ${type}.`);
+    notes.push(`Changed the DQ dimension to ${type}.`);
+  }
+
+  if (/\b(activate|turn (?:it )?on|enable)\b/i.test(t) && next.status !== "Active") {
+    next.status = "Active";
+    mark("status");
+    notes.push("Turned it on.");
+  } else if (/\b(disable|turn (?:it )?off|pause)\b/i.test(t) && next.status !== "Disabled") {
+    next.status = "Disabled";
+    mark("status");
+    notes.push("Disabled it.");
   }
 
   const definition = t.match(
