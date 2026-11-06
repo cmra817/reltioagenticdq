@@ -4,6 +4,7 @@ import { AlertTriangle, DatabaseZap, Pin, PinOff } from "lucide-react";
 import { useChatThreads, type ChatThread } from "../chat/chat-context";
 import { useSetupSessions } from "../add-dataset-agentic/setup-sessions";
 import { useUnreadRunAlerts } from "@/lib/ops-store";
+import { scheduleThreadId } from "../scheduled/open-schedule";
 
 const ROW_CLASS =
   "flex min-w-0 flex-1 items-center gap-2 truncate rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]";
@@ -51,6 +52,21 @@ function ThreadLink({ thread, children }: { thread: ChatThread; children: React.
       <Link
         to="/rule/$threadId"
         params={{ threadId: thread.id }}
+        className={ROW_CLASS}
+        style={ROW_STYLE}
+        activeProps={ACTIVE_PROPS}
+        title={thread.title}
+      >
+        {children}
+      </Link>
+    );
+  }
+  if (thread.kind === "schedule") {
+    return (
+      <Link
+        to="/schedule/$threadId"
+        params={{ threadId: thread.id }}
+        search={{}}
         className={ROW_CLASS}
         style={ROW_STYLE}
         activeProps={ACTIVE_PROPS}
@@ -156,6 +172,7 @@ export function RecentChats() {
     ...alerts.map((r) => ({
       kind: "run" as const,
       id: r.id,
+      scheduleId: r.scheduleId,
       updatedAt: Date.now() - r.hoursAgo * 3_600_000,
       name: schedules.find((s) => s.id === r.scheduleId)?.name ?? "Schedule run",
     })),
@@ -181,7 +198,8 @@ export function RecentChats() {
           item.kind === "run" ? (
             <li key={item.id} className="flex items-center">
               <Link
-                to="/scheduled"
+                to="/schedule/$threadId"
+                params={{ threadId: scheduleThreadId(item.scheduleId) }}
                 search={{ run: item.id }}
                 className={ROW_CLASS}
                 style={ROW_STYLE}

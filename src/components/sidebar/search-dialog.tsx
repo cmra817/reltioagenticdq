@@ -51,6 +51,8 @@ export function SearchDialog({ open, onOpenChange }: Props) {
       void navigate({ to: "/investigate/consistency", search: { q: t.title, thread: t.id } });
     } else if (t.kind === "dashboard") {
       void navigate({ to: "/dashboard/$threadId", params: { threadId: t.id } });
+    } else if (t.kind === "schedule") {
+      void navigate({ to: "/schedule/$threadId", params: { threadId: t.id }, search: {} });
     } else if (t.kind === "rule") {
       void navigate({ to: "/rule/$threadId", params: { threadId: t.id } });
     } else {

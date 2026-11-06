@@ -22,6 +22,7 @@ import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
 import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
 import { Route as DashboardThreadIdRouteImport } from './routes/dashboard.$threadId'
 import { Route as RuleThreadIdRouteImport } from './routes/rule.$threadId'
+import { Route as ScheduleThreadIdRouteImport } from './routes/schedule.$threadId'
 import { Route as InvestigateTopicRouteImport } from './routes/investigate.$topic'
 import { Route as InvestigateConsistencyRouteImport } from './routes/investigate.consistency'
 
@@ -90,6 +91,11 @@ const RuleThreadIdRoute = RuleThreadIdRouteImport.update({
   path: '/rule/$threadId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScheduleThreadIdRoute = ScheduleThreadIdRouteImport.update({
+  id: '/schedule/$threadId',
+  path: '/schedule/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InvestigateTopicRoute = InvestigateTopicRouteImport.update({
   id: '/investigate/$topic',
   path: '/investigate/$topic',
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/chat/$chatId': typeof ChatChatIdRoute
   '/dashboard/$threadId': typeof DashboardThreadIdRoute
   '/rule/$threadId': typeof RuleThreadIdRoute
+  '/schedule/$threadId': typeof ScheduleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/chat/$chatId': typeof ChatChatIdRoute
   '/dashboard/$threadId': typeof DashboardThreadIdRoute
   '/rule/$threadId': typeof RuleThreadIdRoute
+  '/schedule/$threadId': typeof ScheduleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/chat/$chatId': typeof ChatChatIdRoute
   '/dashboard/$threadId': typeof DashboardThreadIdRoute
   '/rule/$threadId': typeof RuleThreadIdRoute
+  '/schedule/$threadId': typeof ScheduleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/chat/$chatId'
     | '/dashboard/$threadId'
     | '/rule/$threadId'
+    | '/schedule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
   fileRoutesByTo: FileRoutesByTo
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/chat/$chatId'
     | '/dashboard/$threadId'
     | '/rule/$threadId'
+    | '/schedule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
   id:
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/chat/$chatId'
     | '/dashboard/$threadId'
     | '/rule/$threadId'
+    | '/schedule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
   fileRoutesById: FileRoutesById
@@ -221,6 +233,7 @@ export interface RootRouteChildren {
   ChatChatIdRoute: typeof ChatChatIdRoute
   DashboardThreadIdRoute: typeof DashboardThreadIdRoute
   RuleThreadIdRoute: typeof RuleThreadIdRoute
+  ScheduleThreadIdRoute: typeof ScheduleThreadIdRoute
   InvestigateTopicRoute: typeof InvestigateTopicRoute
   InvestigateConsistencyRoute: typeof InvestigateConsistencyRoute
 }
@@ -318,6 +331,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RuleThreadIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/schedule/$threadId': {
+      id: '/schedule/$threadId'
+      path: '/schedule/$threadId'
+      fullPath: '/schedule/$threadId'
+      preLoaderRoute: typeof ScheduleThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/investigate/$topic': {
       id: '/investigate/$topic'
       path: '/investigate/$topic'
@@ -349,6 +369,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChatChatIdRoute: ChatChatIdRoute,
   DashboardThreadIdRoute: DashboardThreadIdRoute,
   RuleThreadIdRoute: RuleThreadIdRoute,
+  ScheduleThreadIdRoute: ScheduleThreadIdRoute,
   InvestigateTopicRoute: InvestigateTopicRoute,
   InvestigateConsistencyRoute: InvestigateConsistencyRoute,
 }
