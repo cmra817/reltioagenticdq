@@ -49,11 +49,11 @@ function ScheduledHome({ tab }: { tab: "schedules" | "runs" }) {
       <div className="mx-auto w-full max-w-[980px]">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-[22px] font-semibold" style={{ color: "var(--ink-900)" }}>
-            Scheduled
+            Jobs
           </h1>
           <div className="ml-2">
             <Tabs
-              label="Scheduled views"
+              label="Jobs views"
               value={tab}
               onChange={(t) => go({ tab: t })}
               tabs={[

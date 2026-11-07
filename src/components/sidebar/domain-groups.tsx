@@ -1,0 +1,203 @@
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { AlertTriangle, ChevronDown, ChevronRight, DatabaseZap, Plus } from "lucide-react";
+import { SearchIcon } from "../brand-icons";
+import { STATUS_LABEL, statusForScore, useDomainState, type HealthStatus } from "../domain-context";
+import { newChatId, useChatThreads } from "../chat/chat-context";
+import { useSetupSessions } from "../add-dataset-agentic/setup-sessions";
+import { useUnreadRunAlerts } from "@/lib/ops-store";
+import { scheduleThreadId } from "../scheduled/open-schedule";
+import { ROW_CLASS, ROW_STYLE, SectionLabel, ThreadRow, useMounted } from "./chat-lists";
+
+/** Chats shown under each domain before the rest are left to search. */
+const PER_GROUP = 5;
+
+const STATUS_COLOR: Record<HealthStatus, string> = {
+  good: "var(--status-good)",
+  warn: "var(--status-warn)",
+  bad: "var(--status-bad)",
+  unknown: "var(--ink-100)",
+};
+
+/**
+ * Recents, grouped by domain. A domain row opens that domain's home; the arrow
+ * folds its chats away; the plus starts a new chat in that domain. Domains are
+ * sorted lowest health first so the ones that need attention are on top.
+ * Pinned chats stay in their own section above.
+ */
+export function DomainGroups({
+  activeNav,
+  onSearch,
+}: {
+  activeNav: string;
+  onSearch: () => void;
+}) {
+  const navigate = useNavigate();
+  const { domains, selected, selectDomain, healthFor } = useDomainState();
+  const { threads, createThread } = useChatThreads();
+  const { sessions, resume } = useSetupSessions();
+  const { alerts, schedules } = useUnreadRunAlerts();
+  const mounted = useMounted();
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  const sorted = useMemo(
+    () =>
+      [...domains].sort((a, b) => {
+        const sa = healthFor(a);
+        const sb = healthFor(b);
+        if (sa === null && sb === null) return a.localeCompare(b);
+        if (sa === null) return 1;
+        if (sb === null) return -1;
+        return sa - sb || a.localeCompare(b);
+      }),
+    [domains, healthFor],
+  );
+
+  const unpinned = threads.filter((t) => !t.pinned);
+  const untagged = unpinned.filter((t) => !t.domain || !domains.includes(t.domain));
+
+  function newChatIn(domain: string) {
+    const id = newChatId();
+    selectDomain(domain);
+    createThread({ id, domain });
+    void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: {} });
+  }
+
+  const needsLook = mounted ? alerts.length + sessions.length : 0;
+
+  return (
+    <div className="mt-3 px-3">
+      <div className="flex items-center justify-between pr-1">
+        <SectionLabel>Recents</SectionLabel>
+        <button
+          type="button"
+          onClick={onSearch}
+          aria-label="Search chats"
+          title="Search (⌘K)"
+          className="mb-1 flex h-6 w-6 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)]"
+          style={{ color: "var(--ink-500)" }}
+        >
+          <SearchIcon />
+        </button>
+      </div>
+
+      {mounted && needsLook > 0 && (
+        <ul className="mb-1">
+          {alerts.map((r) => {
+            const name = schedules.find((s) => s.id === r.scheduleId)?.name ?? "Schedule run";
+            return (
+              <li key={r.id} className="flex items-center">
+                <Link
+                  to="/schedule/$threadId"
+                  params={{ threadId: scheduleThreadId(r.scheduleId) }}
+                  search={{ run: r.id }}
+                  className={ROW_CLASS}
+                  style={ROW_STYLE}
+                  title={`Needs a look: ${name}`}
+                >
+                  <AlertTriangle size={14} style={{ color: "var(--status-warn)", flexShrink: 0 }} />
+                  <span className="truncate">{name}</span>
+                  <span className="sr-only"> run needs attention</span>
+                </Link>
+              </li>
+            );
+          })}
+          {sessions.map((s) => (
+            <li key={s.id} className="flex items-center">
+              <button
+                type="button"
+                onClick={() => resume(s.id)}
+                className={ROW_CLASS}
+                style={ROW_STYLE}
+                title={s.title}
+              >
+                <DatabaseZap size={14} style={{ color: "var(--brand-blue)", flexShrink: 0 }} />
+                <span className="truncate">{s.title}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {mounted && untagged.length > 0 && (
+        <ul className="mb-1">
+          {untagged.slice(0, PER_GROUP).map((t) => (
+            <ThreadRow key={t.id} thread={t} />
+          ))}
+        </ul>
+      )}
+
+      <ul>
+        {sorted.map((name) => {
+          const score = healthFor(name);
+          const status = statusForScore(score);
+          const isSel = name === selected;
+          const current = isSel && activeNav === "domain";
+          const open = !collapsed[name];
+          const chats = mounted ? unpinned.filter((t) => t.domain === name) : [];
+          return (
+            <li key={name}>
+              <div className="group/dom flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setCollapsed((c) => ({ ...c, [name]: open }))}
+                  aria-label={`${open ? "Collapse" : "Expand"} ${name}`}
+                  aria-expanded={open}
+                  className="flex h-8 w-6 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)]"
+                  style={{ color: "var(--ink-500)" }}
+                >
+                  {open ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    selectDomain(name);
+                    void navigate({ to: "/domain" });
+                  }}
+                  aria-current={current ? "page" : undefined}
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13.5px] transition-colors hover:bg-[color:var(--surface-soft)]"
+                  style={{
+                    color: isSel ? "var(--ink-900)" : "var(--ink-700)",
+                    background: current ? "var(--surface-soft)" : "transparent",
+                  }}
+                >
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: STATUS_COLOR[status] }}
+                    aria-hidden="true"
+                  />
+                  <span className={`min-w-0 flex-1 truncate ${isSel ? "font-semibold" : "font-medium"}`}>
+                    {name}
+                  </span>
+                  <span className="sr-only">{STATUS_LABEL[status]}</span>
+                  {score !== null && (
+                    <span className="shrink-0 text-[12px] tabular-nums" style={{ color: "var(--ink-500)" }}>
+                      {score}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => newChatIn(name)}
+                  aria-label={`New chat in ${name}`}
+                  title={`New chat in ${name}`}
+                  className="ml-0.5 hidden h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)] group-hover/dom:flex focus-visible:flex"
+                  style={{ color: "var(--ink-500)" }}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+              {open && chats.length > 0 && (
+                <ul className="ml-4">
+                  {chats.slice(0, PER_GROUP).map((t) => (
+                    <ThreadRow key={t.id} thread={t} />
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}

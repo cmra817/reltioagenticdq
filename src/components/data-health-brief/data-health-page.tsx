@@ -2,11 +2,13 @@ import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { newChatId, useChatThreads } from "@/components/chat/chat-context";
 import { Plus } from "lucide-react";
-import { statusForScore, useDomainState } from "@/components/domain-context";
+import { STATUS_LABEL, statusForScore, useDomainState } from "@/components/domain-context";
 import { RecordQualityPanel } from "./record-quality-panel";
 import {
   GhostButton,
+  HEALTH_COLOR,
   HealthPill,
+  Tag,
   SectionTitle,
   Sparkline,
   type ChatTurn,
@@ -71,7 +73,8 @@ export function customToDashboard(c: CustomDashboard): DashboardDef {
  */
 export function DataHealthPage() {
   const [custom, , ready] = useLocalStore<CustomDashboard[]>(CUSTOM_KEY, CUSTOM_INIT);
-  const [active, setActive] = React.useState("mine");
+  // null shows the card grid; an id opens that dashboard (chat on the left, dashboard on the right).
+  const [active, setActive] = React.useState<string | null>(null);
   const navigate = useNavigate();
   const { createThread } = useChatThreads();
 
@@ -81,6 +84,17 @@ export function DataHealthPage() {
   );
 
   const current = dashboards.find((d) => d.id === active) ?? MY_BRIEF;
+
+  if (active === null) {
+    return (
+      <DashboardCards
+        dashboards={dashboards}
+        onOpen={setActive}
+        onNew={newDashboardChat}
+        loading={!ready}
+      />
+    );
+  }
 
   /** A new dashboard is a new chat thread: create it, open it, and the starter message is already sent. */
   function newDashboardChat() {
@@ -93,9 +107,14 @@ export function DataHealthPage() {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="shrink-0 px-6 pb-2 pt-4">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-[17px] font-semibold" style={{ color: "var(--ink-900)" }}>
-            Data health
-          </h1>
+          <button
+            type="button"
+            onClick={() => setActive(null)}
+            className="text-[13px] hover:underline"
+            style={{ color: "var(--brand-blue)" }}
+          >
+            ‹ Dashboards
+          </button>
           <label className="flex min-w-0 flex-1 items-center gap-2">
             <span className="sr-only">Dashboard</span>
             <select
@@ -126,6 +145,149 @@ export function DataHealthPage() {
       </div>
 
       <DashboardThreadScreen key={current.id} threadId={dashboardViewId(current.id)} />
+    </div>
+  );
+}
+
+/** A small summary of each dashboard: score, trend, and its lowest rows. */
+function useCardSummary(dash: DashboardDef) {
+  const { domains, healthFor } = useDomainState();
+  const { schedules } = useSchedules();
+  return React.useMemo(() => {
+    const scored = domains.map((d) => healthFor(d)).filter((n): n is number => n !== null);
+    const score =
+      dash.id === "mine"
+        ? 78
+        : dash.scope === ALL_DOMAINS
+          ? scored.length
+            ? Math.round(scored.reduce((n, v) => n + v, 0) / scored.length)
+            : 85
+          : (healthFor(dash.scope) ?? 85);
+    const rows =
+      dash.breakdown ??
+      (dash.scope === ALL_DOMAINS
+        ? domains
+            .map((d) => ({ label: d, score: healthFor(d) }))
+            .filter((r): r is { label: string; score: number } => r.score !== null)
+        : dash.id === "mine"
+          ? []
+          : tablesFor(dash.scope, healthFor(dash.scope), schedules).map((t) => ({
+              label: t.name,
+              score: t.score,
+            })));
+    return {
+      score,
+      trend: trendFor(score, dash.id),
+      lowest: [...rows].sort((a, b) => a.score - b.score).slice(0, 3),
+    };
+  }, [dash, domains, healthFor, schedules]);
+}
+
+function DashboardCard({ dash, onOpen }: { dash: DashboardDef; onOpen: () => void }) {
+  const { score, trend, lowest } = useCardSummary(dash);
+  const status = statusForScore(score);
+  const tag = dash.sharedBy ? "Shared" : dash.audience === "Shared with your team" ? "Shared" : "Private";
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex w-full flex-col gap-3 rounded-xl border bg-white p-4 text-left transition-colors hover:bg-[color:var(--surface-soft)]"
+      style={{ borderColor: "var(--hairline)" }}
+    >
+      <span className="flex items-start justify-between gap-2">
+        <span>
+          <span className="block text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
+            {dash.name}
+          </span>
+          <span className="block text-[12px]" style={{ color: "var(--ink-500)" }}>
+            {dash.scope === ALL_DOMAINS ? "Every domain" : dash.scope}
+          </span>
+        </span>
+        <Tag>{tag}</Tag>
+      </span>
+      <span className="block">
+        <span className="flex items-baseline gap-2">
+          <span className="text-[28px] font-semibold leading-none" style={{ color: "var(--ink-900)" }}>
+            {score}
+          </span>
+          <span className="text-[12px]" style={{ color: "var(--ink-500)" }}>
+            {STATUS_LABEL[status]}
+          </span>
+        </span>
+        <span className="mt-2 block">
+          <Sparkline values={trend} label={`${dash.name} health over 14 days`} />
+        </span>
+      </span>
+      {lowest.length > 0 && (
+        <span className="block space-y-1.5">
+          {lowest.map((r) => (
+            <span key={r.label} className="block">
+              <span className="flex justify-between text-[12.5px]" style={{ color: "var(--ink-900)" }}>
+                <span className="truncate">{r.label}</span>
+                <span className="tabular-nums">{r.score}</span>
+              </span>
+              <span
+                className="mt-1 block h-2 overflow-hidden rounded-full"
+                style={{ background: "var(--surface-soft)" }}
+              >
+                <span
+                  className="block h-2 rounded-full"
+                  style={{
+                    width: `${r.score}%`,
+                    background:
+                      HEALTH_COLOR[statusForScore(r.score)] ?? "var(--brand-blue)",
+                  }}
+                />
+              </span>
+            </span>
+          ))}
+        </span>
+      )}
+      <span
+        className="block border-t pt-2.5 text-[12px]"
+        style={{ borderColor: "var(--hairline)", color: "var(--ink-500)" }}
+      >
+        {dash.sharedBy ? `Shared by ${dash.sharedBy}` : "Owned by you"}
+      </span>
+    </button>
+  );
+}
+
+/** Dashboards: a card per dashboard, each with a chart. Opening one starts today's chat about it. */
+function DashboardCards({
+  dashboards,
+  onOpen,
+  onNew,
+  loading,
+}: {
+  dashboards: DashboardDef[];
+  onOpen: (id: string) => void;
+  onNew: () => void;
+  loading: boolean;
+}) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-10 pt-5">
+      <div className="mx-auto w-full max-w-[1100px]">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-[22px] font-semibold" style={{ color: "var(--ink-900)" }}>
+            Dashboards
+          </h1>
+          <span className="text-[13px]" style={{ color: "var(--ink-500)" }}>
+            Ask the agent to build one, then share it or open it any day.
+          </span>
+          <GhostButton onClick={onNew} className="ml-auto flex items-center gap-1.5">
+            <Plus size={14} /> New dashboard
+          </GhostButton>
+        </div>
+        {loading && <span className="sr-only">Loading dashboards</span>}
+        <ul className="mt-5 grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))" }}>
+          {dashboards.map((d) => (
+            <li key={d.id}>
+              <DashboardCard dash={d} onOpen={() => onOpen(d.id)} />
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

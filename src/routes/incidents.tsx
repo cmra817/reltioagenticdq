@@ -43,7 +43,7 @@ function IncidentsPage() {
             style={{ color: "var(--brand-blue)" }}
           >
             <ArrowLeft size={14} />
-            Back to Data health
+            Back to Dashboards
           </Link>
           <h1 className="mt-3 text-[24px] font-semibold" style={{ color: "var(--ink-900)" }}>
             Incident Manager

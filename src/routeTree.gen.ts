@@ -15,6 +15,8 @@ import { Route as DomainRouteImport } from './routes/domain'
 import { Route as DqChecksRouteImport } from './routes/dq-checks'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as IncidentsRouteImport } from './routes/incidents'
+import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as TodayRouteImport } from './routes/today'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as ScheduledRouteImport } from './routes/scheduled'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -54,6 +56,16 @@ const ExploreRoute = ExploreRouteImport.update({
 const IncidentsRoute = IncidentsRouteImport.update({
   id: '/incidents',
   path: '/incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsRoute = ProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TodayRoute = TodayRouteImport.update({
+  id: '/today',
+  path: '/today',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RulesRoute = RulesRouteImport.update({
@@ -114,6 +126,8 @@ export interface FileRoutesByFullPath {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/projects': typeof ProjectsRoute
+  '/today': typeof TodayRoute
   '/rules': typeof RulesRoute
   '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
@@ -132,6 +146,8 @@ export interface FileRoutesByTo {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/projects': typeof ProjectsRoute
+  '/today': typeof TodayRoute
   '/rules': typeof RulesRoute
   '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
@@ -151,6 +167,8 @@ export interface FileRoutesById {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/projects': typeof ProjectsRoute
+  '/today': typeof TodayRoute
   '/rules': typeof RulesRoute
   '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
@@ -171,6 +189,8 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/projects'
+    | '/today'
     | '/rules'
     | '/scheduled'
     | '/api/chat'
@@ -189,6 +209,8 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/projects'
+    | '/today'
     | '/rules'
     | '/scheduled'
     | '/api/chat'
@@ -207,6 +229,8 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/projects'
+    | '/today'
     | '/rules'
     | '/scheduled'
     | '/api/chat'
@@ -226,6 +250,8 @@ export interface RootRouteChildren {
   DqChecksRoute: typeof DqChecksRoute
   ExploreRoute: typeof ExploreRoute
   IncidentsRoute: typeof IncidentsRoute
+  ProjectsRoute: typeof ProjectsRoute
+  TodayRoute: typeof TodayRoute
   RulesRoute: typeof RulesRoute
   ScheduledRoute: typeof ScheduledRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -280,6 +306,20 @@ declare module '@tanstack/react-router' {
       path: '/incidents'
       fullPath: '/incidents'
       preLoaderRoute: typeof IncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects': {
+      id: '/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/today': {
+      id: '/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof TodayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rules': {
@@ -362,6 +402,8 @@ const rootRouteChildren: RootRouteChildren = {
   DqChecksRoute: DqChecksRoute,
   ExploreRoute: ExploreRoute,
   IncidentsRoute: IncidentsRoute,
+  ProjectsRoute: ProjectsRoute,
+  TodayRoute: TodayRoute,
   RulesRoute: RulesRoute,
   ScheduledRoute: ScheduledRoute,
   ApiChatRoute: ApiChatRoute,

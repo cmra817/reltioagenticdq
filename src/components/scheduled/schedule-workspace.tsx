@@ -276,7 +276,7 @@ export function ScheduleWorkspace({
     return (
       <div className="p-8">
         <p className="text-[14px]" style={{ color: "var(--ink-500)" }}>
-          This schedule isn't available. Choose another from Scheduled.
+          This schedule isn't available. Choose another from Jobs.
         </p>
       </div>
     );

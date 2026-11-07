@@ -17,9 +17,11 @@ type Props = {
 };
 
 const PAGES = [
-  { label: "Data health", to: "/" },
-  { label: "Scheduled", to: "/scheduled" },
+  { label: "Today", to: "/today" },
+  { label: "Dashboards", to: "/" },
+  { label: "Jobs", to: "/scheduled" },
   { label: "Rules", to: "/rules" },
+  { label: "Projects", to: "/projects" },
   { label: "Explore", to: "/explore" },
   { label: "DQ checks", to: "/dq-checks" },
 ] as const;

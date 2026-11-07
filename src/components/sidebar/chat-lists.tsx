@@ -6,12 +6,12 @@ import { useSetupSessions } from "../add-dataset-agentic/setup-sessions";
 import { useUnreadRunAlerts } from "@/lib/ops-store";
 import { scheduleThreadId } from "../scheduled/open-schedule";
 
-const ROW_CLASS =
+export const ROW_CLASS =
   "flex min-w-0 flex-1 items-center gap-2 truncate rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]";
-const ROW_STYLE = { color: "var(--ink-700)" };
+export const ROW_STYLE = { color: "var(--ink-700)" };
 
 /** Threads and setup sessions live in localStorage, so render them only after hydration. */
-function useMounted() {
+export function useMounted() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   return mounted;
@@ -107,7 +107,7 @@ function ThreadLink({ thread, children }: { thread: ChatThread; children: React.
  * One chat row. A pin button appears on hover or keyboard focus, and the
  * domain tag (when shown) steps aside for it.
  */
-function ThreadRow({ thread, showDomain }: { thread: ChatThread; showDomain?: boolean }) {
+export function ThreadRow({ thread, showDomain }: { thread: ChatThread; showDomain?: boolean }) {
   const { togglePin } = useChatThreads();
   const pinned = !!thread.pinned;
   return (
