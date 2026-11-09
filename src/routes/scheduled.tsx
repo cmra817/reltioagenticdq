@@ -11,12 +11,12 @@ export const Route = createFileRoute("/scheduled")({
   }),
   head: () => ({
     meta: [
-      { title: "Scheduled — Data Quality" },
+      { title: "Jobs — Data Quality" },
       {
         name: "description",
         content: "Profiling and data quality check schedules, and the history of every run.",
       },
-      { property: "og:title", content: "Scheduled — Data Quality" },
+      { property: "og:title", content: "Jobs — Data Quality" },
       {
         property: "og:description",
         content: "Profiling and data quality check schedules, and the history of every run.",

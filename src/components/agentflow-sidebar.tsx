@@ -3,9 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   AppsGridIcon,
   ChevronDownIcon,
-  HealthIcon,
   PlusIcon,
-  SearchIcon,
   UserIcon,
 } from "./brand-icons";
 import { useDomainState } from "./domain-context";
@@ -16,12 +14,15 @@ import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
 import { newChatId, useChatThreads } from "./chat/chat-context";
 import { useSetupSessions } from "./add-dataset-agentic/setup-sessions";
-import { Clock, ListChecks, MessageSquarePlus } from "lucide-react";
-import { DomainList } from "./sidebar/domain-list";
-import { PinnedChats, RecentChats } from "./sidebar/chat-lists";
+import { CalendarCheck, Clock, FolderKanban, LayoutDashboard, ListChecks, MessageSquarePlus } from "lucide-react";
+import { DomainGroups } from "./sidebar/domain-groups";
+import { PinnedChats } from "./sidebar/chat-lists";
+import { useNeedsCount } from "./today/today-screen";
 import { SearchDialog } from "./sidebar/search-dialog";
 
 export type SidebarNav =
+  | "today"
+  | "projects"
   | "data-health"
   | "scheduled"
   | "rules"
@@ -37,11 +38,14 @@ function NavItem({
   to,
   onClick,
   hint,
+  badge,
 }: {
   icon: React.ReactNode;
   label: string;
   active?: boolean;
-  to?: "/" | "/scheduled" | "/rules";
+  to?: "/" | "/today" | "/scheduled" | "/rules" | "/projects";
+  /** Small count badge, e.g. what needs the person. */
+  badge?: number;
   onClick?: () => void;
   /** Small trailing text, e.g. a keyboard shortcut. */
   hint?: string;
@@ -56,6 +60,15 @@ function NavItem({
     <>
       <span style={{ color: active ? "var(--brand-blue)" : "var(--ink-500)" }}>{icon}</span>
       <span className="font-medium">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span
+          className="ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
+          style={{ background: "var(--brand-blue)" }}
+        >
+          {badge}
+          <span className="sr-only"> need you</span>
+        </span>
+      )}
       {hint && (
         <span className="ml-auto text-[11px] font-normal" style={{ color: "var(--ink-300)" }}>
           {hint}
@@ -115,27 +128,44 @@ function NewMenu() {
 
   return (
     <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-[14px] font-medium transition-colors"
+      <div
+        className="inline-flex h-9 items-center rounded-full border text-[14px] font-medium"
         style={{
           borderColor: "var(--brand-blue)",
           color: "var(--brand-blue)",
           background: open ? "rgba(67,134,250,0.14)" : "rgba(67,134,250,0.08)",
         }}
-        aria-haspopup="menu"
-        aria-expanded={open}
       >
-        <PlusIcon size={14} />
-        <span>New</span>
-        <span
-          className="transition-transform"
-          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            const id = newChatId();
+            createThread({ id, domain: selected });
+            void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: {} });
+          }}
+          className="inline-flex h-full items-center gap-1.5 rounded-l-full pl-3 pr-2"
         >
-          <ChevronDownIcon size={12} />
-        </span>
-      </button>
+          <MessageSquarePlus size={14} />
+          <span>New chat</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-label="More ways to add"
+          className="inline-flex h-full items-center rounded-r-full border-l pl-2 pr-2.5"
+          style={{ borderColor: "var(--brand-blue)" }}
+          aria-haspopup="menu"
+          aria-expanded={open}
+        >
+          <span
+            className="transition-transform"
+            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+          >
+            <ChevronDownIcon size={12} />
+          </span>
+        </button>
+      </div>
 
       {open && (
         <div
@@ -143,21 +173,6 @@ function NewMenu() {
           className="absolute left-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border bg-white py-1"
           style={{ borderColor: "var(--hairline)", boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
         >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              const id = newChatId();
-              createThread({ id, domain: selected });
-              void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: {} });
-            }}
-            className={itemClass}
-            style={{ color: "var(--ink-900)" }}
-          >
-            <MessageSquarePlus size={14} />
-            <span>New chat</span>
-          </button>
           <button
             type="button"
             role="menuitem"
@@ -262,6 +277,7 @@ function NewMenu() {
 
 export function AgentflowSidebar({ activeNav = "data-health" }: { activeNav?: SidebarNav }) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const needsCount = useNeedsCount();
   const iconProps = { size: 20, strokeWidth: 1.6 };
 
   return (
@@ -277,20 +293,21 @@ export function AgentflowSidebar({ activeNav = "data-health" }: { activeNav?: Si
       {/* global destinations */}
       <nav className="mt-3 px-3" aria-label="Primary">
         <NavItem
-          icon={<SearchIcon />}
-          label="Search"
-          hint="⌘K"
-          onClick={() => setSearchOpen(true)}
+          icon={<CalendarCheck {...iconProps} />}
+          label="Today"
+          to="/today"
+          active={activeNav === "today"}
+          badge={needsCount}
         />
         <NavItem
-          icon={<HealthIcon />}
-          label="Data health"
+          icon={<LayoutDashboard {...iconProps} />}
+          label="Dashboards"
           to="/"
           active={activeNav === "data-health"}
         />
         <NavItem
           icon={<Clock {...iconProps} />}
-          label="Scheduled"
+          label="Jobs"
           to="/scheduled"
           active={activeNav === "scheduled"}
         />
@@ -300,6 +317,12 @@ export function AgentflowSidebar({ activeNav = "data-health" }: { activeNav?: Si
           to="/rules"
           active={activeNav === "rules"}
         />
+        <NavItem
+          icon={<FolderKanban {...iconProps} />}
+          label="Projects"
+          to="/projects"
+          active={activeNav === "projects"}
+        />
       </nav>
 
       <SectionDivider />
@@ -307,8 +330,7 @@ export function AgentflowSidebar({ activeNav = "data-health" }: { activeNav?: Si
       {/* Pinned chats, domains, and recents scroll together; the footer stays put. */}
       <div className="min-h-0 flex-1 overflow-y-auto pb-2">
         <PinnedChats />
-        <DomainList activeNav={activeNav} />
-        <RecentChats />
+        <DomainGroups activeNav={activeNav} onSearch={() => setSearchOpen(true)} />
       </div>
 
       {/* footer block */}

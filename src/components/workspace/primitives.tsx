@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ChatVisualView, type ChatReply, type ChatVisual } from "./chat-visuals";
 import { ArrowUp, PanelLeft, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { STATUS_LABEL, type HealthStatus } from "@/components/domain-context";
@@ -212,7 +213,8 @@ export function SplitWorkspace({
   floating,
 }: {
   center: React.ReactNode;
-  panel: React.ReactNode;
+  /** Leave out to show the chat alone; the panel appears when there is something to show. */
+  panel?: React.ReactNode;
   panelWidth?: number | string;
   panelLabel: string;
   /** Chat hidden: the panel fills the row and `floating` renders over it. */
@@ -225,33 +227,47 @@ export function SplitWorkspace({
       {!collapsed && (
         <div className="relative flex min-h-[420px] min-w-0 flex-1 flex-col overflow-hidden">
           {onToggle && (
-            <PanelToggle label="Hide chat" onClick={onToggle} className="absolute right-3 top-3 z-10" />
+            <PanelToggle
+              label="Hide chat"
+              onClick={onToggle}
+              className="absolute right-3 top-3 z-10"
+            />
           )}
           {center}
         </div>
       )}
-      <aside
-        aria-label={panelLabel}
-        className={`relative flex w-full flex-col border-t lg:min-h-0 lg:border-t-0 ${collapsed ? "flex-1" : "shrink-0 lg:w-[var(--panel-w)] lg:border-l"}`}
-        style={
-          {
-            "--panel-w": typeof panelWidth === "number" ? `${panelWidth}px` : panelWidth,
-            borderColor: "var(--hairline)",
-            background: "rgba(255,255,255,0.72)",
-          } as React.CSSProperties
-        }
-      >
-        <div className="flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
-          {panel}
-          {collapsed && floating && <div className="h-28 shrink-0" />}
-        </div>
-        {collapsed && floating}
-      </aside>
+      {panel ? (
+        <aside
+          aria-label={panelLabel}
+          className={`relative flex w-full flex-col border-t lg:min-h-0 lg:border-t-0 ${collapsed ? "flex-1" : "shrink-0 lg:w-[var(--panel-w)] lg:border-l"}`}
+          style={
+            {
+              "--panel-w": typeof panelWidth === "number" ? `${panelWidth}px` : panelWidth,
+              borderColor: "var(--hairline)",
+              background: "rgba(255,255,255,0.72)",
+            } as React.CSSProperties
+          }
+        >
+          <div className="flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
+            {panel}
+            {collapsed && floating && <div className="h-28 shrink-0" />}
+          </div>
+          {collapsed && floating}
+        </aside>
+      ) : null}
     </div>
   );
 }
 
-export function PanelToggle({ label, onClick, className = "" }: { label: string; onClick: () => void; className?: string }) {
+export function PanelToggle({
+  label,
+  onClick,
+  className = "",
+}: {
+  label: string;
+  onClick: () => void;
+  className?: string;
+}) {
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>
@@ -273,7 +289,7 @@ export function PanelToggle({ label, onClick, className = "" }: { label: string;
 }
 
 /** One chat thread that a docked chat and a floating prompt can share. */
-export function useChatThread(reply: (q: string) => string, initialTurns?: ChatTurn[]) {
+export function useChatThread(reply: (q: string) => ChatReply, initialTurns?: ChatTurn[]) {
   const [turns, setTurns] = React.useState<ChatTurn[]>(initialTurns ?? []);
   const replyRef = React.useRef(reply);
   replyRef.current = reply;
@@ -281,13 +297,18 @@ export function useChatThread(reply: (q: string) => string, initialTurns?: ChatT
     const text = q.trim();
     if (!text) return;
     const answer = replyRef.current(text);
+    const { text: body, visual } = typeof answer === "string" ? { text: answer } : answer;
     setTurns((prev) => [
       ...prev,
-      { id: prev.length * 2, role: "user", text },
-      { id: prev.length * 2 + 1, role: "agent", text: answer },
+      { id: prev.length, role: "user", text },
+      { id: prev.length + 1, role: "agent", text: body, ...(visual ? { visual } : {}) },
     ]);
   }, []);
-  return { turns, send };
+  /** Adds an agent message that answers nothing the person asked, e.g. "Saved". */
+  const say = React.useCallback((text: string) => {
+    setTurns((prev) => [...prev, { id: prev.length, role: "agent", text }]);
+  }, []);
+  return { turns, send, say };
 }
 export type ChatThread = ReturnType<typeof useChatThread>;
 
@@ -321,31 +342,58 @@ export function FloatingPrompt({
     boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
   };
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex justify-start px-6">
+    <div className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex justify-center px-6">
       <div className="pointer-events-auto w-full max-w-md">
         {thinkingQ && (
-          <div className="mb-2 rounded-2xl border p-3 backdrop-blur-md" style={{ ...glass, background: "rgba(255,255,255,0.55)" }} aria-live="polite">
-            <p className="truncate text-[13px]" style={{ color: "var(--ink-700)" }}>{thinkingQ}</p>
-            <p className="mt-1 text-[12px]" style={{ color: "var(--ink-500)" }}>Thinking…</p>
+          <div
+            className="mb-2 rounded-2xl border p-3 backdrop-blur-md"
+            style={{ ...glass, background: "rgba(255,255,255,0.55)" }}
+            aria-live="polite"
+          >
+            <p className="truncate text-[13px]" style={{ color: "var(--ink-700)" }}>
+              {thinkingQ}
+            </p>
+            <p className="mt-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
+              Thinking…
+            </p>
           </div>
         )}
         {showReply && (
-          <div className="mb-2 flex items-start gap-2 rounded-2xl border p-3 backdrop-blur-md" style={{ ...glass, background: "rgba(255,255,255,0.8)" }} aria-live="polite">
-            <button type="button" onClick={onOpen} className="max-h-24 flex-1 overflow-hidden text-left text-[13px] leading-relaxed" style={{ color: "var(--ink-900)" }}>
+          <div
+            className="mb-2 flex items-start gap-2 rounded-2xl border p-3 backdrop-blur-md"
+            style={{ ...glass, background: "rgba(255,255,255,0.8)" }}
+            aria-live="polite"
+          >
+            <button
+              type="button"
+              onClick={onOpen}
+              className="max-h-24 flex-1 overflow-hidden text-left text-[13px] leading-relaxed"
+              style={{ color: "var(--ink-900)" }}
+            >
               {lastAgent!.text}
             </button>
-            <button type="button" aria-label="Dismiss" onClick={() => setSeenUpTo(lastAgent!.id)} className="shrink-0 rounded p-0.5 hover:bg-[color:var(--surface-soft)]" style={{ color: "var(--ink-500)" }}>
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={() => setSeenUpTo(lastAgent!.id)}
+              className="shrink-0 rounded p-0.5 hover:bg-[color:var(--surface-soft)]"
+              style={{ color: "var(--ink-500)" }}
+            >
               <X size={13} />
             </button>
           </div>
         )}
         <form
-          onSubmit={(e) => { e.preventDefault(); submit(); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
           className="flex items-center gap-2 rounded-2xl p-2 pl-3 backdrop-blur-md"
           style={{
             background: "rgba(227, 227, 242, 0.7)",
             border: "1px solid rgba(0, 0, 204, 0.14)",
-            boxShadow: "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.35)",
+            boxShadow:
+              "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.35)",
           }}
         >
           <input
@@ -359,7 +407,13 @@ export function FloatingPrompt({
             className="flex-1 bg-transparent py-1.5 text-[13px] outline-none"
             style={{ color: "var(--ink-900)" }}
           />
-          <button type="submit" aria-label="Send" disabled={!input.trim()} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full disabled:opacity-40" style={{ background: "var(--brand-blue)", color: "#fff" }}>
+          <button
+            type="submit"
+            aria-label="Send"
+            disabled={!input.trim()}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full disabled:opacity-40"
+            style={{ background: "var(--brand-blue)", color: "#fff" }}
+          >
             <ArrowUp size={16} />
           </button>
         </form>
@@ -368,7 +422,13 @@ export function FloatingPrompt({
   );
 }
 
-export type ChatTurn = { id: number; role: "user" | "agent"; text: string };
+export type ChatTurn = {
+  id: number;
+  role: "user" | "agent";
+  text: string;
+  /** A chart the agent put under its answer. */
+  visual?: ChatVisual;
+};
 
 /**
  * A chat scoped to what is on screen (a run, a rule, a domain). Nothing shows
@@ -391,7 +451,7 @@ export function ScopedChat({
   scopeLabel: string;
   placeholder: string;
   suggestions: string[];
-  reply: (question: string) => string;
+  reply: (question: string) => ChatReply;
   header?: React.ReactNode;
   ask?: { id: number; q: string } | null;
 }) {
@@ -429,7 +489,10 @@ export function ScopedChat({
           {turns.length > 0 && (
             <ul className="mt-5 space-y-3" aria-live="polite">
               {turns.map((t) => (
-                <li key={t.id} className={t.role === "user" ? "flex justify-end" : "flex"}>
+                <li
+                  key={t.id}
+                  className={t.role === "user" ? "flex justify-end" : "flex flex-col gap-2"}
+                >
                   <div
                     className="max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed"
                     style={
@@ -444,6 +507,11 @@ export function ScopedChat({
                   >
                     {t.text}
                   </div>
+                  {t.visual && (
+                    <div className="w-full max-w-[88%]">
+                      <ChatVisualView visual={t.visual} onAsk={send} />
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

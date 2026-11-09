@@ -6,7 +6,6 @@ import type { RulesSearch } from "@/components/rules/nav";
 export const Route = createFileRoute("/rules")({
   validateSearch: (search: Record<string, unknown>): RulesSearch => ({
     rule: typeof search.rule === "string" ? search.rule : undefined,
-    new: search.new === true || search.new === "true" ? true : undefined,
   }),
   head: () => ({
     meta: [

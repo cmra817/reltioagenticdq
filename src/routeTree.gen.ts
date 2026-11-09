@@ -15,11 +15,16 @@ import { Route as DomainRouteImport } from './routes/domain'
 import { Route as DqChecksRouteImport } from './routes/dq-checks'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as IncidentsRouteImport } from './routes/incidents'
+import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as TodayRouteImport } from './routes/today'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as ScheduledRouteImport } from './routes/scheduled'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
 import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
+import { Route as DashboardThreadIdRouteImport } from './routes/dashboard.$threadId'
+import { Route as RuleThreadIdRouteImport } from './routes/rule.$threadId'
+import { Route as ScheduleThreadIdRouteImport } from './routes/schedule.$threadId'
 import { Route as InvestigateTopicRouteImport } from './routes/investigate.$topic'
 import { Route as InvestigateConsistencyRouteImport } from './routes/investigate.consistency'
 
@@ -53,6 +58,16 @@ const IncidentsRoute = IncidentsRouteImport.update({
   path: '/incidents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProjectsRoute = ProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TodayRoute = TodayRouteImport.update({
+  id: '/today',
+  path: '/today',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RulesRoute = RulesRouteImport.update({
   id: '/rules',
   path: '/rules',
@@ -78,6 +93,21 @@ const ChatChatIdRoute = ChatChatIdRouteImport.update({
   path: '/chat/$chatId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardThreadIdRoute = DashboardThreadIdRouteImport.update({
+  id: '/dashboard/$threadId',
+  path: '/dashboard/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RuleThreadIdRoute = RuleThreadIdRouteImport.update({
+  id: '/rule/$threadId',
+  path: '/rule/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScheduleThreadIdRoute = ScheduleThreadIdRouteImport.update({
+  id: '/schedule/$threadId',
+  path: '/schedule/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InvestigateTopicRoute = InvestigateTopicRouteImport.update({
   id: '/investigate/$topic',
   path: '/investigate/$topic',
@@ -96,11 +126,16 @@ export interface FileRoutesByFullPath {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/projects': typeof ProjectsRoute
+  '/today': typeof TodayRoute
   '/rules': typeof RulesRoute
   '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/dashboard/$threadId': typeof DashboardThreadIdRoute
+  '/rule/$threadId': typeof RuleThreadIdRoute
+  '/schedule/$threadId': typeof ScheduleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
@@ -111,11 +146,16 @@ export interface FileRoutesByTo {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/projects': typeof ProjectsRoute
+  '/today': typeof TodayRoute
   '/rules': typeof RulesRoute
   '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/dashboard/$threadId': typeof DashboardThreadIdRoute
+  '/rule/$threadId': typeof RuleThreadIdRoute
+  '/schedule/$threadId': typeof ScheduleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
@@ -127,11 +167,16 @@ export interface FileRoutesById {
   '/dq-checks': typeof DqChecksRoute
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
+  '/projects': typeof ProjectsRoute
+  '/today': typeof TodayRoute
   '/rules': typeof RulesRoute
   '/scheduled': typeof ScheduledRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/dashboard/$threadId': typeof DashboardThreadIdRoute
+  '/rule/$threadId': typeof RuleThreadIdRoute
+  '/schedule/$threadId': typeof ScheduleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
 }
@@ -144,11 +189,16 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/projects'
+    | '/today'
     | '/rules'
     | '/scheduled'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/dashboard/$threadId'
+    | '/rule/$threadId'
+    | '/schedule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
   fileRoutesByTo: FileRoutesByTo
@@ -159,11 +209,16 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/projects'
+    | '/today'
     | '/rules'
     | '/scheduled'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/dashboard/$threadId'
+    | '/rule/$threadId'
+    | '/schedule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
   id:
@@ -174,11 +229,16 @@ export interface FileRouteTypes {
     | '/dq-checks'
     | '/explore'
     | '/incidents'
+    | '/projects'
+    | '/today'
     | '/rules'
     | '/scheduled'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
+    | '/dashboard/$threadId'
+    | '/rule/$threadId'
+    | '/schedule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
   fileRoutesById: FileRoutesById
@@ -190,11 +250,16 @@ export interface RootRouteChildren {
   DqChecksRoute: typeof DqChecksRoute
   ExploreRoute: typeof ExploreRoute
   IncidentsRoute: typeof IncidentsRoute
+  ProjectsRoute: typeof ProjectsRoute
+  TodayRoute: typeof TodayRoute
   RulesRoute: typeof RulesRoute
   ScheduledRoute: typeof ScheduledRoute
   ApiChatRoute: typeof ApiChatRoute
   AssetsAssetSlugRoute: typeof AssetsAssetSlugRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
+  DashboardThreadIdRoute: typeof DashboardThreadIdRoute
+  RuleThreadIdRoute: typeof RuleThreadIdRoute
+  ScheduleThreadIdRoute: typeof ScheduleThreadIdRoute
   InvestigateTopicRoute: typeof InvestigateTopicRoute
   InvestigateConsistencyRoute: typeof InvestigateConsistencyRoute
 }
@@ -243,6 +308,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IncidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/projects': {
+      id: '/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/today': {
+      id: '/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof TodayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rules': {
       id: '/rules'
       path: '/rules'
@@ -278,6 +357,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/$threadId': {
+      id: '/dashboard/$threadId'
+      path: '/dashboard/$threadId'
+      fullPath: '/dashboard/$threadId'
+      preLoaderRoute: typeof DashboardThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rule/$threadId': {
+      id: '/rule/$threadId'
+      path: '/rule/$threadId'
+      fullPath: '/rule/$threadId'
+      preLoaderRoute: typeof RuleThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/schedule/$threadId': {
+      id: '/schedule/$threadId'
+      path: '/schedule/$threadId'
+      fullPath: '/schedule/$threadId'
+      preLoaderRoute: typeof ScheduleThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/investigate/$topic': {
       id: '/investigate/$topic'
       path: '/investigate/$topic'
@@ -302,11 +402,16 @@ const rootRouteChildren: RootRouteChildren = {
   DqChecksRoute: DqChecksRoute,
   ExploreRoute: ExploreRoute,
   IncidentsRoute: IncidentsRoute,
+  ProjectsRoute: ProjectsRoute,
+  TodayRoute: TodayRoute,
   RulesRoute: RulesRoute,
   ScheduledRoute: ScheduledRoute,
   ApiChatRoute: ApiChatRoute,
   AssetsAssetSlugRoute: AssetsAssetSlugRoute,
   ChatChatIdRoute: ChatChatIdRoute,
+  DashboardThreadIdRoute: DashboardThreadIdRoute,
+  RuleThreadIdRoute: RuleThreadIdRoute,
+  ScheduleThreadIdRoute: ScheduleThreadIdRoute,
   InvestigateTopicRoute: InvestigateTopicRoute,
   InvestigateConsistencyRoute: InvestigateConsistencyRoute,
 }

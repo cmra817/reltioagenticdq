@@ -4,13 +4,14 @@ import { AlertTriangle, DatabaseZap, Pin, PinOff } from "lucide-react";
 import { useChatThreads, type ChatThread } from "../chat/chat-context";
 import { useSetupSessions } from "../add-dataset-agentic/setup-sessions";
 import { useUnreadRunAlerts } from "@/lib/ops-store";
+import { scheduleThreadId } from "../scheduled/open-schedule";
 
-const ROW_CLASS =
+export const ROW_CLASS =
   "flex min-w-0 flex-1 items-center gap-2 truncate rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-[color:var(--surface-soft)]";
-const ROW_STYLE = { color: "var(--ink-700)" };
+export const ROW_STYLE = { color: "var(--ink-700)" };
 
 /** Threads and setup sessions live in localStorage, so render them only after hydration. */
-function useMounted() {
+export function useMounted() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   return mounted;
@@ -27,6 +28,11 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+const ACTIVE_PROPS = {
+  "aria-current": "page" as const,
+  style: { background: "var(--surface-soft)", color: "var(--ink-900)", fontWeight: 600 },
+};
+
 function ThreadLink({ thread, children }: { thread: ChatThread; children: React.ReactNode }) {
   if (thread.kind === "investigation") {
     return (
@@ -41,12 +47,55 @@ function ThreadLink({ thread, children }: { thread: ChatThread; children: React.
       </Link>
     );
   }
+  if (thread.kind === "rule") {
+    return (
+      <Link
+        to="/rule/$threadId"
+        params={{ threadId: thread.id }}
+        className={ROW_CLASS}
+        style={ROW_STYLE}
+        activeProps={ACTIVE_PROPS}
+        title={thread.title}
+      >
+        {children}
+      </Link>
+    );
+  }
+  if (thread.kind === "schedule") {
+    return (
+      <Link
+        to="/schedule/$threadId"
+        params={{ threadId: thread.id }}
+        className={ROW_CLASS}
+        style={ROW_STYLE}
+        activeProps={ACTIVE_PROPS}
+        title={thread.title}
+      >
+        {children}
+      </Link>
+    );
+  }
+  if (thread.kind === "dashboard") {
+    return (
+      <Link
+        to="/dashboard/$threadId"
+        params={{ threadId: thread.id }}
+        className={ROW_CLASS}
+        style={ROW_STYLE}
+        activeProps={ACTIVE_PROPS}
+        title={thread.title}
+      >
+        {children}
+      </Link>
+    );
+  }
   return (
     <Link
       to="/chat/$chatId"
       params={{ chatId: thread.id }}
       className={ROW_CLASS}
       style={ROW_STYLE}
+      activeProps={ACTIVE_PROPS}
       title={thread.title}
     >
       {children}
@@ -58,7 +107,7 @@ function ThreadLink({ thread, children }: { thread: ChatThread; children: React.
  * One chat row. A pin button appears on hover or keyboard focus, and the
  * domain tag (when shown) steps aside for it.
  */
-function ThreadRow({ thread, showDomain }: { thread: ChatThread; showDomain?: boolean }) {
+export function ThreadRow({ thread, showDomain }: { thread: ChatThread; showDomain?: boolean }) {
   const { togglePin } = useChatThreads();
   const pinned = !!thread.pinned;
   return (
@@ -122,6 +171,7 @@ export function RecentChats() {
     ...alerts.map((r) => ({
       kind: "run" as const,
       id: r.id,
+      scheduleId: r.scheduleId,
       updatedAt: Date.now() - r.hoursAgo * 3_600_000,
       name: schedules.find((s) => s.id === r.scheduleId)?.name ?? "Schedule run",
     })),
@@ -147,7 +197,8 @@ export function RecentChats() {
           item.kind === "run" ? (
             <li key={item.id} className="flex items-center">
               <Link
-                to="/scheduled"
+                to="/schedule/$threadId"
+                params={{ threadId: scheduleThreadId(item.scheduleId) }}
                 search={{ run: item.id }}
                 className={ROW_CLASS}
                 style={ROW_STYLE}
@@ -179,5 +230,3 @@ export function RecentChats() {
     </div>
   );
 }
-
-

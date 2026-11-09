@@ -17,9 +17,11 @@ type Props = {
 };
 
 const PAGES = [
-  { label: "Data health", to: "/" },
-  { label: "Scheduled", to: "/scheduled" },
+  { label: "Today", to: "/today" },
+  { label: "Dashboards", to: "/" },
+  { label: "Jobs", to: "/scheduled" },
   { label: "Rules", to: "/rules" },
+  { label: "Projects", to: "/projects" },
   { label: "Explore", to: "/explore" },
   { label: "DQ checks", to: "/dq-checks" },
 ] as const;
@@ -49,6 +51,12 @@ export function SearchDialog({ open, onOpenChange }: Props) {
     close();
     if (t.kind === "investigation") {
       void navigate({ to: "/investigate/consistency", search: { q: t.title, thread: t.id } });
+    } else if (t.kind === "dashboard") {
+      void navigate({ to: "/dashboard/$threadId", params: { threadId: t.id } });
+    } else if (t.kind === "schedule") {
+      void navigate({ to: "/schedule/$threadId", params: { threadId: t.id }, search: {} });
+    } else if (t.kind === "rule") {
+      void navigate({ to: "/rule/$threadId", params: { threadId: t.id } });
     } else {
       void navigate({ to: "/chat/$chatId", params: { chatId: t.id }, search: {} });
     }

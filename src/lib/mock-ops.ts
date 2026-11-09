@@ -68,7 +68,7 @@ export type Rule = {
   type: RuleType;
   severity: Severity;
   owner: string;
-  status: "Draft" | "Active";
+  status: "Draft" | "Active" | "Disabled";
   scope: RuleScope;
   /** Share of rows allowed to fail before the check fails. */
   threshold: number;

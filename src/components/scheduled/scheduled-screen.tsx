@@ -8,12 +8,23 @@ import { ME, type Run, type RunStatus, type Schedule } from "@/lib/mock-ops";
 import { useRuns, useSchedules } from "@/lib/ops-store";
 import { ago } from "./format";
 import { useScheduledNav, type ScheduledSearch } from "./nav";
-import { RunView } from "./run-view";
-import { ScheduleView } from "./schedule-view";
+import { useOpenSchedule } from "./open-schedule";
 
 export function ScheduledScreen({ search }: { search: ScheduledSearch }) {
-  if (search.run) return <RunView runId={search.run} />;
-  if (search.schedule) return <ScheduleView scheduleId={search.schedule} />;
+  const openSchedule = useOpenSchedule();
+  const { schedules } = useSchedules();
+  const { runs } = useRuns(schedules);
+
+  // Old links to /scheduled?schedule=… or ?run=… open that schedule's chat thread.
+  React.useEffect(() => {
+    if (search.run) {
+      const run = runs.find((r) => r.id === search.run);
+      if (run) openSchedule(run.scheduleId, run.id);
+    } else if (search.schedule) {
+      openSchedule(search.schedule);
+    }
+  }, [search.run, search.schedule, runs, openSchedule]);
+
   return <ScheduledHome tab={search.tab ?? "schedules"} />;
 }
 
@@ -38,11 +49,11 @@ function ScheduledHome({ tab }: { tab: "schedules" | "runs" }) {
       <div className="mx-auto w-full max-w-[980px]">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-[22px] font-semibold" style={{ color: "var(--ink-900)" }}>
-            Scheduled
+            Jobs
           </h1>
           <div className="ml-2">
             <Tabs
-              label="Scheduled views"
+              label="Jobs views"
               value={tab}
               onChange={(t) => go({ tab: t })}
               tabs={[
@@ -100,7 +111,7 @@ function SearchBox({
 }
 
 function SchedulesTab() {
-  const go = useScheduledNav();
+  const openSchedule = useOpenSchedule();
   const { domains } = useDomainState();
   const { schedules } = useSchedules();
   const { runs } = useRuns(schedules);
@@ -161,7 +172,7 @@ function SchedulesTab() {
               <li key={s.id}>
                 <button
                   type="button"
-                  onClick={() => go({ schedule: s.id })}
+                  onClick={() => openSchedule(s.id)}
                   className="flex h-full w-full flex-col gap-2 rounded-xl border bg-white p-4 text-left transition-shadow hover:shadow-md"
                   style={{ borderColor: "var(--hairline)" }}
                 >
@@ -202,7 +213,7 @@ type Window = "all" | "24h" | "7d";
 const RANK: Record<RunStatus, number> = { running: 0, failed: 1, attention: 2, passed: 3 };
 
 function RunsTab() {
-  const go = useScheduledNav();
+  const openSchedule = useOpenSchedule();
   const { schedules } = useSchedules();
   const { runs } = useRuns(schedules);
   const [who, setWho] = React.useState<"mine" | "team">("team");
@@ -316,7 +327,7 @@ function RunsTab() {
               <li key={r.id}>
                 <button
                   type="button"
-                  onClick={() => go({ run: r.id })}
+                  onClick={() => openSchedule(r.scheduleId, r.id)}
                   className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-left hover:bg-[color:var(--surface-soft)]"
                 >
                   <span className="w-[120px] shrink-0">
