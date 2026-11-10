@@ -211,6 +211,7 @@ export function SplitWorkspace({
   collapsed = false,
   onToggle,
   floating,
+  ownShowToggle = false,
 }: {
   center: React.ReactNode;
   /** Leave out to show the chat alone; the panel appears when there is something to show. */
@@ -221,7 +222,10 @@ export function SplitWorkspace({
   collapsed?: boolean;
   onToggle?: () => void;
   floating?: React.ReactNode;
+  /** The panel places its own "Show chat" toggle (e.g. before its heading). */
+  ownShowToggle?: boolean;
 }) {
+  const builtInShow = collapsed && !!onToggle && !ownShowToggle;
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
       {!collapsed && (
@@ -248,7 +252,10 @@ export function SplitWorkspace({
             } as React.CSSProperties
           }
         >
-          <div className="flex min-h-0 flex-1 flex-col lg:overflow-y-auto">
+          {builtInShow && (
+            <PanelToggle label="Show chat" onClick={onToggle!} className="absolute left-3 top-3 z-20 bg-white" />
+          )}
+          <div className={`flex min-h-0 flex-1 flex-col lg:overflow-y-auto ${builtInShow ? "pl-9" : ""}`}>
             {panel}
             {collapsed && floating && <div className="h-28 shrink-0" />}
           </div>

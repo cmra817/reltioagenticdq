@@ -318,6 +318,7 @@ export function ScheduleWorkspace({
         panelLabel="Schedule"
         panelWidth="59vw"
         collapsed={!chatOpen}
+        ownShowToggle
         onToggle={() => setChatOpen(!chatOpen)}
         floating={
           <FloatingPrompt
@@ -340,7 +341,7 @@ export function ScheduleWorkspace({
             <div className="mx-auto w-full max-w-[960px] flex-1 space-y-5 p-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2">
-                  {!chatOpen && turnCount > 0 && (
+                  {!chatOpen && (
                     <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
                   )}
                   <Tabs
