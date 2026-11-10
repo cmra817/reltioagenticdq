@@ -494,15 +494,15 @@ export function ScopedChat({
                   className={t.role === "user" ? "flex justify-end" : "flex flex-col gap-2"}
                 >
                   <div
-                    className="max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed"
+                    className={
+                      t.role === "user"
+                        ? "max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed"
+                        : "max-w-[88%] whitespace-pre-wrap text-[13.5px] leading-relaxed"
+                    }
                     style={
                       t.role === "user"
                         ? { background: "var(--surface-soft)", color: "var(--ink-900)" }
-                        : {
-                            background: "#fff",
-                            color: "var(--ink-700)",
-                            border: "1px solid var(--hairline)",
-                          }
+                        : { color: "var(--ink-700)" }
                     }
                   >
                     {t.text}
