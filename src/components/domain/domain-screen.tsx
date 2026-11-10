@@ -471,13 +471,7 @@ function DomainWorkspace({
           <ScopedChat
             thread={thread}
             scopeLabel={table ? `${scopeName} › ${table.name}` : scopeName}
-            placeholder={
-              project
-                ? `Ask about ${project.title}…`
-                : table
-                  ? `Ask about ${table.name}…`
-                  : `Ask about ${scopeName}…`
-            }
+            placeholder="Ask Reltio…"
             suggestions={[]}
             ask={ask}
             composerTop={composerTop}
