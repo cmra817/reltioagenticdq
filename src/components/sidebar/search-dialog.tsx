@@ -55,6 +55,8 @@ export function SearchDialog({ open, onOpenChange }: Props) {
       void navigate({ to: "/dashboard/$threadId", params: { threadId: t.id } });
     } else if (t.kind === "schedule") {
       void navigate({ to: "/schedule/$threadId", params: { threadId: t.id }, search: {} });
+    } else if (t.kind === "project") {
+      void navigate({ to: "/projects", search: { project: t.id.replace(/^project-view-/, "") } });
     } else if (t.kind === "rule") {
       void navigate({ to: "/rule/$threadId", params: { threadId: t.id } });
     } else {

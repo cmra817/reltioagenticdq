@@ -7,7 +7,7 @@ export type ChatThread = {
   updatedAt: number;
   messages: UIMessage[];
   /** Scripted surfaces (e.g. the consistency investigation) reopen on their own route. */
-  kind?: "chat" | "investigation" | "rule" | "dashboard" | "schedule" | "domain";
+  kind?: "chat" | "investigation" | "rule" | "dashboard" | "schedule" | "domain" | "project";
   /** Pinned chats sit in their own sidebar section and are never trimmed from history. */
   pinned?: boolean;
   /** The domain the chat started in. It stays put even if the chat later moves focus. */

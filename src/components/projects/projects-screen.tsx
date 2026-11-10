@@ -218,54 +218,47 @@ export function projectReply(p: Project, q: string): ChatReply {
 }
 
 /** A project with its chat on the left and the detail on the right. */
-function ProjectDetail({
-  project: p,
-  onBack,
-  onMove,
-  onComment,
-  notice,
-}: {
+type ProjectDetailProps = {
   project: Project;
   onBack: () => void;
   onMove: (to: ProjectStatus) => void;
   onComment: (text: string) => void;
   notice: string;
-}) {
-  const [draft, setDraft] = React.useState("");
-  const pr = progress(p);
-  const reply = React.useCallback((q: string) => projectReply(p, q), [p]);
-  // One chat per project. It joins Recents, under the project's domain, with the first message.
-  const threadId = projectThreadId(p.id);
-  const [savedChats, setSavedChats, chatsReady] = useLocalStore<Record<string, ChatTurn[]>>(
-    PROJECT_CHATS_KEY,
-    {},
-  );
-  if (!chatsReady) return <div className="flex-1" />;
+};
+
+/** One chat per project. It joins Recents, under the project's domain, with the first message. */
+function ProjectDetail(props: ProjectDetailProps) {
+  const threadId = projectThreadId(props.project.id);
+  const [saved, setSaved, ready] = useLocalStore<Record<string, ChatTurn[]>>(PROJECT_CHATS_KEY, {});
+  if (!ready) return <div className="flex-1" />;
   return (
     <ProjectDetailBody
       key={threadId}
       {...props}
-      reply={reply}
       threadId={threadId}
-      initialTurns={savedChats[threadId]}
-      onTurns={(turns) => setSavedChats((prev) => ({ ...prev, [threadId]: turns }))}
+      initialTurns={saved[threadId]}
+      onTurns={(turns) => setSaved((prev) => ({ ...prev, [threadId]: turns }))}
     />
   );
 }
 
 function ProjectDetailBody({
-  reply,
+  project: p,
+  onBack,
+  onMove,
+  onComment,
+  notice,
   threadId,
   initialTurns,
   onTurns,
-  ...props
 }: ProjectDetailProps & {
-  reply: (q: string) => ChatReply;
   threadId: string;
   initialTurns?: ChatTurn[];
   onTurns: (turns: ChatTurn[]) => void;
 }) {
-  const { p } = props;
+  const [draft, setDraft] = React.useState("");
+  const pr = progress(p);
+  const reply = React.useCallback((q: string) => projectReply(p, q), [p]);
   const thread = useChatThread(reply, initialTurns);
   const { getThread, createThread } = useChatThreads();
   React.useEffect(() => {
