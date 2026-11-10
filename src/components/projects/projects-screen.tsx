@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useDomainState } from "@/components/domain-context";
 import {
   GhostButton,
+  PrimaryButton,
   ScopedChat,
   SectionTitle,
   SplitWorkspace,
@@ -21,6 +22,7 @@ import { PROJECT_STATUSES, type Project, type ProjectStatus } from "@/lib/mock-p
 import { useProjects } from "@/lib/projects-store";
 
 const ALL = "All domains";
+const ALL_OWNERS = "All owners";
 
 function progress(p: Project) {
   const met = p.criteria.filter((c) => c.met).length;
@@ -30,9 +32,11 @@ function progress(p: Project) {
 /** Projects: a kanban board of remediation efforts, one domain each. A card opens with a chat about it. */
 export function ProjectsScreen({ projectId }: { projectId?: string }) {
   const navigate = useNavigate();
-  const { projects, move, addComment } = useProjects();
+  const { projects, move, addComment, add } = useProjects();
   const { domains, selected } = useDomainState();
   const [filter, setFilter] = React.useState<string>(ALL);
+  const [ownerFilter, setOwnerFilter] = React.useState<string>(ALL_OWNERS);
+  const [creating, setCreating] = React.useState(false);
   const [notice, setNotice] = React.useState("");
 
   // Open the board on the domain the person was last looking at, when it has projects.
