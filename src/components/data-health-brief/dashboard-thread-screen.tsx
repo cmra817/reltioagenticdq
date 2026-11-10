@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useChatThreads } from "@/components/chat/chat-context";
 import { useDomainState } from "@/components/domain-context";
+import { ALL_DOMAINS_FIXED } from "@/components/chat/prompt-box";
 import {
   FloatingPrompt,
   PanelToggle,
@@ -201,6 +202,7 @@ function DashboardViewThread({
               thread={thread}
               placeholder="Ask about this dashboard, or change it…"
               onOpen={() => setChatOpen(true)}
+              domain={ALL_DOMAINS_FIXED}
             />
           }
           center={
@@ -210,6 +212,7 @@ function DashboardViewThread({
               placeholder="Ask about this dashboard, or change it…"
               suggestions={["What changed since yesterday?", "Add a card for freshness"]}
               reply={(q) => dashboardReply(dash, q)}
+              domain={ALL_DOMAINS_FIXED}
             />
           }
           panel={
@@ -340,6 +343,7 @@ function DashboardThread({
             thread={thread}
             placeholder="Ask about this dashboard, or change it…"
             onOpen={() => setChatOpen(true)}
+            domain={ALL_DOMAINS_FIXED}
           />
         }
         center={
@@ -349,6 +353,7 @@ function DashboardThread({
             placeholder={dash ? "Ask about this dashboard, or change it…" : "Reply"}
             suggestions={dash ? ["What changed since yesterday?", "Add a card for freshness"] : []}
             reply={reply}
+            domain={ALL_DOMAINS_FIXED}
           />
         }
         panel={

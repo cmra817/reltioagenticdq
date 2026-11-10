@@ -15,6 +15,9 @@ export type PromptProjectControl = {
   onChange: (id: string) => void;
 };
 
+/** Domain-agnostic surfaces (rules, dashboards) always prompt across All domains. */
+export const ALL_DOMAINS_FIXED: PromptDomainControl = { value: ALL_DOMAINS, locked: true };
+
 export interface PromptBoxProps {
   value: string;
   onChange: (value: string) => void;
@@ -91,10 +94,10 @@ export function PromptBox({
           <span
             className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1"
             style={{ ...card, background: "var(--surface-soft)", color: "var(--ink-900)" }}
-            title="The domain is set for this chat. Start a new chat to look at another domain."
+            title="The domain is set for this screen."
           >
             <Lock size={12} aria-hidden="true" />
-            Domain: {domainValue} · locked
+            Domain: {domainValue}
           </span>
         ) : (
           <label className="flex items-center gap-2">

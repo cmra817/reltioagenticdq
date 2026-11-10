@@ -1,4 +1,4 @@
-import { PromptBox } from "@/components/chat/prompt-box";
+import { ALL_DOMAINS_FIXED, PromptBox } from "@/components/chat/prompt-box";
 import * as React from "react";
 import { ArrowUp, Check, Loader2 } from "lucide-react";
 import {
@@ -364,6 +364,7 @@ export function SetupFlow({ onCreate }: { onCreate: (c: SetupConfig) => void }) 
       placeholder={placeholder}
       autoFocus
       busy={busy}
+      domain={ALL_DOMAINS_FIXED}
     />
   );
 
