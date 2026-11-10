@@ -20,7 +20,7 @@ type ProjectStore = {
 const INIT: ProjectStore = { status: {}, owner: {}, comments: {}, created: [] };
 
 /** Older saved stores predate project creation; retain their other changes. */
-export function createdProjects(store: { created?: Project[] }): Project[] {
+export function createdProjects(store: Partial<ProjectStore>): Project[] {
   return Array.isArray(store.created) ? store.created : [];
 }
 

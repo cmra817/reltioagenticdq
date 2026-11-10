@@ -5,7 +5,7 @@ import { BASE_PROJECTS } from "./mock-projects";
 
 test("legacy saved projects can be read and extended without losing changes", () => {
   const legacy = {
-    status: { "proj-1": "In progress" },
+    status: { "proj-1": "In progress" as const },
     owner: { "proj-1": "You" },
     comments: { "proj-1": [{ who: "You", when: "Just now", text: "Keep this" }] },
   };
