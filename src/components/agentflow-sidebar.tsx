@@ -14,6 +14,11 @@ import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
 import { newChatId, useChatThreads } from "./chat/chat-context";
 import { useSetupSessions } from "./add-dataset-agentic/setup-sessions";
+import { useRules, useSchedules } from "@/lib/ops-store";
+import { useOpenSchedule } from "./scheduled/open-schedule";
+import { ME } from "@/lib/mock-ops";
+import { dimensionsInUse, scheduleLabel } from "./add-dataset-agentic/plan-state";
+import { tableName } from "./add-dataset-agentic/plan-state";
 import { Clock, FolderKanban, LayoutDashboard, ListChecks, MessageSquarePlus } from "lucide-react";
 import { DomainGroups } from "./sidebar/domain-groups";
 import { PinnedChats } from "./sidebar/chat-lists";
@@ -100,6 +105,10 @@ function NewMenu() {
   const { addAssets } = useCreatedAssets();
   const { createThread } = useChatThreads();
   const setup = useSetupSessions();
+  const { add: addSchedule } = useSchedules();
+  const { rules } = useRules();
+  const openSchedule = useOpenSchedule();
+  const isTaskSetup = setup.active?.purpose === "task";
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [domainOpen, setDomainOpen] = useState(false);
@@ -240,16 +249,42 @@ function NewMenu() {
             setPendingDomain(null);
           }
         }}
-        domainName={setup.active?.domain || pendingDomain || selected}
+        domainName={isTaskSetup ? setup.active?.domain ?? "" : setup.active?.domain || pendingDomain || selected}
+        purpose={setup.active?.purpose ?? "asset"}
+        onTaskComplete={(plan, domain) => {
+          const id = `task-${Date.now()}`;
+          const dims = new Set(dimensionsInUse(plan).map((d) => d.toLowerCase()));
+          const ruleIds = rules.filter((r) => r.scope !== "Template" && dims.has(r.type.toLowerCase())).map((r) => r.id);
+          addSchedule({
+            id,
+            name: `${plan.profiling?.frequency === "weekly" ? "Weekly" : "Daily"} checks — ${domain}`,
+            domain,
+            kind: "Profiling + checks",
+            tables: plan.selected.map(tableName),
+            ruleIds,
+            repeats: scheduleLabel(plan.profiling),
+            nextRun: "Tomorrow",
+            active: true,
+            owner: ME,
+            permissions: "Everyone in the domain",
+            plan,
+          });
+          if (setup.active) setup.deleteSession(setup.active.id);
+          window.setTimeout(() => openSchedule(id), 1300);
+        }}
         snapshot={setup.active ? setup.getSession(setup.active.id)?.snapshot ?? null : null}
         onPersist={(snapshot) => {
           const a = setup.active;
           if (!a) return;
-          const domain = a.domain || selected;
+          const task = a.purpose === "task";
+          // A saved task is no longer a setup in progress.
+          if (task && snapshot.done) return;
+          const domain = task ? snapshot.taskDomain || a.domain : a.domain || selected;
           setup.saveSession({
             id: a.id,
             domain,
-            title: `Add asset: ${domain}`,
+            purpose: a.purpose,
+            title: task ? (domain ? `New task: ${domain}` : "New task") : `Add asset: ${domain}`,
             updatedAt: Date.now(),
             snapshot,
           });

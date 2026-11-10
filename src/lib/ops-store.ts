@@ -37,7 +37,12 @@ export function useSchedules() {
     [setStore],
   );
 
-  return { schedules, update, ready };
+  const add = React.useCallback(
+    (s: Schedule) => setStore((prev) => ({ ...prev, added: [...prev.added, s] })),
+    [setStore],
+  );
+
+  return { schedules, update, add, ready };
 }
 
 /* ---------- runs ---------- */

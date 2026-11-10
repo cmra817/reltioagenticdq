@@ -2,7 +2,7 @@ import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
 import { useDomainState } from "@/components/domain-context";
-import { newChatId, useChatThreads } from "@/components/chat/chat-context";
+import { useSetupSessions } from "@/components/add-dataset-agentic/setup-sessions";
 import { PrimaryButton, RunPill, StatTile, Tabs, Tag } from "@/components/workspace/primitives";
 import { ME, type Run, type RunStatus, type Schedule } from "@/lib/mock-ops";
 import { useRuns, useSchedules } from "@/lib/ops-store";
@@ -30,18 +30,12 @@ export function ScheduledScreen({ search }: { search: ScheduledSearch }) {
 
 function ScheduledHome({ tab }: { tab: "schedules" | "runs" }) {
   const go = useScheduledNav();
-  const navigate = useNavigate();
-  const { createThread } = useChatThreads();
-  const { selected } = useDomainState();
+  const setup = useSetupSessions();
+  // The page's domain filter decides the task's domain; "All domains" makes the agent ask.
+  const [domain, setDomain] = React.useState("all");
 
   function newSchedule() {
-    const id = newChatId();
-    createThread({ id, title: "New task", domain: selected });
-    void navigate({
-      to: "/chat/$chatId",
-      params: { chatId: id },
-      search: { q: "Set up a new task for my tables" },
-    });
+    setup.openNew(domain === "all" ? "" : domain, "task");
   }
 
   return (
@@ -72,7 +66,7 @@ function ScheduledHome({ tab }: { tab: "schedules" | "runs" }) {
             : "Every time a task ran, newest first, with failures on top."}
         </p>
 
-        <div className="mt-5">{tab === "schedules" ? <SchedulesTab /> : <RunsTab />}</div>
+        <div className="mt-5">{tab === "schedules" ? <SchedulesTab domain={domain} setDomain={setDomain} /> : <RunsTab />}</div>
       </div>
     </div>
   );
@@ -110,12 +104,11 @@ function SearchBox({
   );
 }
 
-function SchedulesTab() {
+function SchedulesTab({ domain, setDomain }: { domain: string; setDomain: (d: string) => void }) {
   const openSchedule = useOpenSchedule();
   const { domains } = useDomainState();
   const { schedules } = useSchedules();
   const { runs } = useRuns(schedules);
-  const [domain, setDomain] = React.useState("all");
   const [failedOnly, setFailedOnly] = React.useState(false);
   const [query, setQuery] = React.useState("");
 
