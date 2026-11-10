@@ -940,7 +940,7 @@ function TableContext({
   ruleName: (id: string) => string;
   project?: Project;
   onBack: () => void;
-  onAsk: (q: string) => void;
+  onAsk: (q: string, tableName?: string) => void;
 }) {
   const [tab, setTab] = React.useState<TableTab>("overview");
   const covering = schedules.filter((s) => s.tables.includes(table.name));
