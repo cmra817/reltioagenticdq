@@ -46,6 +46,7 @@ import { newChatId, useChatThreads } from "@/components/chat/chat-context";
 import type { ChatTurn } from "@/components/workspace/primitives";
 import type { Project } from "@/lib/mock-projects";
 import { projectReply } from "@/components/projects/projects-screen";
+import { DomainProjects } from "@/components/domain/domain-projects";
 import { DomainRail, type BriefLine } from "./domain-rail";
 
 export type DomainSearch = {
@@ -62,7 +63,7 @@ export type DomainSearch = {
 export type SavedDomainChat = { turns: ChatTurn[]; domain?: string; project?: string };
 export const DOMAIN_CHATS_KEY = "agentflow.domain-chats.v1";
 
-type PanelTab = "overview" | "tables" | "checks";
+type PanelTab = "overview" | "tables" | "checks" | "projects";
 type TableTab = "overview" | "columns" | "sample" | "activity" | "checks";
 
 const DISCUSS = "Let's discuss: ";
@@ -498,6 +499,10 @@ function DomainWorkspace({
                 setPanelTab("tables");
                 setExpanded(true);
               }}
+              onOpenProjects={() => {
+                setPanelTab("projects");
+                setExpanded(true);
+              }}
             />
           ) : (
             <div className="relative flex min-h-0 flex-1 flex-col">
@@ -547,6 +552,7 @@ function DomainWorkspace({
                   runs={scopeRuns}
                   ruleName={ruleName}
                   projectOf={projectOf}
+                  projects={scopeProjects}
                   onAsk={(q, name) => discuss(q, name)}
                   onOpenTable={openTable}
                   tab={panelTab}
@@ -579,6 +585,7 @@ function DomainPanel({
   runs,
   ruleName,
   projectOf,
+  projects,
   onAsk,
   onOpenTable,
   tab,
@@ -603,6 +610,7 @@ function DomainPanel({
   runs: Run[];
   ruleName: (id: string) => string;
   projectOf: (t: TableInfo) => Project | undefined;
+  projects: Project[];
   onAsk: (question: string, tableName?: string) => void;
   onOpenTable: (name: string) => void;
 }) {
@@ -641,15 +649,9 @@ function DomainPanel({
             { id: "overview", label: "Overview" },
             { id: "tables", label: "Tables", hint: String(tables.length) },
             { id: "checks", label: "Checks" },
+            { id: "projects", label: "Projects", hint: String(projects.length) },
           ]}
         />
-        <Link
-          to="/projects"
-          className="ml-1 shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-[13px] font-medium hover:bg-[color:var(--surface-soft)]"
-          style={{ color: "var(--ink-500)" }}
-        >
-          Projects ↗
-        </Link>
       </div>
 
       {tab === "overview" && (
@@ -875,6 +877,8 @@ function DomainPanel({
         </div>
       )}
 
+      {tab === "projects" && <DomainProjects projects={projects} onAsk={(q) => onAsk(q)} />}
+
       {tab === "checks" && <ChecksView onCheck={(name) => onAsk(panelPrompt.check(name))} />}
     </div>
   );
@@ -951,6 +955,7 @@ function TableContext({
       )}
       {tab === "columns" && <ProfilingView onScope={(c) => onAsk(panelPrompt.column(c, table.name))} />}
       {tab === "sample" && <SampleDataView onColumn={(c) => onAsk(panelPrompt.column(c, table.name))} />}
+
       {tab === "checks" && <ChecksView onCheck={(c) => onAsk(panelPrompt.check(c, table.name))} />}
       {tab === "activity" && (
         <ActivityView

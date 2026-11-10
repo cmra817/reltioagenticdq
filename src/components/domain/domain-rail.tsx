@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { Maximize2 } from "lucide-react";
 import { HealthPill, HEALTH_COLOR, Sparkline } from "@/components/workspace/primitives";
 import { statusForScore, STATUS_LABEL } from "@/components/domain-context";
@@ -23,8 +22,10 @@ export function DomainRail({
   onAsk,
   onExpand,
   onOpenTables,
+  onOpenProjects,
   onOpenTable,
 }: {
+  onOpenProjects: () => void;
   domain: string;
   score: number | null;
   tables: TableInfo[];
@@ -159,8 +160,9 @@ export function DomainRail({
             {tables.length} · {attention} need attention ›
           </span>
         </button>
-        <Link
-          to="/projects"
+        <button
+          type="button"
+          onClick={onOpenProjects}
           className="flex w-full items-center justify-between rounded-lg border bg-white px-3 py-2.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
           style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
         >
@@ -168,7 +170,7 @@ export function DomainRail({
           <span style={{ color: "var(--ink-500)" }}>
             {activeProjects} active · {suggestedProjects} suggested ›
           </span>
-        </Link>
+        </button>
       </section>
     </div>
   );
