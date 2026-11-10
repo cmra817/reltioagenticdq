@@ -1,18 +1,28 @@
 import * as React from "react";
-import { PROJECT_STATUSES, type Project } from "@/lib/mock-projects";
+import type { Project } from "@/lib/mock-projects";
+import { ProjectBoard } from "@/components/projects/projects-screen";
+import { useProjects } from "@/lib/projects-store";
 
+const ALL_OWNERS = "All owners";
 const card = { borderColor: "var(--hairline)" } as const;
 
 /** Projects for the domain, shown inside the domain chat's right panel: a kanban, then a project's details. */
 export function DomainProjects({
   projects,
   onAsk,
+  showDomain = false,
 }: {
+  showDomain?: boolean;
   projects: Project[];
   onAsk: (question: string) => void;
 }) {
   const [openId, setOpenId] = React.useState<string | null>(null);
   const open = projects.find((p) => p.id === openId);
+  const { move } = useProjects();
+  const [owner, setOwner] = React.useState(ALL_OWNERS);
+  const [notice, setNotice] = React.useState("");
+  const owners = [...new Set(projects.map((p) => p.owner))].sort();
+  const shown = projects.filter((p) => owner === ALL_OWNERS || p.owner === owner);
 
   if (open) {
     return (
@@ -63,37 +73,40 @@ export function DomainProjects({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
-      {PROJECT_STATUSES.map((status) => {
-        const col = projects.filter((p) => p.status === status);
-        return (
-          <div key={status} className="min-h-[200px] rounded-xl p-2" style={{ background: "var(--surface-soft)" }} aria-label={status}>
-            <div className="mb-2 flex justify-between px-1 text-[12px] font-semibold" style={{ color: "var(--ink-700)" }}>
-              <span>{status}</span><span style={{ color: "var(--ink-500)" }}>{col.length}</span>
-            </div>
-            <ul className="space-y-2">
-              {col.map((p) => (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpenId(p.id);
-                      onAsk(`Tell me about the "${p.title}" project`);
-                    }}
-                    className="block w-full rounded-lg border bg-white p-2.5 text-left hover:border-[color:var(--brand-blue)]"
-                    style={card}
-                  >
-                    <div className="text-[13px] font-medium" style={{ color: "var(--ink-900)" }}>{p.title}</div>
-                    <div className="mt-1 text-[11.5px]" style={{ color: "var(--ink-500)" }}>
-                      {p.owner} · {p.criteria.filter((c) => c.met).length}/{p.criteria.length} criteria
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      })}
+    <div>
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-[13px]" style={{ color: "var(--ink-500)" }}>
+          Owner
+          <select
+            value={owner}
+            onChange={(e) => setOwner(e.target.value)}
+            className="rounded-lg px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
+            style={{ border: "1px solid var(--hairline)", background: "var(--surface)", color: "var(--ink-900)" }}
+          >
+            <option value={ALL_OWNERS}>{ALL_OWNERS}</option>
+            {owners.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
+        </label>
+        <span className="ml-auto text-[12.5px]" style={{ color: "var(--ink-500)" }}>
+          {shown.length} {shown.length === 1 ? "project" : "projects"}
+        </span>
+      </div>
+      {notice && (
+        <div role="status" className="mt-3 rounded-lg px-3 py-2 text-[13px]" style={{ background: "#fcefd4", color: "#5c3902" }}>
+          {notice}
+        </div>
+      )}
+      <ProjectBoard
+        projects={shown}
+        showDomain={showDomain}
+        onOpen={(p) => {
+          setOpenId(p.id);
+          onAsk(`Tell me about the "${p.title}" project`);
+        }}
+        onMove={(id, to) => setNotice(move(id, to) ?? "")}
+      />
     </div>
   );
 }

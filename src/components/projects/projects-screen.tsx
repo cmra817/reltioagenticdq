@@ -147,96 +147,7 @@ export function ProjectsScreen({ projectId }: { projectId?: string }) {
           </div>
         )}
 
-        <div className="mt-4 grid gap-3 overflow-x-auto pb-2 md:grid-cols-4">
-          {PROJECT_STATUSES.map((status) => {
-            const col = shown.filter((p) => p.status === status);
-            const idx = PROJECT_STATUSES.indexOf(status);
-            return (
-              <div
-                key={status}
-                className="min-h-[260px] min-w-[200px] rounded-xl p-2.5"
-                style={{ background: "var(--surface-soft)" }}
-                aria-label={status}
-              >
-                <div
-                  className="flex justify-between px-1 pb-2.5 text-[12.5px] font-semibold"
-                  style={{ color: "var(--ink-900)" }}
-                >
-                  <span>{status}</span>
-                  <span>{col.length}</span>
-                </div>
-                <ul className="space-y-2">
-                  {col.map((p) => {
-                    const pr = progress(p);
-                    return (
-                      <li
-                        key={p.id}
-                        className="rounded-lg border bg-white p-2.5"
-                        style={{ borderColor: "var(--hairline)" }}
-                      >
-                        {p.suggestedByAgent && (
-                          <span
-                            className="mb-1.5 inline-block rounded px-1.5 py-px text-[11px]"
-                            style={{ background: "#fcefd4", color: "#855304" }}
-                          >
-                            Suggested by agent
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => void navigate({ to: "/projects", search: { project: p.id } })}
-                          className="block w-full text-left"
-                        >
-                          <div className="text-[13px] font-medium leading-snug" style={{ color: "var(--ink-900)" }}>
-                            {p.title}
-                          </div>
-                          <div className="mt-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
-                            {p.owner} · {filter === ALL ? `${p.domain} · ` : ""}
-                            {p.tables.length} {p.tables.length === 1 ? "table" : "tables"} ·{" "}
-                            {p.daysOpen === 0 ? "new" : `${p.daysOpen} days`}
-                          </div>
-                          <div className="mt-2 h-2 overflow-hidden rounded-full" style={{ background: "var(--surface-soft)" }}>
-                            <div
-                              className="h-2 rounded-full"
-                              style={{ width: `${pr.pct}%`, background: "var(--status-good)" }}
-                            />
-                          </div>
-                          <div className="mt-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
-                            {pr.met} of {pr.total} criteria met
-                          </div>
-                        </button>
-                        <div className="mt-2 flex gap-1.5">
-                          {idx > 0 && (
-                            <button
-                              type="button"
-                              aria-label={`Move “${p.title}” to ${PROJECT_STATUSES[idx - 1]}`}
-                              onClick={() => doMove(p.id, PROJECT_STATUSES[idx - 1])}
-                              className="rounded-md border bg-white px-2 py-0.5 text-[12px] hover:bg-[color:var(--surface-soft)]"
-                              style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                            >
-                              ‹
-                            </button>
-                          )}
-                          {idx < PROJECT_STATUSES.length - 1 && (
-                            <button
-                              type="button"
-                              aria-label={`Move “${p.title}” to ${PROJECT_STATUSES[idx + 1]}`}
-                              onClick={() => doMove(p.id, PROJECT_STATUSES[idx + 1])}
-                              className="rounded-md border bg-white px-2 py-0.5 text-[12px] hover:bg-[color:var(--surface-soft)]"
-                              style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
-                            >
-                              {PROJECT_STATUSES[idx + 1]} ›
-                            </button>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
+        <ProjectBoard projects={shown} showDomain={filter === ALL} onOpen={(p) => void navigate({ to: "/projects", search: { project: p.id } })} onMove={doMove} />
         <p className="mt-2 text-[12px]" style={{ color: "var(--ink-500)" }}>
           Select a card to open it with a chat about that project.
         </p>
@@ -623,5 +534,111 @@ function ProjectDetailBody({
       }
       panel={panel}
     />
+  );
+}
+
+/** The kanban of project cards, shared by the Projects page and a domain chat's right panel. */
+export function ProjectBoard({
+  projects: shown,
+  showDomain,
+  onOpen,
+  onMove: doMove,
+}: {
+  projects: Project[];
+  showDomain: boolean;
+  onOpen: (p: Project) => void;
+  onMove: (id: string, to: ProjectStatus) => void;
+}) {
+  return (
+        <div className="mt-4 grid gap-3 overflow-x-auto pb-2 md:grid-cols-4">
+          {PROJECT_STATUSES.map((status) => {
+            const col = shown.filter((p) => p.status === status);
+            const idx = PROJECT_STATUSES.indexOf(status);
+            return (
+              <div
+                key={status}
+                className="min-h-[260px] min-w-[200px] rounded-xl p-2.5"
+                style={{ background: "var(--surface-soft)" }}
+                aria-label={status}
+              >
+                <div
+                  className="flex justify-between px-1 pb-2.5 text-[12.5px] font-semibold"
+                  style={{ color: "var(--ink-900)" }}
+                >
+                  <span>{status}</span>
+                  <span>{col.length}</span>
+                </div>
+                <ul className="space-y-2">
+                  {col.map((p) => {
+                    const pr = progress(p);
+                    return (
+                      <li
+                        key={p.id}
+                        className="rounded-lg border bg-white p-2.5"
+                        style={{ borderColor: "var(--hairline)" }}
+                      >
+                        {p.suggestedByAgent && (
+                          <span
+                            className="mb-1.5 inline-block rounded px-1.5 py-px text-[11px]"
+                            style={{ background: "#fcefd4", color: "#855304" }}
+                          >
+                            Suggested by agent
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => onOpen(p)}
+                          className="block w-full text-left"
+                        >
+                          <div className="text-[13px] font-medium leading-snug" style={{ color: "var(--ink-900)" }}>
+                            {p.title}
+                          </div>
+                          <div className="mt-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
+                            {p.owner} · {showDomain ? `${p.domain} · ` : ""}
+                            {p.tables.length} {p.tables.length === 1 ? "table" : "tables"} ·{" "}
+                            {p.daysOpen === 0 ? "new" : `${p.daysOpen} days`}
+                          </div>
+                          <div className="mt-2 h-2 overflow-hidden rounded-full" style={{ background: "var(--surface-soft)" }}>
+                            <div
+                              className="h-2 rounded-full"
+                              style={{ width: `${pr.pct}%`, background: "var(--status-good)" }}
+                            />
+                          </div>
+                          <div className="mt-1 text-[12px]" style={{ color: "var(--ink-500)" }}>
+                            {pr.met} of {pr.total} criteria met
+                          </div>
+                        </button>
+                        <div className="mt-2 flex gap-1.5">
+                          {idx > 0 && (
+                            <button
+                              type="button"
+                              aria-label={`Move “${p.title}” to ${PROJECT_STATUSES[idx - 1]}`}
+                              onClick={() => doMove(p.id, PROJECT_STATUSES[idx - 1])}
+                              className="rounded-md border bg-white px-2 py-0.5 text-[12px] hover:bg-[color:var(--surface-soft)]"
+                              style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                            >
+                              ‹
+                            </button>
+                          )}
+                          {idx < PROJECT_STATUSES.length - 1 && (
+                            <button
+                              type="button"
+                              aria-label={`Move “${p.title}” to ${PROJECT_STATUSES[idx + 1]}`}
+                              onClick={() => doMove(p.id, PROJECT_STATUSES[idx + 1])}
+                              className="rounded-md border bg-white px-2 py-0.5 text-[12px] hover:bg-[color:var(--surface-soft)]"
+                              style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                            >
+                              {PROJECT_STATUSES[idx + 1]} ›
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
   );
 }

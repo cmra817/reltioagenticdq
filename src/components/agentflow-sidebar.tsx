@@ -12,7 +12,7 @@ import { useOpenSchedule } from "./scheduled/open-schedule";
 import { ME } from "@/lib/mock-ops";
 import { dimensionsInUse, scheduleLabel } from "./add-dataset-agentic/plan-state";
 import { tableName } from "./add-dataset-agentic/plan-state";
-import { Clock, FolderKanban, LayoutDashboard, ListChecks, MessageSquarePlus } from "lucide-react";
+import { Clock, LayoutDashboard, ListChecks, MessageSquarePlus } from "lucide-react";
 import { DomainGroups } from "./sidebar/domain-groups";
 import { PinnedChats } from "./sidebar/chat-lists";
 import { useNeeds } from "@/lib/projects-store";
@@ -223,12 +223,6 @@ export function AgentflowSidebar({ activeNav = "data-health" }: { activeNav?: Si
           label="Rules"
           to="/rules"
           active={activeNav === "rules"}
-        />
-        <NavItem
-          icon={<FolderKanban {...iconProps} />}
-          label="Projects"
-          to="/projects"
-          active={activeNav === "projects"}
         />
       </nav>
 

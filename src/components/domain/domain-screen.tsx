@@ -877,7 +877,7 @@ function DomainPanel({
         </div>
       )}
 
-      {tab === "projects" && <DomainProjects projects={projects} onAsk={(q) => onAsk(q)} />}
+      {tab === "projects" && <DomainProjects projects={projects} showDomain={showDomain} onAsk={(q) => onAsk(q)} />}
 
       {tab === "checks" && <ChecksView onCheck={(name) => onAsk(panelPrompt.check(name))} />}
     </div>
