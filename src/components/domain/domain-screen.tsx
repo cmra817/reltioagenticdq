@@ -28,6 +28,13 @@ import {
   type TableInfo,
 } from "@/lib/mock-ops";
 import { useRules, useRuns, useSchedules } from "@/lib/ops-store";
+import {
+  ActivityView,
+  ChecksView,
+  OverviewSection,
+  ProfilingView,
+  SampleDataView,
+} from "@/components/table-brief/evidence-panel";
 import { tableAssetFor } from "@/lib/mock-ops";
 import { AssetRowsTable, SourceTree, type TreeNode } from "@/components/explore-screen";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -54,7 +61,7 @@ export type SavedDomainChat = { turns: ChatTurn[]; domain?: string; project?: st
 export const DOMAIN_CHATS_KEY = "agentflow.domain-chats.v1";
 
 type PanelTab = "overview" | "tables" | "checks";
-type TableTab = "overview" | "columns" | "sample" | "events" | "checks";
+type TableTab = "overview" | "columns" | "sample" | "activity" | "checks";
 
 const DISCUSS = "Let's discuss: ";
 const card = { borderColor: "var(--hairline)" } as const;
@@ -963,201 +970,20 @@ function TableContext({
           { id: "overview", label: "Overview" },
           { id: "columns", label: "Columns" },
           { id: "sample", label: "Sample data" },
-          { id: "events", label: "Events" },
           { id: "checks", label: "Checks" },
+          { id: "activity", label: "Activity log" },
         ]}
       />
 
       {tab === "overview" && (
-        <>
-          <div className="grid grid-cols-3 gap-3">
-            <StatTile
-              label="Health score"
-              value={String(table.score)}
-              note={table.score >= 90 ? "Healthy" : "Needs attention"}
-            />
-            <StatTile label="Rows" value={table.rows} note={`Updated ${table.lastChecked}`} />
-            <StatTile
-              label="Checks passing"
-              value={checksRun ? `${checksRun - checksFailed} of ${checksRun}` : "—"}
-              note={checksRun ? "Latest run" : "No runs yet"}
-            />
-          </div>
-          <div>
-            <SectionTitle>Open findings</SectionTitle>
-            {findings.length === 0 ? (
-              <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-                None from the latest runs.
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {findings.map((f) => (
-                  <li key={f.title} className="rounded-xl border bg-white p-3" style={card}>
-                    <div className="text-[13.5px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                      {f.title}
-                    </div>
-                    <p className="mt-1 text-[12.5px]" style={{ color: "var(--ink-700)" }}>
-                      {f.detail}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div>
-            <SectionTitle>Project</SectionTitle>
-            {project ? (
-              <Link
-                to="/projects"
-                search={{ project: project.id }}
-                className="text-[13.5px] font-medium underline"
-                style={{ color: "var(--brand-blue)" }}
-              >
-                {project.title}
-              </Link>
-            ) : (
-              <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-                This table isn't part of a project.
-              </p>
-            )}
-          </div>
-        </>
+        <OverviewSection
+          onOpen={(id) => setTab(id === "checks" ? "checks" : id === "sample" ? "sample" : id === "activity" ? "activity" : "columns")}
+        />
       )}
-
-      {tab === "columns" && (
-        <table className="w-full text-left text-[13px]">
-          <thead>
-            <tr className="text-[11px] uppercase tracking-wide" style={{ color: "var(--ink-300)" }}>
-              <th className="py-1.5 font-semibold">Column</th>
-              <th className="py-1.5 font-semibold">Type</th>
-              <th className="py-1.5 text-right font-semibold">Filled</th>
-              <th className="py-1.5 text-right font-semibold">Distinct</th>
-            </tr>
-          </thead>
-          <tbody>
-            {columns.map((c) => (
-              <tr key={c.name} className="border-t" style={{ borderColor: "var(--hairline)" }}>
-                <td className="py-2 font-mono font-medium" style={{ color: "var(--ink-900)" }}>
-                  {c.name}
-                </td>
-                <td className="py-2" style={{ color: "var(--ink-500)" }}>
-                  {c.type}
-                </td>
-                <td className="py-2 text-right tabular-nums">{+(100 - c.nullPct).toFixed(1)}%</td>
-                <td className="py-2 text-right tabular-nums">{c.distinct}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {tab === "sample" && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-[12.5px]">
-            <thead>
-              <tr
-                className="text-[11px] uppercase tracking-wide"
-                style={{ color: "var(--ink-300)" }}
-              >
-                {sample.head.map((h) => (
-                  <th key={h} className="whitespace-nowrap py-1.5 pr-3 font-semibold">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sample.rows.map((row, i) => (
-                <tr key={i} className="border-t" style={{ borderColor: "var(--hairline)" }}>
-                  {row.map((cell, j) => (
-                    <td
-                      key={j}
-                      className="whitespace-nowrap py-2 pr-3 font-mono"
-                      style={{ color: cell === "—" ? "var(--ink-300)" : "var(--ink-700)" }}
-                    >
-                      {cell}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="mt-2 text-[12px]" style={{ color: "var(--ink-500)" }}>
-            A few example rows. Values are illustrative.
-          </p>
-        </div>
-      )}
-
-      {tab === "events" && (
-        <ul className="divide-y rounded-xl border bg-white" style={card}>
-          {tableRuns.slice(0, 4).map((r) => (
-            <li key={r.id}>
-              <Link
-                to="/scheduled"
-                search={{ run: r.id }}
-                className="flex items-center gap-3 px-3.5 py-2.5 text-[13px] hover:bg-[color:var(--surface-soft)]"
-              >
-                <RunPill status={r.status} />
-                <span className="min-w-0 flex-1 truncate" style={{ color: "var(--ink-900)" }}>
-                  {r.status === "passed" ? "Daily checks passed" : "Daily checks found failures"} ·{" "}
-                  {schedules.find((s) => s.id === r.scheduleId)?.name}
-                </span>
-                <span style={{ color: "var(--ink-300)" }}>{ago(r.hoursAgo)}</span>
-              </Link>
-            </li>
-          ))}
-          {[
-            ["Schema unchanged", "This week"],
-            ["Profiling refreshed", "Yesterday"],
-          ].map(([what, when]) => (
-            <li key={what} className="flex items-center justify-between px-3.5 py-2.5 text-[13px]">
-              <span style={{ color: "var(--ink-900)" }}>{what}</span>
-              <span style={{ color: "var(--ink-300)" }}>{when}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {tab === "checks" &&
-        (covering.every((s) => s.ruleIds.length === 0) ? (
-          <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-            No checks cover this table yet.
-          </p>
-        ) : (
-          <ul className="divide-y rounded-xl border bg-white" style={card}>
-            {covering.flatMap((s) =>
-              s.ruleIds.map((id) => {
-                const failing = failingRules.has(id);
-                return (
-                  <li key={`${s.id}-${id}`} className="flex items-start gap-3 px-3.5 py-2.5">
-                    <span
-                      className="mt-0.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
-                      style={{
-                        background: "var(--surface-soft)",
-                        color: failing ? "var(--status-bad)" : "var(--status-good)",
-                      }}
-                    >
-                      {failing ? "Failing" : "Passing"}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <Link
-                        to="/rules"
-                        search={{ rule: id }}
-                        className="text-[13.5px] font-medium underline"
-                        style={{ color: "var(--ink-900)" }}
-                      >
-                        {ruleName(id)}
-                      </Link>
-                      <span className="block text-[12px]" style={{ color: "var(--ink-500)" }}>
-                        in {s.name}
-                      </span>
-                    </span>
-                  </li>
-                );
-              }),
-            )}
-          </ul>
-        ))}
+      {tab === "columns" && <ProfilingView onScope={() => {}} />}
+      {tab === "sample" && <SampleDataView />}
+      {tab === "checks" && <ChecksView />}
+      {tab === "activity" && <ActivityView />}
     </div>
   );
 }
