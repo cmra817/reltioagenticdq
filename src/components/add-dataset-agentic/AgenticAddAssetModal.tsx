@@ -38,7 +38,12 @@ import {
 
 
 type Section = "select" | "checks" | "schedule";
-import type { SetupSnapshot } from "./setup-sessions";
+import type { SetupPurpose, SetupSnapshot } from "./setup-sessions";
+import { useDomainState } from "@/components/domain-context";
+
+export const TASK_START_PROMPT = "Set up a new task";
+const TASK_DETAILS_QUESTION =
+  "Sure, I can help you with that. Just let me know:\n(1) What tables you'd like to monitor\n(2) Are there any specific checks you'd like to run them against? I will also recommend some.\n(3) How often would you like to run this task.";
 
 type Msg = {
   id: number;
@@ -75,6 +80,8 @@ export function AgenticAddAssetModal({
   onComplete,
   snapshot,
   onPersist,
+  purpose = "asset",
+  onTaskComplete,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -83,7 +90,14 @@ export function AgenticAddAssetModal({
   /** Saved state of an in-progress setup, restored when the user reopens it. */
   snapshot?: SetupSnapshot | null;
   onPersist?: (s: SetupSnapshot) => void;
+  /** "task": the setup starts itself, makes sure of a domain, and saves a task. */
+  purpose?: SetupPurpose;
+  onTaskComplete?: (plan: Plan, domain: string) => void;
 }) {
+  const isTask = purpose === "task";
+  const { domains } = useDomainState();
+  const [taskDomain, setTaskDomain] = useState(domainName ?? "");
+  const [taskStage, setTaskStage] = useState<"domain" | "details" | null>(null);
   const [mode, setMode] = useState<"chat" | "plan" | "manual">("chat");
   const [reveal, setReveal] = useState<Reveal>(null);
   const [ruleRequest, setRuleRequest] = useState<RuleRequest>(null);
@@ -153,6 +167,8 @@ export function AgenticAddAssetModal({
     setFilled(s.filled);
     setDone(s.done);
     setTab(s.mode === "plan" ? "plan" : "chat");
+    if (s.taskStage !== undefined) setTaskStage(s.taskStage);
+    if (s.taskDomain) setTaskDomain(s.taskDomain);
   }, [open]);
 
   const persistRef = useRef(onPersist);
@@ -160,8 +176,30 @@ export function AgenticAddAssetModal({
   useEffect(() => {
     if (!open || !hydrated.current) return;
     if (msgs.length === 0) return;
-    persistRef.current?.({ mode, plan, msgs, queue, proposal, filled, done });
-  }, [open, mode, plan, msgs, queue, proposal, filled, done]);
+    persistRef.current?.({ mode, plan, msgs, queue, proposal, filled, done, taskStage, taskDomain });
+  }, [open, mode, plan, msgs, queue, proposal, filled, done, taskStage, taskDomain]);
+
+  // A new task starts itself: the request is already sent, then the agent asks
+  // for a domain (when none is chosen) and the task details.
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (!open || !isTask || autoStarted.current) return;
+    autoStarted.current = true;
+    if (snapshotRef.current?.msgs?.length) return;
+    setMsgs([{ id: mid(), role: "user", text: TASK_START_PROMPT } as Msg]);
+    setThinking(true);
+    window.setTimeout(() => {
+      setThinking(false);
+      if (!taskDomain) {
+        setTaskStage("domain");
+        setMsgs((m) => [...m, { id: mid(), role: "agent", text: "Which domain is this task for?", chips: domains } as Msg]);
+      } else {
+        setTaskStage("details");
+        setMsgs((m) => [...m, { id: mid(), role: "agent", text: TASK_DETAILS_QUESTION } as Msg]);
+      }
+    }, 800);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isTask]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -559,7 +597,29 @@ export function AgenticAddAssetModal({
     const text = (raw ?? input).trim();
     if (!text || thinking) return;
     setInput("");
-    if (mode === "chat" && msgs.length === 0) firstMessage(text);
+    if (isTask && taskStage === "domain") {
+      push({ role: "user", text });
+      const d = domains.find((x) => text.toLowerCase().includes(x.toLowerCase()));
+      agentSay(() => {
+        if (!d) return push({ role: "agent", text: "I didn't catch the domain. Pick one:", chips: domains });
+        setTaskDomain(d);
+        setTaskStage("details");
+        push({ role: "agent", text: `Got it, a ${d} task. ${TASK_DETAILS_QUESTION}` });
+      });
+    } else if (isTask && taskStage === "details") {
+      push({ role: "user", text });
+      let found = findTables(text);
+      if (!found.length) found = ALL_ASSETS.filter((x) => x.name === "dim_customers" || x.name === "fct_orders_daily");
+      let p = withTables(EMPTY_PLAN, found.map((f) => f.key));
+      p = applyAnswer({ id: "checks" } as Question, text, p);
+      const sched = parseSchedule(text);
+      if (sched) p = { ...p, profiling: sched, checks: sched, linked: true };
+      setTaskStage(null);
+      agentSay(() => {
+        push({ role: "agent", text: "Creating the task now. I added my recommended checks for each table; review it on the right and save when it looks right." });
+        startDrafting(p, { schedule: !!sched });
+      });
+    } else if (mode === "chat" && msgs.length === 0) firstMessage(text);
     else if (queue.length) answerQuestion(text);
     else if (proposal) proposalReply(text);
     else command(text);
@@ -569,6 +629,14 @@ export function AgenticAddAssetModal({
 
   const confirm = () => {
     const { plan: final, defaults } = finalize(plan);
+    if (isTask) {
+      onTaskComplete?.(final, taskDomain);
+      const doneText = `Saved the ${taskDomain} task with ${final.selected.length} ${final.selected.length === 1 ? "table" : "tables"}.`;
+      push({ role: "note", text: doneText });
+      setDone(doneText);
+      window.setTimeout(() => onOpenChange(false), 1200);
+      return;
+    }
     const result = buildAssets(final, domainName ?? "");
     onComplete?.(result);
     const doneText =
@@ -732,10 +800,10 @@ export function AgenticAddAssetModal({
   const header = (right?: React.ReactNode) => (
     <header className="flex h-14 shrink-0 items-center justify-between px-5" style={{ background: "transparent" }}>
       <div className="flex items-center gap-2 text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
-        Add data asset
-        {domainName && (
+        {isTask ? "New task" : "Add data asset"}
+        {(isTask ? taskDomain : domainName) && (
           <span className="text-[12px] font-medium" style={{ color: "var(--ink-500)" }}>
-            · {domainName}
+            · {isTask ? taskDomain : domainName}
           </span>
         )}
       </div>
@@ -940,7 +1008,7 @@ export function AgenticAddAssetModal({
           className="h-9 rounded-full px-4 text-[13px] font-medium text-white transition-shadow disabled:opacity-50"
           style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
         >
-          Complete setup
+          {isTask ? "Save task" : "Complete setup"}
         </button>
       </div>
     </div>
