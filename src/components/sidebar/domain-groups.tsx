@@ -161,7 +161,7 @@ export function DomainGroups({
                 <ul className="ml-4">
                   {domAlerts.map((r) => {
                     const sName =
-                      schedules.find((s) => s.id === r.scheduleId)?.name ?? "Schedule run";
+                      schedules.find((s) => s.id === r.scheduleId)?.name ?? "Task run";
                     return (
                       <li key={r.id} className="flex items-center">
                         <Link

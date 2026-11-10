@@ -8,15 +8,15 @@ export const Route = createFileRoute("/schedule/$threadId")({
   }),
   head: () => ({
     meta: [
-      { title: "Schedule — Data Quality" },
+      { title: "Task — Data Quality" },
       {
         name: "description",
-        content: "How a schedule is doing, its plan, and every run, beside a chat about it.",
+        content: "How a task is doing, its plan, and every run, beside a chat about it.",
       },
-      { property: "og:title", content: "Schedule — Data Quality" },
+      { property: "og:title", content: "Task — Data Quality" },
       {
         property: "og:description",
-        content: "How a schedule is doing, its plan, and every run, beside a chat about it.",
+        content: "How a task is doing, its plan, and every run, beside a chat about it.",
       },
     ],
   }),

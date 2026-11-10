@@ -100,7 +100,7 @@ export const CONFIRM_WORDS = /^(go ahead|confirm|create( it)?|do it|ship it|yes,
 // ---- Plan proposal (stated in chat before anything is drafted) ----
 
 export const PROPOSAL_YES = /^(y|yes|yep|yeah|yup|sure|ok|okay|go ahead|proceed|looks good|sounds good|do it|generate|build it|confirm|perfect|that works)\b/;
-export const PROPOSAL_CHIPS = ["Yes, generate the plan", "Change the schedule", "Add more tables"];
+export const PROPOSAL_CHIPS = ["Yes, generate the plan", "Change the task", "Add more tables"];
 
 
 // ---- Create-a-check flow ----

@@ -443,7 +443,7 @@ export function EditSchedulesModal({
   return (
     <ModalShell
       open={open}
-      title="Edit schedules"
+      title="Edit tasks"
       subtitle={`Profiling ${frequencyLabel(p).toLowerCase()} · Checks ${frequencyLabel(c).toLowerCase()} on ${tableName}`}
       onClose={onClose}
       width="min(880px, 94vw)"
@@ -451,7 +451,7 @@ export function EditSchedulesModal({
         <>
           <GhostButton onClick={onClose}>Cancel</GhostButton>
           <PrimaryButton onClick={() => onSave({ profiling: p, checks: c })}>
-            Save schedules
+            Save tasks
           </PrimaryButton>
         </>
       }
@@ -516,7 +516,7 @@ export function RemoveFromMonitoringModal({
             Stop monitoring <span className="font-mono">{tableName}</span>?
           </div>
           <p className="mt-1.5 text-[13px] leading-relaxed" style={{ color: "var(--ink-700)" }}>
-            Profiling and DQ checks will stop running, scheduled jobs will be cancelled, and this
+            Profiling and DQ checks will stop running, scheduled tasks will be cancelled, and this
             table will no longer appear in Explore or Data health. Existing history is kept, and you
             can add the table back later through Add new dataset.
           </p>

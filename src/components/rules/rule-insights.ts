@@ -134,12 +134,12 @@ export function whyFailing(rule: Rule, ins: RuleInsights): string {
 }
 
 export function passRateText(ins: RuleInsights): string {
-  if (!ins.applied) return "No history yet, because no schedule applies this rule.";
+  if (!ins.applied) return "No history yet, because no task applies this rule.";
   return `It passed ${ins.passes} of ${ins.runs} checks in the last 30 days (${ins.passRate}%). Last week it was ${ins.lastWeekRate}%.`;
 }
 
 export function coverageText(ins: RuleInsights): string {
-  if (!ins.applied) return "No schedule applies this rule yet, so changing it affects nothing.";
+  if (!ins.applied) return "No task applies this rule yet, so changing it affects nothing.";
   const names = [...new Set(ins.coverage.map((c) => c.scheduleName))];
   return `It covers ${plural(ins.tableCount, "table")} and ${plural(ins.columnCount, "column")}, through ${names.join(", ")}. When you save a change I'll ask whether to update all of them, some, or save a new rule.`;
 }

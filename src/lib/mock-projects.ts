@@ -37,7 +37,7 @@ export const BASE_PROJECTS: Project[] = [
     tables: ["gl_entries", "invoices"],
     criteria: [
       { text: "Nights the ledger reconciles", current: "4 of 7", target: "7 of 7", met: false },
-      { text: "Reconciliation rule on every Finance schedule", current: "1 of 2", target: "All", met: false },
+      { text: "Reconciliation rule on every Finance task", current: "1 of 2", target: "All", met: false },
     ],
     comments: [
       {
@@ -61,7 +61,7 @@ export const BASE_PROJECTS: Project[] = [
       { text: "Invoices with a negative amount", current: "0.4%", target: "0%", met: false },
       { text: "Credit notes are flagged", current: "Yes", target: "Yes", met: true },
     ],
-    comments: [{ who: "Maya R.", when: "Nov 3", text: "Added the amounts rule to the nightly Finance schedule." }],
+    comments: [{ who: "Maya R.", when: "Nov 3", text: "Added the amounts rule to the nightly Finance task." }],
   },
   {
     id: "sc-stale",
@@ -114,7 +114,7 @@ export const BASE_PROJECTS: Project[] = [
     criteria: [
       { text: "Email valid", current: "94.2%", target: "95% or more", met: false },
       { text: "Duplicate rate", current: "0.8%", target: "1% or less", met: true },
-      { text: "Email rule on every intake schedule", current: "All", target: "All", met: true },
+      { text: "Email rule on every intake task", current: "All", target: "All", met: true },
     ],
     comments: [{ who: "Agent", when: "Today 6:00am", text: "Email validity rose to 94.2%, up 1 point since Monday." }],
   },
@@ -188,9 +188,9 @@ export const NEEDS: Need[] = [
     kind: "rule",
     domain: "Sales",
     title: "Run “Country codes are ISO standard” on Customer master checks",
-    why: "Country is filled on every customer, but about 3% of the values are not valid codes, and no schedule checks them.",
+    why: "Country is filled on every customer, but about 3% of the values are not valid codes, and no task checks them.",
     evidence: "customers profile, 1.2M rows",
-    effect: "Adds the rule to the schedule. It runs from the next run.",
+    effect: "Adds the rule to the task. It runs from the next run.",
     confidence: "Medium",
     scheduleId: "s2",
     ruleId: "r7",
@@ -202,7 +202,7 @@ export const NEEDS: Need[] = [
     title: "Run Supplier quality sweep every day until the feeds recover",
     why: "A check every 2 days finds out about a stale feed too late.",
     evidence: "Supplier quality sweep, 3 runs",
-    effect: "Changes the schedule from every 2 days to every day at 6:00am.",
+    effect: "Changes the task from every 2 days to every day at 6:00am.",
     confidence: "High",
     scheduleId: "s6",
     newRepeats: "Every day at 6:00am",

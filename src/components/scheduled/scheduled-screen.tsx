@@ -36,11 +36,11 @@ function ScheduledHome({ tab }: { tab: "schedules" | "runs" }) {
 
   function newSchedule() {
     const id = newChatId();
-    createThread({ id, title: "New schedule", domain: selected });
+    createThread({ id, title: "New task", domain: selected });
     void navigate({
       to: "/chat/$chatId",
       params: { chatId: id },
-      search: { q: "Set up a new schedule for my tables" },
+      search: { q: "Set up a new task for my tables" },
     });
   }
 
@@ -53,7 +53,7 @@ function ScheduledHome({ tab }: { tab: "schedules" | "runs" }) {
           </h1>
           <div className="ml-2">
             <Tabs
-              label="Jobs views"
+              label="Tasks views"
               value={tab}
               onChange={(t) => go({ tab: t })}
               tabs={[
@@ -68,8 +68,8 @@ function ScheduledHome({ tab }: { tab: "schedules" | "runs" }) {
         </div>
         <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-500)" }}>
           {tab === "schedules"
-            ? "Each schedule says which tables to profile or check, with which rules, and how often."
-            : "Every time a schedule ran, newest first, with failures on top."}
+            ? "Each task says which tables to profile or check, with which rules, and how often."
+            : "Every time a task ran, newest first, with failures on top."}
         </p>
 
         <div className="mt-5">{tab === "schedules" ? <SchedulesTab /> : <RunsTab />}</div>
@@ -135,7 +135,7 @@ function SchedulesTab() {
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <SearchBox value={query} onChange={setQuery} label="Search schedules" />
+        <SearchBox value={query} onChange={setQuery} label="Search tasks" />
         <select
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
@@ -162,7 +162,7 @@ function SchedulesTab() {
 
       {visible.length === 0 ? (
         <p className="mt-8 text-[14px]" style={{ color: "var(--ink-500)" }}>
-          No schedules match these filters.
+          No tasks match these filters.
         </p>
       ) : (
         <ul className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -338,7 +338,7 @@ function RunsTab() {
                       className="block truncate text-[14px] font-medium"
                       style={{ color: "var(--ink-900)" }}
                     >
-                      {s?.name ?? "Deleted schedule"}
+                      {s?.name ?? "Deleted task"}
                     </span>
                     <span className="block text-[12.5px]" style={{ color: "var(--ink-500)" }}>
                       {s?.domain}

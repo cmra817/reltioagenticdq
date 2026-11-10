@@ -11,15 +11,15 @@ export const Route = createFileRoute("/scheduled")({
   }),
   head: () => ({
     meta: [
-      { title: "Jobs — Data Quality" },
+      { title: "Tasks — Data Quality" },
       {
         name: "description",
-        content: "Profiling and data quality check schedules, and the history of every run.",
+        content: "Profiling and data quality check tasks, and the history of every run.",
       },
-      { property: "og:title", content: "Jobs — Data Quality" },
+      { property: "og:title", content: "Tasks — Data Quality" },
       {
         property: "og:description",
-        content: "Profiling and data quality check schedules, and the history of every run.",
+        content: "Profiling and data quality check tasks, and the history of every run.",
       },
     ],
   }),

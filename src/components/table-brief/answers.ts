@@ -39,7 +39,7 @@ const SCRIPT: { match: string[]; answer: ScriptedAnswer }[] = [
         {
           kind: "kv",
           rows: [
-            { k: "Aug 19", v: "40 duplicates — the day the SFDC sync schedule changed" },
+            { k: "Aug 19", v: "40 duplicates — the day the SFDC sync task changed" },
             { k: "Aug 26", v: "310" },
             { k: "Sep 02", v: "780" },
             { k: "Today", v: "1,204 — threshold crossed, alert fires" },
@@ -105,7 +105,7 @@ const SCRIPT: { match: string[]; answer: ScriptedAnswer }[] = [
             { text: "Schema changed — no DDL in 90 days", ruled: true },
             { text: "Pipeline failed or ran late — all runs completed", ruled: true },
             { text: "Rule or threshold edited — no changes in 30 days", ruled: true },
-            { text: "Connector config changed — SFDC sync schedule edited Aug 19, 02:10", ruled: false },
+            { text: "Connector config changed — SFDC sync task edited Aug 19, 02:10", ruled: false },
             {
               text: "Insert pattern shifted — duplicates never have a later updated_at, so they're inserts, not upserts",
               ruled: false,
@@ -118,7 +118,7 @@ const SCRIPT: { match: string[]; answer: ScriptedAnswer }[] = [
         },
         {
           kind: "p",
-          text: "Likely cause. The Aug 19 schedule change appears to have switched the SFDC sync from upsert to insert. Every run since re-inserts records it should be matching. Confidence is high — the date is exact, the insert-vs-update signature is unambiguous, and it reproduces across three tables.",
+          text: "Likely cause. The Aug 19 task change appears to have switched the SFDC sync from upsert to insert. Every run since re-inserts records it should be matching. Confidence is high — the date is exact, the insert-vs-update signature is unambiguous, and it reproduces across three tables.",
         },
         {
           kind: "p",

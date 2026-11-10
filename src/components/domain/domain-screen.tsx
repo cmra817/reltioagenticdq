@@ -253,7 +253,7 @@ function DomainWorkspace({
     ...(findings.length === 0 && scopeSchedules.length > 0
       ? [
           {
-            text: `Nothing needs attention. The latest runs on all ${scopeSchedules.length} schedules passed.`,
+            text: `Nothing needs attention. The latest runs on all ${scopeSchedules.length} tasks passed.`,
             ask: `${DISCUSS}Open issues`,
           },
         ]
@@ -367,7 +367,7 @@ function DomainWorkspace({
     if (/late|stale|fresh|updated/i.test(q)) {
       const few = tables.slice(0, 3);
       return few.length
-        ? `Last checked: ${few.map((t) => `${t.name} (${t.lastChecked})`).join(", ")}. Nothing is overdue against its schedule.`
+        ? `Last checked: ${few.map((t) => `${t.name} (${t.lastChecked})`).join(", ")}. Nothing is overdue against its task.`
         : "No tables are monitored yet.";
     }
     if (/first|priorit|look|attention/i.test(q)) {
@@ -377,7 +377,7 @@ function DomainWorkspace({
     }
     if (/lowest|worst|tables/i.test(q)) {
       return tables.length === 0
-        ? "No tables are monitored here yet. Tell me which warehouse tables belong here and I'll set up a schedule."
+        ? "No tables are monitored here yet. Tell me which warehouse tables belong here and I'll set up a task."
         : { text: "Lowest first.", visual: tableBars(tables.slice(0, 5), "DQ score by table") };
     }
     return `${scopeName} health is ${score ?? "not measured yet"}. ${findings.length} open ${findings.length === 1 ? "finding" : "findings"} from the latest runs across ${scopeSchedules.length} schedules.`;
@@ -525,7 +525,7 @@ function DomainWorkspace({
                 </h1>
                 <p className="mt-4 text-[14px]" style={{ color: "var(--ink-700)" }}>
                   {scopeSchedules.length === 0
-                    ? "Nothing is monitored here yet. Tell me which tables belong here and how often to check them, and I'll set up the first schedule."
+                    ? "Nothing is monitored here yet. Tell me which tables belong here and how often to check them, and I'll set up the first task."
                     : "Ask a question, or pick something from the brief on the right."}
                 </p>
               </section>

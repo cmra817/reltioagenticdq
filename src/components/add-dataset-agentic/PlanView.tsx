@@ -270,7 +270,7 @@ export function PlanView(p: Props) {
     else setClosedGroups((s) => toggle(s, w));
   };
 
-  const removeTable = (k: string) => onChange(withoutTables(plan, [k]), `You removed ${tableName(k)} from the job.`);
+  const removeTable = (k: string) => onChange(withoutTables(plan, [k]), `You removed ${tableName(k)} from the task.`);
   const removeCheck = (k: string, c: Check) =>
     onChange({ ...plan, checked: { ...plan.checked, [k]: (plan.checked[k] ?? []).filter((x) => x !== c.id) } }, `You removed '${c.rule}' from ${tableName(k)}.`);
 
@@ -561,7 +561,7 @@ export function PlanView(p: Props) {
               </div>
             ) : visible.length === 0 ? (
               <p className="px-1 py-4 text-[13px]" style={{ color: "var(--ink-500)" }}>
-                No tables in this job match.
+                No tables in this task match.
               </p>
             ) : (
               groups.map(([w, keys]) => {
@@ -624,7 +624,7 @@ export function PlanView(p: Props) {
                       DQ checks
                     </span>
                     <span className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-                      No checks to schedule
+                      No checks to task
                     </span>
                   </div>
                 ) : (
@@ -637,7 +637,7 @@ export function PlanView(p: Props) {
                     onLink={(on) =>
                       onChange(
                         { ...plan, linked: on, checks: on ? plan.profiling : plan.checks ?? plan.profiling },
-                        on ? "You set checks to run on the same schedule as profiling." : "You gave checks their own schedule.",
+                        on ? "You set checks to run on the same task as profiling." : "You gave checks their own task.",
                       )
                     }
                     onChange={(s, what) => onChange({ ...plan, checks: s, linked: false }, `You changed checks to ${what}.`)}
@@ -886,7 +886,7 @@ function ScheduleRow({
           {onLink && (
             <label className="flex items-center gap-2 text-[13px]" style={{ color: "var(--ink-700)" }}>
               <input type="checkbox" checked={!!linked} onChange={(e) => onLink(e.target.checked)} className="accent-[color:var(--brand-blue)]" />
-              Run on the same schedule as profiling
+              Run on the same task as profiling
             </label>
           )}
           <div className="flex flex-wrap gap-3">

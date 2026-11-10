@@ -196,10 +196,10 @@ export const HEALTH_WIDGETS: Widget[] = [
   },
   {
     id: "h-job-summary",
-    name: "Job Summary",
+    name: "Task Summary",
     chartType: "donut",
     creator: { kind: "reltio" },
-    measure: "job outcomes",
+    measure: "task outcomes",
     scope: "All sources",
     timeframe: "Last month",
     drillable: true,
@@ -207,7 +207,7 @@ export const HEALTH_WIDGETS: Widget[] = [
     segments: ["Passed", "Failed", "Aborted"],
     donut: {
       total: "280",
-      totalLabel: "Total Jobs",
+      totalLabel: "Total Tasks",
       segments: [
         { label: "Passed", value: 87.5, color: "#14a6a6", display: "245 (87.5%)" },
         { label: "Failed", value: 10, color: "#ef4444", display: "28 (10.0%)" },
@@ -445,7 +445,7 @@ export function mockDataFor(chartType: ChartType) {
         data: [],
         donut: {
           total: "280",
-          totalLabel: "Total Jobs",
+          totalLabel: "Total Tasks",
           segments: [
             { label: "Passed", value: 87.5, color: "#14a6a6", display: "245 (87.5%)" },
             { label: "Failed", value: 10, color: "#ef4444", display: "28 (10.0%)" },

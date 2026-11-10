@@ -25,7 +25,7 @@ export function ChatWindow({
   followUps = [],
   onIntercept,
   emptyTitle = "How can I help with your data?",
-  emptySubtitle = "Ask about profiling results, anomalies, DQ checks, or schedules.",
+  emptySubtitle = "Ask about profiling results, anomalies, DQ checks, or tasks.",
   compact = false,
   autoSendText,
   renderPrompt,

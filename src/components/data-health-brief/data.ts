@@ -244,7 +244,7 @@ export const WATCHING_HIDDEN: WatchRow[] = [
 ];
 
 export const EXCLUDED: WatchRow[] = [
-  { table: "customer_data_bkp", reason: "Backup copy — same rows, written by a copy job, not a source" },
+  { table: "customer_data_bkp", reason: "Backup copy — same rows, written by a copy task, not a source" },
   { table: "customer_data_v1", reason: "Superseded version — no writes since the v2 cutover" },
   { table: "customer_events", reason: "Event log — row churn is by design, bands would be meaningless" },
   { table: "country_ref", reason: "Static reference table — 249 rows, unchanged in 90 days" },

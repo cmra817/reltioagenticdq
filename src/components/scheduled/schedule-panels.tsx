@@ -121,7 +121,7 @@ export function ScheduleInsightsView({
           <SectionTitle>Rules</SectionTitle>
           {rules.length === 0 ? (
             <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-              No rules, so this schedule only profiles.
+              No rules, so this task only profiles.
             </p>
           ) : (
             <ul className="space-y-1 text-[13.5px]">
@@ -150,7 +150,7 @@ export function RunsList({ runs, onOpen }: { runs: Run[]; onOpen: (runId: string
   if (runs.length === 0) {
     return (
       <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-        This schedule hasn't run yet.
+        This task hasn't run yet.
       </p>
     );
   }

@@ -58,7 +58,7 @@ const SCRIPT: { match: string[]; answer: ScriptedAnswer }[] = [
         {
           kind: "kv",
           rows: [
-            { k: "1 · Now", v: "Notify the SFDC connector owner — the Aug 21 schedule change is still re-inserting on every run." },
+            { k: "1 · Now", v: "Notify the SFDC connector owner — the Aug 21 task change is still re-inserting on every run." },
             { k: "2 · Today", v: "Add uniqueness checks to contact_master and account_roll so they can report for themselves." },
             { k: "3 · Leave", v: "orders_fact — it returns to band on its own and nothing has failed." },
             { k: "4 · Later", v: "cust_addresses — 2.4% against a 2% threshold, newly failing rather than badly failing." },
@@ -160,7 +160,7 @@ const SCRIPT: { match: string[]; answer: ScriptedAnswer }[] = [
         { kind: "p", lead: true, text: "Not this week." },
         {
           kind: "p",
-          text: "Load time leaves its band and comes back on its own within a day, every time. No check failed, and the spike days don't line up with the SFDC change — different connector, different schedule.",
+          text: "Load time leaves its band and comes back on its own within a day, every time. No check failed, and the spike days don't line up with the SFDC change — different connector, different task.",
         },
         { kind: "chart", chart: "orders-freshness" },
         {

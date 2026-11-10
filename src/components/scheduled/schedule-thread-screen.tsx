@@ -22,7 +22,7 @@ export function ScheduleThreadScreen({ threadId, run }: { threadId: string; run?
     return (
       <div className="p-8">
         <p className="text-[14px]" style={{ color: "var(--ink-500)" }}>
-          This schedule isn't available. Choose another from Jobs.
+          This task isn't available. Choose another from Tasks.
         </p>
       </div>
     );

@@ -66,7 +66,7 @@ export function Step3Schedule({
   return (
     <div className="@container px-10 py-8">
       <p className="text-[13px]" style={{ color: "var(--ink-700)" }}>
-        Schedule when profiling and checks run
+        Task when profiling and checks run
       </p>
 
       <div
@@ -104,7 +104,7 @@ export function Step3Schedule({
                   className="h-4 w-4"
                   style={{ accentColor: "var(--brand-blue)" }}
                 />
-                Run on the same schedule as profiling
+                Run on the same task as profiling
               </label>
             }
           />
