@@ -7,7 +7,14 @@ import {
   SectionTitle,
   SplitWorkspace,
   Tag,
+  useChatThread,
+  type ChatTurn,
 } from "@/components/workspace/primitives";
+import { useChatThreads } from "@/components/chat/chat-context";
+import { useLocalStore } from "@/lib/use-local-store";
+
+const PROJECT_CHATS_KEY = "agentflow.project-chats.v1";
+export const projectThreadId = (id: string) => `project-view-${id}`;
 import type { ChatReply } from "@/components/workspace/chat-visuals";
 import { PROJECT_STATUSES, type Project, type ProjectStatus } from "@/lib/mock-projects";
 import { useProjects } from "@/lib/projects-store";
@@ -227,6 +234,48 @@ function ProjectDetail({
   const [draft, setDraft] = React.useState("");
   const pr = progress(p);
   const reply = React.useCallback((q: string) => projectReply(p, q), [p]);
+  // One chat per project. It joins Recents, under the project's domain, with the first message.
+  const threadId = projectThreadId(p.id);
+  const [savedChats, setSavedChats, chatsReady] = useLocalStore<Record<string, ChatTurn[]>>(
+    PROJECT_CHATS_KEY,
+    {},
+  );
+  if (!chatsReady) return <div className="flex-1" />;
+  return (
+    <ProjectDetailBody
+      key={threadId}
+      {...props}
+      reply={reply}
+      threadId={threadId}
+      initialTurns={savedChats[threadId]}
+      onTurns={(turns) => setSavedChats((prev) => ({ ...prev, [threadId]: turns }))}
+    />
+  );
+}
+
+function ProjectDetailBody({
+  reply,
+  threadId,
+  initialTurns,
+  onTurns,
+  ...props
+}: ProjectDetailProps & {
+  reply: (q: string) => ChatReply;
+  threadId: string;
+  initialTurns?: ChatTurn[];
+  onTurns: (turns: ChatTurn[]) => void;
+}) {
+  const { p } = props;
+  const thread = useChatThread(reply, initialTurns);
+  const { getThread, createThread } = useChatThreads();
+  React.useEffect(() => {
+    if (thread.turns.length === 0) return;
+    if (!getThread(threadId)) {
+      createThread({ id: threadId, title: p.title, kind: "project", domain: p.domain });
+    }
+    onTurns(thread.turns);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread.turns]);
 
   const panel = (
     <div className="space-y-5 p-5">
@@ -364,6 +413,7 @@ function ProjectDetail({
       panelWidth="52%"
       center={
         <ScopedChat
+          thread={thread}
           scopeLabel={p.title}
           placeholder="Ask about this project"
           suggestions={["What is blocking this?", "Suggest next steps"]}
