@@ -646,7 +646,7 @@ function DomainPanel({
   runs: Run[];
   ruleName: (id: string) => string;
   projectOf: (t: TableInfo) => Project | undefined;
-  onAsk: (question: string) => void;
+  onAsk: (question: string, tableName?: string) => void;
   onOpenTable: (name: string) => void;
 }) {
   const [query, setQuery] = React.useState("");
