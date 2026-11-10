@@ -448,7 +448,10 @@ export function ScopedChat({
   thread,
   initialInput,
   composerTop,
+  centerWhenEmpty,
 }: {
+  /** Empty chat: intro and prompt box sit together in the middle. */
+  centerWhenEmpty?: boolean;
   thread?: ChatThread;
   /** Controls above the text box, such as a scope or project picker. */
   composerTop?: React.ReactNode;
@@ -487,9 +490,12 @@ export function ScopedChat({
     if (turns.length > 0) endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [turns.length]);
 
+  const centered = !!centerWhenEmpty && turns.length === 0;
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-3 pt-4">
+    <div className={`flex min-h-0 flex-1 flex-col ${centered ? "justify-center" : ""}`}>
+      <div
+        className={`${centered ? "shrink-0" : "min-h-0 flex-1 overflow-y-auto"} px-6 pb-3 pt-4`}
+      >
         <div className="mx-auto w-full max-w-[760px]">
           {header}
           {turns.length > 0 && (

@@ -463,6 +463,7 @@ function DomainWorkspace({
             }
             ask={ask}
             composerTop={composerTop}
+            centerWhenEmpty
             header={
               <section aria-label={`${scopeName} chat`}>
                 <div className="flex flex-wrap items-center gap-3">
