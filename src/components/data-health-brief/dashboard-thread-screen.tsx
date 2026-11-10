@@ -100,9 +100,11 @@ function runTurns(dash: DashboardDef, day: string): ChatTurn[] {
     ? "today"
     : new Date(`${day}T06:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const trend = trendFor(dash.id === "mine" ? 78 : 84, `${dash.id}-${day}`);
+  const prompt = `Run ${dash.name} for ${isToday ? "today" : when}. Follow its instructions: check the tables and rules it watches, tell me what changed since the last run and what needs my attention, and open the dashboard.`;
   return [
+    { id: 0, role: "user", text: prompt },
     {
-      id: 0,
+      id: 1,
       role: "agent",
       text: `Scheduled run finished ${isToday ? "today" : `on ${when}`} at 6:00 AM. I checked the tables and rules this dashboard watches.`,
       visual: {
@@ -112,7 +114,7 @@ function runTurns(dash: DashboardDef, day: string): ChatTurn[] {
       },
     },
     {
-      id: 1,
+      id: 2,
       role: "agent",
       text: "Here's what needs your attention:",
       visual: {
@@ -123,7 +125,7 @@ function runTurns(dash: DashboardDef, day: string): ChatTurn[] {
       },
     },
     {
-      id: 2,
+      id: 3,
       role: "agent",
       text: "How the score has moved over the last 14 days:",
       visual: {
@@ -161,9 +163,9 @@ function DashboardViewThread({
   const [chatOpen, setChatOpen] = React.useState(true);
   const [expanded, setExpanded] = React.useState(false);
   const seed = runTurns(dash, day);
-  const saved = (initial?.turns ?? []).filter((t) => t.role === "user" || t.id >= seed.length);
-  const userStart = saved.findIndex((t) => t.role === "user");
-  const rest = userStart < 0 ? [] : saved.slice(userStart);
+  const prev = initial?.turns ?? [];
+  const firstReal = prev.findIndex((t) => t.role === "user" && t.text !== seed[0].text);
+  const rest = firstReal < 0 ? [] : prev.slice(firstReal);
   const startTurns = [...seed, ...rest.map((t, i) => ({ ...t, id: seed.length + i }))];
   const thread = useChatThread((q) => dashboardReply(dash, q), startTurns);
 
