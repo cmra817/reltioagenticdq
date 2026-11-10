@@ -359,11 +359,11 @@ export function SampleDataView() {
             <tbody>
               {rows.map((row, i) => (
                 <tr key={i} style={{ borderTop: "1px solid var(--hairline)" }}>
-                  {shownIdx.map((j) => (
+                  {shownIdx.map((j, k) => (
                     <td
                       key={j}
                       className="whitespace-nowrap px-3 py-2 font-mono"
-                      style={{ color: j === 0 ? "var(--ink-900)" : "var(--ink-700)" }}
+                      style={{ color: k === 0 ? "var(--ink-900)" : "var(--ink-700)" }}
                     >
                       {row[j]}
                     </td>
