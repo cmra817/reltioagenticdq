@@ -37,6 +37,7 @@ import {
 import { tableAssetFor } from "@/lib/mock-ops";
 import { AssetRowsTable, SourceTree, type TreeNode } from "@/components/explore-screen";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProjects } from "@/lib/projects-store";
 import { useLocalStore } from "@/lib/use-local-store";
 import { newChatId, useChatThreads } from "@/components/chat/chat-context";
@@ -100,6 +101,8 @@ function sampleFor(table: string) {
  */
 export function DomainScreen({ search }: { search: DomainSearch }) {
   const { selected, selectDomain } = useDomainState();
+  const [expanded, setExpanded] = React.useState(!!search.table);
+  const [panelTab, setPanelTab] = React.useState<PanelTab>("overview");
   const [saved, , ready] = useLocalStore<Record<string, SavedDomainChat>>(DOMAIN_CHATS_KEY, {});
   const rec = search.thread ? saved[search.thread] : undefined;
   const all = search.thread ? !!rec && !rec.domain : !!search.all;
@@ -120,6 +123,10 @@ export function DomainScreen({ search }: { search: DomainSearch }) {
       search={{ ...search, all: all || undefined }}
       domainName={domain}
       saved={rec}
+      expanded={expanded || !!search.table}
+      setExpanded={setExpanded}
+      panelTab={panelTab}
+      setPanelTab={setPanelTab}
     />
   );
 }
@@ -128,10 +135,18 @@ function DomainWorkspace({
   search,
   domainName: selected,
   saved,
+  expanded,
+  setExpanded,
+  panelTab,
+  setPanelTab,
 }: {
   search: DomainSearch;
   domainName: string;
   saved?: SavedDomainChat;
+  expanded: boolean;
+  setExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  panelTab: PanelTab;
+  setPanelTab: React.Dispatch<React.SetStateAction<PanelTab>>;
 }) {
   const navigate = useNavigate();
   const { domains, selectDomain, healthFor } = useDomainState();
@@ -146,8 +161,6 @@ function DomainWorkspace({
   const all = !!search.all;
   const scopeName = all ? ALL_DOMAINS : selected;
 
-  const [expanded, setExpanded] = React.useState(!!search.table);
-  const [panelTab, setPanelTab] = React.useState<PanelTab>("overview");
   const [ask, setAsk] = React.useState<{ id: number; q: string } | null>(null);
   const [chatProject, setChatProject] = React.useState(saved?.project ?? "");
 
@@ -550,6 +563,9 @@ function DomainWorkspace({
               ) : (
                 <DomainPanel
                   scopeName={scopeName}
+                  domains={domains}
+                  onDomainChange={chooseScope}
+                  domainLocked={locked}
                   showDomain={all}
                   score={score}
                   trend={trend}
@@ -579,6 +595,9 @@ function DomainWorkspace({
 
 function DomainPanel({
   scopeName,
+  domains,
+  onDomainChange,
+  domainLocked,
   showDomain,
   score,
   trend,
@@ -600,6 +619,9 @@ function DomainPanel({
   tab: PanelTab;
   onTab: (tab: PanelTab) => void;
   scopeName: string;
+  domains: string[];
+  onDomainChange: (domain: string) => void;
+  domainLocked: boolean;
   showDomain: boolean;
   score: number | null;
   trend: number[];
@@ -795,7 +817,7 @@ function DomainPanel({
 
       {tab === "tables" && (
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               type="search"
               value={query}
@@ -805,6 +827,21 @@ function DomainPanel({
               className="min-w-0 flex-1 rounded-lg border bg-white px-3 py-2 text-[13.5px] outline-none focus:border-[color:var(--brand-blue)]"
               style={{ ...card, color: "var(--ink-900)" }}
             />
+            <Select value={scopeName} onValueChange={onDomainChange} disabled={domainLocked}>
+              <SelectTrigger
+                aria-label="Domains"
+                title={domainLocked ? "The domain is set for this chat. Start a new chat to look at another domain." : undefined}
+                className="h-9 w-auto shrink-0 gap-2 bg-background text-[13.5px]"
+              >
+                <span>Domains: <SelectValue /></span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_DOMAINS}>{ALL_DOMAINS}</SelectItem>
+                {domains.map((domain) => (
+                  <SelectItem key={domain} value={domain}>{domain}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Popover>
               <PopoverTrigger asChild>
                 <button
