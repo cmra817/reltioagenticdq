@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Lock, Minimize2 } from "lucide-react";
+import { ArrowLeft, Minimize2 } from "lucide-react";
 import { statusForScore, useDomainState } from "@/components/domain-context";
 import {
   HealthPill,
@@ -444,60 +444,8 @@ function DomainWorkspace({
     }
   };
 
-  const selectCls =
-    "rounded-full border bg-white px-2.5 py-1 text-[12.5px] outline-none focus:border-[color:var(--brand-blue)]";
-  const composerTop = (
-    <div
-      className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px]"
-      style={{ color: "var(--ink-500)" }}
-    >
-      {locked ? (
-        <span
-          className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1"
-          style={{ ...card, background: "var(--surface-soft)", color: "var(--ink-900)" }}
-          title="The domain is set for this chat. Start a new chat to look at another domain."
-        >
-          <Lock size={12} aria-hidden="true" />
-          Domain: {scopeName} · locked
-        </span>
-      ) : (
-        <label className="flex items-center gap-2">
-          Domain
-          <select
-            value={scopeName}
-            onChange={(e) => chooseScope(e.target.value)}
-            className={selectCls}
-            style={{ ...card, color: "var(--ink-900)" }}
-          >
-            {domains.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-            <option value={ALL_DOMAINS}>{ALL_DOMAINS}</option>
-          </select>
-        </label>
-      )}
-      {!all && (
-        <label className="flex items-center gap-2">
-          Project
-          <select
-            value={chatProject}
-            onChange={(e) => chooseProject(e.target.value)}
-            className={selectCls}
-            style={{ ...card, color: "var(--ink-900)" }}
-          >
-            <option value="">None</option>
-            {scopeProjects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-    </div>
-  );
+  const promptDomain = { value: scopeName, onChange: chooseScope, locked };
+  const promptProject = { value: chatProject, onChange: chooseProject };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -506,7 +454,7 @@ function DomainWorkspace({
         panelWidth={expanded ? "59vw" : 320}
         collapsed={!chatOpen}
         onToggle={() => setChatOpen(!chatOpen)}
-        floating={<FloatingPrompt thread={thread} placeholder="Ask Reltio…" onOpen={() => setChatOpen(true)} />}
+        floating={<FloatingPrompt thread={thread} placeholder="Ask Reltio…" onOpen={() => setChatOpen(true)} domain={promptDomain} project={promptProject} />}
         center={
           <ScopedChat
             thread={thread}
@@ -514,7 +462,8 @@ function DomainWorkspace({
             placeholder="Ask Reltio…"
             suggestions={[]}
             ask={ask}
-            composerTop={composerTop}
+            domain={promptDomain}
+            project={promptProject}
             centerWhenEmpty
             header={
               <section aria-label={`${scopeName} chat`}>

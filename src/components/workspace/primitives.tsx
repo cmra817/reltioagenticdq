@@ -1,6 +1,11 @@
 import * as React from "react";
+import {
+  PromptBox,
+  type PromptDomainControl,
+  type PromptProjectControl,
+} from "@/components/chat/prompt-box";
 import { ChatVisualView, type ChatReply, type ChatVisual } from "./chat-visuals";
-import { ArrowUp, PanelLeft, X } from "lucide-react";
+import { PanelLeft, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { STATUS_LABEL, type HealthStatus } from "@/components/domain-context";
 import { RUN_STATUS_LABEL, type RunStatus } from "@/lib/mock-ops";
@@ -327,10 +332,14 @@ export function FloatingPrompt({
   thread,
   placeholder,
   onOpen,
+  domain,
+  project,
 }: {
   thread: ChatThread;
   placeholder: string;
   onOpen: () => void;
+  domain?: PromptDomainControl;
+  project?: PromptProjectControl;
 }) {
   const [input, setInput] = React.useState("");
   const lastAgent = [...thread.turns].reverse().find((t) => t.role === "agent");
@@ -393,40 +402,18 @@ export function FloatingPrompt({
             </button>
           </div>
         )}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit();
+        <PromptBox
+          value={input}
+          onChange={(v) => {
+            setInput(v);
+            if (lastAgent) setSeenUpTo(lastAgent.id);
           }}
-          className="flex items-center gap-2 rounded-2xl p-2 pl-3 backdrop-blur-md"
-          style={{
-            background: "rgba(227, 227, 242, 0.7)",
-            border: "1px solid rgba(0, 0, 204, 0.14)",
-            boxShadow:
-              "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.35)",
-          }}
-        >
-          <input
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              if (lastAgent) setSeenUpTo(lastAgent.id);
-            }}
-            aria-label={placeholder}
-            placeholder={placeholder}
-            className="flex-1 bg-transparent py-1.5 text-[13px] outline-none"
-            style={{ color: "var(--ink-900)" }}
-          />
-          <button
-            type="submit"
-            aria-label="Send"
-            disabled={!input.trim()}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full disabled:opacity-40"
-            style={{ background: "var(--brand-blue)", color: "#fff" }}
-          >
-            <ArrowUp size={16} />
-          </button>
-        </form>
+          onSubmit={submit}
+          placeholder={placeholder}
+          rows={1}
+          domain={domain}
+          project={project}
+        />
       </div>
     </div>
   );
@@ -454,14 +441,16 @@ export function ScopedChat({
   ask,
   thread,
   initialInput,
-  composerTop,
+  domain,
+  project,
   centerWhenEmpty,
 }: {
   /** Empty chat: intro and prompt box sit together in the middle. */
   centerWhenEmpty?: boolean;
   thread?: ChatThread;
-  /** Controls above the text box, such as a scope or project picker. */
-  composerTop?: React.ReactNode;
+  /** Domain and project selectors in the prompt box; unset follows the app-wide domain. */
+  domain?: PromptDomainControl;
+  project?: PromptProjectControl;
   /** Prefills the prompt box and focuses it with the cursor at the end. */
   initialInput?: string;
   scopeLabel: string;
@@ -559,45 +548,19 @@ export function ScopedChat({
             ))}
           </div>
         )}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            send(input);
+        <PromptBox
+          value={input}
+          onChange={setInput}
+          onSubmit={(q) => {
+            send(q);
             setInput("");
           }}
-          className="flex flex-col gap-1 rounded-2xl border bg-white/95 px-3 py-2.5"
-          style={{ borderColor: "var(--hairline)", boxShadow: "0 12px 32px rgba(15,23,42,0.08)" }}
-        >
-          {composerTop}
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send(input);
-                setInput("");
-              }
-            }}
-            rows={initialInput ? 3 : 2}
-            aria-label={placeholder}
-            placeholder={placeholder}
-            className="min-h-[44px] resize-none bg-transparent text-[13.5px] outline-none"
-            style={{ color: "var(--ink-900)" }}
-          />
-          <div className="flex items-center justify-end">
-            <button
-              type="submit"
-              aria-label="Send"
-              disabled={!input.trim()}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-white disabled:opacity-40"
-              style={{ background: "var(--brand-blue)" }}
-            >
-              <ArrowUp size={15} />
-            </button>
-          </div>
-        </form>
+          placeholder={placeholder}
+          rows={initialInput ? 3 : 2}
+          textareaRef={inputRef}
+          domain={domain}
+          project={project}
+        />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
-import { ArrowUp } from "lucide-react";
-import { useRef, type FormEvent, type RefObject, type KeyboardEvent } from "react";
+import type { RefObject } from "react";
 import type { ChatStatus } from "ai";
+import { PromptBox } from "./prompt-box";
 
 interface ChatPromptBoxProps {
   input: string;
@@ -13,7 +13,7 @@ interface ChatPromptBoxProps {
   placeholder?: string;
 }
 
-/** Chat composer used at the bottom of full chat surfaces. Fluid width, fixed visual style. */
+/** Bottom-of-chat placement of the shared PromptBox. */
 export function ChatPromptBox({
   input,
   setInput,
@@ -21,72 +21,22 @@ export function ChatPromptBox({
   status,
   stop,
   textareaRef,
-  placeholder = "Ask about your data…",
+  placeholder = "Ask Reltio…",
 }: ChatPromptBoxProps) {
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    submit(input);
-  }
-
-  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      submit(input);
-    }
-  }
-
+  const streaming = status === "submitted" || status === "streaming";
   return (
     <div className="px-6 pb-5">
-      <form
-        onSubmit={handleSubmit}
-        className="mx-auto flex w-full max-w-3xl flex-col items-start gap-2 p-2"
-        style={{
-          boxSizing: "border-box",
-          minHeight: "112px",
-          background: "#E3E3F2",
-          border: "1px solid rgba(0, 0, 204, 0.14)",
-          boxShadow:
-            "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.5)",
-          borderRadius: "16px",
-        }}
-      >
-        <textarea
-          ref={textareaRef}
+      <div className="mx-auto w-full max-w-3xl">
+        <PromptBox
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
+          onChange={setInput}
+          onSubmit={submit}
           placeholder={placeholder}
-          className="min-h-[56px] w-full flex-1 resize-none bg-transparent px-2 py-1 text-[14px] outline-none"
-          style={{ color: "var(--ink-900)" }}
+          textareaRef={textareaRef}
+          busy={streaming}
+          onStop={stop}
         />
-        <div className="flex w-full justify-end px-1 pb-1">
-          {status === "submitted" || status === "streaming" ? (
-            <button
-              ref={buttonRef}
-              type="button"
-              onClick={() => stop()}
-              aria-label="Stop response"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90"
-              style={{ background: "var(--ink-900)" }}
-            >
-              <span className="block h-3 w-3 rounded-sm bg-white" />
-            </button>
-          ) : (
-            <button
-              ref={buttonRef}
-              type="submit"
-              disabled={!input.trim()}
-              aria-label="Send message"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-opacity disabled:opacity-40"
-              style={{ background: "var(--brand-blue)" }}
-            >
-              <ArrowUp size={16} />
-            </button>
-          )}
-        </div>
-      </form>
+      </div>
     </div>
   );
 }
