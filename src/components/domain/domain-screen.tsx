@@ -36,11 +36,19 @@ import type { Project } from "@/lib/mock-projects";
 import { projectReply } from "@/components/projects/projects-screen";
 import { DomainRail, type BriefLine } from "./domain-rail";
 
-export type DomainSearch = { table?: string; all?: boolean; thread?: string };
+export type DomainSearch = {
+  table?: string;
+  all?: boolean;
+  thread?: string;
+  /** A fresh "New chat": a new value always starts a new chat. */
+  n?: string;
+  /** A prompt to send as soon as the chat opens. */
+  q?: string;
+};
 
 /** What a saved domain chat needs to come back as it was. */
-type SavedDomainChat = { turns: ChatTurn[]; domain?: string; project?: string };
-const DOMAIN_CHATS_KEY = "agentflow.domain-chats.v1";
+export type SavedDomainChat = { turns: ChatTurn[]; domain?: string; project?: string };
+export const DOMAIN_CHATS_KEY = "agentflow.domain-chats.v1";
 
 type PanelTab = "overview" | "tables" | "checks";
 type TableTab = "overview" | "columns" | "sample" | "events" | "checks";
@@ -99,7 +107,7 @@ export function DomainScreen({ search }: { search: DomainSearch }) {
   // A new scope is a new chat: everything below starts over.
   return (
     <DomainWorkspace
-      key={`${search.thread ?? ""}|${all ? ALL_DOMAINS : domain}`}
+      key={`${search.thread ?? ""}|${search.n ?? ""}|${all ? ALL_DOMAINS : domain}`}
       search={{ ...search, all: all || undefined }}
       domainName={domain}
       saved={rec}
@@ -340,6 +348,20 @@ function DomainWorkspace({
 
   const thread = useChatThread(reply, saved?.turns);
 
+  // A seed prompt (from other pages) is sent once, then dropped from the URL.
+  const seeded = React.useRef(false);
+  React.useEffect(() => {
+    if (!search.q || seeded.current) return;
+    seeded.current = true;
+    thread.send(search.q);
+    void navigate({
+      to: "/domain",
+      search: { all: search.all, thread: threadId },
+      replace: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // The first message puts this chat in Recents, nested under its domain
   // (chats about All domains have no domain and sit in the last group).
   React.useEffect(() => {
@@ -463,6 +485,7 @@ function DomainWorkspace({
             }
             ask={ask}
             composerTop={composerTop}
+            centerWhenEmpty
             header={
               <section aria-label={`${scopeName} chat`}>
                 <div className="flex flex-wrap items-center gap-3">

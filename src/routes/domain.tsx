@@ -6,6 +6,8 @@ export const Route = createFileRoute("/domain")({
   validateSearch: (search: Record<string, unknown>): DomainSearch => ({
     table: typeof search.table === "string" ? search.table : undefined,
     thread: typeof search.thread === "string" ? search.thread : undefined,
+    n: typeof search.n === "string" ? search.n : undefined,
+    q: typeof search.q === "string" ? search.q : undefined,
     all: search.all === true || search.all === "true" ? true : undefined,
   }),
   head: () => ({
@@ -20,6 +22,8 @@ export const Route = createFileRoute("/domain")({
         property: "og:description",
         content: "One domain: a briefing in chat, with its summary, tables and checks beside it.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DomainPage,

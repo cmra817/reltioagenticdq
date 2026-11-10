@@ -140,9 +140,7 @@ function NewMenu() {
           type="button"
           onClick={() => {
             setOpen(false);
-            const id = newChatId();
-            createThread({ id, domain: selected });
-            void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: {} });
+            void navigate({ to: "/domain", search: { all: true, n: newChatId() } });
           }}
           className="inline-flex h-full items-center gap-1.5 rounded-l-full pl-3 pr-2"
         >
