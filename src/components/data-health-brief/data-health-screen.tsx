@@ -1,4 +1,4 @@
-import { PromptBox } from "@/components/chat/prompt-box";
+import { ALL_DOMAINS_FIXED, PromptBox } from "@/components/chat/prompt-box";
 import * as React from "react";
 import { ArrowUp } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
@@ -324,6 +324,7 @@ export function DataHealthScreen({ embedded = false }: { embedded?: boolean } = 
             setInput("");
           }}
           placeholder="Ask about your data, or change this dashboard…"
+          domain={ALL_DOMAINS_FIXED}
         />
       </div>
     </div>
