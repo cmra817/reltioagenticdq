@@ -2,6 +2,7 @@ import * as React from "react";
 import { Maximize2, Pencil } from "lucide-react";
 import { ALL_DOMAINS, trendFor, type DashboardDef } from "@/lib/mock-ops";
 import { Sparkline } from "@/components/workspace/primitives";
+import { DashboardNeeds } from "./dashboard-needs";
 
 function dayLabel(day: string) {
   return new Date(`${day}T06:00:00`).toLocaleDateString("en-US", {
@@ -88,6 +89,8 @@ export function DashboardController({
           <Maximize2 size={15} />
         </button>
       </div>
+
+      <DashboardNeeds scope={dash.scope} />
 
       <section className="mt-5">
         <div className="flex items-center justify-between">

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Minimize2 } from "lucide-react";
 import { statusForScore, useDomainState } from "@/components/domain-context";
 import {
   HealthPill,
@@ -23,6 +23,8 @@ import {
   type TableInfo,
 } from "@/lib/mock-ops";
 import { useRules, useRuns, useSchedules } from "@/lib/ops-store";
+import { useProjects } from "@/lib/projects-store";
+import { DomainRail, type BriefLine } from "./domain-rail";
 
 export type DomainSearch = { table?: string };
 
@@ -40,6 +42,11 @@ export function DomainScreen({ search }: { search: DomainSearch }) {
   const { schedules } = useSchedules();
   const { runs } = useRuns(schedules);
   const { rules } = useRules();
+  const { projects } = useProjects();
+  // The right panel starts minimized. Opening a table, or Tables on the rail, expands it.
+  const [expanded, setExpanded] = React.useState(!!search.table);
+  const [panelTab, setPanelTab] = React.useState<PanelTab>("summary");
+  const [ask, setAsk] = React.useState<{ id: number; q: string } | null>(null);
 
   const score = healthFor(domain);
   const status = statusForScore(score);
@@ -56,7 +63,34 @@ export function DomainScreen({ search }: { search: DomainSearch }) {
     .filter((r): r is Run => !!r && (r.status === "failed" || r.status === "attention"));
   const findings = latestProblems.flatMap((r) => r.findings.map((f) => ({ f, run: r })));
 
-  const openTable = (name?: string) => void navigate({ to: "/domain", search: { table: name } });
+  const openTable = (name?: string) => {
+    if (name) setExpanded(true);
+    void navigate({ to: "/domain", search: { table: name } });
+  };
+
+  // The domain brief: about this domain only, the same for everyone.
+  const lowestTable = tables[0];
+  const brief: BriefLine[] = [
+    {
+      text:
+        score === null
+          ? `${domain} has no health score yet.`
+          : `${domain} health is ${score}${status === "good" ? ", in good shape" : status === "warn" ? ", and needs attention" : ", and is at risk"}.`,
+      ask: "What should I look at first?",
+    },
+    ...findings.slice(0, 2).map(({ f }) => ({ text: `${f.title} on ${f.table}.`, ask: `Tell me about: ${f.title}` })),
+    ...(findings.length === 0 && domainSchedules.length > 0
+      ? [{ text: `Nothing needs attention. The latest runs on all ${domainSchedules.length} schedules passed.`, ask: "What should I look at first?" }]
+      : []),
+    ...(lowestTable
+      ? [{ text: `${lowestTable.name} has the lowest score at ${lowestTable.score}.`, ask: "Which tables are lowest?" }]
+      : []),
+  ];
+  const domainProjects = projects.filter((p) => p.domain === domain);
+  const activeProjects = domainProjects.filter(
+    (p) => p.status === "In progress" || p.status === "Validating",
+  ).length;
+  const suggestedProjects = domainProjects.filter((p) => p.status === "Suggested").length;
   const ruleName = (id: string) => rules.find((r) => r.id === id)?.name ?? "Deleted rule";
 
   function reply(q: string): string {
@@ -74,6 +108,10 @@ export function DomainScreen({ search }: { search: DomainSearch }) {
         return `${n} checks cover ${table.name}. See the Checks tab on the right for which rules and schedules.`;
       }
       return `${table.name} has about ${table.rows} rows and was last checked ${table.lastChecked}. Ask why its score is what it is, or which checks cover it.`;
+    }
+    const asked = findings.find((x) => q.includes(x.f.title));
+    if (asked) {
+      return `${asked.f.title}. ${asked.f.detail} It is on ${asked.f.table}: open the Tables tab to see it, or see the run under Jobs.`;
     }
     if (/first|priorit|look|attention/i.test(q)) {
       return findings.length > 0
@@ -95,7 +133,7 @@ export function DomainScreen({ search }: { search: DomainSearch }) {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <SplitWorkspace
         panelLabel={table ? `${table.name} details` : `${domain} workspace`}
-        panelWidth={440}
+        panelWidth={expanded ? "59vw" : 320}
         center={
           <ScopedChat
             key={domain}
@@ -107,6 +145,7 @@ export function DomainScreen({ search }: { search: DomainSearch }) {
                 : ["What should I look at first?", "Which tables are lowest?"]
             }
             reply={reply}
+            ask={ask}
             header={
               <section aria-label={`${domain} briefing`}>
                 <div className="flex flex-wrap items-center gap-3">
@@ -115,85 +154,69 @@ export function DomainScreen({ search }: { search: DomainSearch }) {
                   </h1>
                   <HealthPill score={score} status={status} />
                 </div>
-                {domainSchedules.length === 0 ? (
-                  <p className="mt-4 text-[14px]" style={{ color: "var(--ink-700)" }}>
-                    Nothing is monitored in this domain yet. Tell me which tables belong here and
-                    how often to check them, and I'll set up the first schedule.
-                  </p>
-                ) : findings.length === 0 ? (
-                  <p className="mt-4 text-[14px]" style={{ color: "var(--ink-700)" }}>
-                    Nothing needs attention. The latest runs on all {domainSchedules.length}{" "}
-                    schedules passed.
-                  </p>
-                ) : (
-                  <>
-                    <p className="mt-4 text-[14px]" style={{ color: "var(--ink-700)" }}>
-                      {findings.length} {findings.length === 1 ? "thing needs" : "things need"} a
-                      look from the latest runs:
-                    </p>
-                    <ul className="mt-3 space-y-2.5">
-                      {findings.map(({ f, run }) => (
-                        <li
-                          key={`${run.id}-${f.title}`}
-                          className="rounded-xl border bg-white p-3.5"
-                          style={{ borderColor: "var(--hairline)" }}
-                        >
-                          <div
-                            className="text-[14px] font-semibold"
-                            style={{ color: "var(--ink-900)" }}
-                          >
-                            {f.title}
-                          </div>
-                          <p className="mt-1 text-[13px]" style={{ color: "var(--ink-700)" }}>
-                            {f.detail}
-                          </p>
-                          <div className="mt-2 flex gap-4 text-[12.5px]">
-                            <button
-                              type="button"
-                              onClick={() => openTable(f.table)}
-                              className="underline"
-                              style={{ color: "var(--brand-blue)" }}
-                            >
-                              Open {f.table}
-                            </button>
-                            <Link
-                              to="/scheduled"
-                              search={{ run: run.id }}
-                              className="underline"
-                              style={{ color: "var(--brand-blue)" }}
-                            >
-                              See the run
-                            </Link>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
+                <p className="mt-4 text-[14px]" style={{ color: "var(--ink-700)" }}>
+                  {domainSchedules.length === 0
+                    ? "Nothing is monitored in this domain yet. Tell me which tables belong here and how often to check them, and I'll set up the first schedule."
+                    : `Ask about ${domain}, or pick something from the brief on the right.`}
+                </p>
               </section>
             }
           />
         }
         panel={
-          table ? (
-            <TableContext
-              table={table}
-              schedules={domainSchedules}
-              runs={domainRuns}
-              findings={findings.filter((x) => x.f.table === table.name).map((x) => x.f)}
-              ruleName={ruleName}
-              onBack={() => openTable(undefined)}
-            />
-          ) : (
-            <DomainPanel
+          !expanded ? (
+            <DomainRail
               domain={domain}
               score={score}
               tables={tables}
-              schedules={domainSchedules}
-              runs={domainRuns}
-              ruleName={ruleName}
-              onOpenTable={openTable}
+              brief={brief}
+              activeProjects={activeProjects}
+              suggestedProjects={suggestedProjects}
+              onAsk={(q) => setAsk({ id: (ask?.id ?? 0) + 1, q })}
+              onExpand={() => setExpanded(true)}
+              onOpenTables={() => {
+                setPanelTab("tables");
+                setExpanded(true);
+              }}
             />
+          ) : (
+            <div className="relative flex min-h-0 flex-1 flex-col">
+              <button
+                type="button"
+                onClick={() => {
+                  setExpanded(false);
+                  if (table) openTable(undefined);
+                }}
+                aria-label="Minimize the panel"
+                title="Minimize the panel"
+                className="absolute right-3 top-3 z-10 grid h-7 w-7 place-items-center rounded-md bg-white hover:bg-[color:var(--surface-soft)]"
+                style={{ color: "var(--ink-500)" }}
+              >
+                <Minimize2 size={15} />
+              </button>
+              {table ? (
+                <TableContext
+                  table={table}
+                  schedules={domainSchedules}
+                  runs={domainRuns}
+                  findings={findings.filter((x) => x.f.table === table.name).map((x) => x.f)}
+                  ruleName={ruleName}
+                  onBack={() => openTable(undefined)}
+                />
+              ) : (
+                <DomainPanel
+                  domain={domain}
+                  score={score}
+                  tables={tables}
+                  schedules={domainSchedules}
+                  runs={domainRuns}
+                  ruleName={ruleName}
+                  onOpenTable={openTable}
+                  tab={panelTab}
+                  onTab={setPanelTab}
+                />
+              )}
+            </div>
           )
         }
       />
@@ -209,7 +232,11 @@ function DomainPanel({
   runs,
   ruleName,
   onOpenTable,
+  tab,
+  onTab,
 }: {
+  tab: PanelTab;
+  onTab: (tab: PanelTab) => void;
   domain: string;
   score: number | null;
   tables: TableInfo[];
@@ -218,7 +245,6 @@ function DomainPanel({
   ruleName: (id: string) => string;
   onOpenTable: (name: string) => void;
 }) {
-  const [tab, setTab] = React.useState<PanelTab>("summary");
   const week = runs.filter((r) => r.hoursAgo <= 168);
   const lastRun = (s: Schedule) => runs.find((r) => r.scheduleId === s.id);
 
@@ -227,7 +253,7 @@ function DomainPanel({
       <Tabs
         label="Domain workspace"
         value={tab}
-        onChange={setTab}
+        onChange={onTab}
         tabs={[
           { id: "summary", label: "Summary" },
           { id: "tables", label: "Tables", hint: String(tables.length) },
