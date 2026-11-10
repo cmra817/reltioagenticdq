@@ -5,7 +5,7 @@ import {
   type Project,
   type ProjectComment,
   type ProjectStatus,
-} from "./mock-today";
+} from "./mock-projects";
 
 type ProjectStore = {
   status: Record<string, ProjectStatus>;
@@ -71,26 +71,4 @@ export function useProjects() {
   );
 
   return { projects, move, addComment, ready };
-}
-
-/* ---------- Today ---------- */
-
-type TodayStore = {
-  needs: Record<string, "approved" | "rejected">;
-  undone: Record<string, boolean>;
-};
-const TODAY_INIT: TodayStore = { needs: {}, undone: {} };
-
-export function useToday() {
-  const [store, setStore, ready] = useLocalStore<TodayStore>("agentflow.today.v1", TODAY_INIT);
-  const resolve = React.useCallback(
-    (id: string, status: "approved" | "rejected") =>
-      setStore((prev) => ({ ...prev, needs: { ...prev.needs, [id]: status } })),
-    [setStore],
-  );
-  const undo = React.useCallback(
-    (id: string) => setStore((prev) => ({ ...prev, undone: { ...prev.undone, [id]: true } })),
-    [setStore],
-  );
-  return { needs: store.needs, undone: store.undone, resolve, undo, ready };
 }

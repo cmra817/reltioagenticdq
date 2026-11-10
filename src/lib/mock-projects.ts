@@ -1,7 +1,6 @@
 /**
- * Prototype data for Today and Projects. Stands in for the agent: what it
- * proposes, what it did overnight, and the remediation projects per domain.
- * Rules and schedules referenced here are the real ones in mock-ops.ts.
+ * Prototype data for Projects: remediation efforts, one domain each.
+ * Tables named here are illustrative.
  */
 
 export type ProjectStatus = "Suggested" | "In progress" | "Validating" | "Done";
@@ -151,87 +150,4 @@ export const BASE_PROJECTS: Project[] = [
     ],
     comments: [{ who: "Dan K.", when: "Oct 28", text: "Closed after seven clean days." }],
   },
-];
-
-export type NeedKind = "project" | "rule" | "job";
-export type Confidence = "High" | "Medium";
-
-export type Need = {
-  id: string;
-  kind: NeedKind;
-  domain: string;
-  title: string;
-  why: string;
-  evidence: string;
-  /** What approving does, in plain words. */
-  effect: string;
-  confidence: Confidence;
-  projectId?: string;
-  scheduleId?: string;
-  ruleId?: string;
-  newRepeats?: string;
-};
-
-export const NEEDS: Need[] = [
-  {
-    id: "n1",
-    kind: "project",
-    domain: "Supply Chain",
-    title: "Start a project: stale supplier and inventory feeds",
-    why: "inventory and purchase_orders have been stale for 3 days, and the supplier sweep only runs every 2 days.",
-    evidence: "Supplier quality sweep, 3 runs",
-    effect: "Moves the project to In progress and assigns it to you.",
-    confidence: "High",
-    projectId: "sc-stale",
-  },
-  {
-    id: "n2",
-    kind: "rule",
-    domain: "Sales",
-    title: "Run “Country codes are ISO standard” on Customer master checks",
-    why: "Country is filled on every customer, but about 3% of the values are not valid codes, and no schedule checks them.",
-    evidence: "customers profile, 1.2M rows",
-    effect: "Adds the rule to the schedule. It runs from the next run.",
-    confidence: "Medium",
-    scheduleId: "s2",
-    ruleId: "r7",
-  },
-  {
-    id: "n3",
-    kind: "job",
-    domain: "Supply Chain",
-    title: "Run Supplier quality sweep every day until the feeds recover",
-    why: "A check every 2 days finds out about a stale feed too late.",
-    evidence: "Supplier quality sweep, 3 runs",
-    effect: "Changes the schedule from every 2 days to every day at 6:00am.",
-    confidence: "High",
-    scheduleId: "s6",
-    newRepeats: "Every day at 6:00am",
-  },
-  {
-    id: "n4",
-    kind: "project",
-    domain: "Finance",
-    title: "Start a project: ledger balance failures",
-    why: "The ledger failed to reconcile on 3 of the last 7 nights.",
-    evidence: "Nightly profiling, 7 runs",
-    effect: "Moves the project to In progress and assigns it to you.",
-    confidence: "Medium",
-    projectId: "fin-ledger",
-  },
-];
-
-export type LogEntry = { id: string; text: string; when: string; canUndo: boolean };
-
-export const LOG: LogEntry[] = [
-  { id: "l1", text: "Ran 8 schedules. 2 had failed checks and 1 ran late.", when: "6:00am", canUndo: false },
-  { id: "l2", text: "Filled 312 empty country values in customers from postal codes.", when: "3:40am", canUndo: true },
-  { id: "l3", text: "Paused the reports that read the stale inventory table.", when: "6:05am", canUndo: true },
-  { id: "l4", text: "Started looking into why the Finance ledger stopped reconciling.", when: "6:10am", canUndo: false },
-];
-
-export const CHANGED: { text: string; question: string }[] = [
-  { text: "Across your domains, health is 88. Supply Chain is the lowest at 72.", question: "Why is Supply Chain the lowest?" },
-  { text: "Finance slipped to 81: the ledger stopped reconciling on 3 of 7 nights.", question: "What is wrong with the Finance ledger?" },
-  { text: "Sales customer email validity is recovering, up 1 point since Monday.", question: "How is customer email validity doing?" },
 ];

@@ -9,7 +9,7 @@ import {
   Tag,
 } from "@/components/workspace/primitives";
 import type { ChatReply } from "@/components/workspace/chat-visuals";
-import { PROJECT_STATUSES, type Project, type ProjectStatus } from "@/lib/mock-today";
+import { PROJECT_STATUSES, type Project, type ProjectStatus } from "@/lib/mock-projects";
 import { useProjects } from "@/lib/projects-store";
 
 const ALL = "All domains";
