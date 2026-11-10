@@ -254,11 +254,11 @@ export function ScheduleWorkspace({
   // Opening a job asks about it, unless the link already opens a run.
   const autoAsked = React.useRef(false);
   React.useEffect(() => {
-    if (autoAsked.current || initialRun || thread.turns.length > 0) return;
+    if (autoAsked.current || !schedule || initialRun || thread.turns.length > 0) return;
     autoAsked.current = true;
     thread.send(jobPrompt(schedule.name));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [schedule]);
 
   // A run asked for in the link (from a failed-run alert) comes into focus once.
   const handledRun = React.useRef<string | undefined>(undefined);
