@@ -60,7 +60,7 @@ const OVERVIEW_ACTIVITY: OverviewActivityItem[] = [
   { label: "Last synced", value: "14 hrs ago", stale: true },
 ];
 
-type OverviewCard = {
+export type OverviewCard = {
   id: string;
   label: string;
   value: string;
@@ -71,7 +71,7 @@ type OverviewCard = {
   evidence: EvidenceId;
 };
 
-const OVERVIEW_CARDS: OverviewCard[] = [
+export const OVERVIEW_CARDS: OverviewCard[] = [
   {
     id: "columns",
     label: "Columns",
@@ -112,14 +112,19 @@ const OVERVIEW_CARDS: OverviewCard[] = [
 function OverviewStatusCard({
   card,
   onOpen,
+  onAsk,
 }: {
   card: OverviewCard;
   onOpen: (id: EvidenceId) => void;
+  onAsk?: (card: OverviewCard) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={() => onOpen(card.evidence)}
+      onClick={() => {
+        onOpen(card.evidence);
+        onAsk?.(card);
+      }}
       className="flex min-h-[132px] flex-col rounded-xl p-3 text-left transition-shadow hover:shadow-sm"
       style={{
         border: "1px solid var(--hairline)",
@@ -255,7 +260,7 @@ function DuplicateRowsView({
 
 const SAMPLE_PAGE = 50;
 
-export function SampleDataView() {
+export function SampleDataView({ onColumn }: { onColumn?: (column: string) => void } = {}) {
   const [count, setCount] = React.useState(SAMPLE_PAGE);
   const [visible, setVisible] = React.useState<string[]>(SAMPLE_COLUMNS);
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -351,7 +356,18 @@ export function SampleDataView() {
               <tr style={{ color: "var(--ink-300)" }}>
                 {shownIdx.map((j) => (
                   <th key={SAMPLE_COLUMNS[j]} className="whitespace-nowrap px-3 py-2 text-left font-mono font-medium">
-                    {SAMPLE_COLUMNS[j]}
+                    {onColumn ? (
+                      <button
+                        type="button"
+                        onClick={() => onColumn(SAMPLE_COLUMNS[j])}
+                        className="font-mono font-medium hover:underline"
+                        title={`Ask about ${SAMPLE_COLUMNS[j]}`}
+                      >
+                        {SAMPLE_COLUMNS[j]}
+                      </button>
+                    ) : (
+                      SAMPLE_COLUMNS[j]
+                    )}
                   </th>
                 ))}
               </tr>
@@ -574,7 +590,7 @@ function StatusBadge({ status }: { status: CheckRunStatus }) {
   );
 }
 
-export function ChecksView() {
+export function ChecksView({ onCheck }: { onCheck?: (name: string) => void } = {}) {
   const [expanded, setExpanded] = React.useState<Set<string>>(
     () => new Set(CHECK_GROUPS.filter((group) => group.expanded).map((group) => group.id)),
   );
@@ -619,7 +635,10 @@ export function ChecksView() {
                       <td className="px-3 py-2.5">
                         <button
                           type="button"
-                          onClick={() => toggle(group.id)}
+                          onClick={() => {
+                            if (!isOpen) onCheck?.(group.name);
+                            toggle(group.id);
+                          }}
                           aria-expanded={isOpen}
                           className="flex min-w-0 items-center gap-1.5 text-left font-semibold"
                           style={{ color: "var(--brand-blue)" }}
@@ -672,7 +691,10 @@ export function ChecksView() {
   );
 }
 
-export function ActivityView() {
+export function ActivityView({
+  onDay,
+  onRun,
+}: { onDay?: (day: string) => void; onRun?: (run: (typeof ACTIVITY_ROWS)[number]) => void } = {}) {
   const PAGE_SIZE = 18;
   const [count, setCount] = React.useState(PAGE_SIZE);
   const sentinel = React.useRef<HTMLDivElement | null>(null);
@@ -711,7 +733,10 @@ export function ActivityView() {
             {ACTIVITY_HEATMAP.map((value, index) => (
               <span
                 key={index}
-                className="aspect-square min-w-0 rounded-[2px]"
+                role={onDay ? "button" : undefined}
+                tabIndex={onDay ? 0 : undefined}
+                onClick={onDay ? () => onDay(`week ${Math.floor(index / 7) + 1}`) : undefined}
+                className={`aspect-square min-w-0 rounded-[2px] ${onDay ? "cursor-pointer hover:outline hover:outline-1" : ""}`}
                 style={{ background: heatColors[value] }}
                 aria-label={`Week ${Math.floor(index / 7) + 1}, ${value === 0 ? "failed" : value === 3 ? "passed" : "mixed"}`}
               />
@@ -746,11 +771,19 @@ export function ActivityView() {
                 return (
                   <React.Fragment key={run.id}>
                     {showDay ? (
-                      <tr style={{ background: "var(--canvas)", borderTop: "1px solid var(--hairline)" }}>
+                      <tr
+                        onClick={onDay ? () => onDay(run.day) : undefined}
+                        className={onDay ? "cursor-pointer" : undefined}
+                        style={{ background: "var(--canvas)", borderTop: "1px solid var(--hairline)" }}
+                      >
                         <td colSpan={5} className="px-3 py-1.5 text-[10px] font-semibold uppercase" style={{ color: "var(--ink-500)" }}>{run.day}</td>
                       </tr>
                     ) : null}
-                    <tr style={{ borderTop: "1px solid var(--hairline)" }}>
+                    <tr
+                      onClick={onRun ? () => onRun(run) : undefined}
+                      className={onRun ? "cursor-pointer hover:bg-[var(--surface-soft)]" : undefined}
+                      style={{ borderTop: "1px solid var(--hairline)" }}
+                    >
                       <td className="truncate px-3 py-2.5 font-mono" title={run.check} style={{ color: "var(--ink-900)" }}>{run.check}</td>
                       <td className="px-3 py-2.5">
                         <span className="inline-flex whitespace-nowrap rounded-full px-2 py-1 text-[10.5px] font-semibold" style={dimensionStyle}>{run.dimension}</span>
@@ -787,7 +820,14 @@ const EVIDENCE_LABEL: Record<EvidenceId, string> = {
 
 const ADDABLE: EvidenceId[] = ["sample", "profiling", "checks", "activity", "duplicates"];
 
-export function OverviewSection({ onOpen }: { onOpen: (id: EvidenceId) => void }) {
+export function OverviewSection({
+  onOpen,
+  onAsk,
+}: {
+  onOpen: (id: EvidenceId) => void;
+  /** When set, clicking a card also asks the agent about it. */
+  onAsk?: (card: OverviewCard) => void;
+}) {
   return (
     <div className="flex flex-col gap-2">
       <SectionTitle>Overview</SectionTitle>
@@ -809,7 +849,7 @@ export function OverviewSection({ onOpen }: { onOpen: (id: EvidenceId) => void }
       </div>
       <div className="grid grid-cols-2 gap-2">
         {OVERVIEW_CARDS.map((card) => (
-          <OverviewStatusCard key={card.id} card={card} onOpen={onOpen} />
+          <OverviewStatusCard key={card.id} card={card} onOpen={onOpen} onAsk={onAsk} />
         ))}
       </div>
     </div>
