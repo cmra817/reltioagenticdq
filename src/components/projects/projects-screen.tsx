@@ -241,6 +241,184 @@ export function ProjectsScreen({ projectId }: { projectId?: string }) {
   );
 }
 
+type SetupStage = "domain" | "goal" | "tables" | "criteria" | "ready";
+
+/** Chat-first project setup: the agent asks, drafts the project on the right, you save it. */
+function NewProjectSetup({
+  domains,
+  onCancel,
+  onSave,
+}: {
+  domains: string[];
+  onCancel: () => void;
+  onSave: (p: Project) => void;
+}) {
+  const [stage, setStage] = React.useState<SetupStage>("domain");
+  const [draft, setDraft] = React.useState<Project | null>(null);
+  const draftRef = React.useRef<Project | null>(null);
+  draftRef.current = draft;
+  const stageRef = React.useRef<SetupStage>("domain");
+  stageRef.current = stage;
+
+  const patch = (p: Partial<Project>) =>
+    setDraft((d) =>
+      d
+        ? { ...d, ...p }
+        : {
+            id: `proj-${Date.now()}`,
+            domain: "",
+            title: "New project",
+            status: "Suggested",
+            owner: "You",
+            daysOpen: 0,
+            suggestedByAgent: false,
+            goal: "",
+            tables: [],
+            criteria: [],
+            comments: [],
+            ...p,
+          },
+    );
+
+  function reply(q: string): string {
+    const cur = draftRef.current;
+    const s = stageRef.current;
+    if (s === "domain") {
+      const hit = domains.find((d) => q.toLowerCase().includes(d.toLowerCase()));
+      if (!hit) return "Which domain is it for? Pick one below, or name it.";
+      patch({ domain: hit });
+      setStage("goal");
+      return `${hit} it is. What's the goal — what should be true when this project is done?`;
+    }
+    if (s === "goal") {
+      const goal = q.trim();
+      const title = goal.length > 48 ? `${goal.slice(0, 48).trimEnd()}…` : goal;
+      patch({ goal, title });
+      setStage("tables");
+      return "Got it. Which tables does it touch? Name them, or say “not sure”.";
+    }
+    if (s === "tables") {
+      const tables = /not sure|don'?t know|skip/i.test(q)
+        ? []
+        : q
+            .split(/,| and /i)
+            .map((t) => t.trim())
+            .filter(Boolean);
+      patch({ tables });
+      setStage("criteria");
+      return "How will we know it's done? Give me one or two criteria, like “no negative invoices”.";
+    }
+    if (s === "criteria") {
+      const criteria = q
+        .split(/;|\n/)
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .map((text) => ({ text, current: "Not started", target: "Met", met: false }));
+      patch({ criteria: criteria.length ? criteria : [{ text: q.trim(), current: "Not started", target: "Met", met: false }] });
+      setStage("ready");
+      return "Here's the project on the right. Change anything by telling me, or save it when you're happy.";
+    }
+    if (!cur) return "One moment.";
+    if (/domain/i.test(q)) {
+      const hit = domains.find((d) => q.toLowerCase().includes(d.toLowerCase()));
+      if (hit) {
+        patch({ domain: hit });
+        return `Moved it to ${hit}.`;
+      }
+    }
+    if (/name|title|call it/i.test(q)) {
+      const name = q.replace(/.*(call it|name it|title)\s*/i, "").trim();
+      if (name) {
+        patch({ title: name });
+        return `Renamed to “${name}”.`;
+      }
+    }
+    return "The draft is on the right. Tell me what to change, or save it.";
+  }
+
+  const thread = useChatThread(reply, [
+    { id: 0, role: "user", text: "Set up a new project" },
+    { id: 1, role: "agent", text: "Happy to. Which domain is this project for?" },
+  ]);
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <SplitWorkspace
+        panelLabel="New project"
+        panelWidth="52%"
+        center={
+          <ScopedChat
+            thread={thread}
+            scopeLabel="New project"
+            placeholder="Answer, or tell me what to change…"
+            suggestions={stage === "domain" ? domains : []}
+            reply={reply}
+          />
+        }
+        panel={
+          draft ? (
+            <div className="flex min-h-full flex-col">
+              <div className="mx-auto w-full max-w-[720px] flex-1 space-y-5 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <h1 className="text-[20px] font-semibold" style={{ color: "var(--ink-900)" }}>
+                    {draft.title}
+                  </h1>
+                  <Tag>Not saved yet</Tag>
+                </div>
+                <div className="text-[13px]" style={{ color: "var(--ink-500)" }}>
+                  {draft.domain || "No domain yet"} · Owner: {draft.owner}
+                </div>
+                {draft.goal && (
+                  <div>
+                    <SectionTitle>Goal</SectionTitle>
+                    <p className="text-[13.5px] leading-relaxed" style={{ color: "var(--ink-700)" }}>
+                      {draft.goal}
+                    </p>
+                  </div>
+                )}
+                {draft.tables.length > 0 && (
+                  <div>
+                    <SectionTitle>Data</SectionTitle>
+                    <div className="flex flex-wrap gap-1.5">
+                      {draft.tables.map((t) => (
+                        <Tag key={t}>{t}</Tag>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {draft.criteria.length > 0 && (
+                  <div>
+                    <SectionTitle>Acceptance criteria</SectionTitle>
+                    <ul className="divide-y rounded-xl border bg-white" style={{ borderColor: "var(--hairline)" }}>
+                      {draft.criteria.map((c) => (
+                        <li key={c.text} className="px-3.5 py-2.5 text-[13px]" style={{ color: "var(--ink-900)" }}>
+                          {c.text}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              <div
+                className="sticky bottom-0 flex items-center justify-between gap-3 border-t bg-white/95 p-4 backdrop-blur"
+                style={{ borderColor: "var(--hairline)" }}
+              >
+                <GhostButton onClick={onCancel}>Cancel</GhostButton>
+                <PrimaryButton
+                  disabled={!draft.domain || !draft.goal || draft.criteria.length === 0}
+                  onClick={() => onSave(draft)}
+                >
+                  Save project
+                </PrimaryButton>
+              </div>
+            </div>
+          ) : undefined
+        }
+      />
+    </div>
+  );
+}
+
 export function projectReply(p: Project, q: string): ChatReply {
   const text = q.toLowerCase();
   const unmet = p.criteria.filter((c) => !c.met);
