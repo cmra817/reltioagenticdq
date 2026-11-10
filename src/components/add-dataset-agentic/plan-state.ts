@@ -91,11 +91,11 @@ export function finalize(plan: Plan): { plan: Plan; defaults: string[] } {
   let p = plan;
   if (!p.profiling) {
     p = { ...p, profiling: RECOMMENDED_SCHEDULE };
-    defaults.push("profiling task: daily at 6:00 PM");
+    defaults.push("profiling schedule: daily at 6:00 PM");
   }
   if (!p.checks) {
     p = { ...p, checks: p.linked ? p.profiling : RECOMMENDED_SCHEDULE };
-    defaults.push("DQ checks task: same as profiling");
+    defaults.push("DQ checks schedule: same as profiling");
   }
   return { plan: p, defaults };
 }

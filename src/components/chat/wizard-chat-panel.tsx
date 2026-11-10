@@ -186,7 +186,7 @@ export function WizardChatPanel({
               ? "Find your data"
               : context === "checks"
               ? "Tune your checks"
-              : "Describe your task"
+              : "Describe your schedule"
           }
           emptySubtitle={
             context === "select"

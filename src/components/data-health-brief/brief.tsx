@@ -74,7 +74,7 @@ export function TodayBrief({
           Duplicates climbing across the SFDC connector — two tables silently
         </h3>
         <p className="mt-1.5 text-[13px] leading-relaxed" style={{ color: "var(--ink-700)" }}>
-          All three turn on the same day the SFDC sync task changed. One upstream cause, not three table
+          All three turn on the same day the SFDC sync schedule changed. One upstream cause, not three table
           problems — and fixing the one that alerted wouldn't have fixed the other two.
         </p>
         <div className="mt-3">
@@ -87,7 +87,7 @@ export function TodayBrief({
             band={DUPE_BAND}
             unit="%"
             marker={AUG21}
-            markerLabel="Aug 21 — SFDC sync task changed"
+            markerLabel="Aug 21 — SFDC sync schedule changed"
           />
         </div>
         <StatStrip
@@ -241,7 +241,7 @@ export function HealthyBrief({
           stats={[
             { value: "112,890", label: "rows today", note: "+3%/week for 11 weeks" },
             { value: "Nov 3", label: "projected", note: "partition threshold" },
-            { value: "7 wks", label: "headroom", note: "scheduled task vs incident" },
+            { value: "7 wks", label: "headroom", note: "scheduled job vs incident" },
           ]}
         />
         <div className="mt-3">

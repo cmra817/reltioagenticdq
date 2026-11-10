@@ -59,7 +59,7 @@ export function ThreadChart({ chart }: { chart: ChartId }) {
         band={DUPE_BAND}
         unit="%"
         marker={AUG21}
-        markerLabel="Aug 21 — SFDC sync task changed"
+        markerLabel="Aug 21 — SFDC sync schedule changed"
       />
     );
   }

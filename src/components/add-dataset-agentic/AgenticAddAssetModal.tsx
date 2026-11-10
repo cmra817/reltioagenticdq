@@ -268,7 +268,7 @@ export function AgenticAddAssetModal({
       `Here's what I'd set up:\n` +
       `**Tables (${names.length})** ${shown.map((n) => `\`${n}\``).join(", ")}${names.length > shown.length ? ` + ${names.length - shown.length} more` : ""} — ${whs.join(", ")} · ${schemaShown.join(", ")}${schemas.length > schemaShown.length ? ` + ${schemas.length - schemaShown.length} more` : ""}\n` +
       `**Checks** Recommended for each table — ${dims.join(", ")} (${checkTotal(p)} in total)\n` +
-      `**Task** ${sched}${p.profiling ? "" : " (recommended)"}\n` +
+      `**Schedule** ${sched}${p.profiling ? "" : " (recommended)"}\n` +
       `Does that look right, or should I change something first?`
     );
   };
@@ -311,7 +311,7 @@ export function AgenticAddAssetModal({
       if (!changed.length)
         return push({
           role: "agent",
-          text: "I can change the tables, the task or the time zone before I draft anything. Otherwise say yes and I'll build it.",
+          text: "I can change the tables, the schedule or the time zone before I draft anything. Otherwise say yes and I'll build it.",
           chips: PROPOSAL_CHIPS,
         });
       setProposal(p);
@@ -484,7 +484,7 @@ export function AgenticAddAssetModal({
       if (/^undo\b/.test(t)) return undo();
       if (/without (any )?checks|no checks|profiling only/.test(t) && /show|which|list/.test(t)) {
         const keys = plan.selected.filter((k) => keptChecks(plan, k).length === 0);
-        if (!keys.length) return push({ role: "agent", text: "Every table in the task has at least one check." });
+        if (!keys.length) return push({ role: "agent", text: "Every table in the job has at least one check." });
         setFilter({ label: "Tables without checks", keys });
         setTab("plan");
         return push({ role: "agent", text: `${keys.length} ${keys.length === 1 ? "table has" : "tables have"} no checks and will be profiled only.` });
@@ -539,7 +539,7 @@ export function AgenticAddAssetModal({
           ...plan,
           ...(sched ? (/check/.test(t) && !/profil/.test(t) ? { checks: sched, linked: false } : { profiling: sched, checks: plan.linked ? sched : plan.checks }) : {}),
         };
-        return chatChange(next, `Task is now ${scheduleLabel(next.profiling)}.`, "schedule");
+        return chatChange(next, `Schedule is now ${scheduleLabel(next.profiling)}.`, "schedule");
       }
       if (/which|what|missing|unused|stale/.test(t)) {
         return push({
@@ -550,7 +550,7 @@ export function AgenticAddAssetModal({
       }
       push({
         role: "agent",
-        text: "I'm not sure what to change from that. I can't answer general data questions in this setup, but if you name a table, a check or a task I'll update the plan.",
+        text: "I'm not sure what to change from that. I can't answer general data questions in this setup, but if you name a table, a check or a schedule I'll update the plan.",
       });
     });
   };
@@ -756,7 +756,7 @@ export function AgenticAddAssetModal({
               What data should we start watching?
             </h1>
             <p className="mb-6 text-center text-[14px]" style={{ color: "var(--ink-500)" }}>
-              Tell me the connection, tables and task in a sentence or two. I'll propose a plan before building anything.
+              Tell me the connection, tables and schedule in a sentence or two. I'll propose a plan before building anything.
             </p>
             {composer("Monitor dim_customers in Databricks, daily at 6pm…")}
             <div className="mt-4 flex flex-wrap justify-center gap-2">

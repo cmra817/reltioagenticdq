@@ -443,7 +443,7 @@ export function EditSchedulesModal({
   return (
     <ModalShell
       open={open}
-      title="Edit tasks"
+      title="Edit schedules"
       subtitle={`Profiling ${frequencyLabel(p).toLowerCase()} · Checks ${frequencyLabel(c).toLowerCase()} on ${tableName}`}
       onClose={onClose}
       width="min(880px, 94vw)"
@@ -451,7 +451,7 @@ export function EditSchedulesModal({
         <>
           <GhostButton onClick={onClose}>Cancel</GhostButton>
           <PrimaryButton onClick={() => onSave({ profiling: p, checks: c })}>
-            Save tasks
+            Save schedules
           </PrimaryButton>
         </>
       }
