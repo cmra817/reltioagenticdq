@@ -565,3 +565,34 @@ export function trendFor(score: number, seed: string): number[] {
     return clamp(Math.round(score + wobble + drift), 40, 100);
   });
 }
+
+const ASSET_SOURCES: Record<string, string[]> = {
+  Databricks: ["customer_data", "product_catalog", "loyalty_points"],
+  BigQuery: ["marketing_analytics", "web_events", "finance"],
+  Snowflake: ["supply_chain", "hr_core"],
+};
+const ASSET_TAGS = ["PII", "Operational", "Analytical", "Marketing", "Confidential business"];
+
+/** Mock warehouse metadata for a domain table, stable per table name (shown in Explore's list style). */
+export function tableAssetFor(t: TableInfo) {
+  const h = hash(t.name + t.domain);
+  const sources = Object.keys(ASSET_SOURCES);
+  const source = sources[h % sources.length];
+  const ds = ASSET_SOURCES[source];
+  const n = Number(String(t.rows).replace(/[^0-9.]/g, "")) || 0;
+  const mult = /m/i.test(t.rows) ? 1_000_000 : /k/i.test(t.rows) ? 1_000 : 1;
+  return {
+    name: t.name,
+    kind: "table" as const,
+    description: `${t.domain} table checked for quality on its schedule.`,
+    source,
+    dataset: ds[h % ds.length],
+    columns: 8 + (h % 40),
+    rows: Math.round(n * mult) || null,
+    checks: 2 + (h % 9),
+    tags: [ASSET_TAGS[h % ASSET_TAGS.length], ASSET_TAGS[(h >> 3) % ASSET_TAGS.length]].filter(
+      (x, i, a) => a.indexOf(x) === i,
+    ),
+    lastAnalyzed: t.lastChecked,
+  };
+}

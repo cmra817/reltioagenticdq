@@ -28,6 +28,9 @@ import {
   type TableInfo,
 } from "@/lib/mock-ops";
 import { useRules, useRuns, useSchedules } from "@/lib/ops-store";
+import { tableAssetFor } from "@/lib/mock-ops";
+import { AssetRowsTable, SourceTree, type TreeNode } from "@/components/explore-screen";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useProjects } from "@/lib/projects-store";
 import { useLocalStore } from "@/lib/use-local-store";
 import { newChatId, useChatThreads } from "@/components/chat/chat-context";
@@ -610,8 +613,25 @@ function DomainPanel({
   const [query, setQuery] = React.useState("");
   const lastRun = (s: Schedule) => runs.find((r) => r.scheduleId === s.id);
   const qy = query.trim().toLowerCase();
-  const shown = tables.filter(
-    (t) => !qy || t.name.toLowerCase().includes(qy) || t.domain.toLowerCase().includes(qy),
+  const [srcSel, setSrcSel] = React.useState<Set<string>>(new Set());
+  const assets = tables.map(tableAssetFor);
+  const srcTrees: Record<string, TreeNode[]> = {};
+  for (const a of assets) {
+    const list = (srcTrees[a.source] ??= []);
+    if (!list.some((n) => n.name === a.dataset)) list.push({ name: a.dataset, kind: "dataset" });
+  }
+  const srcNames = Object.keys(srcTrees).sort();
+  const toggleSrc = (name: string) =>
+    setSrcSel((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  const shownAssets = assets.filter(
+    (a, i) =>
+      (!qy || a.name.toLowerCase().includes(qy) || tables[i].domain.toLowerCase().includes(qy)) &&
+      (srcSel.size === 0 || srcSel.has(a.source) || srcSel.has(a.dataset)),
   );
   const drift = trend.length > 7 && score !== null ? score - trend[trend.length - 8] : 0;
 
@@ -770,67 +790,78 @@ function DomainPanel({
 
       {tab === "tables" && (
         <div>
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search or filter tables"
-            aria-label="Search tables"
-            className="w-full rounded-lg border bg-white px-3 py-2 text-[13.5px] outline-none focus:border-[color:var(--brand-blue)]"
-            style={{ ...card, color: "var(--ink-900)" }}
-          />
-          <div className="mt-3">
-            <div
-              className="grid grid-cols-[1.6fr_.7fr_.9fr_1.2fr] gap-2 px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide"
-              style={{ color: "var(--ink-300)" }}
-            >
-              <span>Table</span>
-              <span>Health</span>
-              <span>Updated</span>
-              <span>Project</span>
-            </div>
-            <ul className="divide-y rounded-xl border bg-white" style={card}>
-              {shown.map((t) => {
-                const p = projectOf(t);
-                return (
-                  <li key={`${t.domain}-${t.name}`}>
+          <div className="flex items-center gap-2">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search or filter tables"
+              aria-label="Search tables"
+              className="min-w-0 flex-1 rounded-lg border bg-white px-3 py-2 text-[13.5px] outline-none focus:border-[color:var(--brand-blue)]"
+              style={{ ...card, color: "var(--ink-900)" }}
+            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="shrink-0 rounded-lg border bg-white px-3 py-2 text-[13.5px] hover:bg-[color:var(--surface-soft)]"
+                  style={{ ...card, color: "var(--ink-900)" }}
+                >
+                  Source{srcSel.size > 0 ? ` · ${srcSel.size}` : ""} ▾
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[260px] p-2">
+                <div className="mb-1 flex items-center justify-between px-1">
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-[0.08em]"
+                    style={{ color: "var(--ink-300)" }}
+                  >
+                    Data Source
+                  </span>
+                  {srcSel.size > 0 && (
                     <button
                       type="button"
-                      onClick={() => onOpenTable(t.name)}
-                      className="grid w-full grid-cols-[1.6fr_.7fr_.9fr_1.2fr] items-center gap-2 px-2 py-2.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
+                      onClick={() => setSrcSel(new Set())}
+                      className="text-[12px]"
+                      style={{ color: "var(--brand-blue)" }}
                     >
-                      <span
-                        className="min-w-0 truncate font-medium"
-                        style={{ color: "var(--ink-900)" }}
-                      >
-                        {t.name}
-                        {showDomain && (
-                          <span
-                            className="ml-1.5 text-[11.5px] font-normal"
-                            style={{ color: "var(--ink-500)" }}
-                          >
-                            {t.domain}
-                          </span>
-                        )}
-                      </span>
-                      <span>
-                        <HealthPill score={t.score} status={statusForScore(t.score)} />
-                      </span>
-                      <span style={{ color: "var(--ink-500)" }}>{t.lastChecked}</span>
-                      <span className="min-w-0 truncate">{p && <Tag>{p.title}</Tag>}</span>
+                      Clear
                     </button>
-                  </li>
-                );
-              })}
-              {shown.length === 0 && (
-                <li className="px-3 py-4 text-[13px]" style={{ color: "var(--ink-500)" }}>
-                  {tables.length === 0
-                    ? "No tables yet. Ask the agent to add some."
-                    : "No tables match."}
-                </li>
-              )}
-            </ul>
+                  )}
+                </div>
+                <SourceTree
+                  sources={srcNames}
+                  trees={srcTrees}
+                  selected={srcSel}
+                  onToggle={toggleSrc}
+                  initialOpen={Object.fromEntries(srcNames.map((n) => [n, true]))}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
+          <section className="mt-3 rounded-2xl border bg-white" style={card}>
+            <div
+              className="flex items-center gap-2 border-b px-4 py-2 text-[12px]"
+              style={{ color: "var(--ink-500)", borderColor: "var(--hairline)" }}
+            >
+              <span>Tables</span>
+              <span
+                className="rounded-md border px-2 py-0.5"
+                style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+              >
+                {shownAssets.length}
+              </span>
+            </div>
+            {shownAssets.length > 0 ? (
+              <div className="overflow-x-auto">
+                <AssetRowsTable rows={shownAssets} onOpen={(a) => onOpenTable(a.name)} />
+              </div>
+            ) : (
+              <p className="px-4 py-4 text-[13px]" style={{ color: "var(--ink-500)" }}>
+                {tables.length === 0 ? "No tables yet. Ask the agent to add some." : "No tables match."}
+              </p>
+            )}
+          </section>
         </div>
       )}
 

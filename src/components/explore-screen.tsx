@@ -112,13 +112,13 @@ function CheckSquare({ checked }: { checked: boolean }) {
 
 /* ---------- data ---------- */
 type AssetKind = "dataset" | "table" | "chart";
-type TreeNode = {
+export type TreeNode = {
   name: string;
   kind: AssetKind;
   children?: TreeNode[];
 };
 
-type AssetRow = {
+export type AssetRow = {
   name: string;
   kind: AssetKind;
   description: string;
@@ -634,61 +634,6 @@ function FilterPanel({
   tags: Set<string>;
   onToggleTag: (label: string) => void;
 }) {
-  const [openSources, setOpenSources] = useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = { Databricks: true };
-    for (const src of derived.sources) if (selected.has(src)) init[src] = true;
-    return init;
-  });
-  const setOpenFor = (label: string, v: boolean) =>
-    setOpenSources((prev) => ({ ...prev, [label]: v }));
-
-  const renderSourceHeader = (
-    label: string,
-    count: number,
-    open: boolean,
-    setOpen: (v: boolean) => void,
-  ) => {
-    const isSel = selected.has(label);
-    return (
-      <div
-        className="flex w-full items-center gap-1 rounded-md pr-1 text-[13px] hover:bg-[color:var(--surface-soft)]"
-        style={{
-          color: isSel ? "var(--brand-blue)" : "var(--ink-900)",
-          background: isSel ? "var(--surface-soft)" : "transparent",
-        }}
-      >
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpen(!open);
-          }}
-          aria-label={open ? "Collapse" : "Expand"}
-          aria-expanded={open}
-          className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-[color:var(--ink-500)] transition-colors hover:bg-[color:var(--hairline)] hover:text-[color:var(--ink-900)]"
-        >
-          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setOpen(true);
-            onToggle(label);
-          }}
-          className="flex flex-1 items-center gap-2 py-1.5 text-left"
-        >
-          <CheckSquare checked={isSel} />
-          <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center">
-            <SourceLogo source={label} />
-          </span>
-          <span className="flex-1 font-medium">
-            {label} ({count})
-          </span>
-        </button>
-      </div>
-    );
-  };
-
   return (
     <aside
       className="flex w-[240px] shrink-0 flex-col gap-5 rounded-2xl border bg-white p-4"
@@ -702,22 +647,13 @@ function FilterPanel({
           Data Source
         </div>
 
-        {derived.sources.map((src, i) => {
-          const nodes = derived.trees[src] ?? [];
-          const open = openSources[src] ?? false;
-          return (
-            <div key={src} className={i === 0 ? undefined : "mt-1"}>
-              {renderSourceHeader(src, nodes.length, open, (v) => setOpenFor(src, v))}
-              {open && (
-                <div className="mt-1">
-                  {nodes.map((n) => (
-                    <TreeRow key={n.name} node={n} depth={1} selected={selected} onToggle={onToggle} />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+        <SourceTree
+          sources={derived.sources}
+          trees={derived.trees}
+          selected={selected}
+          onToggle={onToggle}
+          initialOpen={{ Databricks: true }}
+        />
       </div>
 
       <CheckboxFilterGroup
@@ -1020,91 +956,187 @@ function AssetOverview({
             </tbody>
           </table>
         ) : (
-          <table className="w-full table-fixed border-collapse text-left text-[13px]">
-            <thead>
-              <tr
-                className="border-y text-[11px] uppercase tracking-[0.08em]"
-                style={{ borderColor: "var(--hairline)", color: "var(--ink-300)" }}
-              >
-                <th className="w-[38%] px-6 py-3 font-semibold">Name</th>
-                <th className="w-[10%] px-3 py-3 font-semibold">No. of columns</th>
-                <th className="w-[10%] px-3 py-3 font-semibold">No. of rows</th>
-                <th className="w-[10%] px-3 py-3 font-semibold">No. of checks</th>
-                <th className="w-[32%] px-6 py-3 text-right font-semibold">Last analyzed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {view.rows.map((a) => {
-                const slug = a.name.toLowerCase().replace(/\s+/g, "-");
-                return (
-                  <tr
-                    key={`${a.source}-${a.name}`}
-                    className="border-b transition-colors hover:bg-[color:var(--surface-soft)]"
-                    style={{ borderColor: "var(--hairline)" }}
-                  >
-                    <td className="px-6 py-4 align-top">
-                      <Link
-                        to="/assets/$assetSlug"
-                        params={{ assetSlug: slug }}
-                        className="flex items-start gap-3"
-                      >
-                        <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
-                          <SourceLogo source={a.source} />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-[14px]" style={{ color: "var(--ink-900)" }}>
-                            {a.name}
-                          </div>
-                          <div
-                            className="mt-0.5 flex items-center gap-1.5 text-[12px]"
-                            style={{ color: "var(--ink-500)" }}
-                          >
-                            <span style={{ color: "var(--ink-300)" }}>{kindIcon(a.kind, 13)}</span>
-                            <span>{a.kind === "chart" ? "Dashboard" : a.kind === "table" ? "Table" : "Dataset"}</span>
-                            <span style={{ color: "var(--ink-300)" }}>›</span>
-                            <span style={{ color: "var(--brand-blue)" }}>
-                              <DatasetIcon size={13} />
-                            </span>
-                            <span style={{ color: "var(--ink-700)" }}>{a.dataset}</span>
-                          </div>
-                          <p className="mt-2 text-[13px]" style={{ color: "var(--ink-700)" }}>
-                            {a.description}
-                          </p>
-                        </div>
-                      </Link>
-                    </td>
-                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
-                      {a.columns !== null ? a.columns.toLocaleString() : <span style={{ color: "var(--ink-300)" }}>—</span>}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 pr-6 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
-                      {a.rows !== null ? a.rows.toLocaleString() : <span style={{ color: "var(--ink-300)" }}>—</span>}
-                    </td>
-                    <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
-                      {a.checks}
-                    </td>
-                    <td className="relative px-6 py-4 align-top">
-                      <div className="text-right">
-                        <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
-                          <ClockIcon size={13} />
-                          {a.lastAnalyzed}
-                        </span>
-                      </div>
-                      {a.tags.length > 0 && (
-                        <div className="absolute right-6 bottom-4 flex flex-nowrap items-center gap-1.5">
-                          {a.tags.map((t) => (
-                            <TagChip key={t} label={t} />
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <AssetRowsTable rows={view.rows} />
         )}
       </div>
     </section>
+  );
+}
+
+
+function RowLink({ slug, onOpen, children }: { slug: string; onOpen?: () => void; children: React.ReactNode }) {
+  if (onOpen)
+    return (
+      <button type="button" onClick={onOpen} className="flex w-full items-start gap-3 text-left">
+        {children}
+      </button>
+    );
+  return (
+    <Link to="/assets/$assetSlug" params={{ assetSlug: slug }} className="flex items-start gap-3">
+      {children}
+    </Link>
+  );
+}
+
+/** The Explore asset list; shared with the domain Tables tab. */
+export function AssetRowsTable({ rows, onOpen }: { rows: AssetRow[]; onOpen?: (a: AssetRow) => void }) {
+  return (
+      <table className="w-full table-fixed border-collapse text-left text-[13px]">
+              <thead>
+                <tr
+                  className="border-y text-[11px] uppercase tracking-[0.08em]"
+                  style={{ borderColor: "var(--hairline)", color: "var(--ink-300)" }}
+                >
+                  <th className="w-[38%] px-6 py-3 font-semibold">Name</th>
+                  <th className="w-[10%] px-3 py-3 font-semibold">No. of columns</th>
+                  <th className="w-[10%] px-3 py-3 font-semibold">No. of rows</th>
+                  <th className="w-[10%] px-3 py-3 font-semibold">No. of checks</th>
+                  <th className="w-[32%] px-6 py-3 text-right font-semibold">Last analyzed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((a) => {
+                  const slug = a.name.toLowerCase().replace(/\s+/g, "-");
+                  return (
+                    <tr
+                      key={`${a.source}-${a.name}`}
+                      className="border-b transition-colors hover:bg-[color:var(--surface-soft)]"
+                      style={{ borderColor: "var(--hairline)" }}
+                    >
+                      <td className="px-6 py-4 align-top">
+                        <RowLink slug={slug} onOpen={onOpen ? () => onOpen(a) : undefined}>
+                          <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center">
+                            <SourceLogo source={a.source} />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-[14px]" style={{ color: "var(--ink-900)" }}>
+                              {a.name}
+                            </div>
+                            <div
+                              className="mt-0.5 flex items-center gap-1.5 text-[12px]"
+                              style={{ color: "var(--ink-500)" }}
+                            >
+                              <span style={{ color: "var(--ink-300)" }}>{kindIcon(a.kind, 13)}</span>
+                              <span>{a.kind === "chart" ? "Dashboard" : a.kind === "table" ? "Table" : "Dataset"}</span>
+                              <span style={{ color: "var(--ink-300)" }}>›</span>
+                              <span style={{ color: "var(--brand-blue)" }}>
+                                <DatasetIcon size={13} />
+                              </span>
+                              <span style={{ color: "var(--ink-700)" }}>{a.dataset}</span>
+                            </div>
+                            <p className="mt-2 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                              {a.description}
+                            </p>
+                          </div>
+                        </RowLink>
+                      </td>
+                      <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
+                        {a.columns !== null ? a.columns.toLocaleString() : <span style={{ color: "var(--ink-300)" }}>—</span>}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 pr-6 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
+                        {a.rows !== null ? a.rows.toLocaleString() : <span style={{ color: "var(--ink-300)" }}>—</span>}
+                      </td>
+                      <td className="px-3 py-4 align-top text-[13px]" style={{ color: "var(--ink-900)" }}>
+                        {a.checks}
+                      </td>
+                      <td className="relative px-6 py-4 align-top">
+                        <div className="text-right">
+                          <span className="inline-flex items-center gap-1.5 text-[13px]" style={{ color: "var(--ink-700)" }}>
+                            <ClockIcon size={13} />
+                            {a.lastAnalyzed}
+                          </span>
+                        </div>
+                        {a.tags.length > 0 && (
+                          <div className="absolute right-6 bottom-4 flex flex-nowrap items-center gap-1.5">
+                            {a.tags.map((t) => (
+                              <TagChip key={t} label={t} />
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+  );
+}
+
+/** Explore's Data Source tree (warehouses with datasets); shared with the domain Source filter. */
+export function SourceTree({
+  sources,
+  trees,
+  selected,
+  onToggle,
+  initialOpen,
+}: {
+  sources: string[];
+  trees: Record<string, TreeNode[]>;
+  selected: Set<string>;
+  onToggle: (name: string) => void;
+  initialOpen?: Record<string, boolean>;
+}) {
+  const [openSources, setOpenSources] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = { ...(initialOpen ?? {}) };
+    for (const src of sources) if (selected.has(src)) init[src] = true;
+    return init;
+  });
+  return (
+    <>
+      {sources.map((label, i) => {
+        const nodes = trees[label] ?? [];
+        const open = openSources[label] ?? false;
+        const setOpen = (v: boolean) => setOpenSources((prev) => ({ ...prev, [label]: v }));
+        const isSel = selected.has(label);
+        return (
+          <div key={label} className={i === 0 ? undefined : "mt-1"}>
+            <div
+              className="flex w-full items-center gap-1 rounded-md pr-1 text-[13px] hover:bg-[color:var(--surface-soft)]"
+              style={{
+                color: isSel ? "var(--brand-blue)" : "var(--ink-900)",
+                background: isSel ? "var(--surface-soft)" : "transparent",
+              }}
+            >
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(!open);
+                }}
+                aria-label={open ? "Collapse" : "Expand"}
+                aria-expanded={open}
+                className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-[color:var(--ink-500)] transition-colors hover:bg-[color:var(--hairline)] hover:text-[color:var(--ink-900)]"
+              >
+                {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(true);
+                  onToggle(label);
+                }}
+                className="flex flex-1 items-center gap-2 py-1.5 text-left"
+              >
+                <CheckSquare checked={isSel} />
+                <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center">
+                  <SourceLogo source={label} />
+                </span>
+                <span className="flex-1 font-medium">
+                  {label} ({nodes.length})
+                </span>
+              </button>
+            </div>
+            {open && (
+              <div className="mt-1">
+                {nodes.map((n) => (
+                  <TreeRow key={n.name} node={n} depth={1} selected={selected} onToggle={onToggle} />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </>
   );
 }
 
