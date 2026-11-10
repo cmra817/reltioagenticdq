@@ -6,6 +6,7 @@ import {
   ScopedChat,
   SectionTitle,
   SplitWorkspace,
+  FloatingPrompt,
   Tag,
   useChatThread,
   type ChatTurn,
@@ -260,6 +261,7 @@ function ProjectDetailBody({
   const pr = progress(p);
   const reply = React.useCallback((q: string) => projectReply(p, q), [p]);
   const thread = useChatThread(reply, initialTurns);
+  const [chatOpen, setChatOpen] = React.useState(true);
   const { getThread, createThread } = useChatThreads();
   React.useEffect(() => {
     if (thread.turns.length === 0) return;
@@ -404,6 +406,9 @@ function ProjectDetailBody({
     <SplitWorkspace
       panelLabel="Project detail"
       panelWidth="52%"
+      collapsed={!chatOpen}
+      onToggle={() => setChatOpen(!chatOpen)}
+      floating={<FloatingPrompt thread={thread} placeholder="Ask about this project" onOpen={() => setChatOpen(true)} />}
       center={
         <ScopedChat
           thread={thread}

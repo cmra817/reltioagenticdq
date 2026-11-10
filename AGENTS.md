@@ -16,3 +16,4 @@
 - Domain-level and table-level Checks tabs reuse `ChecksView` from `table-brief/evidence-panel`, so their table layout and expand/collapse behavior stay identical.
 - The Tables Domains filter uses the chat's controlled domain value and scope-change handler, including its post-message lock; panel presentation state belongs to `DomainScreen` so scope changes retain the open tab.
 - Opening any object into a chat (rule, job, table, panel item) sends an auto prompt about it when the thread is empty, so every opened object starts as a conversation.
+- `SplitWorkspace` always offers Hide chat when a panel exists and renders the Show chat toggle plus floating prompt when collapsed (unless the panel places its own via `ownShowToggle`), so every chat+panel screen hides the same way.

@@ -9,6 +9,7 @@ import {
   SectionTitle,
   Sparkline,
   SplitWorkspace,
+  FloatingPrompt,
   StatTile,
   Tabs,
   Tag,
@@ -163,6 +164,7 @@ function DomainWorkspace({
   const scopeName = all ? ALL_DOMAINS : selected;
 
   const [ask, setAsk] = React.useState<{ id: number; q: string } | null>(null);
+  const [chatOpen, setChatOpen] = React.useState(true);
   const [chatProject, setChatProject] = React.useState(saved?.project ?? "");
 
   const scores = domains.map((d) => healthFor(d)).filter((x): x is number => x !== null);
@@ -207,7 +209,10 @@ function DomainWorkspace({
     void navigate({ to: "/domain", search: { table: name, all: all || undefined } });
   };
   const discuss = (q: string, tableName?: string) => {
-    setAsk({ id: (ask?.id ?? 0) + 1, q });
+    // A hidden chat can't take the question, so it goes straight to the thread
+    // and the answer shows in the floating prompt.
+    if (chatOpen) setAsk({ id: (ask?.id ?? 0) + 1, q });
+    else thread.send(q);
     if (tableName) openTable(tableName);
   };
 
@@ -499,6 +504,9 @@ function DomainWorkspace({
       <SplitWorkspace
         panelLabel={table ? `${table.name} details` : `${scopeName} workspace`}
         panelWidth={expanded ? "59vw" : 320}
+        collapsed={!chatOpen}
+        onToggle={() => setChatOpen(!chatOpen)}
+        floating={<FloatingPrompt thread={thread} placeholder="Ask Reltio…" onOpen={() => setChatOpen(true)} />}
         center={
           <ScopedChat
             thread={thread}
