@@ -263,7 +263,7 @@ function NewMenu() {
             tables: plan.selected.map(tableName),
             ruleIds,
             repeats: scheduleLabel(plan.profiling),
-            nextRun: "Next scheduled time",
+            nextRun: "Tomorrow",
             active: true,
             owner: ME,
             permissions: "Everyone in the domain",
@@ -277,6 +277,8 @@ function NewMenu() {
           const a = setup.active;
           if (!a) return;
           const task = a.purpose === "task";
+          // A saved task is no longer a setup in progress.
+          if (task && snapshot.done) return;
           const domain = task ? snapshot.taskDomain || a.domain : a.domain || selected;
           setup.saveSession({
             id: a.id,

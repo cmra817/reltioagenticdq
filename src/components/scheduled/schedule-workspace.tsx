@@ -139,7 +139,7 @@ export function ScheduleWorkspace({
       setTab("insights");
       return `${schedule.name} checks ${schedule.tables.length} table${schedule.tables.length === 1 ? "" : "s"} (${schedule.tables.join(", ")})${
         scheduleRules.length ? ` with ${scheduleRules.length} rule${scheduleRules.length === 1 ? "" : "s"}` : ", profiling only"
-      }. It runs ${schedule.repeats.toLowerCase()}${schedule.active ? `; next run ${schedule.nextRun}` : ", but it's paused"}. ${insights.successRate}% of its ${insights.history.length} runs passed.\n\nAsk what happened in the last run, or tell me to change it.`;
+      }. It runs ${schedule.repeats.toLowerCase()}${schedule.active ? `; next run ${schedule.nextRun.toLowerCase()}` : ", but it's paused"}. ${insights.history.length ? `${insights.successRate}% of its ${insights.history.length} runs passed.` : "It hasn't run yet."}\n\nAsk what happened in the last run, or tell me to change it.`;
     }
     if (/\b(resume|unpause|turn (it )?on)\b/i.test(q)) {
       update(schedule.id, { active: true, nextRun: "Next scheduled time" });
