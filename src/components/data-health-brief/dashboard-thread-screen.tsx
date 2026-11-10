@@ -130,7 +130,7 @@ function runTurns(dash: DashboardDef, day: string): ChatTurn[] {
       text: "How the score has moved over the last 14 days:",
       visual: {
         kind: "trend",
-        title: "Health score, 14 days",
+        title: "DQ score, 14 days",
         values: trend,
         startLabel: "14 days ago",
         endLabel: isToday ? "Today" : when,
