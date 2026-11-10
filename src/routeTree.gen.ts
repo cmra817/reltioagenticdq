@@ -16,17 +16,17 @@ import { Route as DqChecksRouteImport } from './routes/dq-checks'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as ProjectsRouteImport } from './routes/projects'
-import { Route as TodayRouteImport } from './routes/today'
 import { Route as RulesRouteImport } from './routes/rules'
 import { Route as ScheduledRouteImport } from './routes/scheduled'
+import { Route as TodayRouteImport } from './routes/today'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AssetsAssetSlugRouteImport } from './routes/assets.$assetSlug'
 import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
 import { Route as DashboardThreadIdRouteImport } from './routes/dashboard.$threadId'
-import { Route as RuleThreadIdRouteImport } from './routes/rule.$threadId'
-import { Route as ScheduleThreadIdRouteImport } from './routes/schedule.$threadId'
 import { Route as InvestigateTopicRouteImport } from './routes/investigate.$topic'
 import { Route as InvestigateConsistencyRouteImport } from './routes/investigate.consistency'
+import { Route as RuleThreadIdRouteImport } from './routes/rule.$threadId'
+import { Route as ScheduleThreadIdRouteImport } from './routes/schedule.$threadId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,11 +63,6 @@ const ProjectsRoute = ProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TodayRoute = TodayRouteImport.update({
-  id: '/today',
-  path: '/today',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RulesRoute = RulesRouteImport.update({
   id: '/rules',
   path: '/rules',
@@ -76,6 +71,11 @@ const RulesRoute = RulesRouteImport.update({
 const ScheduledRoute = ScheduledRouteImport.update({
   id: '/scheduled',
   path: '/scheduled',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TodayRoute = TodayRouteImport.update({
+  id: '/today',
+  path: '/today',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -98,16 +98,6 @@ const DashboardThreadIdRoute = DashboardThreadIdRouteImport.update({
   path: '/dashboard/$threadId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RuleThreadIdRoute = RuleThreadIdRouteImport.update({
-  id: '/rule/$threadId',
-  path: '/rule/$threadId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ScheduleThreadIdRoute = ScheduleThreadIdRouteImport.update({
-  id: '/schedule/$threadId',
-  path: '/schedule/$threadId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const InvestigateTopicRoute = InvestigateTopicRouteImport.update({
   id: '/investigate/$topic',
   path: '/investigate/$topic',
@@ -116,6 +106,16 @@ const InvestigateTopicRoute = InvestigateTopicRouteImport.update({
 const InvestigateConsistencyRoute = InvestigateConsistencyRouteImport.update({
   id: '/investigate/consistency',
   path: '/investigate/consistency',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RuleThreadIdRoute = RuleThreadIdRouteImport.update({
+  id: '/rule/$threadId',
+  path: '/rule/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScheduleThreadIdRoute = ScheduleThreadIdRouteImport.update({
+  id: '/schedule/$threadId',
+  path: '/schedule/$threadId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -127,17 +127,17 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
   '/projects': typeof ProjectsRoute
-  '/today': typeof TodayRoute
   '/rules': typeof RulesRoute
   '/scheduled': typeof ScheduledRoute
+  '/today': typeof TodayRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
   '/dashboard/$threadId': typeof DashboardThreadIdRoute
-  '/rule/$threadId': typeof RuleThreadIdRoute
-  '/schedule/$threadId': typeof ScheduleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
+  '/rule/$threadId': typeof RuleThreadIdRoute
+  '/schedule/$threadId': typeof ScheduleThreadIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -147,17 +147,17 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
   '/projects': typeof ProjectsRoute
-  '/today': typeof TodayRoute
   '/rules': typeof RulesRoute
   '/scheduled': typeof ScheduledRoute
+  '/today': typeof TodayRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
   '/dashboard/$threadId': typeof DashboardThreadIdRoute
-  '/rule/$threadId': typeof RuleThreadIdRoute
-  '/schedule/$threadId': typeof ScheduleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
+  '/rule/$threadId': typeof RuleThreadIdRoute
+  '/schedule/$threadId': typeof ScheduleThreadIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -168,17 +168,17 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/incidents': typeof IncidentsRoute
   '/projects': typeof ProjectsRoute
-  '/today': typeof TodayRoute
   '/rules': typeof RulesRoute
   '/scheduled': typeof ScheduledRoute
+  '/today': typeof TodayRoute
   '/api/chat': typeof ApiChatRoute
   '/assets/$assetSlug': typeof AssetsAssetSlugRoute
   '/chat/$chatId': typeof ChatChatIdRoute
   '/dashboard/$threadId': typeof DashboardThreadIdRoute
-  '/rule/$threadId': typeof RuleThreadIdRoute
-  '/schedule/$threadId': typeof ScheduleThreadIdRoute
   '/investigate/$topic': typeof InvestigateTopicRoute
   '/investigate/consistency': typeof InvestigateConsistencyRoute
+  '/rule/$threadId': typeof RuleThreadIdRoute
+  '/schedule/$threadId': typeof ScheduleThreadIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -190,17 +190,17 @@ export interface FileRouteTypes {
     | '/explore'
     | '/incidents'
     | '/projects'
-    | '/today'
     | '/rules'
     | '/scheduled'
+    | '/today'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
     | '/dashboard/$threadId'
-    | '/rule/$threadId'
-    | '/schedule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
+    | '/rule/$threadId'
+    | '/schedule/$threadId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -210,17 +210,17 @@ export interface FileRouteTypes {
     | '/explore'
     | '/incidents'
     | '/projects'
-    | '/today'
     | '/rules'
     | '/scheduled'
+    | '/today'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
     | '/dashboard/$threadId'
-    | '/rule/$threadId'
-    | '/schedule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
+    | '/rule/$threadId'
+    | '/schedule/$threadId'
   id:
     | '__root__'
     | '/'
@@ -230,17 +230,17 @@ export interface FileRouteTypes {
     | '/explore'
     | '/incidents'
     | '/projects'
-    | '/today'
     | '/rules'
     | '/scheduled'
+    | '/today'
     | '/api/chat'
     | '/assets/$assetSlug'
     | '/chat/$chatId'
     | '/dashboard/$threadId'
-    | '/rule/$threadId'
-    | '/schedule/$threadId'
     | '/investigate/$topic'
     | '/investigate/consistency'
+    | '/rule/$threadId'
+    | '/schedule/$threadId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -251,17 +251,17 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   IncidentsRoute: typeof IncidentsRoute
   ProjectsRoute: typeof ProjectsRoute
-  TodayRoute: typeof TodayRoute
   RulesRoute: typeof RulesRoute
   ScheduledRoute: typeof ScheduledRoute
+  TodayRoute: typeof TodayRoute
   ApiChatRoute: typeof ApiChatRoute
   AssetsAssetSlugRoute: typeof AssetsAssetSlugRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
   DashboardThreadIdRoute: typeof DashboardThreadIdRoute
-  RuleThreadIdRoute: typeof RuleThreadIdRoute
-  ScheduleThreadIdRoute: typeof ScheduleThreadIdRoute
   InvestigateTopicRoute: typeof InvestigateTopicRoute
   InvestigateConsistencyRoute: typeof InvestigateConsistencyRoute
+  RuleThreadIdRoute: typeof RuleThreadIdRoute
+  ScheduleThreadIdRoute: typeof ScheduleThreadIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -315,13 +315,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/today': {
-      id: '/today'
-      path: '/today'
-      fullPath: '/today'
-      preLoaderRoute: typeof TodayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/rules': {
       id: '/rules'
       path: '/rules'
@@ -334,6 +327,13 @@ declare module '@tanstack/react-router' {
       path: '/scheduled'
       fullPath: '/scheduled'
       preLoaderRoute: typeof ScheduledRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/today': {
+      id: '/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof TodayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -364,20 +364,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardThreadIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/rule/$threadId': {
-      id: '/rule/$threadId'
-      path: '/rule/$threadId'
-      fullPath: '/rule/$threadId'
-      preLoaderRoute: typeof RuleThreadIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/schedule/$threadId': {
-      id: '/schedule/$threadId'
-      path: '/schedule/$threadId'
-      fullPath: '/schedule/$threadId'
-      preLoaderRoute: typeof ScheduleThreadIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/investigate/$topic': {
       id: '/investigate/$topic'
       path: '/investigate/$topic'
@@ -392,6 +378,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvestigateConsistencyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rule/$threadId': {
+      id: '/rule/$threadId'
+      path: '/rule/$threadId'
+      fullPath: '/rule/$threadId'
+      preLoaderRoute: typeof RuleThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/schedule/$threadId': {
+      id: '/schedule/$threadId'
+      path: '/schedule/$threadId'
+      fullPath: '/schedule/$threadId'
+      preLoaderRoute: typeof ScheduleThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -403,17 +403,17 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   IncidentsRoute: IncidentsRoute,
   ProjectsRoute: ProjectsRoute,
-  TodayRoute: TodayRoute,
   RulesRoute: RulesRoute,
   ScheduledRoute: ScheduledRoute,
+  TodayRoute: TodayRoute,
   ApiChatRoute: ApiChatRoute,
   AssetsAssetSlugRoute: AssetsAssetSlugRoute,
   ChatChatIdRoute: ChatChatIdRoute,
   DashboardThreadIdRoute: DashboardThreadIdRoute,
-  RuleThreadIdRoute: RuleThreadIdRoute,
-  ScheduleThreadIdRoute: ScheduleThreadIdRoute,
   InvestigateTopicRoute: InvestigateTopicRoute,
   InvestigateConsistencyRoute: InvestigateConsistencyRoute,
+  RuleThreadIdRoute: RuleThreadIdRoute,
+  ScheduleThreadIdRoute: ScheduleThreadIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

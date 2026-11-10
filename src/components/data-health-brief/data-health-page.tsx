@@ -29,7 +29,7 @@ import type { ChatReply } from "@/components/workspace/chat-visuals";
 import { AskItem, AskProvider, useAsk } from "./ask";
 import { answerTopic, recordReply, topicFrom } from "./dashboard-topics";
 import { DashboardThreadScreen } from "./dashboard-thread-screen";
-import { dashboardViewId } from "./dashboard-topics";
+import { dashboardViewId, dayKey } from "./dashboard-topics";
 import { assetsLabel, type SetupAnswers } from "./dashboard-setup";
 
 export type CustomDashboard = {
@@ -74,7 +74,12 @@ export function customToDashboard(c: CustomDashboard): DashboardDef {
 export function DataHealthPage() {
   const [custom, , ready] = useLocalStore<CustomDashboard[]>(CUSTOM_KEY, CUSTOM_INIT);
   // null shows the card grid; an id opens that dashboard (chat on the left, dashboard on the right).
-  const [active, setActive] = React.useState<string | null>(null);
+  const [active, setActiveRaw] = React.useState<string | null>(null);
+  const [day, setDay] = React.useState(() => dayKey());
+  const setActive = (id: string | null) => {
+    setActiveRaw(id);
+    setDay(dayKey());
+  };
   const navigate = useNavigate();
   const { createThread } = useChatThreads();
 
@@ -107,27 +112,25 @@ export function DataHealthPage() {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="shrink-0 px-6 pb-2 pt-4">
         <div className="flex flex-wrap items-center gap-3">
+          <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-2 text-[14px]">
           <button
             type="button"
             onClick={() => setActive(null)}
-            className="text-[13px] hover:underline"
-            style={{ color: "var(--brand-blue)" }}
+            className="hover:underline"
+            style={{ color: "var(--ink-500)" }}
           >
-            ‹ Dashboards
+            Dashboards
           </button>
-          <label className="flex min-w-0 flex-1 items-center gap-2">
+          <span aria-hidden style={{ color: "var(--ink-300)" }}>/</span>
+          <label className="flex min-w-0 items-center gap-2">
             <span className="sr-only">Dashboard</span>
             <select
               value={current.id}
               onChange={(e) => {
                 setActive(e.target.value);
               }}
-              className="min-w-0 max-w-96 flex-1 rounded-lg px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
-              style={{
-                border: "1px solid var(--hairline)",
-                background: "#fff",
-                color: "var(--ink-900)",
-              }}
+              className="min-w-0 max-w-96 cursor-pointer rounded-lg bg-transparent px-1.5 py-1 text-[14px] font-medium outline-none hover:bg-[color:var(--surface-soft)]"
+              style={{ border: "none", color: "var(--ink-900)" }}
             >
               {dashboards.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -137,6 +140,7 @@ export function DataHealthPage() {
               ))}
             </select>
           </label>
+          </nav>
           <GhostButton onClick={newDashboardChat} className="flex items-center gap-1.5">
             <Plus size={14} /> New dashboard
           </GhostButton>
@@ -144,7 +148,11 @@ export function DataHealthPage() {
         {!ready && <span className="sr-only">Loading dashboards</span>}
       </div>
 
-      <DashboardThreadScreen key={current.id} threadId={dashboardViewId(current.id)} />
+      <DashboardThreadScreen
+        key={`${current.id}-${day}`}
+        threadId={dashboardViewId(current.id, day)}
+        onPickDay={setDay}
+      />
     </div>
   );
 }
@@ -280,13 +288,28 @@ function DashboardCards({
           </GhostButton>
         </div>
         {loading && <span className="sr-only">Loading dashboards</span>}
-        <ul className="mt-5 grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))" }}>
-          {dashboards.map((d) => (
-            <li key={d.id}>
-              <DashboardCard dash={d} onOpen={() => onOpen(d.id)} />
-            </li>
-          ))}
-        </ul>
+        {[
+          { title: "Created by you", items: dashboards.filter((d) => !d.sharedBy) },
+          { title: "Shared with you", items: dashboards.filter((d) => d.sharedBy) },
+        ].map((g) =>
+          g.items.length === 0 ? null : (
+            <section key={g.title} className="mt-6">
+              <h2 className="text-[13px] font-semibold" style={{ color: "var(--ink-700)" }}>
+                {g.title}
+              </h2>
+              <ul
+                className="mt-3 grid gap-4"
+                style={{ gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))" }}
+              >
+                {g.items.map((d) => (
+                  <li key={d.id}>
+                    <DashboardCard dash={d} onOpen={() => onOpen(d.id)} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ),
+        )}
       </div>
     </div>
   );

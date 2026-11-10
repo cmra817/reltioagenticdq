@@ -34,7 +34,16 @@ export type ChatVisual =
       kind: "stats";
       title?: string;
       items: { label: string; value: string; note?: string }[];
+    }
+  | {
+      /** A card that opens the run's visual dashboard in the right panel. */
+      kind: "artifact";
+      title: string;
+      meta: string;
     };
+
+/** Lets an artifact card open its dashboard, wherever the chat is shown. */
+export const ArtifactOpenContext = React.createContext<(() => void) | null>(null);
 
 /** What the agent answers: text, and optionally a chart that explains it. */
 export type ChatReply = string | { text: string; visual?: ChatVisual };
@@ -49,6 +58,43 @@ function Title({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ArtifactCard({ title, meta }: { title: string; meta: string }) {
+  const open = React.useContext(ArtifactOpenContext);
+  return (
+    <button
+      type="button"
+      onClick={() => open?.()}
+      disabled={!open}
+      className="flex w-full max-w-sm items-center gap-3 rounded-xl border bg-white px-3 py-2.5 text-left transition-colors hover:bg-[color:var(--surface-soft)] focus-visible:outline-2 focus-visible:outline-[color:var(--brand-blue)]"
+      style={frame}
+    >
+      <span
+        aria-hidden
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-lg"
+        style={{ background: "var(--surface-soft)", color: "var(--brand-blue)" }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+          <rect x="3" y="3" width="7" height="9" rx="1.5" />
+          <rect x="14" y="3" width="7" height="5" rx="1.5" />
+          <rect x="14" y="12" width="7" height="9" rx="1.5" />
+          <rect x="3" y="16" width="7" height="5" rx="1.5" />
+        </svg>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13.5px] font-semibold" style={{ color: "var(--ink-900)" }}>
+          {title}
+        </span>
+        <span className="block truncate text-[12px]" style={{ color: "var(--ink-500)" }}>
+          {meta}
+        </span>
+      </span>
+      <span className="text-[12px] font-medium" style={{ color: "var(--brand-blue)" }}>
+        Open ↗
+      </span>
+    </button>
+  );
+}
+
 export function ChatVisualView({
   visual,
   onAsk,
@@ -56,6 +102,7 @@ export function ChatVisualView({
   visual: ChatVisual;
   onAsk?: (question: string) => void;
 }) {
+  if (visual.kind === "artifact") return <ArtifactCard title={visual.title} meta={visual.meta} />;
   if (visual.kind === "brief") {
     return (
       <div className="rounded-xl border bg-white p-1.5" style={frame}>
