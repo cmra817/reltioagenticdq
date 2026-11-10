@@ -9,9 +9,14 @@ Clicking **+ New task** opens the same agentic experience as adding a data asset
   -> chat opens, prompt already sent: "Set up a new task"
   -> Domain known?  no (All domains) -> agent: "Which domain is this task for?" + one chip per domain
                     yes              -> skip
-  -> agent: proposes tables, recommended checks and a schedule for that domain, asks to confirm
-  -> user: "Yes"
-  -> plan is generated in the workspace for review and edits (chat or inline)
+  -> agent: "Sure, I can help you with that. Just let me know:
+            (1) What tables you'd like to monitor
+            (2) Are there any specific checks you'd like to run them against? I will also recommend some.
+            (3) How often would you like to run this task."
+     (chat only, no right panel yet: nothing has been created)
+  -> user answers
+  -> agent creates the task: the right panel opens with the plan (tables, chosen + recommended checks, schedule)
+  -> user reviews and edits (chat or inline)
   -> Save task -> task is created under that domain and its task page opens
 ```
 
