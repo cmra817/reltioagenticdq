@@ -418,14 +418,14 @@ function DomainWorkspace({
         <span
           className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1"
           style={{ ...card, background: "var(--surface-soft)", color: "var(--ink-900)" }}
-          title="The scope is set for this chat. Start a new chat to look at another domain."
+          title="The domain is set for this chat. Start a new chat to look at another domain."
         >
           <Lock size={12} aria-hidden="true" />
-          Scope: {scopeName} · locked
+          Domain: {scopeName} · locked
         </span>
       ) : (
         <label className="flex items-center gap-2">
-          Scope
+          Domain
           <select
             value={scopeName}
             onChange={(e) => chooseScope(e.target.value)}
