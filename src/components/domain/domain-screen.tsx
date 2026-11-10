@@ -5,7 +5,6 @@ import { statusForScore, useDomainState } from "@/components/domain-context";
 import {
   HealthPill,
   HEALTH_COLOR,
-  RunPill,
   ScopedChat,
   SectionTitle,
   Sparkline,
@@ -618,7 +617,6 @@ function DomainPanel({
   onOpenTable: (name: string) => void;
 }) {
   const [query, setQuery] = React.useState("");
-  const lastRun = (s: Schedule) => runs.find((r) => r.scheduleId === s.id);
   const qy = query.trim().toLowerCase();
   const [srcSel, setSrcSel] = React.useState<Set<string>>(new Set());
   const assets = tables.map(tableAssetFor);
@@ -872,44 +870,7 @@ function DomainPanel({
         </div>
       )}
 
-      {tab === "checks" && (
-        <>
-          {schedules.every((s) => s.ruleIds.length === 0) ? (
-            <p className="text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-              No checks here yet.
-            </p>
-          ) : (
-            <ul className="divide-y rounded-xl border bg-white" style={card}>
-              {schedules.flatMap((s) =>
-                s.ruleIds.map((id) => {
-                  const r = lastRun(s);
-                  return (
-                    <li key={`${s.id}-${id}`} className="px-3.5 py-2.5">
-                      <div className="flex items-start justify-between gap-3">
-                        <Link
-                          to="/rules"
-                          search={{ rule: id }}
-                          className="text-[13.5px] font-medium underline"
-                          style={{ color: "var(--ink-900)" }}
-                        >
-                          {ruleName(id)}
-                        </Link>
-                        {r && <RunPill status={r.status} />}
-                      </div>
-                      <div className="mt-0.5 text-[12px]" style={{ color: "var(--ink-500)" }}>
-                        {s.name} · {s.tables.join(", ")}
-                      </div>
-                    </li>
-                  );
-                }),
-              )}
-            </ul>
-          )}
-          <p className="text-[12.5px]" style={{ color: "var(--ink-500)" }}>
-            To add a check, tell the agent which table and what should be true.
-          </p>
-        </>
-      )}
+      {tab === "checks" && <ChecksView />}
     </div>
   );
 }
