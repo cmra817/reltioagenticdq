@@ -478,11 +478,7 @@ function DomainWorkspace({
                   ? `Ask about ${table.name}…`
                   : `Ask about ${scopeName}…`
             }
-            suggestions={
-              table
-                ? ["Why is its score what it is?", "Which checks cover it?"]
-                : ["Which tables are late?", "Show me the projects"]
-            }
+            suggestions={[]}
             ask={ask}
             composerTop={composerTop}
             centerWhenEmpty
