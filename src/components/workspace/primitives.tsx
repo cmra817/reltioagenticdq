@@ -533,23 +533,25 @@ export function ScopedChat({
       </div>
 
       <div className="mx-auto w-full max-w-[760px] shrink-0 px-6 pb-4 pt-1">
-        <div className="mb-2 flex flex-wrap gap-2">
-          {suggestions.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => send(s)}
-              className="rounded-full px-3 py-1.5 text-[12px]"
-              style={{
-                border: "1px solid var(--hairline)",
-                background: "#fff",
-                color: "var(--ink-700)",
-              }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+        {suggestions.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {suggestions.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => send(s)}
+                className="rounded-full px-3 py-1.5 text-[12px]"
+                style={{
+                  border: "1px solid var(--hairline)",
+                  background: "#fff",
+                  color: "var(--ink-700)",
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
