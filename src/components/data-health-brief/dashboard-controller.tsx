@@ -1,6 +1,16 @@
 import * as React from "react";
 import { Maximize2, Pencil } from "lucide-react";
-import { ALL_DOMAINS, type DashboardDef } from "@/lib/mock-ops";
+import { ALL_DOMAINS, trendFor, type DashboardDef } from "@/lib/mock-ops";
+import { Sparkline } from "@/components/workspace/primitives";
+
+function dayLabel(day: string) {
+  return new Date(`${day}T06:00:00`).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 import { useLocalStore } from "@/lib/use-local-store";
 import { dayKey } from "./dashboard-topics";
 
@@ -185,6 +195,42 @@ export function DashboardController({
             );
           })}
         </ul>
+      </section>
+
+      <section className="mt-5 border-t pt-4" style={{ borderColor: "var(--hairline)" }}>
+        <h2 className={label} style={{ color: "var(--ink-500)" }}>
+          Outputs
+        </h2>
+        <button
+          type="button"
+          onClick={onExpand}
+          aria-label={`Open ${dash.name} dashboard`}
+          className="group mt-2 block w-full text-left"
+        >
+          <span
+            className="block overflow-hidden rounded-lg border p-3 transition-shadow group-hover:shadow-[var(--shadow-card)]"
+            style={{ borderColor: "var(--hairline)", background: "var(--surface-soft)" }}
+          >
+            <span className="block text-[10px]" style={{ color: "var(--ink-500)" }}>
+              {dayLabel(day)}
+            </span>
+            <span
+              className="mt-1 line-clamp-3 block text-[12.5px] font-semibold leading-snug"
+              style={{ color: "var(--ink-900)" }}
+            >
+              {dash.briefing[0]}
+            </span>
+            <span className="mt-2 block">
+              <Sparkline values={trendFor(dash.id === "mine" ? 78 : 84, `${dash.id}-${day}`)} label="Health over 14 days" />
+            </span>
+          </span>
+          <span className="mt-1.5 block text-[13px] font-medium" style={{ color: "var(--ink-900)" }}>
+            {dash.name}
+          </span>
+          <span className="block text-[12px]" style={{ color: "var(--ink-500)" }}>
+            Dashboard
+          </span>
+        </button>
       </section>
     </div>
   );
