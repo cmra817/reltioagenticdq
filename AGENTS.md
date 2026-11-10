@@ -18,3 +18,4 @@
 - Opening any object into a chat (rule, job, table, panel item) sends an auto prompt about it when the thread is empty, so every opened object starts as a conversation.
 - `SplitWorkspace` always offers Hide chat when a panel exists and renders the Show chat toggle plus floating prompt when collapsed (unless the panel places its own via `ownShowToggle`), so every chat+panel screen hides the same way.
 - Every prompt box in the app is `PromptBox` (chat/prompt-box.tsx) with Domain and Project selectors; screens pass controlled domain/project values or it follows the app-wide domain, so no screen has its own composer.
+- Project-store reads and creation updates default a missing `created` list to an empty array, so older saved state remains usable without deleting status, owner, or comment edits.
