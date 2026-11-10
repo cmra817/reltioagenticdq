@@ -135,6 +135,10 @@ export function RuleWorkspace({
       setFlash(["name", "description", "type", "severity", "threshold"]);
       return `I drafted "${d.name}" as a ${d.type.toLowerCase()} rule. ${describeTest(testRule(d), d.threshold)}\n\nIt's on the right. Edit anything there, or tell me what to change, like "make it high severity" or "allow 2% to fail".`;
     }
+    if (saved && insights && q === rulePrompt(saved.name)) {
+      setTab("insights");
+      return `${saved.name} is a ${saved.type.toLowerCase()} rule. ${saved.description} ${coverageText(insights)} ${passRateText(insights)}\n\nAsk why it fails, where it's used, or tell me what to change.`;
+    }
     const insight = saved && insights ? answerInsight(saved, insights, q) : null;
     if (readOnly) {
       return (
@@ -164,6 +168,15 @@ export function RuleWorkspace({
             { id: 1, role: "agent", text: START_QUESTION },
           ]),
   );
+
+  // Opening a rule asks about it, so every opened rule starts as a chat.
+  const autoAsked = React.useRef(false);
+  React.useEffect(() => {
+    if (autoAsked.current || !ruleId || !saved || !draft || thread.turns.length > 0) return;
+    autoAsked.current = true;
+    thread.send(rulePrompt(saved.name));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ruleId, saved, draft]);
 
   // An opened rule is just a page until a conversation starts: the first question
   // (typed, or an item selected) opens the chat and puts the thread in Recents.
@@ -450,6 +463,8 @@ export function RuleWorkspace({
     </div>
   );
 }
+
+const rulePrompt = (name: string) => `Tell me about the "${name}" rule`;
 
 function FieldBox({
   label,

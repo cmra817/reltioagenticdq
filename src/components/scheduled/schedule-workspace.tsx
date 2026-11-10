@@ -30,6 +30,8 @@ export const SCHEDULE_THREADS_INIT: Record<string, ScheduleThreadState> = {};
 
 type PanelTab = "insights" | "plan" | "runs";
 
+const jobPrompt = (name: string) => `Tell me about the "${name}" job`;
+
 function IconAction({
   label,
   onClick,
@@ -133,6 +135,12 @@ export function ScheduleWorkspace({
     const focus = openRunRecord ?? lastFailed ?? insights.lastRun;
     const top = focus?.findings[0];
 
+    if (q === jobPrompt(schedule.name)) {
+      setTab("insights");
+      return `${schedule.name} checks ${schedule.tables.length} table${schedule.tables.length === 1 ? "" : "s"} (${schedule.tables.join(", ")})${
+        scheduleRules.length ? ` with ${scheduleRules.length} rule${scheduleRules.length === 1 ? "" : "s"}` : ", profiling only"
+      }. It runs ${schedule.repeats.toLowerCase()}${schedule.active ? `; next run ${schedule.nextRun}` : ", but it's paused"}. ${insights.successRate}% of its ${insights.history.length} runs passed.\n\nAsk what happened in the last run, or tell me to change it.`;
+    }
     if (/\b(resume|unpause|turn (it )?on)\b/i.test(q)) {
       update(schedule.id, { active: true, nextRun: "Next scheduled time" });
       return "Resumed. It will run at its next scheduled time.";
@@ -242,6 +250,15 @@ export function ScheduleWorkspace({
     askedRun.current = id;
     thread.send(prompt);
   }
+
+  // Opening a job asks about it, unless the link already opens a run.
+  const autoAsked = React.useRef(false);
+  React.useEffect(() => {
+    if (autoAsked.current || !schedule || initialRun || thread.turns.length > 0) return;
+    autoAsked.current = true;
+    thread.send(jobPrompt(schedule.name));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schedule]);
 
   // A run asked for in the link (from a failed-run alert) comes into focus once.
   const handledRun = React.useRef<string | undefined>(undefined);
