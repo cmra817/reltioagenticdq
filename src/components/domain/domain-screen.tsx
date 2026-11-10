@@ -29,11 +29,18 @@ import {
 } from "@/lib/mock-ops";
 import { useRules, useRuns, useSchedules } from "@/lib/ops-store";
 import { useProjects } from "@/lib/projects-store";
+import { useLocalStore } from "@/lib/use-local-store";
+import { newChatId, useChatThreads } from "@/components/chat/chat-context";
+import type { ChatTurn } from "@/components/workspace/primitives";
 import type { Project } from "@/lib/mock-projects";
 import { projectReply } from "@/components/projects/projects-screen";
 import { DomainRail, type BriefLine } from "./domain-rail";
 
-export type DomainSearch = { table?: string; all?: boolean };
+export type DomainSearch = { table?: string; all?: boolean; thread?: string };
+
+/** What a saved domain chat needs to come back as it was. */
+type SavedDomainChat = { turns: ChatTurn[]; domain?: string; project?: string };
+const DOMAIN_CHATS_KEY = "agentflow.domain-chats.v1";
 
 type PanelTab = "overview" | "tables" | "checks";
 type TableTab = "overview" | "columns" | "sample" | "events" | "checks";
@@ -75,14 +82,45 @@ function sampleFor(table: string) {
  * message, and can be focused on one project.
  */
 export function DomainScreen({ search }: { search: DomainSearch }) {
-  const { selected } = useDomainState();
+  const { selected, selectDomain } = useDomainState();
+  const [saved, , ready] = useLocalStore<Record<string, SavedDomainChat>>(DOMAIN_CHATS_KEY, {});
+  const rec = search.thread ? saved[search.thread] : undefined;
+  const all = search.thread ? !!rec && !rec.domain : !!search.all;
+  const domain = rec?.domain ?? selected;
+
+  // Opening a saved chat from Recents also moves the sidebar to its domain.
+  React.useEffect(() => {
+    if (rec?.domain && rec.domain !== selected) selectDomain(rec.domain);
+    // Only when a different saved chat is opened.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.thread, rec?.domain]);
+
+  if (search.thread && !ready) return <div className="flex-1" />;
   // A new scope is a new chat: everything below starts over.
-  return <DomainWorkspace key={search.all ? ALL_DOMAINS : selected} search={search} />;
+  return (
+    <DomainWorkspace
+      key={`${search.thread ?? ""}|${all ? ALL_DOMAINS : domain}`}
+      search={{ ...search, all: all || undefined }}
+      domainName={domain}
+      saved={rec}
+    />
+  );
 }
 
-function DomainWorkspace({ search }: { search: DomainSearch }) {
+function DomainWorkspace({
+  search,
+  domainName: selected,
+  saved,
+}: {
+  search: DomainSearch;
+  domainName: string;
+  saved?: SavedDomainChat;
+}) {
   const navigate = useNavigate();
-  const { domains, selected, selectDomain, healthFor } = useDomainState();
+  const { domains, selectDomain, healthFor } = useDomainState();
+  const { getThread, createThread } = useChatThreads();
+  const [, setSaved] = useLocalStore<Record<string, SavedDomainChat>>(DOMAIN_CHATS_KEY, {});
+  const threadId = React.useRef(search.thread ?? newChatId()).current;
   const { schedules } = useSchedules();
   const { runs } = useRuns(schedules);
   const { rules } = useRules();
@@ -94,7 +132,7 @@ function DomainWorkspace({ search }: { search: DomainSearch }) {
   const [expanded, setExpanded] = React.useState(!!search.table);
   const [panelTab, setPanelTab] = React.useState<PanelTab>("overview");
   const [ask, setAsk] = React.useState<{ id: number; q: string } | null>(null);
-  const [chatProject, setChatProject] = React.useState("");
+  const [chatProject, setChatProject] = React.useState(saved?.project ?? "");
 
   const scores = domains.map((d) => healthFor(d)).filter((x): x is number => x !== null);
   const score = all
@@ -300,7 +338,27 @@ function DomainWorkspace({ search }: { search: DomainSearch }) {
     return `${scopeName} health is ${score ?? "not measured yet"}. ${findings.length} open ${findings.length === 1 ? "finding" : "findings"} from the latest runs across ${scopeSchedules.length} schedules.`;
   }
 
-  const thread = useChatThread(reply);
+  const thread = useChatThread(reply, saved?.turns);
+
+  // The first message puts this chat in Recents, nested under its domain
+  // (chats about All domains have no domain and sit in the last group).
+  React.useEffect(() => {
+    if (thread.turns.length === 0) return;
+    if (!getThread(threadId)) {
+      const first = thread.turns.find((t) => t.role === "user")?.text ?? "New chat";
+      createThread({
+        id: threadId,
+        title: first.replace(DISCUSS, "").slice(0, 48),
+        kind: "domain",
+        domain: all ? undefined : selected,
+      });
+    }
+    setSaved((prev) => ({
+      ...prev,
+      [threadId]: { turns: thread.turns, domain: all ? undefined : selected, project: chatProject },
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread.turns, chatProject]);
   const locked = thread.turns.length > 0;
 
   const chooseScope = (value: string) => {

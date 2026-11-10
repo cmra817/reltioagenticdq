@@ -5,6 +5,7 @@ import { DomainScreen, type DomainSearch } from "@/components/domain/domain-scre
 export const Route = createFileRoute("/domain")({
   validateSearch: (search: Record<string, unknown>): DomainSearch => ({
     table: typeof search.table === "string" ? search.table : undefined,
+    thread: typeof search.thread === "string" ? search.thread : undefined,
     all: search.all === true || search.all === "true" ? true : undefined,
   }),
   head: () => ({
