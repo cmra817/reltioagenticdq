@@ -293,17 +293,65 @@ export function SampleDataView() {
   }, [hasMore, count]);
 
   const rows = SAMPLE_ROWS.slice(0, count);
+  const shownIdx = SAMPLE_COLUMNS.map((h, i) => (visible.includes(h) ? i : -1)).filter((i) => i >= 0);
+  const toggle = (h: string) =>
+    setVisible((v) => (v.includes(h) ? v.filter((x) => x !== h) : [...v, h]));
 
   return (
     <div className="flex flex-col gap-2">
+      <div className="relative flex justify-end" ref={menuRef}>
+        <button
+          type="button"
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-label="Show columns"
+          className="flex h-7 w-7 items-center justify-center rounded-lg"
+          style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-700)" }}
+        >
+          <Columns3 size={14} />
+        </button>
+        {menuOpen ? (
+          <div
+            className="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl p-2"
+            style={{ background: "#fff", border: "1px solid var(--hairline)", boxShadow: "0 18px 40px -18px rgba(67,67,112,0.5)" }}
+          >
+            <p className="px-2 py-1 text-[10.5px] font-semibold uppercase tracking-wide" style={{ color: "var(--ink-300)" }}>
+              Show columns
+            </p>
+            {SAMPLE_COLUMNS.map((h) => {
+              const on = visible.includes(h);
+              return (
+                <button
+                  key={h}
+                  type="button"
+                  onClick={() => toggle(h)}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[12.5px] hover:bg-[var(--surface-soft)]"
+                  style={{ color: "var(--ink-900)" }}
+                >
+                  <span
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                    style={{
+                      background: on ? "var(--ink-900)" : "transparent",
+                      border: on ? "none" : "1px solid var(--hairline)",
+                      color: "#fff",
+                    }}
+                  >
+                    {on ? <Check size={10} strokeWidth={3} /> : null}
+                  </span>
+                  <span className="font-mono">{h}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
       <EvidenceTableShell>
         <div className="overflow-x-auto">
           <table className="w-full text-[12px]">
             <thead>
               <tr style={{ color: "var(--ink-300)" }}>
-                {SAMPLE_COLUMNS.map((h) => (
-                  <th key={h} className="whitespace-nowrap px-3 py-2 text-left font-mono font-medium">
-                    {h}
+                {shownIdx.map((j) => (
+                  <th key={SAMPLE_COLUMNS[j]} className="whitespace-nowrap px-3 py-2 text-left font-mono font-medium">
+                    {SAMPLE_COLUMNS[j]}
                   </th>
                 ))}
               </tr>
@@ -311,13 +359,13 @@ export function SampleDataView() {
             <tbody>
               {rows.map((row, i) => (
                 <tr key={i} style={{ borderTop: "1px solid var(--hairline)" }}>
-                  {row.map((cell, j) => (
+                  {shownIdx.map((j) => (
                     <td
                       key={j}
                       className="whitespace-nowrap px-3 py-2 font-mono"
                       style={{ color: j === 0 ? "var(--ink-900)" : "var(--ink-700)" }}
                     >
-                      {cell}
+                      {row[j]}
                     </td>
                   ))}
                 </tr>
