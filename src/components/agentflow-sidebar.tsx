@@ -14,7 +14,7 @@ import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
 import { newChatId, useChatThreads } from "./chat/chat-context";
 import { useSetupSessions } from "./add-dataset-agentic/setup-sessions";
-import { CalendarCheck, Clock, FolderKanban, LayoutDashboard, ListChecks, MessageSquarePlus } from "lucide-react";
+import { Clock, FolderKanban, LayoutDashboard, ListChecks, MessageSquarePlus } from "lucide-react";
 import { DomainGroups } from "./sidebar/domain-groups";
 import { PinnedChats } from "./sidebar/chat-lists";
 import { SearchDialog } from "./sidebar/search-dialog";
