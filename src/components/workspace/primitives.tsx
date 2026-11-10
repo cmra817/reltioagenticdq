@@ -496,7 +496,7 @@ export function ScopedChat({
       <div
         className={`${centered ? "shrink-0" : "min-h-0 flex-1 overflow-y-auto"} px-6 pb-3 pt-4`}
       >
-        <div className="mx-auto w-full max-w-[760px]">
+        <div className={`mx-auto w-full max-w-[760px] ${centered ? "text-center" : ""}`}>
           {header}
           {turns.length > 0 && (
             <ul className="mt-5 space-y-3" aria-live="polite">
