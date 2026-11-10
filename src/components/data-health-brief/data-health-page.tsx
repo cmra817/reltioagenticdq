@@ -6,6 +6,7 @@ import { STATUS_LABEL, statusForScore, useDomainState } from "@/components/domai
 import { RecordQualityPanel } from "./record-quality-panel";
 import {
   GhostButton,
+  PrimaryButton,
   HEALTH_COLOR,
   HealthPill,
   Tag,
@@ -141,9 +142,9 @@ export function DataHealthPage() {
             </select>
           </label>
           </nav>
-          <GhostButton onClick={newDashboardChat} className="flex items-center gap-1.5">
+          <PrimaryButton onClick={newDashboardChat} className="flex items-center gap-1.5">
             <Plus size={14} /> New dashboard
-          </GhostButton>
+          </PrimaryButton>
         </div>
         {!ready && <span className="sr-only">Loading dashboards</span>}
       </div>
@@ -283,9 +284,9 @@ function DashboardCards({
           <span className="text-[13px]" style={{ color: "var(--ink-500)" }}>
             Ask the agent to build one, then share it or open it any day.
           </span>
-          <GhostButton onClick={onNew} className="ml-auto flex items-center gap-1.5">
+          <PrimaryButton onClick={onNew} className="ml-auto flex items-center gap-1.5">
             <Plus size={14} /> New dashboard
-          </GhostButton>
+          </PrimaryButton>
         </div>
         {loading && <span className="sr-only">Loading dashboards</span>}
         {[
