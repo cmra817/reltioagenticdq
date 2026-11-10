@@ -10,7 +10,7 @@ import {
   type ChatThread,
   type ChatTurn,
 } from "@/components/workspace/primitives";
-import { ALL_DOMAINS, MY_BRIEF, SHARED_DASHBOARDS, type DashboardDef } from "@/lib/mock-ops";
+import { ALL_DOMAINS, MY_BRIEF, SHARED_DASHBOARDS, trendFor, type DashboardDef } from "@/lib/mock-ops";
 import { todayLabel } from "@/lib/ops-store";
 import { useLocalStore } from "@/lib/use-local-store";
 import {
@@ -36,7 +36,11 @@ import {
   type SetupAnswers,
 } from "./dashboard-setup";
 import type { ChatReply } from "@/components/workspace/chat-visuals";
-import { discussPrompt, parseViewId, topicFrom } from "./dashboard-topics";
+import { dashboardViewId, dayKey, discussPrompt, parseViewId, topicFrom } from "./dashboard-topics";
+import { ArtifactOpenContext } from "@/components/workspace/chat-visuals";
+import { DashboardController } from "./dashboard-controller";
+import { Minimize2 } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 
 /** What a dashboard thread remembers, so it can be reopened from Recents. */
 type DashboardThreadState = { turns: ChatTurn[]; answers: SetupAnswers; dashId?: string };
@@ -48,7 +52,14 @@ const THREADS_INIT: Record<string, DashboardThreadState> = {};
  * a dashboard's conversation for one day. Waits for saved state so a reopened
  * thread comes back as it was.
  */
-export function DashboardThreadScreen({ threadId }: { threadId: string }) {
+export function DashboardThreadScreen({
+  threadId,
+  onPickDay,
+}: {
+  threadId: string;
+  onPickDay?: (day: string) => void;
+}) {
+  const navigate = useNavigate();
   const [threads, , ready] = useLocalStore(THREADS_KEY, THREADS_INIT);
   const [custom, , customReady] = useLocalStore<CustomDashboard[]>(CUSTOM_KEY, CUSTOM_INIT);
   if (!ready || !customReady) return <div className="flex-1" />;
@@ -68,60 +79,100 @@ export function DashboardThreadScreen({ threadId }: { threadId: string }) {
       key={threadId}
       threadId={threadId}
       dash={dash}
+      day={view.day}
       initial={threads[threadId]}
+      onPickDay={
+        onPickDay ??
+        ((d) =>
+          void navigate({
+            to: "/dashboard/$threadId",
+            params: { threadId: dashboardViewId(dash.id, d) },
+          }))
+      }
     />
   );
 }
 
-/** The day's first message: that day's brief, each line selectable. */
-function briefTurn(dash: DashboardDef): ChatTurn {
-  return {
-    id: 0,
-    role: "agent",
-    text: `Good morning. Here's today's brief for ${dash.name}.`,
-    visual: {
-      kind: "brief",
-      title: "Today's brief",
-      stamp: "Generated today, 6:00am",
-      lines: dash.briefing.map((text) => ({ text, ask: discussPrompt(text) })),
+/** A day's run, as the agent's first messages: the artifact, a summary, and a chart. */
+function runTurns(dash: DashboardDef, day: string): ChatTurn[] {
+  const isToday = day === dayKey();
+  const when = isToday
+    ? "today"
+    : new Date(`${day}T06:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const trend = trendFor(dash.id === "mine" ? 78 : 84, `${dash.id}-${day}`);
+  return [
+    {
+      id: 0,
+      role: "agent",
+      text: `Scheduled run finished ${isToday ? "today" : `on ${when}`} at 6:00 AM. I checked the tables and rules this dashboard watches.`,
+      visual: {
+        kind: "artifact",
+        title: dash.name,
+        meta: `Dashboard · ${isToday ? "Today" : when} · ${dash.sharedBy ? "Shared" : "Only you"}`,
+      },
     },
-  };
+    {
+      id: 1,
+      role: "agent",
+      text: "Here's what needs your attention:",
+      visual: {
+        kind: "brief",
+        title: isToday ? "Today's brief" : `Brief for ${when}`,
+        stamp: `Generated ${when}, 6:00am`,
+        lines: dash.briefing.map((text) => ({ text, ask: discussPrompt(text) })),
+      },
+    },
+    {
+      id: 2,
+      role: "agent",
+      text: "How the score has moved over the last 14 days:",
+      visual: {
+        kind: "trend",
+        title: "Health score, 14 days",
+        values: trend,
+        startLabel: "14 days ago",
+        endLabel: isToday ? "Today" : when,
+        target: 90,
+      },
+    },
+  ];
 }
 
 /**
- * One conversation per dashboard per day, always beside the dashboard. It opens
- * with that day's brief; selecting a brief line, card or chart asks about it
- * here, and whatever was selected is highlighted on the dashboard. The thread
- * joins Recents with the first question.
+ * One conversation per dashboard per day. Chat on the left; the right panel
+ * starts minimized (instructions and runs) and expands to the dashboard when
+ * the artifact is opened. The thread joins Recents with the first question.
  */
 function DashboardViewThread({
   threadId,
   dash,
+  day,
   initial,
+  onPickDay,
 }: {
   threadId: string;
   dash: DashboardDef;
+  day: string;
   initial?: DashboardThreadState;
+  onPickDay: (day: string) => void;
 }) {
   const { getThread, createThread } = useChatThreads();
   const [, setThreads] = useLocalStore(THREADS_KEY, THREADS_INIT);
   const [chatOpen, setChatOpen] = React.useState(true);
-  const saved = initial?.turns ?? [];
-  const startTurns =
-    saved[0]?.visual?.kind === "brief"
-      ? saved
-      : [briefTurn(dash), ...saved.map((t, i) => ({ ...t, id: i + 1 }))];
+  const [expanded, setExpanded] = React.useState(false);
+  const seed = runTurns(dash, day);
+  const saved = (initial?.turns ?? []).filter((t) => t.role === "user" || t.id >= seed.length);
+  const userStart = saved.findIndex((t) => t.role === "user");
+  const rest = userStart < 0 ? [] : saved.slice(userStart);
+  const startTurns = [...seed, ...rest.map((t, i) => ({ ...t, id: seed.length + i }))];
   const thread = useChatThread((q) => dashboardReply(dash, q), startTurns);
 
   const asked = thread.turns.some((t) => t.role === "user");
   React.useEffect(() => {
     if (!asked) return;
     if (!getThread(threadId)) {
-      createThread({
-        id: threadId,
-        title: `${dash.name} · ${todayLabel()}`,
-        kind: "dashboard",
-      });
+      const label = day === dayKey() ? todayLabel() : day;
+      createThread({ id: threadId, title: `${dash.name} · ${label}`, kind: "dashboard" });
     }
     setThreads((prev) => ({
       ...prev,
@@ -132,42 +183,66 @@ function DashboardViewThread({
 
   const lastAsked = [...thread.turns].reverse().find((t) => t.role === "user");
   const focus = lastAsked ? (topicFrom(lastAsked.text) ?? null) : null;
+  const open = React.useCallback(() => setExpanded(true), []);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <SplitWorkspace
-        panelLabel={`${dash.name} dashboard`}
-        panelWidth="59vw"
-        collapsed={!chatOpen}
-        onToggle={() => setChatOpen(!chatOpen)}
-        floating={
-          <FloatingPrompt
-            thread={thread}
-            placeholder="Ask about this dashboard, or change it…"
-            onOpen={() => setChatOpen(true)}
-          />
-        }
-        center={
-          <ScopedChat
-            thread={thread}
-            scopeLabel={dash.name}
-            placeholder="Ask about this dashboard, or change it…"
-            suggestions={["What changed since yesterday?", "Add a card for freshness"]}
-            reply={(q) => dashboardReply(dash, q)}
-          />
-        }
-        panel={
-          <DashboardBody
-            dash={dash}
-            focus={focus}
-            onAsk={(topic) => thread.send(discussPrompt(topic))}
-            leading={
-              chatOpen ? null : <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
-            }
-          />
-        }
-      />
-    </div>
+    <ArtifactOpenContext.Provider value={open}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <SplitWorkspace
+          panelLabel={expanded ? `${dash.name} dashboard` : `${dash.name} instructions and runs`}
+          panelWidth={expanded ? "59vw" : 320}
+          collapsed={expanded && !chatOpen}
+          onToggle={expanded ? () => setChatOpen(!chatOpen) : undefined}
+          floating={
+            <FloatingPrompt
+              thread={thread}
+              placeholder="Ask about this dashboard, or change it…"
+              onOpen={() => setChatOpen(true)}
+            />
+          }
+          center={
+            <ScopedChat
+              thread={thread}
+              scopeLabel={dash.name}
+              placeholder="Ask about this dashboard, or change it…"
+              suggestions={["What changed since yesterday?", "Add a card for freshness"]}
+              reply={(q) => dashboardReply(dash, q)}
+            />
+          }
+          panel={
+            expanded ? (
+              <div className="relative flex min-h-0 flex-1 flex-col">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExpanded(false);
+                    setChatOpen(true);
+                  }}
+                  aria-label="Minimize dashboard"
+                  title="Minimize dashboard"
+                  className="absolute right-3 top-3 z-10 grid h-7 w-7 place-items-center rounded-md bg-white hover:bg-[color:var(--surface-soft)]"
+                  style={{ color: "var(--ink-500)" }}
+                >
+                  <Minimize2 size={15} />
+                </button>
+                <DashboardBody
+                  dash={dash}
+                  focus={focus}
+                  onAsk={(topic) => thread.send(discussPrompt(topic))}
+                  leading={
+                    chatOpen ? null : (
+                      <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
+                    )
+                  }
+                />
+              </div>
+            ) : (
+              <DashboardController dash={dash} day={day} onPickDay={onPickDay} onExpand={open} />
+            )
+          }
+        />
+      </div>
+    </ArtifactOpenContext.Provider>
   );
 }
 
