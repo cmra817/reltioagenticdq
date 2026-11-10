@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useChatThreads } from "@/components/chat/chat-context";
+import { ALL_DOMAINS_FIXED } from "@/components/chat/prompt-box";
 import { useLocalStore } from "@/lib/use-local-store";
 import {
   FloatingPrompt,
@@ -307,6 +308,7 @@ export function RuleWorkspace({
             thread={thread}
             placeholder="Ask about this rule, or tell me what to change…"
             onOpen={() => setChatOpen(true)}
+            domain={ALL_DOMAINS_FIXED}
           />
         }
         center={
@@ -320,6 +322,7 @@ export function RuleWorkspace({
             }
             suggestions={suggestions}
             reply={reply}
+            domain={ALL_DOMAINS_FIXED}
           />
         }
         panel={
