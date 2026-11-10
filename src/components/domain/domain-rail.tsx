@@ -95,11 +95,11 @@ export function DomainRail({
       {score !== null && (
         <section className="mt-5">
           <h2 className={label} style={{ color: "var(--ink-500)" }}>
-            Health score
+            DQ score
           </h2>
           <button
             type="button"
-            onClick={() => onAsk("Let's discuss: Health score")}
+            onClick={() => onAsk("Let's discuss: DQ score")}
             className="mt-1.5 block w-full rounded-lg text-left hover:bg-[color:var(--surface-soft)]"
           >
           <div className="flex items-baseline gap-2">

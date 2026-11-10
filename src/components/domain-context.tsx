@@ -24,7 +24,7 @@ type DomainContextValue = {
   dismissJustConnected: () => void;
   /** Called when AddDataset wizard finishes — saves tables/checks under domain. */
   completeConnection: (input: { domain: string; tables: string[]; checkCount: number }) => void;
-  /** Health score (0–100) for a domain, or null when nothing is monitored yet. */
+  /** DQ score (0–100) for a domain, or null when nothing is monitored yet. */
   healthFor: (name: string) => number | null;
 };
 

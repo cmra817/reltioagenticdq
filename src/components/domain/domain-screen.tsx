@@ -236,9 +236,9 @@ function DomainWorkspace({
     {
       text:
         score === null
-          ? `${scopeName} has no health score yet.`
+          ? `${scopeName} has no DQ score yet.`
           : `${scopeName} health is ${score}${status === "good" ? ", in good shape" : status === "warn" ? ", and needs attention" : ", and is at risk"}.`,
-      ask: `${DISCUSS}Health score`,
+      ask: `${DISCUSS}DQ score`,
     },
     ...findings.slice(0, 2).map(({ f }) => ({
       text: `${f.title} on ${f.table}.`,
@@ -290,10 +290,10 @@ function DomainWorkspace({
           ),
         };
       }
-      if (what === "Health score") {
+      if (what === "DQ score") {
         return {
           text: `${scopeName} scores ${score ?? "—"}. ${lowest ? `${lowest.name} is the weakest at ${lowest.score}.` : ""}`,
-          visual: tables.length ? tableBars(tables.slice(0, 5), "Health score by table") : undefined,
+          visual: tables.length ? tableBars(tables.slice(0, 5), "DQ score by table") : undefined,
         };
       }
       if (what === "Tables") {
@@ -363,7 +363,7 @@ function DomainWorkspace({
     if (/lowest|worst|tables/i.test(q)) {
       return tables.length === 0
         ? "No tables are monitored here yet. Tell me which warehouse tables belong here and I'll set up a schedule."
-        : { text: "Lowest first.", visual: tableBars(tables.slice(0, 5), "Health score by table") };
+        : { text: "Lowest first.", visual: tableBars(tables.slice(0, 5), "DQ score by table") };
     }
     return `${scopeName} health is ${score ?? "not measured yet"}. ${findings.length} open ${findings.length === 1 ? "finding" : "findings"} from the latest runs across ${scopeSchedules.length} schedules.`;
   }
@@ -717,10 +717,10 @@ function DomainPanel({
 
           <div className="grid grid-cols-2 gap-3">
             <StatTile
-              label="Health score"
+              label="DQ score"
               value={score === null ? "—" : String(score)}
               note={drift < -1 ? `Down ${Math.abs(drift)} this week` : "Steady this week"}
-              onClick={() => onAsk(`${DISCUSS}Health score`)}
+              onClick={() => onAsk(`${DISCUSS}DQ score`)}
             />
             <StatTile
               label="Tables"
