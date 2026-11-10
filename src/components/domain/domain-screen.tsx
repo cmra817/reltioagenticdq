@@ -488,16 +488,15 @@ function DomainWorkspace({
             centerWhenEmpty
             header={
               <section aria-label={`${scopeName} chat`}>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-[22px] font-semibold" style={{ color: "var(--ink-900)" }}>
-                    Chat
-                  </h1>
-                  <Tag>{scopeName}</Tag>
-                </div>
+                <h1 className="text-[22px] font-semibold" style={{ color: "var(--ink-900)" }}>
+                  {all
+                    ? "What do you want to know about your data?"
+                    : `What do you want to know about ${scopeName} data?`}
+                </h1>
                 <p className="mt-4 text-[14px]" style={{ color: "var(--ink-700)" }}>
                   {scopeSchedules.length === 0
                     ? "Nothing is monitored here yet. Tell me which tables belong here and how often to check them, and I'll set up the first schedule."
-                    : `Ask about ${scopeName}, or select a line, card or chart on the right to discuss it.`}
+                    : "Ask a question, or pick something from the brief on the right."}
                 </p>
               </section>
             }
