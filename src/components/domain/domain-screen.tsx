@@ -15,6 +15,7 @@ import {
   useChatThread,
 } from "@/components/workspace/primitives";
 import type { ChatReply, ChatVisual } from "@/components/workspace/chat-visuals";
+import { panelPrompt, panelReply } from "./panel-prompts";
 import { ago } from "@/components/scheduled/format";
 import {
   ALL_DOMAINS,
@@ -265,6 +266,8 @@ function DomainWorkspace({
   // ---- What the agent says ------------------------------------------------
   function reply(q: string): ChatReply {
     if (project) return projectReply(project, q);
+    const fromPanel = panelReply(q);
+    if (fromPanel) return fromPanel;
 
     if (q.startsWith(DISCUSS)) {
       const what = q.slice(DISCUSS.length);
@@ -277,7 +280,14 @@ function DomainWorkspace({
             open.length > 0
               ? `Open: ${open.map((x) => x.f.title.toLowerCase()).join("; ")}.`
               : "No open findings from the latest runs."
-          } ${p ? `It is part of “${p.title}”.` : "It is not part of a project."}`,
+          } ${p ? `It is part of “${p.title}”.` : "It is not part of a project."} The details are open on the right; click any card, column or check to ask about it.`,
+          visual: {
+            kind: "trend",
+            title: `${t.name} DQ score, last 14 days`,
+            values: trendFor(t.score, t.name),
+            startLabel: "14 days ago",
+            endLabel: "Today",
+          },
         };
       }
       const hit = findings.find((x) => x.f.title === what);
@@ -559,6 +569,7 @@ function DomainWorkspace({
                     setPanelTab("tables");
                     openTable(undefined);
                   }}
+                  onAsk={(q) => discuss(q)}
                 />
               ) : (
                 <DomainPanel
@@ -579,7 +590,7 @@ function DomainWorkspace({
                   runs={scopeRuns}
                   ruleName={ruleName}
                   projectOf={projectOf}
-                  onAsk={(q) => discuss(q)}
+                  onAsk={(q, name) => discuss(q, name)}
                   onOpenTable={openTable}
                   tab={panelTab}
                   onTab={setPanelTab}
@@ -896,7 +907,7 @@ function DomainPanel({
             </div>
             {shownAssets.length > 0 ? (
               <div className="overflow-x-auto">
-                <AssetRowsTable rows={shownAssets} onOpen={(a) => onOpenTable(a.name)} />
+                <AssetRowsTable rows={shownAssets} onOpen={(a) => onAsk(`${DISCUSS}${a.name}`, a.name)} />
               </div>
             ) : (
               <p className="px-4 py-4 text-[13px]" style={{ color: "var(--ink-500)" }}>
@@ -907,7 +918,7 @@ function DomainPanel({
         </div>
       )}
 
-      {tab === "checks" && <ChecksView />}
+      {tab === "checks" && <ChecksView onCheck={(name) => onAsk(panelPrompt.check(name))} />}
     </div>
   );
 }
@@ -920,6 +931,7 @@ function TableContext({
   ruleName,
   project,
   onBack,
+  onAsk,
 }: {
   table: TableInfo;
   schedules: Schedule[];
@@ -928,6 +940,7 @@ function TableContext({
   ruleName: (id: string) => string;
   project?: Project;
   onBack: () => void;
+  onAsk: (q: string) => void;
 }) {
   const [tab, setTab] = React.useState<TableTab>("overview");
   const covering = schedules.filter((s) => s.tables.includes(table.name));
@@ -976,12 +989,18 @@ function TableContext({
       {tab === "overview" && (
         <OverviewSection
           onOpen={(id) => setTab(id === "checks" ? "checks" : id === "sample" ? "sample" : id === "activity" ? "activity" : "columns")}
+          onAsk={(card) => onAsk(panelPrompt.card(card.label, table.name))}
         />
       )}
-      {tab === "columns" && <ProfilingView onScope={() => {}} />}
-      {tab === "sample" && <SampleDataView />}
-      {tab === "checks" && <ChecksView />}
-      {tab === "activity" && <ActivityView />}
+      {tab === "columns" && <ProfilingView onScope={(c) => onAsk(panelPrompt.column(c, table.name))} />}
+      {tab === "sample" && <SampleDataView onColumn={(c) => onAsk(panelPrompt.column(c, table.name))} />}
+      {tab === "checks" && <ChecksView onCheck={(c) => onAsk(panelPrompt.check(c, table.name))} />}
+      {tab === "activity" && (
+        <ActivityView
+          onDay={(d) => onAsk(panelPrompt.day(d, table.name))}
+          onRun={(run) => onAsk(panelPrompt.run(run.check, run.column, table.name))}
+        />
+      )}
     </div>
   );
 }
