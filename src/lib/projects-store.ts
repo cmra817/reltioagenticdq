@@ -19,12 +19,17 @@ type ProjectStore = {
 };
 const INIT: ProjectStore = { status: {}, owner: {}, comments: {}, created: [] };
 
+/** Older saved stores predate project creation; retain their other changes. */
+export function createdProjects(store: { created?: Project[] }): Project[] {
+  return Array.isArray(store.created) ? store.created : [];
+}
+
 export function useProjects() {
   const [store, setStore, ready] = useLocalStore<ProjectStore>("agentflow.projects.v1", INIT);
 
   const projects = React.useMemo<Project[]>(
     () =>
-      [...store.created, ...BASE_PROJECTS].map((p) => {
+      [...createdProjects(store), ...BASE_PROJECTS].map((p) => {
         const status = store.status[p.id] ?? p.status;
         const owner = store.owner[p.id] ?? p.owner;
         return {
@@ -40,7 +45,7 @@ export function useProjects() {
   );
 
   const add = React.useCallback(
-    (p: Project) => setStore((prev) => ({ ...prev, created: [p, ...prev.created] })),
+    (p: Project) => setStore((prev) => ({ ...prev, created: [p, ...createdProjects(prev)] })),
     [setStore],
   );
 
