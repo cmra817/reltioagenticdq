@@ -1,18 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import {
-  AppsGridIcon,
-  ChevronDownIcon,
-  PlusIcon,
-  UserIcon,
-} from "./brand-icons";
+import { useState } from "react";
+import { AppsGridIcon, ChevronDownIcon, UserIcon } from "./brand-icons";
 import { useDomainState } from "./domain-context";
-import { CreateDomainDialog } from "./create-domain-dialog";
-import { AddDatasetModal } from "./add-dataset/AddDatasetModal";
 import { AgenticAddAssetModal } from "./add-dataset-agentic/AgenticAddAssetModal";
 import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
-import { newChatId, useChatThreads } from "./chat/chat-context";
+import { newChatId } from "./chat/chat-context";
 import { useSetupSessions } from "./add-dataset-agentic/setup-sessions";
 import { useRules, useSchedules } from "@/lib/ops-store";
 import { useOpenSchedule } from "./scheduled/open-schedule";
@@ -100,146 +93,33 @@ function SectionDivider() {
 }
 
 function NewMenu() {
-  const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
+  const { completeConnection, selected } = useDomainState();
   const { runJob } = useNotifications();
   const { addAssets } = useCreatedAssets();
-  const { createThread } = useChatThreads();
   const setup = useSetupSessions();
   const { add: addSchedule } = useSchedules();
   const { rules } = useRules();
   const openSchedule = useOpenSchedule();
   const isTaskSetup = setup.active?.purpose === "task";
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const [domainOpen, setDomainOpen] = useState(false);
-  const [datasetOpen, setDatasetOpen] = useState(false);
   const [pendingDomain, setPendingDomain] = useState<string | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  const itemClass =
-    "flex w-full items-center gap-2 px-3 py-2 text-left text-[14px] transition-colors hover:bg-[color:var(--surface-soft)]";
 
   return (
-    <div ref={ref} className="relative">
-      <div
-        className="inline-flex h-9 items-center rounded-full border text-[14px] font-medium"
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => void navigate({ to: "/domain", search: { all: true, n: newChatId() } })}
+        className="inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-[14px] font-medium"
         style={{
           borderColor: "var(--brand-blue)",
           color: "var(--brand-blue)",
-          background: open ? "rgba(67,134,250,0.14)" : "rgba(67,134,250,0.08)",
+          background: "rgba(67,134,250,0.08)",
         }}
       >
-        <button
-          type="button"
-          onClick={() => {
-            setOpen(false);
-            void navigate({ to: "/domain", search: { all: true, n: newChatId() } });
-          }}
-          className="inline-flex h-full items-center gap-1.5 rounded-l-full pl-3 pr-2"
-        >
-          <MessageSquarePlus size={14} />
-          <span>New chat</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="More ways to add"
-          className="inline-flex h-full items-center rounded-r-full border-l pl-2 pr-2.5"
-          style={{ borderColor: "var(--brand-blue)" }}
-          aria-haspopup="menu"
-          aria-expanded={open}
-        >
-          <span
-            className="transition-transform"
-            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-          >
-            <ChevronDownIcon size={12} />
-          </span>
-        </button>
-      </div>
+        <MessageSquarePlus size={14} />
+        <span>New chat</span>
+      </button>
 
-      {open && (
-        <div
-          role="menu"
-          className="absolute left-0 top-[calc(100%+6px)] z-50 w-56 overflow-hidden rounded-xl border bg-white py-1"
-          style={{ borderColor: "var(--hairline)", boxShadow: "0 12px 32px rgba(15,23,42,0.12)" }}
-        >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              setPendingDomain(selected);
-              // Any setup already in progress stays saved under Recent chats.
-              setup.openNew(selected);
-            }}
-            className={itemClass}
-            style={{ color: "var(--ink-900)" }}
-          >
-            <PlusIcon size={14} />
-            <span>Add new data asset (agentic)</span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              setDomainOpen(true);
-            }}
-            className={itemClass}
-            style={{ color: "var(--ink-900)" }}
-          >
-            <PlusIcon size={14} />
-            <span>Create new domain</span>
-          </button>
-        </div>
-      )}
-
-      <CreateDomainDialog
-        open={domainOpen}
-        onOpenChange={setDomainOpen}
-        onCreate={(name) => {
-          addDomain(name);
-          selectDomain(name);
-          setPendingDomain(name);
-          setDatasetOpen(true);
-        }}
-      />
-      <AddDatasetModal
-        open={datasetOpen}
-        onOpenChange={(o) => {
-          setDatasetOpen(o);
-          if (!o) setPendingDomain(null);
-        }}
-        domainName={pendingDomain ?? selected}
-        onComplete={({ tables, checkCount, assets }) => {
-          completeConnection({ domain: pendingDomain ?? selected, tables, checkCount });
-          // Register the new assets so they appear in Explore with their checks + schedule.
-          addAssets(assets);
-          // Newly added datasets kick off profiling + DQ checks; notify on completion.
-          tables.forEach((table, i) => {
-            runJob({ kind: "profiling", table, delayMs: 3500 + i * 1200 });
-            runJob({ kind: "checks", table, delayMs: 7000 + i * 1200 });
-          });
-          setPendingDomain(null);
-        }}
-      />
       <AgenticAddAssetModal
         key={setup.active?.id ?? "none"}
         open={!!setup.active}
