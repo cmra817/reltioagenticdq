@@ -1,3 +1,4 @@
+import { PromptBox } from "@/components/chat/prompt-box";
 import * as React from "react";
 import { ArrowUp } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
@@ -315,46 +316,15 @@ export function DataHealthScreen({ embedded = false }: { embedded?: boolean } = 
             </button>
           ))}
         </div>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            ask(input);
+        <PromptBox
+          value={input}
+          onChange={setInput}
+          onSubmit={(q) => {
+            ask(q);
             setInput("");
           }}
-          className="flex flex-col rounded-2xl px-3 py-3"
-          style={{
-            background: "#E3E3F2",
-            border: "1px solid rgba(0,0,204,0.14)",
-            boxShadow:
-              "0px -2px 20px -10px rgba(67,67,112,0.15), 0px 24px 48px -16px rgba(67,67,112,0.5)",
-          }}
-        >
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                ask(input);
-                setInput("");
-              }
-            }}
-            rows={2}
-            placeholder="Ask about your data, or change this dashboard…"
-            className="min-h-[52px] flex-1 resize-none bg-transparent text-[13px] outline-none"
-            style={{ color: "var(--ink-900)" }}
-          />
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              aria-label="Send"
-              className="flex h-8 w-8 items-center justify-center rounded-full"
-              style={{ background: "var(--brand-blue)", color: "#fff" }}
-            >
-              <ArrowUp size={15} />
-            </button>
-          </div>
-        </form>
+          placeholder="Ask about your data, or change this dashboard…"
+        />
       </div>
     </div>
   );

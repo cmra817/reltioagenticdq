@@ -1,3 +1,4 @@
+import { PromptBox } from "@/components/chat/prompt-box";
 import * as React from "react";
 import { ArrowUp, Check, Loader2 } from "lucide-react";
 import {
@@ -356,46 +357,14 @@ export function SetupFlow({ onCreate }: { onCreate: (c: SetupConfig) => void }) 
   };
 
   const promptForm = (placeholder: string) => (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        send();
-      }}
-      className="flex flex-col rounded-2xl px-3 py-3"
-      style={{
-        background: "#E3E3F2",
-        border: "1px solid rgba(0,0,204,0.14)",
-        boxShadow:
-          "0px -2px 20px -10px rgba(67,67,112,0.15), 0px 24px 48px -16px rgba(67,67,112,0.5)",
-      }}
-    >
-      <textarea
-        value={input}
-        autoFocus
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            send();
-          }
-        }}
-        rows={2}
-        placeholder={placeholder}
-        className="min-h-[52px] flex-1 resize-none bg-transparent text-[13px] outline-none"
-        style={{ color: "var(--ink-900)" }}
-      />
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          aria-label="Send"
-          disabled={busy}
-          className="flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-40"
-          style={{ background: "var(--brand-blue)", color: "#fff" }}
-        >
-          <ArrowUp size={15} />
-        </button>
-      </div>
-    </form>
+    <PromptBox
+      value={input}
+      onChange={setInput}
+      onSubmit={send}
+      placeholder={placeholder}
+      autoFocus
+      busy={busy}
+    />
   );
 
   return (

@@ -1,3 +1,4 @@
+import { PromptBox } from "@/components/chat/prompt-box";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, Loader2, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { PlanView, hasKey, type PlanFilter, type Reveal, type RuleRequest } from "./PlanView";
@@ -749,49 +750,14 @@ export function AgenticAddAssetModal({
   );
 
   const composer = (placeholder: string) => (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        send();
-      }}
-      className="flex flex-col items-start gap-2 rounded-2xl p-3"
-      style={{
-        background: "#E3E3F2",
-        boxSizing: "border-box",
-        minHeight: "112px",
-        border: "1px solid rgba(0, 0, 204, 0.14)",
-        boxShadow:
-          "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.5)",
-      }}
-    >
-      <div className="flex w-full items-start gap-2">
-        <textarea
-          ref={inputRef}
-          autoFocus
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          placeholder={placeholder}
-          className="min-h-[56px] flex-1 resize-none bg-transparent px-1 py-0.5 text-[13px] outline-none"
-          style={{ color: "var(--ink-900)" }}
-        />
-      </div>
-      <div className="flex w-full justify-end px-1 pb-1">
-        <button
-          type="submit"
-          aria-label="Send"
-          className="flex h-8 w-8 items-center justify-center rounded-full"
-          style={{ background: "var(--brand-blue)", color: "#fff" }}
-        >
-          <ArrowUp size={16} />
-        </button>
-      </div>
-    </form>
+    <PromptBox
+      value={input}
+      onChange={setInput}
+      onSubmit={send}
+      placeholder={placeholder}
+      textareaRef={inputRef}
+      autoFocus
+    />
   );
 
 
@@ -930,41 +896,13 @@ export function AgenticAddAssetModal({
             </div>
           </button>
         )}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            send();
-          }}
-          className="flex items-end gap-2 rounded-2xl p-2 pl-3 backdrop-blur-md"
-          style={{
-            background: "rgba(227, 227, 242, 0.7)",
-            border: "1px solid rgba(0, 0, 204, 0.14)",
-            boxShadow: "0px -2px 20px -10px rgba(67, 67, 112, 0.15), 0px 24px 48px -16px rgba(67, 67, 112, 0.35)",
-          }}
-        >
-          <textarea
-            rows={1}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-            }}
-            placeholder="Change the plan, e.g. remove fct_orders_daily…"
-            className="max-h-28 flex-1 resize-none bg-transparent py-2 text-[13px] outline-none"
-            style={{ color: "var(--ink-900)" }}
-          />
-          <button
-            type="submit"
-            aria-label="Send"
-            className="mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-            style={{ background: "var(--brand-blue)", color: "#fff" }}
-          >
-            <ArrowUp size={16} />
-          </button>
-        </form>
+        <PromptBox
+          value={input}
+          onChange={setInput}
+          onSubmit={send}
+          placeholder="Change the plan, e.g. remove fct_orders_daily…"
+          rows={1}
+        />
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { PromptBox } from "@/components/chat/prompt-box";
 import * as React from "react";
 import {
   X, Clock3, TriangleAlert, Table2, ListChecks, Activity, Rows3, Grid3x3,
@@ -899,41 +900,13 @@ function PanelComposer({
     setValue("");
   };
   return (
-    <form
-      onSubmit={submit}
-      className="flex items-center gap-2 rounded-xl px-3 py-1.5"
-      style={{
-        background: "#E3E3F2",
-        boxSizing: "border-box",
-        minHeight: "40px",
-        border: "1px solid rgba(0, 0, 204, 0.14)",
-      }}
-    >
-      <textarea
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            submit();
-          }
-        }}
-        rows={1}
-        placeholder={scopeLabel ? `Ask about ${scopeLabel}…` : "Ask about this table…"}
-        className="min-h-[24px] w-full flex-1 resize-none bg-transparent px-1 py-0.5 text-[13px] outline-none"
-        style={{ color: "var(--ink-900)" }}
-      />
-      <div className="flex items-center">
-        <button
-          type="submit"
-          aria-label="Send"
-          className="flex h-7 w-7 items-center justify-center rounded-full"
-          style={{ background: "var(--brand-blue)", color: "#fff" }}
-        >
-          <ArrowUp size={14} />
-        </button>
-      </div>
-    </form>
+    <PromptBox
+      value={value}
+      onChange={setValue}
+      onSubmit={() => submit()}
+      placeholder={scopeLabel ? `Ask about ${scopeLabel}…` : "Ask about this table…"}
+      rows={1}
+    />
   );
 }
 

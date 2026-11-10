@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Lock, Minimize2 } from "lucide-react";
+import { ArrowLeft, Minimize2 } from "lucide-react";
 import { statusForScore, useDomainState } from "@/components/domain-context";
 import {
   HealthPill,
