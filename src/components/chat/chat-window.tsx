@@ -127,6 +127,72 @@ export function ChatWindow({
     void sendMessage({ text: value });
   }
 
+  const controls = { input, setInput, submit, status, busy, stop, textareaRef };
+
+  const composer = (
+    <div className={compact ? "p-3" : "px-6 py-4"}>
+      <div className={compact ? "" : "mx-auto w-full max-w-3xl"}>
+        <PromptInput
+          onSubmit={(_message, event) => {
+            event.preventDefault();
+            submit(input);
+          }}
+        >
+          <PromptInputTextarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask about your data…"
+          />
+          <PromptInputFooter className="justify-end">
+            <PromptInputSubmit status={status} disabled={!input.trim() && !busy} onStop={stop} />
+          </PromptInputFooter>
+        </PromptInput>
+      </div>
+    </div>
+  );
+
+  const promptBlock = renderPrompt ? renderPrompt(controls) : hidePrompt ? null : composer;
+
+  // A fresh chat sits in the middle of the column: greeting on top, prompt box right below it.
+  if (messages.length === 0 && !compact && !hidePrompt) {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col justify-center py-6">
+          <div className="w-full">
+            <div className="mx-auto w-full max-w-3xl px-6 pb-6 text-center">
+              <div className="font-semibold text-[20px]" style={{ color: "var(--ink-900)" }}>
+                {emptyTitle}
+              </div>
+              <p
+                className="mx-auto mt-1.5 max-w-sm text-[13px]"
+                style={{ color: "var(--ink-500)" }}
+              >
+                {emptySubtitle}
+              </p>
+              {suggestions.length > 0 && (
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => submit(s)}
+                      className="rounded-full border px-3 py-1.5 text-left text-[12px] transition-colors hover:bg-[color:var(--surface-soft)]"
+                      style={{ borderColor: "var(--hairline)", color: "var(--ink-700)" }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {promptBlock}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <Conversation className="min-h-0 flex-1">
@@ -235,32 +301,7 @@ export function ChatWindow({
         <ConversationScrollButton />
       </Conversation>
 
-      {renderPrompt && (
-        <div className="shrink-0">{renderPrompt({ input, setInput, submit, status, busy, stop, textareaRef })}</div>
-      )}
-
-      {!hidePrompt && !renderPrompt && (
-        <div className={compact ? "p-3" : "px-6 py-4"}>
-          <div className={compact ? "" : "mx-auto w-full max-w-3xl"}>
-            <PromptInput
-              onSubmit={(_message, event) => {
-                event.preventDefault();
-                submit(input);
-              }}
-            >
-              <PromptInputTextarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about your data…"
-              />
-              <PromptInputFooter className="justify-end">
-                <PromptInputSubmit status={status} disabled={!input.trim() && !busy} onStop={stop} />
-              </PromptInputFooter>
-            </PromptInput>
-          </div>
-        </div>
-      )}
+      {promptBlock && <div className="shrink-0">{promptBlock}</div>}
     </div>
   );
 }
