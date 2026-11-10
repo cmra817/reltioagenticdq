@@ -193,7 +193,7 @@ export function ProjectsScreen({ projectId }: { projectId?: string }) {
   );
 }
 
-function projectReply(p: Project, q: string): ChatReply {
+export function projectReply(p: Project, q: string): ChatReply {
   const text = q.toLowerCase();
   const unmet = p.criteria.filter((c) => !c.met);
   if (/block|left|unmet|missing/.test(text)) {

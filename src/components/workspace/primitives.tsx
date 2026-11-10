@@ -305,8 +305,11 @@ export function useChatThread(reply: (q: string) => ChatReply, initialTurns?: Ch
     ]);
   }, []);
   /** Adds an agent message that answers nothing the person asked, e.g. "Saved". */
-  const say = React.useCallback((text: string) => {
-    setTurns((prev) => [...prev, { id: prev.length, role: "agent", text }]);
+  const say = React.useCallback((text: string, visual?: ChatVisual) => {
+    setTurns((prev) => [
+      ...prev,
+      { id: prev.length, role: "agent", text, ...(visual ? { visual } : {}) },
+    ]);
   }, []);
   return { turns, send, say };
 }
@@ -444,8 +447,11 @@ export function ScopedChat({
   ask,
   thread,
   initialInput,
+  composerTop,
 }: {
   thread?: ChatThread;
+  /** Controls above the text box, such as a scope or project picker. */
+  composerTop?: React.ReactNode;
   /** Prefills the prompt box and focuses it with the cursor at the end. */
   initialInput?: string;
   scopeLabel: string;
@@ -547,6 +553,7 @@ export function ScopedChat({
           className="flex flex-col gap-1 rounded-2xl border bg-white/95 px-3 py-2.5"
           style={{ borderColor: "var(--hairline)", boxShadow: "0 12px 32px rgba(15,23,42,0.08)" }}
         >
+          {composerTop}
           <textarea
             ref={inputRef}
             value={input}

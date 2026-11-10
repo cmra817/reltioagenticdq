@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Link } from "@tanstack/react-router";
 
 /**
  * Small charts the agent can put in a chat reply to explain what it says.
@@ -40,6 +41,13 @@ export type ChatVisual =
       kind: "artifact";
       title: string;
       meta: string;
+    }
+  | {
+      /** A button that goes somewhere, e.g. "Open the project". */
+      kind: "link";
+      label: string;
+      to: "/projects";
+      search?: { project?: string };
     };
 
 /** Lets an artifact card open its dashboard, wherever the chat is shown. */
@@ -102,6 +110,18 @@ export function ChatVisualView({
   visual: ChatVisual;
   onAsk?: (question: string) => void;
 }) {
+  if (visual.kind === "link") {
+    return (
+      <Link
+        to={visual.to}
+        search={visual.search}
+        className="inline-flex rounded-lg border bg-white px-3 py-1.5 text-[13px] font-medium hover:bg-[color:var(--surface-soft)]"
+        style={{ ...frame, color: "var(--brand-blue)" }}
+      >
+        {visual.label} ↗
+      </Link>
+    );
+  }
   if (visual.kind === "artifact") return <ArtifactCard title={visual.title} meta={visual.meta} />;
   if (visual.kind === "brief") {
     return (

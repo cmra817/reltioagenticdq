@@ -23,6 +23,7 @@ export function DomainRail({
   onAsk,
   onExpand,
   onOpenTables,
+  onOpenTable,
 }: {
   domain: string;
   score: number | null;
@@ -33,6 +34,7 @@ export function DomainRail({
   onAsk: (question: string) => void;
   onExpand: () => void;
   onOpenTables: () => void;
+  onOpenTable: (name: string) => void;
 }) {
   const status = statusForScore(score);
   const lowest = [...tables].sort((a, b) => a.score - b.score).slice(0, 3);
@@ -95,7 +97,12 @@ export function DomainRail({
           <h2 className={label} style={{ color: "var(--ink-500)" }}>
             Health score
           </h2>
-          <div className="mt-1.5 flex items-baseline gap-2">
+          <button
+            type="button"
+            onClick={() => onAsk("Let's discuss: Health score")}
+            className="mt-1.5 block w-full rounded-lg text-left hover:bg-[color:var(--surface-soft)]"
+          >
+          <div className="flex items-baseline gap-2">
             <span className="text-[28px] font-semibold leading-none" style={{ color: "var(--ink-900)" }}>
               {score}
             </span>
@@ -106,6 +113,7 @@ export function DomainRail({
           <div className="mt-2">
             <Sparkline values={trendFor(score, domain)} label={`${domain} health over 14 days`} />
           </div>
+          </button>
         </section>
       )}
 
@@ -116,7 +124,12 @@ export function DomainRail({
           </h2>
           <ul className="mt-2 space-y-2">
             {lowest.map((t) => (
-              <li key={t.name}>
+              <li key={`${t.domain}-${t.name}`}>
+                <button
+                  type="button"
+                  onClick={() => onOpenTable(t.name)}
+                  className="block w-full rounded-lg px-1.5 py-1 text-left hover:bg-[color:var(--surface-soft)]"
+                >
                 <div className="flex justify-between text-[12.5px]" style={{ color: "var(--ink-900)" }}>
                   <span className="truncate">{t.name}</span>
                   <span className="tabular-nums">{t.score}</span>
@@ -127,6 +140,7 @@ export function DomainRail({
                     style={{ width: `${t.score}%`, background: HEALTH_COLOR[statusForScore(t.score)] }}
                   />
                 </div>
+                </button>
               </li>
             ))}
           </ul>
