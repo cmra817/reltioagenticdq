@@ -14,15 +14,17 @@ type ProjectStore = {
   status: Record<string, ProjectStatus>;
   owner: Record<string, string>;
   comments: Record<string, ProjectComment[]>;
+  /** Projects created in the app, newest first. */
+  created: Project[];
 };
-const INIT: ProjectStore = { status: {}, owner: {}, comments: {} };
+const INIT: ProjectStore = { status: {}, owner: {}, comments: {}, created: [] };
 
 export function useProjects() {
   const [store, setStore, ready] = useLocalStore<ProjectStore>("agentflow.projects.v1", INIT);
 
   const projects = React.useMemo<Project[]>(
     () =>
-      BASE_PROJECTS.map((p) => {
+      [...store.created, ...BASE_PROJECTS].map((p) => {
         const status = store.status[p.id] ?? p.status;
         const owner = store.owner[p.id] ?? p.owner;
         return {
@@ -35,6 +37,11 @@ export function useProjects() {
         };
       }),
     [store],
+  );
+
+  const add = React.useCallback(
+    (p: Project) => setStore((prev) => ({ ...prev, created: [p, ...prev.created] })),
+    [setStore],
   );
 
   /** Returns a reason when the move is not allowed. Done needs every criterion met. */
@@ -73,7 +80,7 @@ export function useProjects() {
     [setStore],
   );
 
-  return { projects, move, addComment, ready };
+  return { projects, move, addComment, add, ready };
 }
 
 /* ---------- Needs you ---------- */
