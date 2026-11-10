@@ -257,8 +257,25 @@ const SAMPLE_PAGE = 50;
 
 export function SampleDataView() {
   const [count, setCount] = React.useState(SAMPLE_PAGE);
+  const [visible, setVisible] = React.useState<string[]>(SAMPLE_COLUMNS);
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement | null>(null);
   const sentinel = React.useRef<HTMLDivElement | null>(null);
   const hasMore = count < SAMPLE_ROWS.length;
+
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
 
   React.useEffect(() => {
     const el = sentinel.current;
