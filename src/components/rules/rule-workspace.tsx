@@ -301,6 +301,7 @@ export function RuleWorkspace({
         panelWidth="59vw"
         collapsed={!!draft && !chatOpen}
         onToggle={draft ? () => setChatOpen(!chatOpen) : undefined}
+        ownShowToggle
         floating={
           <FloatingPrompt
             thread={thread}

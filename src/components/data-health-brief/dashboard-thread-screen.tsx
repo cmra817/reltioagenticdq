@@ -193,8 +193,9 @@ function DashboardViewThread({
         <SplitWorkspace
           panelLabel={expanded ? `${dash.name} dashboard` : `${dash.name} instructions and runs`}
           panelWidth={expanded ? "59vw" : 320}
-          collapsed={expanded && !chatOpen}
-          onToggle={expanded ? () => setChatOpen(!chatOpen) : undefined}
+          collapsed={!chatOpen}
+          onToggle={() => setChatOpen(!chatOpen)}
+          ownShowToggle={expanded}
           floating={
             <FloatingPrompt
               thread={thread}
