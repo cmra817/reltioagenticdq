@@ -5,7 +5,7 @@ import { ALL_DOMAINS } from "@/lib/mock-ops";
 import type { Need } from "@/lib/mock-projects";
 import { useNeeds } from "@/lib/projects-store";
 
-const KIND: Record<Need["kind"], string> = { project: "Project", rule: "Rule", job: "Job" };
+const KIND: Record<Need["kind"], string> = { project: "Project", rule: "Rule", job: "Task" };
 
 /**
  * What the agent suggests for the domains this dashboard covers, waiting on

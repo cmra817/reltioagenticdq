@@ -270,7 +270,7 @@ export function PlanView(p: Props) {
     else setClosedGroups((s) => toggle(s, w));
   };
 
-  const removeTable = (k: string) => onChange(withoutTables(plan, [k]), `You removed ${tableName(k)} from the job.`);
+  const removeTable = (k: string) => onChange(withoutTables(plan, [k]), `You removed ${tableName(k)} from the task.`);
   const removeCheck = (k: string, c: Check) =>
     onChange({ ...plan, checked: { ...plan.checked, [k]: (plan.checked[k] ?? []).filter((x) => x !== c.id) } }, `You removed '${c.rule}' from ${tableName(k)}.`);
 
@@ -561,7 +561,7 @@ export function PlanView(p: Props) {
               </div>
             ) : visible.length === 0 ? (
               <p className="px-1 py-4 text-[13px]" style={{ color: "var(--ink-500)" }}>
-                No tables in this job match.
+                No tables in this task match.
               </p>
             ) : (
               groups.map(([w, keys]) => {
@@ -1010,7 +1010,7 @@ function AddTablesDialog({ plan, onClose, onDone }: { plan: Plan; onClose: () =>
         <div className="flex items-center gap-3 border-t px-6 py-3" style={{ borderColor: "var(--hairline)" }}>
           <span className="text-[13px]" style={{ color: "var(--ink-900)" }}>
             <b>{add.length}</b> {add.length === 1 ? "table" : "tables"} to add
-            <span style={{ color: "var(--ink-500)" }}> · {locked.size} already in this job</span>
+            <span style={{ color: "var(--ink-500)" }}> · {locked.size} already in this task</span>
           </span>
           <div className="ml-auto flex gap-2">
             <button type="button" onClick={onClose} className="h-9 rounded-full border px-4 text-[13px]" style={{ borderColor: "var(--hairline)" }}>

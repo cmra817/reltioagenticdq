@@ -241,7 +241,7 @@ export function HealthyBrief({
           stats={[
             { value: "112,890", label: "rows today", note: "+3%/week for 11 weeks" },
             { value: "Nov 3", label: "projected", note: "partition threshold" },
-            { value: "7 wks", label: "headroom", note: "scheduled job vs incident" },
+            { value: "7 wks", label: "headroom", note: "scheduled task vs incident" },
           ]}
         />
         <div className="mt-3">
