@@ -5,7 +5,7 @@ import { useDomainState } from "./domain-context";
 import { AgenticAddAssetModal } from "./add-dataset-agentic/AgenticAddAssetModal";
 import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
-import { newChatId, useChatThreads } from "./chat/chat-context";
+import { newChatId } from "./chat/chat-context";
 import { useSetupSessions } from "./add-dataset-agentic/setup-sessions";
 import { useRules, useSchedules } from "@/lib/ops-store";
 import { useOpenSchedule } from "./scheduled/open-schedule";
