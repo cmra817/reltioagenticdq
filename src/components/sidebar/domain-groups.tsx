@@ -11,6 +11,8 @@ import { ROW_CLASS, ROW_STYLE, SectionLabel, ThreadRow, useMounted } from "./cha
 
 /** Chats shown under each domain before the rest are left to search. */
 const PER_GROUP = 5;
+/** Collapse key for chats that are not about one domain. */
+const ALL_KEY = "__all__";
 
 const STATUS_COLOR: Record<HealthStatus, string> = {
   good: "var(--status-good)",
@@ -119,14 +121,6 @@ export function DomainGroups({
         </ul>
       )}
 
-      {mounted && untagged.length > 0 && (
-        <ul className="mb-1">
-          {untagged.slice(0, PER_GROUP).map((t) => (
-            <ThreadRow key={t.id} thread={t} />
-          ))}
-        </ul>
-      )}
-
       <ul>
         {sorted.map((name) => {
           const score = healthFor(name);
@@ -198,6 +192,36 @@ export function DomainGroups({
           );
         })}
       </ul>
+
+      {mounted && untagged.length > 0 && (
+        <div className="mt-1">
+          <div className="flex items-center">
+            <button
+              type="button"
+              onClick={() => setCollapsed((c) => ({ ...c, [ALL_KEY]: !c[ALL_KEY] }))}
+              aria-label={`${collapsed[ALL_KEY] ? "Expand" : "Collapse"} All domains`}
+              aria-expanded={!collapsed[ALL_KEY]}
+              className="flex h-8 w-6 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-[color:var(--surface-soft)]"
+              style={{ color: "var(--ink-500)" }}
+            >
+              {collapsed[ALL_KEY] ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
+            </button>
+            <span
+              className="flex-1 px-2 py-1.5 text-[13.5px] font-medium"
+              style={{ color: "var(--ink-700)" }}
+            >
+              All domains
+            </span>
+          </div>
+          {!collapsed[ALL_KEY] && (
+            <ul className="ml-4">
+              {untagged.slice(0, PER_GROUP).map((t) => (
+                <ThreadRow key={t.id} thread={t} />
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
