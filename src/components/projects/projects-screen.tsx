@@ -64,8 +64,27 @@ export function ProjectsScreen({ projectId }: { projectId?: string }) {
     );
   }
 
-  const shown = filter === ALL ? projects : projects.filter((p) => p.domain === filter);
+  if (creating) {
+    return (
+      <NewProjectSetup
+        domains={domains}
+        onCancel={() => setCreating(false)}
+        onSave={(p) => {
+          add(p);
+          setCreating(false);
+          void navigate({ to: "/projects", search: { project: p.id } });
+        }}
+      />
+    );
+  }
+
+  const shown = projects.filter(
+    (p) =>
+      (filter === ALL || p.domain === filter) &&
+      (ownerFilter === ALL_OWNERS || p.owner === ownerFilter),
+  );
   const withProjects = domains.filter((d) => projects.some((p) => p.domain === d));
+  const owners = [...new Set(projects.map((p) => p.owner))].sort();
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-10 pt-5">
@@ -90,9 +109,26 @@ export function ProjectsScreen({ projectId }: { projectId?: string }) {
               ))}
             </select>
           </label>
+          <label className="flex items-center gap-2 text-[13px]" style={{ color: "var(--ink-500)" }}>
+            Owner
+            <select
+              value={ownerFilter}
+              onChange={(e) => setOwnerFilter(e.target.value)}
+              className="rounded-lg px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
+              style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-900)" }}
+            >
+              <option value={ALL_OWNERS}>{ALL_OWNERS}</option>
+              {owners.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </select>
+          </label>
           <span className="ml-auto text-[12.5px]" style={{ color: "var(--ink-500)" }}>
             {shown.length} {shown.length === 1 ? "project" : "projects"}
           </span>
+          <PrimaryButton onClick={() => setCreating(true)}>+ New project</PrimaryButton>
         </div>
         <p className="mt-1 text-[13px]" style={{ color: "var(--ink-500)" }}>
           A project is a focused effort to fix a data problem in one domain, with a goal, an owner and criteria for done.
