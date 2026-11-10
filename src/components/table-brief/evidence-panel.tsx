@@ -255,7 +255,7 @@ function DuplicateRowsView({
 
 const SAMPLE_PAGE = 50;
 
-function SampleDataView() {
+export function SampleDataView() {
   const [count, setCount] = React.useState(SAMPLE_PAGE);
   const sentinel = React.useRef<HTMLDivElement | null>(null);
   const hasMore = count < SAMPLE_ROWS.length;
@@ -335,7 +335,7 @@ const PROFILING_FIELDS: { id: string; label: string; get: (c: (typeof COLUMNS_RO
   { id: "fill", label: "Completeness", get: (c) => c.fill, mono: true },
 ];
 
-function ProfilingView({ onScope }: { onScope: (id: string) => void }) {
+export function ProfilingView({ onScope }: { onScope: (id: string) => void }) {
   const [count, setCount] = React.useState(PROFILING_PAGE);
   const [visible, setVisible] = React.useState<string[]>(PROFILING_FIELDS.map((f) => f.id));
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -509,7 +509,7 @@ function StatusBadge({ status }: { status: CheckRunStatus }) {
   );
 }
 
-function ChecksView() {
+export function ChecksView() {
   const [expanded, setExpanded] = React.useState<Set<string>>(
     () => new Set(CHECK_GROUPS.filter((group) => group.expanded).map((group) => group.id)),
   );
@@ -607,7 +607,7 @@ function ChecksView() {
   );
 }
 
-function ActivityView() {
+export function ActivityView() {
   const PAGE_SIZE = 18;
   const [count, setCount] = React.useState(PAGE_SIZE);
   const sentinel = React.useRef<HTMLDivElement | null>(null);
@@ -722,7 +722,7 @@ const EVIDENCE_LABEL: Record<EvidenceId, string> = {
 
 const ADDABLE: EvidenceId[] = ["sample", "profiling", "checks", "activity", "duplicates"];
 
-function OverviewSection({ onOpen }: { onOpen: (id: EvidenceId) => void }) {
+export function OverviewSection({ onOpen }: { onOpen: (id: EvidenceId) => void }) {
   return (
     <div className="flex flex-col gap-2">
       <SectionTitle>Overview</SectionTitle>
