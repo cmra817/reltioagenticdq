@@ -139,7 +139,7 @@ export function ScheduleWorkspace({
       setTab("insights");
       return `${schedule.name} checks ${schedule.tables.length} table${schedule.tables.length === 1 ? "" : "s"} (${schedule.tables.join(", ")})${
         scheduleRules.length ? ` with ${scheduleRules.length} rule${scheduleRules.length === 1 ? "" : "s"}` : ", profiling only"
-      }. It runs ${schedule.repeats.toLowerCase()}${schedule.active ? `; next run ${task.nextRun}` : ", but it's paused"}. ${insights.successRate}% of its ${insights.history.length} runs passed.\n\nAsk what happened in the last run, or tell me to change it.`;
+      }. It runs ${schedule.repeats.toLowerCase()}${schedule.active ? `; next run ${schedule.nextRun}` : ", but it's paused"}. ${insights.successRate}% of its ${insights.history.length} runs passed.\n\nAsk what happened in the last run, or tell me to change it.`;
     }
     if (/\b(resume|unpause|turn (it )?on)\b/i.test(q)) {
       update(schedule.id, { active: true, nextRun: "Next scheduled time" });
@@ -168,7 +168,7 @@ export function ScheduleWorkspace({
       }
       update(schedule.id, { ruleIds: [...schedule.ruleIds, found.id] });
       setTab("insights");
-      return `Added "${found.name}". It checks all ${task.tables.length} tables from the next run.`;
+      return `Added "${found.name}". It checks all ${schedule.tables.length} tables from the next run.`;
     }
     if (/\b(remove|drop|take off)\b/i.test(q)) {
       const found = matchRule(q, scheduleRules);
@@ -211,8 +211,8 @@ export function ScheduleWorkspace({
     }
     if (/when|next run|how often does/i.test(q)) {
       return schedule.active
-        ? `It runs ${task.repeats.toLowerCase()}. Next run: ${task.nextRun}.`
-        : `It runs ${task.repeats.toLowerCase()}, but it's paused right now.`;
+        ? `It runs ${schedule.repeats.toLowerCase()}. Next run: ${schedule.nextRun}.`
+        : `It runs ${schedule.repeats.toLowerCase()}, but it's paused right now.`;
     }
     if (/pass|health|doing|success/i.test(q)) {
       setTab("insights");

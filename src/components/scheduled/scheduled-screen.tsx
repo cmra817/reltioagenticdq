@@ -49,7 +49,7 @@ function ScheduledHome({ tab }: { tab: "schedules" | "runs" }) {
       <div className="mx-auto w-full max-w-[980px]">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-[22px] font-semibold" style={{ color: "var(--ink-900)" }}>
-            Jobs
+            Tasks
           </h1>
           <div className="ml-2">
             <Tabs
@@ -57,13 +57,13 @@ function ScheduledHome({ tab }: { tab: "schedules" | "runs" }) {
               value={tab}
               onChange={(t) => go({ tab: t })}
               tabs={[
-                { id: "schedules", label: "Schedules" },
+                { id: "schedules", label: "Tasks" },
                 { id: "runs", label: "Runs" },
               ]}
             />
           </div>
           <PrimaryButton onClick={newSchedule} className="ml-auto flex items-center gap-1.5">
-            <Plus size={14} /> New schedule
+            <Plus size={14} /> New task
           </PrimaryButton>
         </div>
         <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-500)" }}>

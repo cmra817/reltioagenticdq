@@ -299,7 +299,7 @@ export function AgentflowSidebar({ activeNav = "data-health" }: { activeNav?: Si
         />
         <NavItem
           icon={<Clock {...iconProps} />}
-          label="Jobs"
+          label="Tasks"
           to="/scheduled"
           active={activeNav === "scheduled"}
         />
