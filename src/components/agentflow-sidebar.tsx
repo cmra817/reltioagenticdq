@@ -1,14 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import {
-  AppsGridIcon,
-  ChevronDownIcon,
-  PlusIcon,
-  UserIcon,
-} from "./brand-icons";
+import { useState } from "react";
+import { AppsGridIcon, ChevronDownIcon, UserIcon } from "./brand-icons";
 import { useDomainState } from "./domain-context";
-import { CreateDomainDialog } from "./create-domain-dialog";
-import { AddDatasetModal } from "./add-dataset/AddDatasetModal";
 import { AgenticAddAssetModal } from "./add-dataset-agentic/AgenticAddAssetModal";
 import { useCreatedAssets } from "./created-assets-context";
 import { useNotifications } from "./notification-context";
@@ -100,10 +93,9 @@ function SectionDivider() {
 }
 
 function NewMenu() {
-  const { addDomain, selectDomain, completeConnection, selected } = useDomainState();
+  const { completeConnection, selected } = useDomainState();
   const { runJob } = useNotifications();
   const { addAssets } = useCreatedAssets();
-  const { createThread } = useChatThreads();
   const setup = useSetupSessions();
   const { add: addSchedule } = useSchedules();
   const { rules } = useRules();
