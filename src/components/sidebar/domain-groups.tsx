@@ -59,10 +59,8 @@ export function DomainGroups({
   const untagged = unpinned.filter((t) => !t.domain || !domains.includes(t.domain));
 
   function newChatIn(domain: string) {
-    const id = newChatId();
     selectDomain(domain);
-    createThread({ id, domain });
-    void navigate({ to: "/chat/$chatId", params: { chatId: id }, search: {} });
+    void navigate({ to: "/domain", search: { n: newChatId() } });
   }
 
   const needsLook = mounted ? alerts.length + sessions.length : 0;

@@ -47,8 +47,8 @@ export type DomainSearch = {
 };
 
 /** What a saved domain chat needs to come back as it was. */
-type SavedDomainChat = { turns: ChatTurn[]; domain?: string; project?: string };
-const DOMAIN_CHATS_KEY = "agentflow.domain-chats.v1";
+export type SavedDomainChat = { turns: ChatTurn[]; domain?: string; project?: string };
+export const DOMAIN_CHATS_KEY = "agentflow.domain-chats.v1";
 
 type PanelTab = "overview" | "tables" | "checks";
 type TableTab = "overview" | "columns" | "sample" | "events" | "checks";
