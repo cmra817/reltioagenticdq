@@ -55,15 +55,26 @@ export function DomainGroups({
     [domains, healthFor],
   );
 
+  // Rules and dashboards are about no single domain; jobs always have one.
+  const domainOf = (t: (typeof threads)[number]): string | undefined => {
+    if (t.kind === "rule" || t.kind === "dashboard") return undefined;
+    if (t.kind === "schedule") {
+      const id = t.id.replace(/^schedule-view-/, "");
+      return schedules.find((s) => s.id === id)?.domain ?? t.domain;
+    }
+    return t.domain;
+  };
   const unpinned = threads.filter((t) => !t.pinned);
-  const untagged = unpinned.filter((t) => !t.domain || !domains.includes(t.domain));
+  const untagged = unpinned.filter((t) => {
+    const d = domainOf(t);
+    return !d || !domains.includes(d);
+  });
 
   function newChatIn(domain: string) {
     selectDomain(domain);
     void navigate({ to: "/domain", search: { n: newChatId() } });
   }
 
-  const needsLook = mounted ? alerts.length + sessions.length : 0;
 
   return (
     <div className="mt-3 px-3">
@@ -81,52 +92,19 @@ export function DomainGroups({
         </button>
       </div>
 
-      {mounted && needsLook > 0 && (
-        <ul className="mb-1">
-          {alerts.map((r) => {
-            const name = schedules.find((s) => s.id === r.scheduleId)?.name ?? "Schedule run";
-            return (
-              <li key={r.id} className="flex items-center">
-                <Link
-                  to="/schedule/$threadId"
-                  params={{ threadId: scheduleThreadId(r.scheduleId) }}
-                  search={{ run: r.id }}
-                  className={ROW_CLASS}
-                  style={ROW_STYLE}
-                  title={`Needs a look: ${name}`}
-                >
-                  <AlertTriangle size={14} style={{ color: "var(--status-warn)", flexShrink: 0 }} />
-                  <span className="truncate">{name}</span>
-                  <span className="sr-only"> run needs attention</span>
-                </Link>
-              </li>
-            );
-          })}
-          {sessions.map((s) => (
-            <li key={s.id} className="flex items-center">
-              <button
-                type="button"
-                onClick={() => resume(s.id)}
-                className={ROW_CLASS}
-                style={ROW_STYLE}
-                title={s.title}
-              >
-                <DatabaseZap size={14} style={{ color: "var(--brand-blue)", flexShrink: 0 }} />
-                <span className="truncate">{s.title}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
       <ul>
         {sorted.map((name) => {
           const score = healthFor(name);
           const status = statusForScore(score);
           const isSel = name === selected;
           const current = isSel && activeNav === "domain";
-          const open = !collapsed[name];
-          const chats = mounted ? unpinned.filter((t) => t.domain === name) : [];
+          const domAlerts = mounted
+            ? alerts.filter((r) => schedules.find((s) => s.id === r.scheduleId)?.domain === name)
+            : [];
+          const domSessions = mounted ? sessions.filter((x) => x.domain === name) : [];
+          // A domain with an unread alert stays open so the alert is seen.
+          const open = domAlerts.length > 0 || !collapsed[name];
+          const chats = mounted ? unpinned.filter((t) => domainOf(t) === name) : [];
           return (
             <li key={name}>
               <div className="group/dom flex items-center">
@@ -179,8 +157,45 @@ export function DomainGroups({
                   <Plus size={14} />
                 </button>
               </div>
-              {open && chats.length > 0 && (
+              {open && chats.length + domAlerts.length + domSessions.length > 0 && (
                 <ul className="ml-4">
+                  {domAlerts.map((r) => {
+                    const sName =
+                      schedules.find((s) => s.id === r.scheduleId)?.name ?? "Schedule run";
+                    return (
+                      <li key={r.id} className="flex items-center">
+                        <Link
+                          to="/schedule/$threadId"
+                          params={{ threadId: scheduleThreadId(r.scheduleId) }}
+                          search={{ run: r.id }}
+                          className={ROW_CLASS}
+                          style={ROW_STYLE}
+                          title={`Needs a look: ${sName}`}
+                        >
+                          <AlertTriangle
+                            size={14}
+                            style={{ color: "var(--status-warn)", flexShrink: 0 }}
+                          />
+                          <span className="truncate">{sName}</span>
+                          <span className="sr-only"> run needs attention</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                  {domSessions.map((x) => (
+                    <li key={x.id} className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => resume(x.id)}
+                        className={ROW_CLASS}
+                        style={ROW_STYLE}
+                        title={x.title}
+                      >
+                        <DatabaseZap size={14} style={{ color: "var(--brand-blue)", flexShrink: 0 }} />
+                        <span className="truncate">{x.title}</span>
+                      </button>
+                    </li>
+                  ))}
                   {chats.slice(0, PER_GROUP).map((t) => (
                     <ThreadRow key={t.id} thread={t} />
                   ))}

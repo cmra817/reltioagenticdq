@@ -7,7 +7,14 @@ import {
   SectionTitle,
   SplitWorkspace,
   Tag,
+  useChatThread,
+  type ChatTurn,
 } from "@/components/workspace/primitives";
+import { useChatThreads } from "@/components/chat/chat-context";
+import { useLocalStore } from "@/lib/use-local-store";
+
+const PROJECT_CHATS_KEY = "agentflow.project-chats.v1";
+export const projectThreadId = (id: string) => `project-view-${id}`;
 import type { ChatReply } from "@/components/workspace/chat-visuals";
 import { PROJECT_STATUSES, type Project, type ProjectStatus } from "@/lib/mock-projects";
 import { useProjects } from "@/lib/projects-store";
@@ -211,22 +218,57 @@ export function projectReply(p: Project, q: string): ChatReply {
 }
 
 /** A project with its chat on the left and the detail on the right. */
-function ProjectDetail({
-  project: p,
-  onBack,
-  onMove,
-  onComment,
-  notice,
-}: {
+type ProjectDetailProps = {
   project: Project;
   onBack: () => void;
   onMove: (to: ProjectStatus) => void;
   onComment: (text: string) => void;
   notice: string;
+};
+
+/** One chat per project. It joins Recents, under the project's domain, with the first message. */
+function ProjectDetail(props: ProjectDetailProps) {
+  const threadId = projectThreadId(props.project.id);
+  const [saved, setSaved, ready] = useLocalStore<Record<string, ChatTurn[]>>(PROJECT_CHATS_KEY, {});
+  if (!ready) return <div className="flex-1" />;
+  return (
+    <ProjectDetailBody
+      key={threadId}
+      {...props}
+      threadId={threadId}
+      initialTurns={saved[threadId]}
+      onTurns={(turns) => setSaved((prev) => ({ ...prev, [threadId]: turns }))}
+    />
+  );
+}
+
+function ProjectDetailBody({
+  project: p,
+  onBack,
+  onMove,
+  onComment,
+  notice,
+  threadId,
+  initialTurns,
+  onTurns,
+}: ProjectDetailProps & {
+  threadId: string;
+  initialTurns?: ChatTurn[];
+  onTurns: (turns: ChatTurn[]) => void;
 }) {
   const [draft, setDraft] = React.useState("");
   const pr = progress(p);
   const reply = React.useCallback((q: string) => projectReply(p, q), [p]);
+  const thread = useChatThread(reply, initialTurns);
+  const { getThread, createThread } = useChatThreads();
+  React.useEffect(() => {
+    if (thread.turns.length === 0) return;
+    if (!getThread(threadId)) {
+      createThread({ id: threadId, title: p.title, kind: "project", domain: p.domain });
+    }
+    onTurns(thread.turns);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread.turns]);
 
   const panel = (
     <div className="space-y-5 p-5">
@@ -364,6 +406,7 @@ function ProjectDetail({
       panelWidth="52%"
       center={
         <ScopedChat
+          thread={thread}
           scopeLabel={p.title}
           placeholder="Ask about this project"
           suggestions={["What is blocking this?", "Suggest next steps"]}

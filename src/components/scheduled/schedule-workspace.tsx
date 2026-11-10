@@ -266,7 +266,12 @@ export function ScheduleWorkspace({
   React.useEffect(() => {
     if (turnCount === 0) return;
     if (schedule && !getThread(threadId)) {
-      createThread({ id: threadId, title: schedule.name, kind: "schedule" });
+      createThread({
+        id: threadId,
+        title: schedule.name,
+        kind: "schedule",
+        domain: schedule.domain,
+      });
     }
     setThreads((prev) => ({ ...prev, [threadId]: { turns: thread.turns } }));
     // eslint-disable-next-line react-hooks/exhaustive-deps

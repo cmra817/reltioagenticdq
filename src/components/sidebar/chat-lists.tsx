@@ -75,6 +75,19 @@ function ThreadLink({ thread, children }: { thread: ChatThread; children: React.
       </Link>
     );
   }
+  if (thread.kind === "project") {
+    return (
+      <Link
+        to="/projects"
+        search={{ project: thread.id.replace(/^project-view-/, "") }}
+        className={ROW_CLASS}
+        style={ROW_STYLE}
+        title={thread.title}
+      >
+        {children}
+      </Link>
+    );
+  }
   if (thread.kind === "domain") {
     return (
       <Link
