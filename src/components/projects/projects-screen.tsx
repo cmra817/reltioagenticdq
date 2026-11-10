@@ -9,7 +9,7 @@ import {
   Tag,
 } from "@/components/workspace/primitives";
 import type { ChatReply } from "@/components/workspace/chat-visuals";
-import { PROJECT_STATUSES, type Project, type ProjectStatus } from "@/lib/mock-today";
+import { PROJECT_STATUSES, type Project, type ProjectStatus } from "@/lib/mock-projects";
 import { useProjects } from "@/lib/projects-store";
 
 const ALL = "All domains";
@@ -193,7 +193,7 @@ export function ProjectsScreen({ projectId }: { projectId?: string }) {
   );
 }
 
-function projectReply(p: Project, q: string): ChatReply {
+export function projectReply(p: Project, q: string): ChatReply {
   const text = q.toLowerCase();
   const unmet = p.criteria.filter((c) => !c.met);
   if (/block|left|unmet|missing/.test(text)) {

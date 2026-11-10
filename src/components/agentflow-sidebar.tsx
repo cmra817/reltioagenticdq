@@ -17,6 +17,7 @@ import { useSetupSessions } from "./add-dataset-agentic/setup-sessions";
 import { Clock, FolderKanban, LayoutDashboard, ListChecks, MessageSquarePlus } from "lucide-react";
 import { DomainGroups } from "./sidebar/domain-groups";
 import { PinnedChats } from "./sidebar/chat-lists";
+import { useNeeds } from "@/lib/projects-store";
 import { SearchDialog } from "./sidebar/search-dialog";
 
 export type SidebarNav =
@@ -276,6 +277,7 @@ function NewMenu() {
 
 export function AgentflowSidebar({ activeNav = "data-health" }: { activeNav?: SidebarNav }) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const needsCount = useNeeds().open.length;
   const iconProps = { size: 20, strokeWidth: 1.6 };
 
   return (
@@ -295,6 +297,7 @@ export function AgentflowSidebar({ activeNav = "data-health" }: { activeNav?: Si
           label="Dashboards"
           to="/"
           active={activeNav === "data-health"}
+          badge={needsCount}
         />
         <NavItem
           icon={<Clock {...iconProps} />}

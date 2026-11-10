@@ -1,7 +1,6 @@
 /**
- * Prototype data for Today and Projects. Stands in for the agent: what it
- * proposes, what it did overnight, and the remediation projects per domain.
- * Rules and schedules referenced here are the real ones in mock-ops.ts.
+ * Prototype data for Projects: remediation efforts, one domain each.
+ * Tables named here are illustrative.
  */
 
 export type ProjectStatus = "Suggested" | "In progress" | "Validating" | "Done";
@@ -219,19 +218,4 @@ export const NEEDS: Need[] = [
     confidence: "Medium",
     projectId: "fin-ledger",
   },
-];
-
-export type LogEntry = { id: string; text: string; when: string; canUndo: boolean };
-
-export const LOG: LogEntry[] = [
-  { id: "l1", text: "Ran 8 schedules. 2 had failed checks and 1 ran late.", when: "6:00am", canUndo: false },
-  { id: "l2", text: "Filled 312 empty country values in customers from postal codes.", when: "3:40am", canUndo: true },
-  { id: "l3", text: "Paused the reports that read the stale inventory table.", when: "6:05am", canUndo: true },
-  { id: "l4", text: "Started looking into why the Finance ledger stopped reconciling.", when: "6:10am", canUndo: false },
-];
-
-export const CHANGED: { text: string; question: string }[] = [
-  { text: "Across your domains, health is 88. Supply Chain is the lowest at 72.", question: "Why is Supply Chain the lowest?" },
-  { text: "Finance slipped to 81: the ledger stopped reconciling on 3 of 7 nights.", question: "What is wrong with the Finance ledger?" },
-  { text: "Sales customer email validity is recovering, up 1 point since Monday.", question: "How is customer email validity doing?" },
 ];

@@ -1,11 +1,14 @@
 import * as React from "react";
 import { useLocalStore } from "./use-local-store";
+import { useSchedules } from "./ops-store";
 import {
   BASE_PROJECTS,
+  NEEDS,
+  type Need,
   type Project,
   type ProjectComment,
   type ProjectStatus,
-} from "./mock-today";
+} from "./mock-projects";
 
 type ProjectStore = {
   status: Record<string, ProjectStatus>;
@@ -73,24 +76,43 @@ export function useProjects() {
   return { projects, move, addComment, ready };
 }
 
-/* ---------- Today ---------- */
+/* ---------- Needs you ---------- */
 
-type TodayStore = {
-  needs: Record<string, "approved" | "rejected">;
-  undone: Record<string, boolean>;
-};
-const TODAY_INIT: TodayStore = { needs: {}, undone: {} };
+type NeedsStore = Record<string, "approved" | "rejected">;
+const NEEDS_INIT: NeedsStore = {};
 
-export function useToday() {
-  const [store, setStore, ready] = useLocalStore<TodayStore>("agentflow.today.v1", TODAY_INIT);
-  const resolve = React.useCallback(
-    (id: string, status: "approved" | "rejected") =>
-      setStore((prev) => ({ ...prev, needs: { ...prev.needs, [id]: status } })),
-    [setStore],
+/**
+ * What the agent has proposed and is waiting on you for. Nothing here happens
+ * on its own: a proposal changes something only when you approve it.
+ */
+export function useNeeds() {
+  const [resolved, setResolved] = useLocalStore<NeedsStore>("agentflow.needs.v1", NEEDS_INIT);
+  const { schedules, update: updateSchedule } = useSchedules();
+  const { move } = useProjects();
+
+  const open = React.useMemo(() => NEEDS.filter((n) => !resolved[n.id]), [resolved]);
+
+  const approve = React.useCallback(
+    (n: Need) => {
+      setResolved((prev) => ({ ...prev, [n.id]: "approved" }));
+      if (n.kind === "project" && n.projectId) move(n.projectId, "In progress");
+      if (n.kind === "rule" && n.scheduleId && n.ruleId) {
+        const s = schedules.find((x) => x.id === n.scheduleId);
+        if (s && !s.ruleIds.includes(n.ruleId)) {
+          updateSchedule(s.id, { ruleIds: [...s.ruleIds, n.ruleId] });
+        }
+      }
+      if (n.kind === "job" && n.scheduleId && n.newRepeats) {
+        updateSchedule(n.scheduleId, { repeats: n.newRepeats, nextRun: "Tomorrow, 6:00am" });
+      }
+    },
+    [setResolved, schedules, updateSchedule, move],
   );
-  const undo = React.useCallback(
-    (id: string) => setStore((prev) => ({ ...prev, undone: { ...prev.undone, [id]: true } })),
-    [setStore],
+
+  const reject = React.useCallback(
+    (n: Need) => setResolved((prev) => ({ ...prev, [n.id]: "rejected" })),
+    [setResolved],
   );
-  return { needs: store.needs, undone: store.undone, resolve, undo, ready };
+
+  return { open, approve, reject };
 }

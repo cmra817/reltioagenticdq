@@ -7,7 +7,7 @@ export type ChatThread = {
   updatedAt: number;
   messages: UIMessage[];
   /** Scripted surfaces (e.g. the consistency investigation) reopen on their own route. */
-  kind?: "chat" | "investigation" | "rule" | "dashboard" | "schedule";
+  kind?: "chat" | "investigation" | "rule" | "dashboard" | "schedule" | "domain";
   /** Pinned chats sit in their own sidebar section and are never trimmed from history. */
   pinned?: boolean;
   /** The domain the chat started in. It stays put even if the chat later moves focus. */
@@ -65,6 +65,8 @@ type ChatContextValue = {
   }) => ChatThread;
   saveMessages: (id: string, messages: UIMessage[], kind?: ChatThread["kind"]) => void;
   renameThread: (id: string, title: string) => void;
+  /** Changes a chat's scope. Only meant for chats that have no messages yet. */
+  setThreadDomain: (id: string, domain: string | undefined) => void;
   deleteThread: (id: string) => void;
   togglePin: (id: string) => void;
 };
@@ -130,6 +132,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     [update],
   );
 
+  const setThreadDomain = useCallback(
+    (id: string, domain: string | undefined) => {
+      // Scope is not a recent activity, so updatedAt is left alone.
+      update((prev) => prev.map((t) => (t.id === id ? { ...t, domain } : t)));
+    },
+    [update],
+  );
+
   const deleteThread = useCallback(
     (id: string) => {
       update((prev) => prev.filter((t) => t.id !== id));
@@ -154,10 +164,20 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       createThread,
       saveMessages,
       renameThread,
+      setThreadDomain,
       deleteThread,
       togglePin,
     }),
-    [threads, getThread, createThread, saveMessages, renameThread, deleteThread, togglePin],
+    [
+      threads,
+      getThread,
+      createThread,
+      saveMessages,
+      renameThread,
+      setThreadDomain,
+      deleteThread,
+      togglePin,
+    ],
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
