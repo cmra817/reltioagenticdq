@@ -248,9 +248,9 @@ export function RuleWorkspace({
     if (draft.name !== saved.name) renameThread(threadId, draft.name);
     thread.say(
       selected === "some"
-        ? "Saved. The schedules you ticked use the new version; the rest keep the previous one."
+        ? "Saved. The tasks you ticked use the new version; the rest keep the previous one."
         : used.length > 0 && changes.some((k) => k !== "owner")
-          ? `Saved. ${used.length === 1 ? "The schedule that uses it gets" : "Every schedule that uses it gets"} the new version from its next run.`
+          ? `Saved. ${used.length === 1 ? "The task that uses it gets" : "Every task that uses it gets"} the new version from its next run.`
           : "Saved.",
     );
   }
@@ -675,7 +675,7 @@ function Editor({
         </FieldBox>
 
         <p className="text-[12px]" style={{ color: "var(--ink-500)" }}>
-          Rules are generic. You choose the tables and columns when you add this rule to a schedule.
+          Rules are generic. You choose the tables and columns when you add this rule to a task.
         </p>
       </div>
     </div>
@@ -735,7 +735,7 @@ function ImpactChoice({
         {choice(
           "everywhere",
           "Update it everywhere",
-          "Every schedule that uses this rule gets the new version from its next run.",
+          "Every task that uses this rule gets the new version from its next run.",
         )}
         {choice(
           "new",
@@ -744,7 +744,7 @@ function ImpactChoice({
         )}
         {choice(
           "some",
-          "Update some schedules",
+          "Update some tasks",
           "The rest keep the previous version as their own rule.",
         )}
         {mode === "some" && (

@@ -199,7 +199,7 @@ export function RecentChats() {
       id: r.id,
       scheduleId: r.scheduleId,
       updatedAt: Date.now() - r.hoursAgo * 3_600_000,
-      name: schedules.find((s) => s.id === r.scheduleId)?.name ?? "Schedule run",
+      name: schedules.find((s) => s.id === r.scheduleId)?.name ?? "Task run",
     })),
     ...sessions.map((s) => ({
       kind: "setup" as const,

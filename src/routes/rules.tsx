@@ -12,12 +12,12 @@ export const Route = createFileRoute("/rules")({
       { title: "Rules — Data Quality" },
       {
         name: "description",
-        content: "The shared library of data quality rules used by every domain and schedule.",
+        content: "The shared library of data quality rules used by every domain and task.",
       },
       { property: "og:title", content: "Rules — Data Quality" },
       {
         property: "og:description",
-        content: "The shared library of data quality rules used by every domain and schedule.",
+        content: "The shared library of data quality rules used by every domain and task.",
       },
     ],
   }),

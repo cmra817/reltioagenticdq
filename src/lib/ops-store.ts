@@ -197,7 +197,7 @@ export function useRules() {
             scope: "Yours",
             owner: ME,
             versions: [
-              { v: 1, author: ME, at: todayLabel(), note: "Kept for schedules not updated" },
+              { v: 1, author: ME, at: todayLabel(), note: "Kept for tasks not updated" },
             ],
           });
           keep.forEach((s) =>

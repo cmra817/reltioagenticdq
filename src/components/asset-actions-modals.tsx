@@ -516,7 +516,7 @@ export function RemoveFromMonitoringModal({
             Stop monitoring <span className="font-mono">{tableName}</span>?
           </div>
           <p className="mt-1.5 text-[13px] leading-relaxed" style={{ color: "var(--ink-700)" }}>
-            Profiling and DQ checks will stop running, scheduled jobs will be cancelled, and this
+            Profiling and DQ checks will stop running, scheduled tasks will be cancelled, and this
             table will no longer appear in Explore or Data health. Existing history is kept, and you
             can add the table back later through Add new dataset.
           </p>

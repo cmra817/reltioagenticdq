@@ -426,7 +426,7 @@ export const BASE_RUNS: Run[] = [
 
 /** Short, plain-language account of a run, as the agent wrote it when the run finished. */
 export function narrativeFor(run: Run, schedule: Schedule | undefined): string[] {
-  const name = schedule?.name ?? "This schedule";
+  const name = schedule?.name ?? "This task";
   if (run.status === "running")
     return [`${name} is running now. Results will appear here when it finishes.`];
   if (run.findings.length === 0) {

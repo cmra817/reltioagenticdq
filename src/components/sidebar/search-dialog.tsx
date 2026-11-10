@@ -19,7 +19,7 @@ type Props = {
 const PAGES = [
   { label: "Today", to: "/today" },
   { label: "Dashboards", to: "/" },
-  { label: "Jobs", to: "/scheduled" },
+  { label: "Tasks", to: "/scheduled" },
   { label: "Rules", to: "/rules" },
   { label: "Projects", to: "/projects" },
   { label: "Explore", to: "/explore" },

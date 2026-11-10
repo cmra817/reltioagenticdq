@@ -30,7 +30,7 @@ export const SCHEDULE_THREADS_INIT: Record<string, ScheduleThreadState> = {};
 
 type PanelTab = "insights" | "plan" | "runs";
 
-const jobPrompt = (name: string) => `Tell me about the "${name}" job`;
+const jobPrompt = (name: string) => `Tell me about the "${name}" task`;
 
 function IconAction({
   label,
@@ -126,7 +126,7 @@ export function ScheduleWorkspace({
   const askedRun = React.useRef<string | undefined>(undefined);
 
   function reply(q: string): string {
-    if (!schedule) return "One moment while this schedule loads.";
+    if (!schedule) return "One moment while this task loads.";
     const asked = askedRun.current ? history.find((r) => r.id === askedRun.current) : undefined;
     if (asked && q === runPrompt(asked)) return runNarrative(asked, schedule);
     const lastFailed = insights.history.find(
@@ -164,7 +164,7 @@ export function ScheduleWorkspace({
       const pool = rules.filter((r) => !schedule.ruleIds.includes(r.id) && r.scope !== "Template");
       const found = matchRule(q, pool);
       if (!found) {
-        return "I couldn't find a rule like that in your library that this schedule isn't already using. Rules lists them, or start a new rule there.";
+        return "I couldn't find a rule like that in your library that this task isn't already using. Rules lists them, or start a new rule there.";
       }
       update(schedule.id, { ruleIds: [...schedule.ruleIds, found.id] });
       setTab("insights");
@@ -173,10 +173,10 @@ export function ScheduleWorkspace({
     if (/\b(remove|drop|take off)\b/i.test(q)) {
       const found = matchRule(q, scheduleRules);
       if (!found)
-        return "I couldn't tell which rule you mean. Rules this schedule uses are listed under Insights.";
+        return "I couldn't tell which rule you mean. Rules this task uses are listed under Insights.";
       update(schedule.id, { ruleIds: schedule.ruleIds.filter((id) => id !== found.id) });
       setTab("insights");
-      return `Removed "${found.name}" from this schedule. The rule itself stays in your library.`;
+      return `Removed "${found.name}" from this task. The rule itself stays in your library.`;
     }
 
     const why = q.match(/why does (.+?) fail/i);
@@ -201,7 +201,7 @@ export function ScheduleWorkspace({
     }
     if (/\bfix|resolve|how do i\b/i.test(q)) {
       return top
-        ? `Start with "${top.title}". ${top.detail} Quarantine the affected ${top.failingRows.toLocaleString()} rows, correct them at the source, and run this schedule again to confirm.`
+        ? `Start with "${top.title}". ${top.detail} Quarantine the affected ${top.failingRows.toLocaleString()} rows, correct them at the source, and run this task again to confirm.`
         : "Nothing is failing, so there is nothing to fix.";
     }
     if (/change|since|compare|previous/i.test(q)) {
@@ -298,7 +298,7 @@ export function ScheduleWorkspace({
     return (
       <div className="p-8">
         <p className="text-[14px]" style={{ color: "var(--ink-500)" }}>
-          This schedule isn't available. Choose another from Jobs.
+          This task isn't available. Choose another from Tasks.
         </p>
       </div>
     );
@@ -323,7 +323,7 @@ export function ScheduleWorkspace({
         floating={
           <FloatingPrompt
             thread={thread}
-            placeholder="Ask about this schedule, or tell me what to change…"
+            placeholder="Ask about this task, or tell me what to change…"
             onOpen={() => setChatOpen(true)}
           />
         }
@@ -331,7 +331,7 @@ export function ScheduleWorkspace({
           <ScopedChat
             thread={thread}
             scopeLabel={schedule.name}
-            placeholder="Ask about this schedule, or tell me what to change…"
+            placeholder="Ask about this task, or tell me what to change…"
             suggestions={suggestions}
             reply={reply}
           />
@@ -345,7 +345,7 @@ export function ScheduleWorkspace({
                     <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
                   )}
                   <Tabs
-                    label="Schedule sections"
+                    label="Task sections"
                     value={tab}
                     onChange={(t) => {
                       setTab(t);
@@ -403,7 +403,7 @@ export function ScheduleWorkspace({
                   onOpenRun={openRun}
                 />
               ) : tab === "plan" ? (
-                <section aria-label="Schedule plan">
+                <section aria-label="Task plan">
                   <PlanView
                     bare
                     plan={plan}

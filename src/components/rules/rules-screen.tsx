@@ -127,7 +127,7 @@ function RulesHome({ legacyRuleId }: { legacyRuleId?: string }) {
           </PrimaryButton>
         </div>
         <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-          One shared library. A rule becomes a check when a schedule applies it to a table. Select a
+          One shared library. A rule becomes a check when a task applies it to a table. Select a
           rule to see how it's doing and edit it, or describe a new one in chat.
         </p>
 

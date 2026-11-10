@@ -24,7 +24,7 @@ export function RuleInsightsView({
             Not applied anywhere yet
           </div>
           <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-500)" }}>
-            A rule is checked when a schedule applies it to a table. Add this rule to a schedule and
+            A rule is checked when a task applies it to a table. Add this rule to a task and
             its pass rate, coverage, and top failures show up here.
           </p>
         </div>
