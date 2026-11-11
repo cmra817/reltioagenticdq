@@ -81,7 +81,7 @@ export function DomainProjects({
             value={owner}
             onChange={(e) => setOwner(e.target.value)}
             className="rounded-lg px-2.5 py-1.5 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
-            style={{ border: "1px solid var(--hairline)", background: "var(--surface)", color: "var(--ink-900)" }}
+            style={{ border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-900)" }}
           >
             <option value={ALL_OWNERS}>{ALL_OWNERS}</option>
             {owners.map((o) => (

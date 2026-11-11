@@ -46,7 +46,9 @@ import { newChatId, useChatThreads } from "@/components/chat/chat-context";
 import type { ChatTurn } from "@/components/workspace/primitives";
 import type { Project } from "@/lib/mock-projects";
 import { projectReply } from "@/components/projects/projects-screen";
+import { PrimaryButton } from "@/components/workspace/primitives";
 import { DomainProjects } from "@/components/domain/domain-projects";
+import { useSetupSessions } from "@/components/add-dataset-agentic/setup-sessions";
 import { DomainRail, type BriefLine } from "./domain-rail";
 
 export type DomainSearch = {
@@ -641,6 +643,17 @@ function DomainPanel({
       (srcSel.size === 0 || srcSel.has(a.source) || srcSel.has(a.dataset)),
   );
   const drift = trend.length > 7 && score !== null ? score - trend[trend.length - 8] : 0;
+  const setup = useSetupSessions();
+  const goTo = useNavigate();
+  const inDomain = scopeName === ALL_DOMAINS ? "" : scopeName;
+  const action =
+    tab === "tables"
+      ? { label: "+ Add tables", run: () => setup.openNew(inDomain) }
+      : tab === "checks"
+        ? { label: "+ Add checks", run: () => setup.openNew(inDomain, "task") }
+        : tab === "projects"
+          ? { label: "+ Add project", run: () => void goTo({ to: "/projects", search: { new: inDomain || undefined } }) }
+          : null;
 
   return (
     <div className="space-y-5 p-5">
@@ -656,6 +669,11 @@ function DomainPanel({
             { id: "projects", label: "Projects", hint: String(projects.length) },
           ]}
         />
+        {action && (
+          <PrimaryButton onClick={action.run} className="ml-auto shrink-0 whitespace-nowrap">
+            {action.label}
+          </PrimaryButton>
+        )}
       </div>
 
       {tab === "overview" && (

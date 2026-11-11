@@ -3,8 +3,9 @@ import { AppShell } from "@/components/app-shell";
 import { ProjectsScreen } from "@/components/projects/projects-screen";
 
 export const Route = createFileRoute("/projects")({
-  validateSearch: (search: Record<string, unknown>): { project?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { project?: string; new?: string } => ({
     project: typeof search.project === "string" ? search.project : undefined,
+    new: typeof search.new === "string" ? search.new : undefined,
   }),
   head: () => ({
     meta: [
@@ -18,10 +19,11 @@ export const Route = createFileRoute("/projects")({
 });
 
 function ProjectsPage() {
-  const { project } = Route.useSearch();
+  const search = Route.useSearch();
+  const { project } = search;
   return (
     <AppShell activeNav="projects" hideDock>
-      <ProjectsScreen projectId={project} />
+      <ProjectsScreen projectId={project} newIn={search.new} />
     </AppShell>
   );
 }

@@ -599,7 +599,7 @@ export type ChecksDomainFilter = {
 };
 
 const filterSelect = "rounded-lg px-2.5 py-2 text-[13px] outline-none focus:border-[color:var(--brand-blue)] disabled:opacity-70";
-const filterStyle = { border: "1px solid var(--hairline)", background: "var(--surface)", color: "var(--ink-900)" } as const;
+const filterStyle = { border: "1px solid var(--hairline)", background: "#fff", color: "var(--ink-900)" } as const;
 
 export function ChecksView({
   onCheck,
