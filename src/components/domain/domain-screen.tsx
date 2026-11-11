@@ -645,12 +645,21 @@ function DomainPanel({
   const drift = trend.length > 7 && score !== null ? score - trend[trend.length - 8] : 0;
   const setup = useSetupSessions();
   const goTo = useNavigate();
+  const { createThread: createRuleThread } = useChatThreads();
   const inDomain = scopeName === ALL_DOMAINS ? "" : scopeName;
   const action =
     tab === "tables"
       ? { label: "+ Add tables", run: () => setup.openNew(inDomain, "tables") }
       : tab === "checks"
-        ? { label: "+ Add checks", run: () => setup.openNew(inDomain, "task") }
+        ? {
+            label: "+ Add checks",
+            // A new check is the same chat as New rule on the Rules page.
+            run: () => {
+              const id = newChatId();
+              createRuleThread({ id, title: "New rule", kind: "rule" });
+              void goTo({ to: "/rule/$threadId", params: { threadId: id } });
+            },
+          }
         : tab === "projects"
           ? { label: "+ Add project", run: () => void goTo({ to: "/projects", search: { new: inDomain || undefined } }) }
           : null;
