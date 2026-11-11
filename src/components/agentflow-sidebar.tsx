@@ -219,12 +219,6 @@ export function AgentflowSidebar({ activeNav = "data-health" }: { activeNav?: Si
           to="/scheduled"
           active={activeNav === "scheduled"}
         />
-        <NavItem
-          icon={<ListChecks {...iconProps} />}
-          label="Rules"
-          to="/rules"
-          active={activeNav === "rules"}
-        />
       </nav>
 
       <SectionDivider />

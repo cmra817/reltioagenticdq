@@ -1,4 +1,6 @@
 import * as React from "react";
+import { draftFrom } from "@/components/rules/rule-chat";
+const NEW_CHECK_PROMPT = "Help me add a new check.";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Minimize2 } from "lucide-react";
 import { statusForScore, useDomainState } from "@/components/domain-context";
@@ -161,7 +163,7 @@ function DomainWorkspace({
   const threadId = React.useRef(search.thread ?? newChatId()).current;
   const { schedules } = useSchedules();
   const { runs } = useRuns(schedules);
-  const { rules } = useRules();
+  const { rules, addRule } = useRules();
   const { projects } = useProjects();
 
   const all = !!search.all;
@@ -275,6 +277,21 @@ function DomainWorkspace({
 
   // ---- What the agent says ------------------------------------------------
   function reply(q: string): ChatReply {
+    // "+ Add checks" drafts a new check right here in the domain chat; the
+    // draft comes back as a card that opens over the panel.
+    if (q === NEW_CHECK_PROMPT) {
+      awaitingCheck.current = true;
+      return "Sure. What should be true about your data? Describe it in plain words and I'll draft the check.\n\nFor example:\n• Order totals are never negative\n• No two customers share the same email";
+    }
+    if (awaitingCheck.current) {
+      awaitingCheck.current = false;
+      const d = draftFrom(q);
+      addRule(d);
+      return {
+        text: `I drafted "${d.name}" as a ${d.type.toLowerCase()} check. Open it to review, edit and turn it on.`,
+        visual: { kind: "rule", ruleId: d.id, title: d.name, meta: `${d.type} · Draft` },
+      };
+    }
     if (project) return projectReply(project, q);
     const fromPanel = panelReply(q);
     if (fromPanel) return fromPanel;
@@ -388,6 +405,7 @@ function DomainWorkspace({
     return `${scopeName} health is ${score ?? "not measured yet"}. ${findings.length} open ${findings.length === 1 ? "finding" : "findings"} from the latest runs across ${scopeSchedules.length} schedules.`;
   }
 
+  const awaitingCheck = React.useRef(false);
   const thread = useChatThread(reply, saved?.turns);
 
   // A seed prompt (from other pages) is sent once, then dropped from the URL.
@@ -667,7 +685,6 @@ function DomainPanel({
   const drift = trend.length > 7 && score !== null ? score - trend[trend.length - 8] : 0;
   const setup = useSetupSessions();
   const goTo = useNavigate();
-  const { createThread: createRuleThread } = useChatThreads();
   const inDomain = scopeName === ALL_DOMAINS ? "" : scopeName;
   const action =
     tab === "tables"
@@ -675,12 +692,8 @@ function DomainPanel({
       : tab === "checks"
         ? {
             label: "+ Add checks",
-            // A new check is the same chat as New rule on the Rules page.
-            run: () => {
-              const id = newChatId();
-              createRuleThread({ id, title: "New rule", kind: "rule" });
-              void goTo({ to: "/rule/$threadId", params: { threadId: id } });
-            },
+            // A new check is drafted in this domain chat, not a new thread.
+            run: () => onAsk(NEW_CHECK_PROMPT),
           }
         : tab === "projects"
           ? { label: "+ Add project", run: () => void goTo({ to: "/projects", search: { new: inDomain || undefined } }) }
