@@ -95,7 +95,9 @@ export function AgenticAddAssetModal({
   purpose?: SetupPurpose;
   onTaskComplete?: (plan: Plan, domain: string) => void;
 }) {
-  const isTask = purpose === "task";
+  const isTables = purpose === "tables";
+  // Add tables runs the same chat as New task: tables, checks, then a schedule.
+  const isTask = purpose === "task" || isTables;
   const { domains } = useDomainState();
   const [taskDomain, setTaskDomain] = useState(domainName ?? "");
   const [taskStage, setTaskStage] = useState<"domain" | "details" | null>(null);
@@ -187,13 +189,13 @@ export function AgenticAddAssetModal({
     if (!open || !isTask || autoStarted.current) return;
     autoStarted.current = true;
     if (snapshotRef.current?.msgs?.length) return;
-    setMsgs([{ id: mid(), role: "user", text: TASK_START_PROMPT } as Msg]);
+    setMsgs([{ id: mid(), role: "user", text: isTables ? (taskDomain ? `Add tables to ${taskDomain}` : "Add tables") : TASK_START_PROMPT } as Msg]);
     setThinking(true);
     window.setTimeout(() => {
       setThinking(false);
       if (!taskDomain) {
         setTaskStage("domain");
-        setMsgs((m) => [...m, { id: mid(), role: "agent", text: "Which domain is this task for?", chips: domains } as Msg]);
+        setMsgs((m) => [...m, { id: mid(), role: "agent", text: isTables ? "Which domain are these tables for?" : "Which domain is this task for?", chips: domains } as Msg]);
       } else {
         setTaskStage("details");
         setMsgs((m) => [...m, { id: mid(), role: "agent", text: TASK_DETAILS_QUESTION } as Msg]);
@@ -605,7 +607,7 @@ export function AgenticAddAssetModal({
         if (!d) return push({ role: "agent", text: "I didn't catch the domain. Pick one:", chips: domains });
         setTaskDomain(d);
         setTaskStage("details");
-        push({ role: "agent", text: `Got it, a ${d} task. ${TASK_DETAILS_QUESTION}` });
+        push({ role: "agent", text: `Got it, ${isTables ? `tables for ${d}` : `a ${d} task`}. ${TASK_DETAILS_QUESTION}` });
       });
     } else if (isTask && taskStage === "details") {
       push({ role: "user", text });
@@ -631,6 +633,7 @@ export function AgenticAddAssetModal({
   const confirm = () => {
     const { plan: final, defaults } = finalize(plan);
     if (isTask) {
+      if (isTables) onComplete?.(buildAssets(final, taskDomain));
       onTaskComplete?.(final, taskDomain);
       const doneText = `Saved the ${taskDomain} task with ${final.selected.length} ${final.selected.length === 1 ? "table" : "tables"}.`;
       push({ role: "note", text: doneText });
@@ -766,7 +769,7 @@ export function AgenticAddAssetModal({
   const header = (right?: React.ReactNode) => (
     <header className="flex h-14 shrink-0 items-center justify-between px-5" style={{ background: "transparent" }}>
       <div className="flex items-center gap-2 text-[15px] font-semibold" style={{ color: "var(--ink-900)" }}>
-        {isTask ? "New task" : "Add data asset"}
+        {isTables ? "Add tables" : isTask ? "New task" : "Add data asset"}
         {(isTask ? taskDomain : domainName) && (
           <span className="text-[12px] font-medium" style={{ color: "var(--ink-500)" }}>
             · {isTask ? taskDomain : domainName}
@@ -946,7 +949,7 @@ export function AgenticAddAssetModal({
           className="h-9 rounded-full px-4 text-[13px] font-medium text-white transition-shadow disabled:opacity-50"
           style={{ background: "var(--brand-blue)", boxShadow: ring("confirm") }}
         >
-          {isTask ? "Save task" : "Complete setup"}
+          {isTables ? "Add tables" : isTask ? "Save task" : "Complete setup"}
         </button>
       </div>
     </div>

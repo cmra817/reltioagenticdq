@@ -100,7 +100,7 @@ function NewMenu() {
   const { add: addSchedule } = useSchedules();
   const { rules } = useRules();
   const openSchedule = useOpenSchedule();
-  const isTaskSetup = setup.active?.purpose === "task";
+  const isTaskSetup = setup.active?.purpose === "task" || setup.active?.purpose === "tables";
   const navigate = useNavigate();
   const [pendingDomain, setPendingDomain] = useState<string | null>(null);
 
@@ -156,7 +156,8 @@ function NewMenu() {
         onPersist={(snapshot) => {
           const a = setup.active;
           if (!a) return;
-          const task = a.purpose === "task";
+          const task = a.purpose === "task" || a.purpose === "tables";
+          const label = a.purpose === "tables" ? "Add tables" : "New task";
           // A saved task is no longer a setup in progress.
           if (task && snapshot.done) return;
           const domain = task ? snapshot.taskDomain || a.domain : a.domain || selected;
@@ -164,13 +165,13 @@ function NewMenu() {
             id: a.id,
             domain,
             purpose: a.purpose,
-            title: task ? (domain ? `New task: ${domain}` : "New task") : `Add asset: ${domain}`,
+            title: task ? (domain ? `${label}: ${domain}` : label) : `Add asset: ${domain}`,
             updatedAt: Date.now(),
             snapshot,
           });
         }}
         onComplete={({ tables, checkCount, assets }) => {
-          const domain = setup.active?.domain || pendingDomain || selected;
+          const domain = assets[0]?.domain || setup.active?.domain || pendingDomain || selected;
           if (setup.active) setup.deleteSession(setup.active.id);
           completeConnection({ domain, tables, checkCount });
           // Register the new assets so they appear in Explore with their checks + schedule.

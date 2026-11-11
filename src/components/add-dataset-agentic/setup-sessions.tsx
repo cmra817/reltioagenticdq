@@ -19,7 +19,7 @@ export type SetupSnapshot = {
 };
 
 /** What the setup produces: data assets, or a task (which always belongs to one domain). */
-export type SetupPurpose = "asset" | "task";
+export type SetupPurpose = "asset" | "task" | "tables";
 
 export type SetupSession = {
   id: string;

@@ -648,7 +648,7 @@ function DomainPanel({
   const inDomain = scopeName === ALL_DOMAINS ? "" : scopeName;
   const action =
     tab === "tables"
-      ? { label: "+ Add tables", run: () => setup.openNew(inDomain) }
+      ? { label: "+ Add tables", run: () => setup.openNew(inDomain, "tables") }
       : tab === "checks"
         ? { label: "+ Add checks", run: () => setup.openNew(inDomain, "task") }
         : tab === "projects"
