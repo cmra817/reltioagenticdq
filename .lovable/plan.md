@@ -1,16 +1,23 @@
-# Clicking a check in the domain panel opens it like a rule
+# Clicking a check in the domain panel opens it as a card in the chat
 
 ## What changes
-- On a domain's **Checks** tab (and a table's Checks tab), clicking a check's name opens the same screen as clicking a rule on the Rules page. You get a chat that starts with "Tell me about the '<check>' rule" and an answer. The right panel shows **Insights**, **Edit** and **History**.
-- Each check has one chat. Opening it again from the domain panel, the Rules page or Recents brings back the same conversation.
-- To go back to the domain, use Recents or the browser's back button.
-- Three checks become rules in the library, so they also show up on the Rules page: **Phone Number Completeness** (Completeness), **Date Range Validation** (Accuracy) and **Status Value Set Check** (Consistency). The other two use rules that already exist: **Email Format Validation** opens "Email addresses are valid", and **Customer ID Uniqueness** opens "No duplicate records by key".
-- Today, clicking a check's name opens its row and asks about it in the domain chat. That stops. The small arrow at the start of the row now opens and closes the row without leaving the page.
+1. On a domain's Checks tab (or a table's Checks tab), clicking a check's name asks the domain chat "Tell me about the '<check>' check". The question appears in the same chat; no new chat opens.
+2. The agent answers with a short summary and a **check card** in its reply: the check's name, its type, and its pass rate.
+3. Clicking the card switches the right panel to that check, laid over the domain panel. It has the same three tabs as a rule's page:
+   - **Insights:** pass rate, trend, top failing table.column, coverage by task
+   - **Edit:** name, description, type, severity, status, owner, parameters, with the usual impact check when saving
+   - **History**
+4. The card has an **×** in its header. Closing it brings back the domain panel exactly as you left it, on the same tab with the same filters. You can open it again from the card in the chat at any time.
+5. Clicking things inside the card (bars, trend, tiles) asks about them in the same domain chat, just like the rest of the panel.
+6. Three checks become rules in the library, so they also show on the Rules page: **Phone Number Completeness**, **Date Range Validation** and **Status Value Set Check**. **Email Format Validation** uses the existing "Email addresses are valid" and **Customer ID Uniqueness** uses "No duplicate records by key".
+7. The small arrow next to each check still opens and closes the row without asking anything.
+
+This "card that takes over the panel, close to return" pattern becomes the way any chat answer can show a richer view on top of an existing panel.
 
 ## Technical details
-- `lib/mock-ops.ts` `BASE_RULES`: add r8 Phone Number Completeness, r9 Date Range Validation and r10 Status Value Set Check. Each gets a description, severity, owner, Team scope and one "Created" version. "Accuracy" is added as a rule type if it isn't one already.
-- `table-brief/data.ts` `CHECK_GROUPS`: add `ruleId` to each group (email-format→r3, phone-completeness→r8, customer-id-uniqueness→r4, date-range→r9, status-values→r10).
-- `ChecksView`: add an optional `onOpen(group)` prop. When it is set, clicking the name calls it and the chevron becomes its own expand/collapse button. Explore doesn't pass it, so Explore stays the same.
-- `domain-screen.tsx`, domain and table Checks tabs: pass `onOpen={(g) => openRule({ id: g.ruleId, name: g.name })}` using `useOpenRule`, and stop sending the check prompt there. The rule thread sends its own automatic prompt.
-- `insightsFor` in `rule-insights.ts` covers the new rule ids; it falls back to defaults where needed.
-- Domain AGENTS.md: a check opens its rule's thread.
+- `chat-visuals.tsx`: add a `ChatVisual` kind `rule` (`{ kind: "rule"; ruleId; title; meta }`). It is plain data, so saved chats restore it, and it renders as a card. Add `OverlayOpenContext` (`(v) => void`) for opening it.
+- Extract the rule panel body (tabs plus Insights/Edit/History, currently inside `RuleWorkspace`) into an exported `RulePanel({ ruleId, onAsk, onClose? })` in `rules/rule-panel.tsx`. `RuleWorkspace` uses it too, so both stay identical.
+- `domain-screen.tsx`: keep `overlay` state (`{ kind: "rule", ruleId } | null`). When it is set, the panel renders `RulePanel` with a close button (×). Closing clears it, and the domain panel's tab and filters stay put because that state lives in `DomainScreen`. Provide `OverlayOpenContext`.
+- `ChecksView`: add an optional `onOpen(group)` prop. The name calls it and the chevron toggles the row; Explore doesn't pass it, so it stays the same. Domain and table Checks tabs send the check question with a reply that carries the `rule` visual.
+- `CHECK_GROUPS` gets a `ruleId`. `BASE_RULES` gets r8, r9 and r10. `buildInsights` works for the new rules.
+- Domain AGENTS.md: rule for answer cards that lay a panel over the domain panel and close back to it.
