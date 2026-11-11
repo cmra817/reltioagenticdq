@@ -15,7 +15,8 @@ import {
   Tag,
   useChatThread,
 } from "@/components/workspace/primitives";
-import type { ChatReply, ChatVisual } from "@/components/workspace/chat-visuals";
+import { OverlayOpenContext, type ChatReply, type ChatVisual } from "@/components/workspace/chat-visuals";
+import { RuleWorkspace } from "@/components/rules/rule-workspace";
 import { panelPrompt, panelReply } from "./panel-prompts";
 import { ago } from "@/components/scheduled/format";
 import {
@@ -168,6 +169,7 @@ function DomainWorkspace({
 
   const [ask, setAsk] = React.useState<{ id: number; q: string } | null>(null);
   const [chatOpen, setChatOpen] = React.useState(true);
+  const [overlay, setOverlay] = React.useState<{ kind: "rule"; ruleId: string } | null>(null);
   const [chatProject, setChatProject] = React.useState(saved?.project ?? "");
 
   const scores = domains.map((d) => healthFor(d)).filter((x): x is number => x !== null);
@@ -451,6 +453,12 @@ function DomainWorkspace({
   const promptProject = { value: chatProject, onChange: chooseProject };
 
   return (
+    <OverlayOpenContext.Provider
+      value={(v) => {
+        setOverlay(v);
+        setExpanded(true);
+      }}
+    >
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <SplitWorkspace
         panelLabel={table ? `${table.name} details` : `${scopeName} workspace`}
@@ -486,7 +494,19 @@ function DomainWorkspace({
           />
         }
         panel={
-          !expanded ? (
+          <div className="relative flex min-h-0 flex-1 flex-col">
+          {overlay && (
+            // A check card lays its panel over the domain panel; closing it shows the domain panel as it was.
+            <div className="absolute inset-0 z-20 flex flex-col bg-white">
+              <RuleWorkspace
+                key={overlay.ruleId}
+                threadId={`overlay-${overlay.ruleId}`}
+                ruleId={overlay.ruleId}
+                panelOnly={{ onAsk: (q) => discuss(q), onClose: () => setOverlay(null) }}
+              />
+            </div>
+          )}
+          {!expanded ? (
             <DomainRail
               domain={scopeName}
               score={score}
@@ -566,10 +586,12 @@ function DomainWorkspace({
                 />
               )}
             </div>
-          )
+          )}
+          </div>
         }
       />
     </div>
+    </OverlayOpenContext.Provider>
   );
 }
 

@@ -65,7 +65,10 @@ export function RuleWorkspace({
   threadId,
   ruleId,
   initial,
+  panelOnly,
 }: {
+  /** Renders only the rule's panel, laid over another screen's panel; questions go to that screen's chat. */
+  panelOnly?: { onAsk: (q: string) => void; onClose: () => void };
   threadId: string;
   /** Set when the thread was opened from an existing rule in the table. */
   ruleId?: string;
@@ -173,7 +176,7 @@ export function RuleWorkspace({
   // Opening a rule asks about it, so every opened rule starts as a chat.
   const autoAsked = React.useRef(false);
   React.useEffect(() => {
-    if (autoAsked.current || !ruleId || !saved || !draft || thread.turns.length > 0) return;
+    if (panelOnly || autoAsked.current || !ruleId || !saved || !draft || thread.turns.length > 0) return;
     autoAsked.current = true;
     thread.send(rulePrompt(saved.name));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -295,41 +298,10 @@ export function RuleWorkspace({
             "Allow 2% to fail",
           ];
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <SplitWorkspace
-        panelLabel="Rule"
-        panelWidth="59vw"
-        collapsed={!!draft && !chatOpen}
-        onToggle={draft ? () => setChatOpen(!chatOpen) : undefined}
-        ownShowToggle
-        floating={
-          <FloatingPrompt
-            thread={thread}
-            placeholder="Ask about this rule, or tell me what to change…"
-            onOpen={() => setChatOpen(true)}
-            domain={ALL_DOMAINS_FIXED}
-          />
-        }
-        center={
-          <ScopedChat
-            thread={thread}
-            scopeLabel={isNew ? "New rule" : (saved?.name ?? "Rule")}
-            placeholder={
-              isNew
-                ? "Describe what should be true…"
-                : "Ask about this rule, or tell me what to change…"
-            }
-            suggestions={suggestions}
-            reply={reply}
-            domain={ALL_DOMAINS_FIXED}
-          />
-        }
-        panel={
-          !draft ? undefined : (
+  const panelBody = !draft ? null : (
             <div className="flex min-h-full flex-col">
               <div className="mx-auto w-full max-w-[960px] flex-1 space-y-5 p-5">
-                <div className="flex items-center justify-between gap-3">
+                <div className={`flex items-center justify-between gap-3 ${panelOnly ? "pr-9" : ""}`}>
                   <div className="flex min-w-0 items-center gap-2">
                     {!chatOpen && (
                       <PanelToggle label="Show chat" onClick={() => setChatOpen(true)} />
@@ -355,7 +327,7 @@ export function RuleWorkspace({
                 </div>
 
                 {tab === "insights" && saved && insights ? (
-                  <RuleInsightsView rule={saved} insights={insights} onAsk={thread.send} />
+                  <RuleInsightsView rule={saved} insights={insights} onAsk={panelOnly ? panelOnly.onAsk : thread.send} />
                 ) : tab === "history" && saved ? (
                   <ol
                     className="divide-y rounded-xl border bg-white"
@@ -461,7 +433,58 @@ export function RuleWorkspace({
                 </div>
               )}
             </div>
-          )
+  );
+
+  if (panelOnly) {
+    return (
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <button
+          type="button"
+          onClick={panelOnly.onClose}
+          aria-label="Close"
+          title="Close"
+          className="absolute right-3 top-3 z-10 grid h-7 w-7 place-items-center rounded-md bg-white text-[16px] hover:bg-[color:var(--surface-soft)]"
+          style={{ color: "var(--ink-500)" }}
+        >
+          ×
+        </button>
+        {panelBody ?? <p className="p-5 text-[13px]" style={{ color: "var(--ink-500)" }}>Loading…</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <SplitWorkspace
+        panelLabel="Rule"
+        panelWidth="59vw"
+        collapsed={!!draft && !chatOpen}
+        onToggle={draft ? () => setChatOpen(!chatOpen) : undefined}
+        ownShowToggle
+        floating={
+          <FloatingPrompt
+            thread={thread}
+            placeholder="Ask about this rule, or tell me what to change…"
+            onOpen={() => setChatOpen(true)}
+            domain={ALL_DOMAINS_FIXED}
+          />
+        }
+        center={
+          <ScopedChat
+            thread={thread}
+            scopeLabel={isNew ? "New rule" : (saved?.name ?? "Rule")}
+            placeholder={
+              isNew
+                ? "Describe what should be true…"
+                : "Ask about this rule, or tell me what to change…"
+            }
+            suggestions={suggestions}
+            reply={reply}
+            domain={ALL_DOMAINS_FIXED}
+          />
+        }
+        panel={
+          !draft ? undefined : panelBody
         }
       />
     </div>

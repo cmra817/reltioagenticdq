@@ -695,19 +695,27 @@ export function ChecksView({
                   <React.Fragment key={group.id}>
                     <tr style={{ borderTop: "1px solid var(--hairline)" }}>
                       <td className="px-3 py-2.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!isOpen) onCheck?.(group.name);
-                            toggle(group.id);
-                          }}
-                          aria-expanded={isOpen}
-                          className="flex min-w-0 items-center gap-1.5 text-left font-semibold"
-                          style={{ color: "var(--brand-blue)" }}
-                        >
-                          {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                          <span className="truncate">{group.name}</span>
-                        </button>
+                        {onCheck ? (
+                          <span className="flex min-w-0 items-center gap-1.5 font-semibold" style={{ color: "var(--brand-blue)" }}>
+                            <button type="button" onClick={() => toggle(group.id)} aria-expanded={isOpen} aria-label={isOpen ? `Collapse ${group.name}` : `Expand ${group.name}`}>
+                              {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                            </button>
+                            <button type="button" onClick={() => onCheck(group.name)} className="truncate text-left hover:underline">
+                              {group.name}
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => toggle(group.id)}
+                            aria-expanded={isOpen}
+                            className="flex min-w-0 items-center gap-1.5 text-left font-semibold"
+                            style={{ color: "var(--brand-blue)" }}
+                          >
+                            {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                            <span className="truncate">{group.name}</span>
+                          </button>
+                        )}
                       </td>
                       <td className="px-3 py-2.5">
                         <span

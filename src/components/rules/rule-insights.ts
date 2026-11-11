@@ -43,6 +43,7 @@ const COLUMNS_BY_TYPE: Record<RuleType, string[]> = {
   Uniqueness: ["id", "email"],
   Freshness: ["created_at"],
   Consistency: ["status", "amount"],
+  Accuracy: ["created_at", "birth_date"],
 };
 
 const CAUSE_BY_TYPE: Record<RuleType, string> = {
@@ -51,6 +52,7 @@ const CAUSE_BY_TYPE: Record<RuleType, string> = {
   Uniqueness: "keys that appear more than once",
   Freshness: "records that arrived late",
   Consistency: "values that disagree with the source system",
+  Accuracy: "dates outside the plausible range",
 };
 
 /**

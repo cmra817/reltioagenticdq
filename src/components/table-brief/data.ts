@@ -349,11 +349,14 @@ export type CheckGroup = {
   passRate: string;
   columns: CheckColumnResult[];
   expanded?: boolean;
+  /** The library rule this check applies. */
+  ruleId: string;
 };
 
 export const CHECK_GROUPS: CheckGroup[] = [
   {
     id: "email-format",
+    ruleId: "r3",
     name: "Email Format Validation",
     dimension: "Validity",
     lastRun: "2h ago",
@@ -369,6 +372,7 @@ export const CHECK_GROUPS: CheckGroup[] = [
   },
   {
     id: "phone-completeness",
+    ruleId: "r8",
     name: "Phone Number Completeness",
     dimension: "Completeness",
     lastRun: "2h ago",
@@ -383,6 +387,7 @@ export const CHECK_GROUPS: CheckGroup[] = [
   },
   {
     id: "customer-id-uniqueness",
+    ruleId: "r4",
     name: "Customer ID Uniqueness",
     dimension: "Uniqueness",
     lastRun: "2h ago",
@@ -394,6 +399,7 @@ export const CHECK_GROUPS: CheckGroup[] = [
   },
   {
     id: "date-range",
+    ruleId: "r9",
     name: "Date Range Validation",
     dimension: "Accuracy",
     lastRun: "3h ago",
@@ -409,6 +415,7 @@ export const CHECK_GROUPS: CheckGroup[] = [
   },
   {
     id: "status-values",
+    ruleId: "r10",
     name: "Status Value Set Check",
     dimension: "Consistency",
     lastRun: "2h ago",
@@ -421,6 +428,7 @@ export const CHECK_GROUPS: CheckGroup[] = [
   },
   {
     id: "address-completeness",
+    ruleId: "r11",
     name: "Address Completeness",
     dimension: "Completeness",
     lastRun: "2h ago",

@@ -54,7 +54,7 @@ export type Run = {
   findings: Finding[];
 };
 
-export type RuleType = "Completeness" | "Uniqueness" | "Validity" | "Freshness" | "Consistency";
+export type RuleType = "Completeness" | "Uniqueness" | "Validity" | "Freshness" | "Consistency" | "Accuracy";
 export type Severity = "Low" | "Medium" | "High";
 export type RuleScope = "Yours" | "Team" | "Template";
 
@@ -302,6 +302,58 @@ export const BASE_RULES: Rule[] = [
     threshold: 2,
     appliesWhen: "",
     versions: [{ v: 1, author: ME, at: "Oct 29", note: "Created" }],
+  },
+  {
+    id: "r8",
+    name: "Phone Number Completeness",
+    description: "Contact phone numbers must be filled in.",
+    type: "Completeness",
+    severity: "Medium",
+    owner: "Dana Whitfield",
+    status: "Active",
+    scope: "Team",
+    threshold: 5,
+    appliesWhen: "",
+    versions: [{ v: 1, author: "Dana Whitfield", at: "Sep 14", note: "Created" }],
+  },
+  {
+    id: "r9",
+    name: "Date Range Validation",
+    description: "Dates must fall inside a plausible range, never in the future or before 1900.",
+    type: "Accuracy",
+    severity: "Medium",
+    owner: "Maya R.",
+    status: "Active",
+    scope: "Team",
+    threshold: 1,
+    appliesWhen: "",
+    versions: [{ v: 1, author: "Maya R.", at: "Sep 20", note: "Created" }],
+  },
+  {
+    id: "r10",
+    name: "Status Value Set Check",
+    description: "Status fields may only use the agreed set of values.",
+    type: "Consistency",
+    severity: "Low",
+    owner: "Maya R.",
+    status: "Active",
+    scope: "Team",
+    threshold: 0,
+    appliesWhen: "",
+    versions: [{ v: 1, author: "Maya R.", at: "Oct 2", note: "Created" }],
+  },
+  {
+    id: "r11",
+    name: "Address Completeness",
+    description: "Mailing address fields must be filled in.",
+    type: "Completeness",
+    severity: "Low",
+    owner: "Dana Whitfield",
+    status: "Active",
+    scope: "Team",
+    threshold: 5,
+    appliesWhen: "",
+    versions: [{ v: 1, author: "Dana Whitfield", at: "Oct 5", note: "Created" }],
   },
   {
     id: "t1",

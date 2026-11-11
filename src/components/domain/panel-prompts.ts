@@ -11,7 +11,7 @@ export const panelPrompt = {
   card: (label: string, table: string) => `Tell me about the ${label} card for ${table}`,
   column: (column: string, table: string) => `Tell me about the ${column} column in ${table}`,
   check: (check: string, table?: string) =>
-    table ? `Let's discuss the ${check} check on ${table}` : `Let's discuss the ${check} check`,
+    table ? `Tell me about the "${check}" check on ${table}` : `Tell me about the "${check}" check`,
   day: (day: string, table: string) =>
     day.startsWith("week ") ? `What happened in ${day} in ${table}?` : `What happened on ${day} in ${table}?`,
   run: (check: string, column: string, table: string) => `Tell me about the ${check} run on ${column} in ${table}`,
@@ -111,21 +111,15 @@ export function panelReply(q: string): ChatReply | null {
     };
   }
 
-  m = q.match(/^Let's discuss the (.+) check(?: on (.+))?$/);
+  m = q.match(/^Tell me about the "(.+)" check(?: on (.+))?$/);
   if (m) {
     const [, name, table] = m;
     const g = CHECK_GROUPS.find((x) => x.name === name);
     if (!g) return null;
     const rate = rateOf(g.passRate);
     return {
-      text: `${g.name} is a ${g.dimension.toLowerCase()} check${table ? ` on ${table}` : ""}, applied to ${g.columns.length} column${g.columns.length === 1 ? "" : "s"}. It last ran ${g.lastRun} and ${g.status.toLowerCase()} at ${g.passRate}.${nextStep(g.status === "Passed" ? "nothing to do; ask to tighten the threshold if needed." : "open the failing column to see sample rows.")}`,
-      visual: {
-        kind: "trend",
-        title: "Pass rate, last 14 runs",
-        values: series(rate, g.id),
-        startLabel: "14 runs ago",
-        endLabel: "Latest",
-      },
+      text: `${g.name} is a ${g.dimension.toLowerCase()} check${table ? ` on ${table}` : ""}, applied to ${g.columns.length} column${g.columns.length === 1 ? "" : "s"}. It last ran ${g.lastRun} and ${g.status.toLowerCase()} at ${g.passRate}.${nextStep(g.status === "Passed" ? "nothing to do; ask to tighten the threshold if needed." : "open the card to see its insights, or edit it.")}`,
+      visual: { kind: "rule", ruleId: g.ruleId, title: g.name, meta: `${g.dimension} · ${rate}% pass rate · Insights, Edit, History` },
     };
   }
 

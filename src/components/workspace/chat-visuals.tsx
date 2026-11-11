@@ -43,12 +43,46 @@ export type ChatVisual =
       meta: string;
     }
   | {
+      /** A check card: opens the check's Insights, Edit and History over the current panel. */
+      kind: "rule";
+      ruleId: string;
+      title: string;
+      meta: string;
+    }
+  | {
       /** A button that goes somewhere, e.g. "Open the project". */
       kind: "link";
       label: string;
       to: "/projects";
       search?: { project?: string };
     };
+
+/** Lets a check card lay its panel over the screen's right panel. */
+export const OverlayOpenContext = React.createContext<((v: { kind: "rule"; ruleId: string }) => void) | null>(null);
+
+function RuleCard({ ruleId, title, meta }: { ruleId: string; title: string; meta: string }) {
+  const open = React.useContext(OverlayOpenContext);
+  return (
+    <button
+      type="button"
+      onClick={() => open?.({ kind: "rule", ruleId })}
+      disabled={!open}
+      className="flex w-full max-w-sm items-center gap-3 rounded-xl border bg-white px-3 py-2.5 text-left transition-colors hover:bg-[color:var(--surface-soft)]"
+      style={{ borderColor: "var(--hairline)" }}
+    >
+      <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-lg" style={{ background: "var(--surface-soft)", color: "var(--brand-blue)" }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+          <path d="M4 12l5 5L20 6" />
+        </svg>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[13.5px] font-semibold" style={{ color: "var(--ink-900)" }}>{title}</span>
+        <span className="block truncate text-[12px]" style={{ color: "var(--ink-500)" }}>{meta}</span>
+      </span>
+      <span className="text-[12px] font-medium" style={{ color: "var(--brand-blue)" }}>Open ↗</span>
+    </button>
+  );
+}
 
 /** Lets an artifact card open its dashboard, wherever the chat is shown. */
 export const ArtifactOpenContext = React.createContext<(() => void) | null>(null);
@@ -122,6 +156,7 @@ export function ChatVisualView({
       </Link>
     );
   }
+  if (visual.kind === "rule") return <RuleCard ruleId={visual.ruleId} title={visual.title} meta={visual.meta} />;
   if (visual.kind === "artifact") return <ArtifactCard title={visual.title} meta={visual.meta} />;
   if (visual.kind === "brief") {
     return (
