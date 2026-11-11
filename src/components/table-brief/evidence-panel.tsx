@@ -591,7 +591,28 @@ function StatusBadge({ status }: { status: CheckRunStatus }) {
   );
 }
 
-export function ChecksView({ onCheck }: { onCheck?: (name: string) => void } = {}) {
+export type ChecksDomainFilter = {
+  value: string;
+  options: string[];
+  onChange?: (domain: string) => void;
+  locked?: boolean;
+};
+
+const filterSelect = "rounded-lg px-2.5 py-2 text-[13px] outline-none focus:border-[color:var(--brand-blue)] disabled:opacity-70";
+const filterStyle = { border: "1px solid var(--hairline)", background: "var(--surface)", color: "var(--ink-900)" } as const;
+
+export function ChecksView({
+  onCheck,
+  domainFilter,
+}: { onCheck?: (name: string) => void; domainFilter?: ChecksDomainFilter } = {}) {
+  const [query, setQuery] = React.useState("");
+  const [status, setStatus] = React.useState<"All" | CheckRunStatus>("All");
+  const q = query.trim().toLowerCase();
+  const groups = CHECK_GROUPS.filter(
+    (g) =>
+      (!q || g.name.toLowerCase().includes(q) || g.dimension.toLowerCase().includes(q) || g.columns.some((c) => c.column.toLowerCase().includes(q))) &&
+      (status === "All" || g.status === status || g.columns.some((c) => c.status === status)),
+  );
   const [expanded, setExpanded] = React.useState<Set<string>>(
     () => new Set(CHECK_GROUPS.filter((group) => group.expanded).map((group) => group.id)),
   );
@@ -606,6 +627,43 @@ export function ChecksView({ onCheck }: { onCheck?: (name: string) => void } = {
 
   return (
     <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search checks"
+          aria-label="Search checks"
+          className="min-w-0 flex-1 rounded-lg px-3 py-2 text-[13px] outline-none focus:border-[color:var(--brand-blue)]"
+          style={filterStyle}
+        />
+        {domainFilter && (
+          <select
+            aria-label="Domain"
+            value={domainFilter.value}
+            disabled={domainFilter.locked || !domainFilter.onChange}
+            title={domainFilter.locked ? "The domain is set for this view." : undefined}
+            onChange={(e) => domainFilter.onChange?.(e.target.value)}
+            className={filterSelect}
+            style={filterStyle}
+          >
+            {domainFilter.options.map((d) => (
+              <option key={d} value={d}>Domain: {d}</option>
+            ))}
+          </select>
+        )}
+        <select
+          aria-label="Status"
+          value={status}
+          onChange={(e) => setStatus(e.target.value as "All" | CheckRunStatus)}
+          className={filterSelect}
+          style={filterStyle}
+        >
+          {(["All", "Passed", "Warning", "Failed"] as const).map((s) => (
+            <option key={s} value={s}>Status: {s === "All" ? "All statuses" : s}</option>
+          ))}
+        </select>
+      </div>
       <EvidenceTableShell>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] table-fixed text-[12px]">
@@ -627,7 +685,10 @@ export function ChecksView({ onCheck }: { onCheck?: (name: string) => void } = {
               </tr>
             </thead>
             <tbody>
-              {CHECK_GROUPS.map((group) => {
+              {groups.length === 0 && (
+                <tr><td colSpan={6} className="px-3 py-4 text-[13px]" style={{ color: "var(--ink-500)" }}>No checks match.</td></tr>
+              )}
+              {groups.map((group) => {
                 const isOpen = expanded.has(group.id);
                 const dimensionStyle = DIMENSION_STYLES[group.dimension];
                 return (
@@ -663,7 +724,7 @@ export function ChecksView({ onCheck }: { onCheck?: (name: string) => void } = {
                       <td className="px-3 py-2.5"><StatusBadge status={group.status} /></td>
                       <td className="whitespace-nowrap px-3 py-2.5 font-mono" style={{ color: "var(--ink-700)" }}>{group.passRate}</td>
                     </tr>
-                    {isOpen && group.columns.map((column) => (
+                    {isOpen && group.columns.filter((c) => status === "All" || c.status === status).map((column) => (
                       <tr key={`${group.id}-${column.column}`} style={{ borderTop: "1px solid var(--hairline)" }}>
                         <td className="px-3 py-2.5 pl-12 font-mono" style={{ color: "var(--ink-700)" }}>
                           <span className="inline-flex items-center gap-2 whitespace-nowrap">
@@ -686,7 +747,7 @@ export function ChecksView({ onCheck }: { onCheck?: (name: string) => void } = {
         </div>
       </EvidenceTableShell>
       <p className="px-1 text-[11.5px]" style={{ color: "var(--ink-300)" }}>
-        {CHECK_GROUPS.length} checks across {CHECK_GROUPS.reduce((total, group) => total + group.columns.length, 0)} columns · last run 2 hours ago.
+        {groups.length} checks across {groups.reduce((total, group) => total + group.columns.length, 0)} columns · last run 2 hours ago.
       </p>
     </div>
   );

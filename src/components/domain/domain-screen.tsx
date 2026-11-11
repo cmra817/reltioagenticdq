@@ -883,7 +883,12 @@ function DomainPanel({
 
       {tab === "projects" && <DomainProjects projects={projects} showDomain={showDomain} onAsk={(q) => onAsk(q)} />}
 
-      {tab === "checks" && <ChecksView onCheck={(name) => onAsk(panelPrompt.check(name))} />}
+      {tab === "checks" && (
+        <ChecksView
+          onCheck={(name) => onAsk(panelPrompt.check(name))}
+          domainFilter={{ value: scopeName, options: [ALL_DOMAINS, ...domains], onChange: onDomainChange, locked: domainLocked }}
+        />
+      )}
     </div>
   );
 }
@@ -960,7 +965,12 @@ function TableContext({
       {tab === "columns" && <ProfilingView onScope={(c) => onAsk(panelPrompt.column(c, table.name))} />}
       {tab === "sample" && <SampleDataView onColumn={(c) => onAsk(panelPrompt.column(c, table.name))} />}
 
-      {tab === "checks" && <ChecksView onCheck={(c) => onAsk(panelPrompt.check(c, table.name))} />}
+      {tab === "checks" && (
+        <ChecksView
+          onCheck={(c) => onAsk(panelPrompt.check(c, table.name))}
+          domainFilter={{ value: table.domain, options: [table.domain], locked: true }}
+        />
+      )}
       {tab === "activity" && (
         <ActivityView
           onDay={(d) => onAsk(panelPrompt.day(d, table.name))}
