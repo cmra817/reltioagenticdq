@@ -23,8 +23,10 @@ export function DomainRail({
   onExpand,
   onOpenTables,
   onOpenProjects,
+  onOpenChecks,
   onOpenTable,
 }: {
+  onOpenChecks: () => void;
   onOpenProjects: () => void;
   domain: string;
   score: number | null;
@@ -159,6 +161,15 @@ export function DomainRail({
           <span style={{ color: "var(--ink-500)" }}>
             {tables.length} · {attention} need attention ›
           </span>
+        </button>
+        <button
+          type="button"
+          onClick={onOpenChecks}
+          className="flex w-full items-center justify-between rounded-lg border bg-white px-3 py-2.5 text-left text-[13px] hover:bg-[color:var(--surface-soft)]"
+          style={{ borderColor: "var(--hairline)", color: "var(--ink-900)" }}
+        >
+          <span>Checks</span>
+          <span style={{ color: "var(--ink-500)" }}>View all checks ›</span>
         </button>
         <button
           type="button"

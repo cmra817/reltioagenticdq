@@ -499,6 +499,10 @@ function DomainWorkspace({
                 setPanelTab("tables");
                 setExpanded(true);
               }}
+              onOpenChecks={() => {
+                setPanelTab("checks");
+                setExpanded(true);
+              }}
               onOpenProjects={() => {
                 setPanelTab("projects");
                 setExpanded(true);
